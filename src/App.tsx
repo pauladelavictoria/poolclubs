@@ -7,7 +7,7 @@ import { ToastContainer } from "react-toastify";
 import { Routes } from "react-router-dom";
 import { Route } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
-import { ProtectedRoute } from "./ProtectedRoute";
+// import { ProtectedRoute } from "./ProtectedRoute";
 import HomePage from "@/pages/HomePage";
 
 export default function App() {
