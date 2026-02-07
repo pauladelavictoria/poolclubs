@@ -18,13 +18,13 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
-
-            <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
-            </Route>
+
+            {/* <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+            </Route> */}
           </Routes>
         </BrowserRouter>
-
         <ToastContainer />
       </AuthProvider>
     </QueryClientProvider>
