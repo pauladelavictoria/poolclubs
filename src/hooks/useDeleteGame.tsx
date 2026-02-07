@@ -2,15 +2,15 @@ import { supabase } from "@/supabaseClient";
 import { useAuth } from "./useAuth";
 import { useMutation } from "@tanstack/react-query";
 
-export const useDeleteTask = () => {
+export const useDeleteGame = () => {
   const { user } = useAuth();
 
-  async function deleteTask(id: string) {
+  async function deleteGame(id: string) {
     if (!user) {
       return;
     }
 
-    const { error } = await supabase.from("tasks").delete().eq("id", id);
+    const { error } = await supabase.from("games").delete().eq("id", id);
 
     if (error) {
       console.error(error);
@@ -19,6 +19,6 @@ export const useDeleteTask = () => {
   }
 
   return useMutation({
-    mutationFn: deleteTask,
+    mutationFn: deleteGame,
   });
 };
