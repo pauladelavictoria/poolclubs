@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import Layout from "./Layout";
 import type { Game } from "@/types";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
-import { HiHome } from "react-icons/hi";
+import { HiHome, HiPlus } from "react-icons/hi";
 import { Link } from "react-router-dom";
 
 export default function GamesPage() {
@@ -14,7 +14,7 @@ export default function GamesPage() {
     data: gamesData,
     isLoading: gamesLoading,
     refetch: refetchGames,
-  } = useGetGames({pageSize: 10});
+  } = useGetGames({ pageSize: 10 });
   const { data: players, isLoading: playersLoading } = useGetPlayers();
   const { mutate: handleAddGame } = useAddGame();
 
@@ -30,8 +30,8 @@ export default function GamesPage() {
     !player_1_name ||
     !player_2_name ||
     player_1_score === "" ||
-    player_2_score === "" || 
-    player_1_name === player_2_name || 
+    player_2_score === "" ||
+    player_1_name === player_2_name ||
     player_1_score === player_2_score;
 
   const onSubmit = (game: Game) => {
@@ -59,13 +59,13 @@ export default function GamesPage() {
           <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 text-white">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center gap-3">
-              <Link
-                    to="/"
-                    className="inline-flex items-center gap-2 text-white py-2 transition-colors"
-                    aria-label="Inicio"
-                  >
-                    <HiHome className="h-6 w-6" aria-hidden />
-                  </Link>
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-2 text-white py-2 transition-colors"
+                  aria-label="Inicio"
+                >
+                  <HiHome className="h-6 w-6" aria-hidden />
+                </Link>
                 <h1 className="text-2xl font-bold">Añadir nuevo partido</h1>
               </div>
             </div>
@@ -122,20 +122,7 @@ export default function GamesPage() {
                   } text-white px-5 py-3 rounded-lg transition-colors shadow-md flex items-center`}
                   disabled={addDisabled}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
+                  <HiPlus className="h-6 w-6" aria-hidden />
                   Añadir
                 </button>
               </div>
