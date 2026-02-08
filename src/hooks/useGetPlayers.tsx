@@ -20,8 +20,6 @@ export const useGetPlayers = () => {
   }
 
   useEffect(() => {
-    // if (!user) return;
-
     const eventsChannel = supabase
       .channel("players-changes")
       .on(
@@ -31,11 +29,8 @@ export const useGetPlayers = () => {
           schema: "public",
           table: "players",
         },
-        (payload) => {
-          console.log("INSERT received:", payload);
-          queryClient.setQueryData<Player[]>(["players"], (oldData = []) => {
-            return [payload.new as Player, ...oldData];
-          });
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["players"] });
         }
       )
       .on(
@@ -45,13 +40,8 @@ export const useGetPlayers = () => {
           schema: "public",
           table: "players",
         },
-        (payload) => {
-          console.log("UPDATE received:", payload);
-          queryClient.setQueryData<Player[]>(["players"], (oldData = []) => {
-            return oldData.map((player) =>
-              player.id === payload.new.id ? (payload.new as Player) : player
-            );
-          });
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["players"] });
         }
       )
       .on(
@@ -59,22 +49,15 @@ export const useGetPlayers = () => {
         {
           event: "DELETE",
           schema: "public",
-          table: "games",
-          // No filter on user_id because the line is already deleted
+          table: "players",
         },
-        (payload) => {
-          console.log("DELETE received:", payload);
-          // Check if the deleted player is in our list before updating
-          queryClient.setQueryData<Player[]>(["players"], (oldData = []) => {
-            return oldData.filter((game) => game.id !== payload.old.id);
-          });
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["players"] });
         }
       )
       .subscribe();
 
-    // Cleaning
     return () => {
-      console.log("Cleaning real-time subscriptions");
       supabase.removeChannel(eventsChannel);
     };
   }, [queryClient]);

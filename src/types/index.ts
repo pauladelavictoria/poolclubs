@@ -10,7 +10,19 @@ export type Game = {
   created_at: string;
 }
 
+export type Category = 1 | 2 | 3;
+
 export type Player = {
   id: number;
   name: string;
-}
+  category: Category;
+};
+
+export type DailyRankingEntry = {
+  playerId: number;
+  playerName: string;
+  category: Category;
+  points: number;
+  gamesPlayed: number;
+  gamesWon: number;
+};

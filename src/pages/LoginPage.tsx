@@ -56,11 +56,11 @@ export default function LoginPage() {
     <Layout>
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-indigo-600 p-6 text-white">
+          <div className="bg-red-600 p-6 text-white">
             <h1 className="text-2xl font-bold text-center">
               Welcome to TodoMaster
             </h1>
-            <p className="text-indigo-100 text-center mt-2">
+            <p className="text-red-100 text-center mt-2">
               Login to manage your tasks
             </p>
           </div>
@@ -76,7 +76,7 @@ export default function LoginPage() {
                 </label>
                 <input
                   id="email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
                   type="email"
                   placeholder="your@email.com"
                   {...register("email", { required: true })}
@@ -92,7 +92,7 @@ export default function LoginPage() {
                 </label>
                 <input
                   id="password"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
                   type="password"
                   placeholder="••••••••"
                   {...register("password", { required: true })}
@@ -105,7 +105,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleSubmit(onLoginSubmit)}
                 disabled={loading || !formState.isValid}
-                className="cursor-pointer flex-1 bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-md font-medium"
+                className="cursor-pointer flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors shadow-md font-medium"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -140,7 +140,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleSubmit(onRegisterSubmit)}
                 disabled={loading || !formState.isValid}
-                className="cursor-pointer flex-1 bg-white text-indigo-600 border border-indigo-600 py-3 px-4 rounded-lg hover:bg-indigo-50 disabled:opacity-50 transition-colors shadow-sm font-medium"
+                className="cursor-pointer flex-1 bg-white text-red-600 border border-red-600 py-3 px-4 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors shadow-sm font-medium"
               >
                 {loading ? "Loading..." : "Register"}
               </button>
