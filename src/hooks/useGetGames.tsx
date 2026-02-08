@@ -4,25 +4,64 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { Game } from "@/types";
 
-export const useGetGames = () => {
-  // const { user } = useAuth();
+export type UseGetGamesFilters = {
+  date?: string; // ISO date string (e.g. "2025-02-08")
+  page?: number; // 1-based page number
+  pageSize?: number; // items per page
+  playerName?: string; // filter games where this player is player_1 or player_2
+};
+
+const getDateRange = (date: string) => {
+  const dateClean = date.split("T")[0];
+  return {
+    from: `${dateClean}T00:00:00.000Z`,
+    to: `${dateClean}T23:59:59.999Z`,
+  };
+};
+
+export const useGetGames = (filters?: UseGetGamesFilters) => {
+  const { date, page = 1, pageSize = 10, playerName } = filters ?? {};
   const queryClient = useQueryClient();
 
   async function fetchGames() {
-    const { data, error } = await supabase
+    let query = supabase
       .from("games")
-      .select("*")
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false });
+
+    if (date) {
+      const { from, to } = getDateRange(date);
+      query = query.gte("created_at", from);
+      query = query.lte("created_at", to);
+    }
+
+    if (playerName) {
+      const escaped = `"${playerName.replace(/"/g, '\\"')}"`;
+      query = query.or(
+        `player_1_name.eq.${escaped},player_2_name.eq.${escaped}`
+      );
+    }
+
+    if (page >= 1 && pageSize >= 1) {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      query = query.range(from, to);
+    }
+
+    const { data, error, count } = await query;
 
     if (error) throw error;
 
-    return data as Game[];
+    return {
+      games: (data ?? []) as Game[],
+      totalCount: count ?? null,
+    };
   }
 
   useEffect(() => {
     // if (!user) return;
 
-    const eventsChannel = supabase
+    const gamesChannel = supabase
       .channel("games-changes")
       .on(
         "postgres_changes",
@@ -32,11 +71,8 @@ export const useGetGames = () => {
           table: "games",
           // filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
-          console.log("INSERT received:", payload);
-          queryClient.setQueryData<Game[]>(["games"], (oldData = []) => {
-            return [payload.new as Game, ...oldData];
-          });
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["games"] });
         }
       )
       .on(
@@ -47,13 +83,8 @@ export const useGetGames = () => {
           table: "games",
           // filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
-          console.log("UPDATE received:", payload);
-          queryClient.setQueryData<Game[]>(["games"], (oldData = []) => {
-            return oldData.map((game) =>
-              game.id === payload.new.id ? (payload.new as Game) : game
-            );
-          });
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["games"] });
         }
       )
       .on(
@@ -64,25 +95,22 @@ export const useGetGames = () => {
           table: "games",
           // No filter on user_id because the line is already deleted
         },
-        (payload) => {
-          console.log("DELETE received:", payload);
-          // Check if the deleted game is in our list before updating
-          queryClient.setQueryData<Game[]>(["games"], (oldData = []) => {
-            return oldData.filter((game) => game.id !== payload.old.id);
-          });
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["games"] });
         }
       )
       .subscribe();
+    console.log('🚀 ~ gamesChannel:', gamesChannel)
 
     // Cleaning
     return () => {
       console.log("Cleaning real-time subscriptions");
-      supabase.removeChannel(eventsChannel);
+      // supabase.removeChannel(gamesChannel);
     };
   }, [queryClient]);
 
   return useQuery({
-    queryKey: ["games"],
+    queryKey: ["games", date, page, pageSize, playerName],
     queryFn: fetchGames,
     // enabled: !!user,
   });
