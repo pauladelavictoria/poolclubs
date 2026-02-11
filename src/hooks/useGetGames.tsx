@@ -1,5 +1,4 @@
 import { supabase } from "@/supabaseClient";
-// import { useAuth } from "./useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { Game } from "@/types";
@@ -59,8 +58,6 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
   }
 
   useEffect(() => {
-    // if (!user) return;
-
     const gamesChannel = supabase
       .channel("games-changes")
       .on(
@@ -69,7 +66,6 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
           event: "INSERT",
           schema: "public",
           table: "games",
-          // filter: `user_id=eq.${user.id}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["games"] });
@@ -81,7 +77,6 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
           event: "UPDATE",
           schema: "public",
           table: "games",
-          // filter: `user_id=eq.${user.id}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["games"] });
@@ -93,25 +88,21 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
           event: "DELETE",
           schema: "public",
           table: "games",
-          // No filter on user_id because the line is already deleted
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["games"] });
         }
       )
       .subscribe();
-    console.log('🚀 ~ gamesChannel:', gamesChannel)
 
     // Cleaning
     return () => {
-      console.log("Cleaning real-time subscriptions");
-      // supabase.removeChannel(gamesChannel);
+      supabase.removeChannel(gamesChannel);
     };
   }, [queryClient]);
 
   return useQuery({
     queryKey: ["games", date, page, pageSize, playerName],
     queryFn: fetchGames,
-    // enabled: !!user,
   });
 };
