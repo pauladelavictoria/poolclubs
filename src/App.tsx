@@ -30,6 +30,7 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/players" element={<PlayersPage />} />
             </Route>
+
           </Routes>
         </BrowserRouter>
         <ToastContainer />

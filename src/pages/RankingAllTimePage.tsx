@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { HiHome } from "react-icons/hi";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
-import { useDailyRanking } from "@/hooks/useDailyRanking";
+import { useEloRanking } from "@/hooks/useEloRanking";
 import Layout from "./Layout";
 import RankingTable from "@/components/RankingTable";
 import type { Category } from "@/types";
@@ -20,7 +20,8 @@ export default function RankingAllTimePage() {
     const games = gamesData?.games ?? [];
 
     const { data: players, isLoading: playersLoading } = useGetPlayers();
-    const ranking = useDailyRanking({ games, players });
+
+    const ranking = useEloRanking({ games, players });
 
     const rankingByCategory = useMemo(() => {
         if (!ranking) return null;
@@ -67,8 +68,8 @@ export default function RankingAllTimePage() {
                                     aria-selected={viewMode === "combined"}
                                     onClick={() => setViewMode("combined")}
                                     className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${viewMode === "combined"
-                                            ? "bg-white text-gray-900 shadow-sm"
-                                            : "text-gray-600 hover:text-gray-900"
+                                        ? "bg-white text-gray-900 shadow-sm"
+                                        : "text-gray-600 hover:text-gray-900"
                                         }`}
                                 >
                                     Combinado
@@ -79,8 +80,8 @@ export default function RankingAllTimePage() {
                                     aria-selected={viewMode === "byCategory"}
                                     onClick={() => setViewMode("byCategory")}
                                     className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${viewMode === "byCategory"
-                                            ? "bg-white text-gray-900 shadow-sm"
-                                            : "text-gray-600 hover:text-gray-900"
+                                        ? "bg-white text-gray-900 shadow-sm"
+                                        : "text-gray-600 hover:text-gray-900"
                                         }`}
                                 >
                                     Por categoría
