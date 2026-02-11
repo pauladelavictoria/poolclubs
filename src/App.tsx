@@ -9,7 +9,10 @@ import { Route } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
 import HomePage from "@/pages/HomePage";
 import RankingDailyPage from "@/pages/RankingDailyPage";
+import RankingAllTimePage from "@/pages/RankingAllTimePage";
 import AddGamePage from "@/pages/AddGamePage";
+import PlayersPage from "@/pages/PlayersPage";
+import { ProtectedRoute } from "@/ProtectedRoute";
 
 export default function App() {
   return (
@@ -22,10 +25,11 @@ export default function App() {
             <Route path="/partidos" element={<GamesPage />} />
             <Route path="/añadir-partido" element={<AddGamePage />} />
             <Route path="/ranking-diario" element={<RankingDailyPage />} />
+            <Route path="/ranking" element={<RankingAllTimePage />} />
 
-            {/* <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-            </Route> */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/players" element={<PlayersPage />} />
+            </Route>
           </Routes>
         </BrowserRouter>
         <ToastContainer />

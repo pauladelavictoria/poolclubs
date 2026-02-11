@@ -19,7 +19,6 @@ export default function GamesPage() {
   const games = gamesData?.games ?? [];
   const totalCount = gamesData?.totalCount ?? 0;
   const { data: players } = useGetPlayers();
-
   const hasNextPage = page * PAGE_SIZE < totalCount;
   const hasPrevPage = page > 1;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
@@ -39,7 +38,7 @@ export default function GamesPage() {
           <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 text-white">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="w-full flex items-center justify-between">
-              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3">
                   <Link
                     to="/"
                     className="inline-flex items-center gap-2 text-white py-2 transition-colors"
@@ -108,18 +107,16 @@ export default function GamesPage() {
                       >
                         <div className="w-full flex items-center gap-1 text-gray-700">
                           <span
-                            className={`flex-1 text-right ${
-                              player_1_score > player_2_score ? "font-bold" : ""
-                            }`}
+                            className={`flex-1 text-right ${player_1_score > player_2_score ? "font-bold" : ""
+                              }`}
                           >
                             {player_1_name}
                           </span>
                           <span>{player_1_score}</span>-
                           <span>{player_2_score}</span>
                           <span
-                            className={`flex-1 ${
-                              player_2_score > player_1_score ? "font-bold" : ""
-                            }`}
+                            className={`flex-1 ${player_2_score > player_1_score ? "font-bold" : ""
+                              }`}
                           >
                             {player_2_name}
                           </span>
@@ -130,30 +127,30 @@ export default function GamesPage() {
                 </div>
 
                 {totalCount > PAGE_SIZE && (
-                <div className="mt-6 flex items-center justify-center gap-4 border-t border-gray-100 pt-4">
-                  <button
-                    type="button"
-                    onClick={handlePrevPage}
-                    disabled={!hasPrevPage}
-                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
-                    aria-label="Página anterior"
-                  >
-                    Anterior
-                  </button>
-                  <span className="text-sm text-gray-600">
-                    {page} / {totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleNextPage}
-                    disabled={!hasNextPage}
-                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
-                    aria-label="Página siguiente"
-                  >
-                    Siguiente
-                  </button>
-                </div>
-              )}
+                  <div className="mt-6 flex items-center justify-center gap-4 border-t border-gray-100 pt-4">
+                    <button
+                      type="button"
+                      onClick={handlePrevPage}
+                      disabled={!hasPrevPage}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+                      aria-label="Página anterior"
+                    >
+                      Anterior
+                    </button>
+                    <span className="text-sm text-gray-600">
+                      {page} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleNextPage}
+                      disabled={!hasNextPage}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+                      aria-label="Página siguiente"
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>

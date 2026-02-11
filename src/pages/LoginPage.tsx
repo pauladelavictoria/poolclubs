@@ -58,10 +58,10 @@ export default function LoginPage() {
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
           <div className="bg-red-600 p-6 text-white">
             <h1 className="text-2xl font-bold text-center">
-              Welcome to TodoMaster
+              PoolValencia Ranking
             </h1>
             <p className="text-red-100 text-center mt-2">
-              Login to manage your tasks
+              Haz login para gestionar jugadores y partidos
             </p>
           </div>
 
@@ -88,7 +88,7 @@ export default function LoginPage() {
                   htmlFor="password"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Password
+                  Contraseña
                 </label>
                 <input
                   id="password"
@@ -129,7 +129,7 @@ export default function LoginPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Loading...
+                    Cargando...
                   </span>
                 ) : (
                   "Login"
@@ -142,7 +142,7 @@ export default function LoginPage() {
                 disabled={loading || !formState.isValid}
                 className="cursor-pointer flex-1 bg-white text-red-600 border border-red-600 py-3 px-4 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors shadow-sm font-medium"
               >
-                {loading ? "Loading..." : "Register"}
+                {loading ? "Registrando..." : "Registro"}
               </button>
             </div>
 
@@ -155,7 +155,12 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() =>
-                supabase.auth.signInWithOAuth({ provider: "google" })
+                supabase.auth.signInWithOAuth({
+                  provider: "google",
+                  options: {
+                    redirectTo: window.location.origin,
+                  },
+                })
               }
               className="cursor-pointer w-full bg-white border border-gray-300 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center font-medium"
             >
@@ -178,7 +183,7 @@ export default function LoginPage() {
                 />
                 <path fill="none" d="M1 1h22v22H1z" />
               </svg>
-              Continue with Google
+              Continua con Google
             </button>
           </form>
         </div>
