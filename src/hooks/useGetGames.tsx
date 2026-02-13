@@ -19,7 +19,7 @@ const getDateRange = (date: string) => {
 };
 
 export const useGetGames = (filters?: UseGetGamesFilters) => {
-  const { date, page = 1, pageSize = 10, playerName } = filters ?? {};
+  const { date, page = 1, pageSize = 1000, playerName } = filters ?? {};
   const queryClient = useQueryClient();
 
   async function fetchGames() {
