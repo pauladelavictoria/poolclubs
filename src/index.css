@@ -1,2 +1,59 @@
 @import "tailwindcss";
 
+@theme {
+  /* Dark theme colors */
+  --color-dark-bg: #0f0f0f;
+  --color-dark-card: #1a1a1a;
+  --color-dark-card-hover: #222222;
+  --color-dark-border: #2a2a2a;
+  
+  /* Accent colors */
+  --color-accent-red: #ef4444;
+  --color-accent-red-light: #f87171;
+  --color-accent-red-dark: #dc2626;
+  --color-accent-red-darker: #782323;
+  
+  /* Border radius */
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+  
+  /* Shadows */
+  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -1px rgb(0 0 0 / 0.2);
+  --shadow-card-hover: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -2px rgb(0 0 0 / 0.3);
+  --shadow-glow-red: 0 0 20px rgb(239 68 68 / 0.3);
+}
+
+/* Background texture pattern */
+.bg-texture {
+  background-image: linear-gradient(
+    var(--color-accent-red-darker) 0%,
+    rgba(36, 1, 1, 0.775) 80%
+  );
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f0f0f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
