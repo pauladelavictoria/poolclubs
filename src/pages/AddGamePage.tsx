@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import Layout from "./Layout";
 import type { Game } from "@/types";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
-import { HiHome, HiPlus } from "react-icons/hi";
+import { HiChevronLeft, HiPlus } from "react-icons/hi";
 import { Link } from "react-router-dom";
 
 export default function GamesPage() {
@@ -54,17 +54,17 @@ export default function GamesPage() {
 
   return (
     <Layout>
-      <div className="mx-auto px-1 py-1">
-        <div className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 text-white">
+      <div>
+        <div className="bg-dark-card shadow-card overflow-hidden">
+          <div className="bg-gradient-to-r from-accent-red to-accent-red-dark p-4 text-white">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center gap-3">
                 <Link
                   to="/"
-                  className="inline-flex items-center gap-2 text-white py-2 transition-colors"
+                  className="inline-flex items-center gap-2 text-white py-2 transition-colors hover:opacity-80"
                   aria-label="Inicio"
                 >
-                  <HiHome className="h-6 w-6" aria-hidden />
+                  <HiChevronLeft className="h-6 w-6" aria-hidden />
                 </Link>
                 <h1 className="text-2xl font-bold">Añadir nuevo partido</h1>
               </div>
@@ -72,11 +72,11 @@ export default function GamesPage() {
           </div>
 
           {/* Add form */}
-          <div className="px-6 py-10 border-b border-gray-200">
+          <div className="px-6 py-16 border-b border-dark-border bg-white">
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="flex flex-col xl:flex-row gap-2">
                 <select
-                  className="flex-1 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white"
+                  className="flex-1 border border-dark-border p-3 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red transition-colors"
                   disabled={playersLoading}
                   {...register("player_1_name", { required: true })}
                 >
@@ -90,19 +90,19 @@ export default function GamesPage() {
                 <input
                   type="number"
                   min={0}
-                  className="flex-1 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                  className="flex-1 border border-dark-border p-3 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red transition-colors"
                   placeholder="Resultado jugador 1"
                   {...register("player_1_score", { required: true })}
                 />
                 <input
                   type="number"
                   min={0}
-                  className="flex-1 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                  className="flex-1 border border-dark-border p-3 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red transition-colors"
                   placeholder="Resultado jugador 2"
                   {...register("player_2_score", { required: true })}
                 />
                 <select
-                  className="flex-1 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white"
+                  className="flex-1 border border-dark-border p-3 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red transition-colors"
                   disabled={playersLoading}
                   {...register("player_2_name", { required: true })}
                 >
@@ -117,9 +117,9 @@ export default function GamesPage() {
                   type="submit"
                   className={`${
                     addDisabled
-                      ? "bg-gray-500 cursor-not-allowed"
-                      : "bg-red-600 hover:bg-red-700 cursor-pointer"
-                  } text-white px-5 py-3 rounded-lg transition-colors shadow-md flex items-center`}
+                      ? "bg-gray-600 cursor-not-allowed"
+                      : "bg-accent-red hover:bg-accent-red-dark cursor-pointer"
+                  } text-white px-5 py-3 rounded-2xl transition-colors shadow-md flex items-center gap-2`}
                   disabled={addDisabled}
                 >
                   <HiPlus className="h-6 w-6" aria-hidden />
@@ -133,14 +133,14 @@ export default function GamesPage() {
           {gamesData?.games && gamesData.games.length > 0 && (
             <div className="px-6 py-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                <h2 className="text-lg text-center sm:text-left font-medium text-gray-700">
+                <h2 className="text-lg text-center sm:text-left font-medium text-white">
                   Últimos partidos
                 </h2>
               </div>
 
               {gamesLoading ? (
                 <div className="py-8 flex justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent-red"></div>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -154,12 +154,14 @@ export default function GamesPage() {
                     }) => (
                       <div
                         key={id}
-                        className="flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-100 transition-colors group"
+                        className="flex justify-between items-center p-4 bg-dark-bg hover:bg-dark-card-hover rounded-2xl border border-dark-border transition-colors group"
                       >
-                        <div className="w-full flex items-center gap-1 text-gray-700">
+                        <div className="w-full flex items-center gap-1 text-gray-300">
                           <span
                             className={`flex-1 text-right ${
-                              player_1_score > player_2_score ? "font-bold" : ""
+                              player_1_score > player_2_score
+                                ? "font-bold text-white"
+                                : ""
                             }`}
                           >
                             {player_1_name}
@@ -168,14 +170,16 @@ export default function GamesPage() {
                           <span>{player_2_score}</span>
                           <span
                             className={`flex-1 ${
-                              player_2_score > player_1_score ? "font-bold" : ""
+                              player_2_score > player_1_score
+                                ? "font-bold text-white"
+                                : ""
                             }`}
                           >
                             {player_2_name}
                           </span>
                         </div>
                       </div>
-                    )
+                    ),
                   )}
                 </div>
               )}

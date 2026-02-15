@@ -25,9 +25,11 @@ export const useEloRanking = ({
                 gamesPlayed: number; // Matches played
                 gamesWon: number; // Matches won
                 racksPlayed: number; // Total racks (points) played
-                racksWon: number; // Total racks won
                 category: Category;
                 name: string;
+                last10Games: boolean[];
+                racksLosed: number;
+                racksWon: number;
             }
         >();
 
@@ -37,9 +39,11 @@ export const useEloRanking = ({
                 gamesPlayed: 0,
                 gamesWon: 0,
                 racksPlayed: 0,
-                racksWon: 0,
                 category: player.category,
                 name: player.name,
+                last10Games: new Array(10).fill(false),
+                racksLosed: 0,
+                racksWon: 0,
             });
         }
 
@@ -101,6 +105,22 @@ export const useEloRanking = ({
 
             p1Stats.rating += delta1;
             p2Stats.rating += delta2;
+
+            p1Stats.racksLosed += s2;
+            p2Stats.racksLosed += s1;
+
+            p1Stats.racksWon += s1;
+            p2Stats.racksWon += s2;
+
+            p1Stats.last10Games.push(s1 > s2);
+            p2Stats.last10Games.push(s2 > s1);
+
+            if (p1Stats.last10Games.length > 10) {
+              p1Stats.last10Games.shift();
+            }
+            if (p2Stats.last10Games.length > 10) {
+              p2Stats.last10Games.shift();
+            }
         }
 
         // Convert to DailyRankingEntry format
@@ -112,6 +132,9 @@ export const useEloRanking = ({
                 points: Math.round(stats.rating), // Display rating as "points"
                 gamesPlayed: stats.gamesPlayed,
                 gamesWon: stats.gamesWon,
+                last10Games: stats.last10Games.reverse(),
+                racksLosed: stats.racksLosed,
+                racksWon: stats.racksWon,
             }))
             .filter((p) => p.gamesPlayed > 0)
             .sort((a, b) => b.gamesPlayed - a.gamesPlayed) // Sort by games played
