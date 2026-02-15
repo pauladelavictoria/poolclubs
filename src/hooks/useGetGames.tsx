@@ -8,6 +8,7 @@ export type UseGetGamesFilters = {
   page?: number; // 1-based page number
   pageSize?: number; // items per page
   playerName?: string; // filter games where this player is player_1 or player_2
+  category?: number; // filter games where either player belongs to this category
 };
 
 const getDateRange = (date: string) => {
@@ -19,7 +20,7 @@ const getDateRange = (date: string) => {
 };
 
 export const useGetGames = (filters?: UseGetGamesFilters) => {
-  const { date, page = 1, pageSize = 1000, playerName } = filters ?? {};
+  const { date, page = 1, pageSize, playerName, category } = filters ?? {};
   const queryClient = useQueryClient();
 
   async function fetchGames() {
@@ -37,11 +38,36 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
     if (playerName) {
       const escaped = `"${playerName.replace(/"/g, '\\"')}"`;
       query = query.or(
-        `player_1_name.eq.${escaped},player_2_name.eq.${escaped}`
+        `player_1_name.eq.${escaped},player_2_name.eq.${escaped}`,
       );
     }
 
-    if (page >= 1 && pageSize >= 1) {
+    // For category filtering, we need to fetch and filter client-side
+    // since we need to join with players table
+    if (category) {
+      // First get the players in the category
+      const { data: playersInCategory } = await supabase
+        .from("players")
+        .select("name")
+        .eq("category", category);
+
+      if (playersInCategory && playersInCategory.length > 0) {
+        const playerNames = playersInCategory.map((p) => p.name);
+        // Filter games where either player is in the category
+        const conditions = playerNames
+          .map((name) => {
+            const escaped = `"${name.replace(/"/g, '\\"')}"`;
+            return `player_1_name.eq.${escaped},player_2_name.eq.${escaped}`;
+          })
+          .join(",");
+        query = query.or(conditions);
+      } else {
+        // No players in this category, return empty
+        return { games: [], totalCount: 0 };
+      }
+    }
+
+    if (page >= 1 && pageSize && pageSize >= 1) {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
       query = query.range(from, to);
@@ -69,7 +95,7 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["games"] });
-        }
+        },
       )
       .on(
         "postgres_changes",
@@ -80,7 +106,7 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["games"] });
-        }
+        },
       )
       .on(
         "postgres_changes",
@@ -91,7 +117,7 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["games"] });
-        }
+        },
       )
       .subscribe();
 
@@ -102,7 +128,7 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
   }, [queryClient]);
 
   return useQuery({
-    queryKey: ["games", date, page, pageSize, playerName],
+    queryKey: ["games", date, page, pageSize, playerName, category],
     queryFn: fetchGames,
   });
 };

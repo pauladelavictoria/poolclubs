@@ -55,13 +55,13 @@ export default function LoginPage() {
   return (
     <Layout>
       <div className="min-h-[60vh] flex items-center justify-center px-4">
-        <div className="w-full max-w-md bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="bg-red-600 p-6 text-white">
             <h1 className="text-2xl font-bold text-center">
               PoolValencia Ranking
             </h1>
             <p className="text-red-100 text-center mt-2">
-              Haz login para gestionar jugadores y partidos
+              Haz login para gestionar jugadores
             </p>
           </div>
 
