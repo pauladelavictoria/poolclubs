@@ -3,22 +3,32 @@ import { useGetGames } from "@/hooks/useGetGames";
 import Layout from "./Layout";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { Link } from "react-router-dom";
-import { HiHome } from "react-icons/hi";
+import { HiChevronLeft, HiPlus } from "react-icons/hi";
+import type { Category } from "@/types";
 
 const FILTER_ALL = "";
 const PAGE_SIZE = 10;
 
+const CATEGORY_NAMES: Record<Category, string> = {
+  1: "Primera",
+  2: "Segunda",
+  3: "Tercera",
+};
+
 export default function GamesPage() {
   const [playerFilter, setPlayerFilter] = useState<string>(FILTER_ALL);
+  const [categoryFilter, setCategoryFilter] = useState<string>(FILTER_ALL);
   const [page, setPage] = useState(1);
   const { data: gamesData, isLoading: gamesLoading } = useGetGames({
     page,
     pageSize: PAGE_SIZE,
     playerName: playerFilter,
+    category: categoryFilter ? Number(categoryFilter) : undefined,
   });
   const games = gamesData?.games ?? [];
   const totalCount = gamesData?.totalCount ?? 0;
   const { data: players } = useGetPlayers();
+
   const hasNextPage = page * PAGE_SIZE < totalCount;
   const hasPrevPage = page > 1;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
@@ -33,25 +43,26 @@ export default function GamesPage() {
 
   return (
     <Layout>
-      <div className="mx-auto px-1 py-1">
-        <div className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 text-white">
+      <div>
+        <div className="bg-dark-card shadow-card overflow-hidden">
+          <div className="bg-gradient-to-r from-accent-red to-accent-red-dark p-4 text-white">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="w-full flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Link
                     to="/"
-                    className="inline-flex items-center gap-2 text-white py-2 transition-colors"
+                    className="inline-flex items-center gap-2 text-white py-2 transition-colors hover:opacity-80"
                     aria-label="Inicio"
                   >
-                    <HiHome className="h-6 w-6" aria-hidden />
+                    <HiChevronLeft className="h-6 w-6" aria-hidden />
                   </Link>
                   <h1 className="text-2xl font-bold">Partidos</h1>
                 </div>
                 <Link
                   to="/añadir-partido"
-                  className="bg-white hover:bg-gray-100 text-gray-500 font-medium py-2 px-8 rounded-lg transition-all duration-200 flex items-center"
+                  className="bg-white hover:bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded-2xl transition-all duration-200 flex items-center"
                 >
+                  <HiPlus className="h-6 w-6" aria-hidden />
                   Añadir partido
                 </Link>
               </div>
@@ -59,24 +70,18 @@ export default function GamesPage() {
           </div>
           {/* List of items */}
           <div className="px-6 py-5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-              <h2 className="text-lg text-center sm:text-left font-medium text-gray-700">
-                Partidos ({totalCount})
-              </h2>
+            <div className="flex justify-end gap-2 mb-4">
               <label className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 whitespace-nowrap">
-                  Filtrar por jugador:
-                </span>
                 <select
                   value={playerFilter}
                   onChange={(e) => {
                     setPlayerFilter(e.target.value);
                     setPage(1);
                   }}
-                  className="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-700 min-w-[140px]"
+                  className="border border-dark-border px-3 py-2 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red bg-dark-bg text-white min-w-[140px]"
                   aria-label="Filtrar partidos por jugador"
                 >
-                  <option value={FILTER_ALL}>Todos</option>
+                  <option value={FILTER_ALL}>Jugadores</option>
                   {players?.map((player) => (
                     <option key={player.id} value={player.name}>
                       {player.name}
@@ -84,11 +89,28 @@ export default function GamesPage() {
                   ))}
                 </select>
               </label>
+
+              <label className="flex items-center gap-2">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => {
+                    setCategoryFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  className="border border-dark-border px-3 py-2 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red bg-dark-bg text-white min-w-[140px]"
+                  aria-label="Filtrar partidos por categoría"
+                >
+                  <option value={FILTER_ALL}>Categorías</option>
+                  <option value="1">{CATEGORY_NAMES[1]}</option>
+                  <option value="2">{CATEGORY_NAMES[2]}</option>
+                  <option value="3">{CATEGORY_NAMES[3]}</option>
+                </select>
+              </label>
             </div>
 
             {gamesLoading ? (
               <div className="py-8 flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent-red"></div>
               </div>
             ) : (
               <>
@@ -103,48 +125,54 @@ export default function GamesPage() {
                     }) => (
                       <div
                         key={id}
-                        className="flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-100 transition-colors group"
+                        className="flex justify-between items-center p-4 bg-dark-bg hover:bg-dark-card-hover rounded-2xl border border-dark-border transition-colors group"
                       >
-                        <div className="w-full flex items-center gap-1 text-gray-700">
+                        <div className="w-full flex items-center gap-1 text-gray-300">
                           <span
-                            className={`flex-1 text-right ${player_1_score > player_2_score ? "font-bold" : ""
-                              }`}
+                            className={`flex-1 text-right ${
+                              player_1_score > player_2_score
+                                ? "font-bold text-white"
+                                : ""
+                            }`}
                           >
                             {player_1_name}
                           </span>
                           <span>{player_1_score}</span>-
                           <span>{player_2_score}</span>
                           <span
-                            className={`flex-1 ${player_2_score > player_1_score ? "font-bold" : ""
-                              }`}
+                            className={`flex-1 ${
+                              player_2_score > player_1_score
+                                ? "font-bold text-white"
+                                : ""
+                            }`}
                           >
                             {player_2_name}
                           </span>
                         </div>
                       </div>
-                    )
+                    ),
                   )}
                 </div>
 
                 {totalCount > PAGE_SIZE && (
-                  <div className="mt-6 flex items-center justify-center gap-4 border-t border-gray-100 pt-4">
+                  <div className="mt-6 flex items-center justify-center gap-4 border-t border-dark-border pt-4">
                     <button
                       type="button"
                       onClick={handlePrevPage}
                       disabled={!hasPrevPage}
-                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+                      className="rounded-2xl border border-dark-border bg-dark-bg px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-dark-card-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-dark-bg"
                       aria-label="Página anterior"
                     >
                       Anterior
                     </button>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-400">
                       {page} / {totalPages}
                     </span>
                     <button
                       type="button"
                       onClick={handleNextPage}
                       disabled={!hasNextPage}
-                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+                      className="rounded-2xl border border-dark-border bg-dark-bg px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-dark-card-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-dark-bg"
                       aria-label="Página siguiente"
                     >
                       Siguiente
@@ -155,7 +183,6 @@ export default function GamesPage() {
             )}
           </div>
         </div>
-
       </div>
     </Layout>
   );

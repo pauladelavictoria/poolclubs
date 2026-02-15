@@ -25,4 +25,7 @@ export type DailyRankingEntry = {
   points: number;
   gamesPlayed: number;
   gamesWon: number;
+  last10Games: boolean[];
+  racksLosed: number;
+  racksWon: number;
 };
