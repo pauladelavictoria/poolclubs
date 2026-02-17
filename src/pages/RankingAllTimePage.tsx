@@ -5,7 +5,7 @@ import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import Layout from "./Layout";
-import RankingTable from "@/components/RankingTable";
+import Ranking from "@/components/Ranking";
 import type { Category } from "@/types";
 
 type ViewMode = "combined" | "byCategory";
@@ -14,9 +14,7 @@ export default function RankingAllTimePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
 
   // Fetch all games (limit to 10000 for now to get "all-time")
-  const { data: gamesData, isLoading: gamesLoading } = useGetGames({
-    pageSize: 10000,
-  });
+  const { data: gamesData, isLoading: gamesLoading } = useGetGames({});
   const games = gamesData?.games ?? [];
 
   const { data: players, isLoading: playersLoading } = useGetPlayers();
@@ -93,7 +91,7 @@ export default function RankingAllTimePage() {
               </div>
             </div>
 
-            <RankingTable
+            <Ranking
               gamesLabel="Últimos 10 partidos"
               ranking={ranking}
               rankingByCategory={rankingByCategory}
