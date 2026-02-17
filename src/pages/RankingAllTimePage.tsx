@@ -14,9 +14,7 @@ export default function RankingAllTimePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
 
   // Fetch all games (limit to 10000 for now to get "all-time")
-  const { data: gamesData, isLoading: gamesLoading } = useGetGames({
-    pageSize: 10000,
-  });
+  const { data: gamesData, isLoading: gamesLoading } = useGetGames({});
   const games = gamesData?.games ?? [];
 
   const { data: players, isLoading: playersLoading } = useGetPlayers();

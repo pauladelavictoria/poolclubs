@@ -31,6 +31,7 @@ export default function RankingDailyPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
   const { data: gamesData, isLoading: gamesLoading } = useGetGames({
     date: selectedDate,
+    mode: "single",
   });
   const games = gamesData?.games ?? [];
 
