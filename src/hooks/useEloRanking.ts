@@ -137,8 +137,15 @@ export const useEloRanking = ({
                 racksWon: stats.racksWon,
             }))
             .filter((p) => p.gamesPlayed > 0)
-            .sort((a, b) => b.gamesPlayed - a.gamesPlayed) // Sort by games played
-            .sort((a, b) => b.points - a.points) // Sort by rating
+            .sort((a, b) => {
+                if (a.points !== b.points) {
+                    return b.points - a.points; // Sort by points
+                }
+                if (a.gamesWon !== b.gamesWon) {
+                    return b.gamesWon - a.gamesWon; // Sort by games won
+                }
+                return (b.racksWon - b.racksLosed) - (a.racksWon - a.racksLosed); // Sort by difference of racks won and lost
+            })
 
         return entries.length > 0 ? entries : null;
     }, [games, players]);

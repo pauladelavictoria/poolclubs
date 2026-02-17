@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 
 type ViewMode = "combined" | "byCategory";
 
-import RankingTable from "@/components/RankingTable";
+import Ranking from "@/components/Ranking";
 
 function getTodayYYYYMMDD() {
   return new Date().toISOString().split("T")[0];
@@ -126,7 +126,7 @@ export default function RankingDailyPage() {
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent-red"></div>
                 </div>
               ) : (
-                <RankingTable
+                <Ranking
                   ranking={ranking}
                   rankingByCategory={rankingByCategory}
                   viewMode={viewMode}
