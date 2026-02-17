@@ -115,14 +115,26 @@ export default function GamesPage() {
             ) : (
               <>
                 <div className="space-y-3">
-                  {games.map(
-                    ({
+                  {games.map((game) => {
+                    const {
                       id,
                       player_1_name,
                       player_1_score,
                       player_2_score,
                       player_2_name,
-                    }) => (
+                      player_1b_name,
+                      player_2b_name,
+                      mode,
+                    } = game;
+                    const isDoubles = mode === "doubles";
+                    const team1 = isDoubles
+                      ? `${player_1_name} / ${player_1b_name}`
+                      : player_1_name;
+                    const team2 = isDoubles
+                      ? `${player_2_name} / ${player_2b_name}`
+                      : player_2_name;
+
+                    return (
                       <div
                         key={id}
                         className="flex justify-between items-center p-4 bg-dark-bg hover:bg-dark-card-hover rounded-2xl border border-dark-border transition-colors group"
@@ -135,7 +147,7 @@ export default function GamesPage() {
                                 : ""
                             }`}
                           >
-                            {player_1_name}
+                            {team1}
                           </span>
                           <span>{player_1_score}</span>-
                           <span>{player_2_score}</span>
@@ -146,12 +158,12 @@ export default function GamesPage() {
                                 : ""
                             }`}
                           >
-                            {player_2_name}
+                            {team2}
                           </span>
                         </div>
                       </div>
-                    ),
-                  )}
+                    );
+                  })}
                 </div>
 
                 {totalCount > PAGE_SIZE && (

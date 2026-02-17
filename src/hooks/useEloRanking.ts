@@ -53,73 +53,71 @@ export const useEloRanking = ({
         );
 
         for (const game of sortedGames) {
-            const { player_1_id, player_2_id, player_1_score, player_2_score } = game;
+            const {
+                player_1_id,
+                player_2_id,
+                player_1b_id,
+                player_2b_id,
+                mode,
+                player_1_score,
+                player_2_score,
+            } = game;
+
+            const isDoubles = mode === "doubles";
             const s1 = Number(player_1_score);
             const s2 = Number(player_2_score);
 
             if (Number.isNaN(s1) || Number.isNaN(s2)) continue;
 
-            const p1Stats = playerStats.get(player_1_id);
-            const p2Stats = playerStats.get(player_2_id);
+            const p1aStats = playerStats.get(player_1_id);
+            const p1bStats = isDoubles && player_1b_id ? playerStats.get(player_1b_id) : null;
+            const p2aStats = playerStats.get(player_2_id);
+            const p2bStats = isDoubles && player_2b_id ? playerStats.get(player_2b_id) : null;
 
-            if (!p1Stats || !p2Stats) continue;
+            if (!p1aStats || !p2aStats) continue;
 
-            // Update basic stats
-            p1Stats.gamesPlayed += 1;
-            p2Stats.gamesPlayed += 1;
-            p1Stats.racksPlayed += s1 + s2;
-            p2Stats.racksPlayed += s1 + s2;
-            p1Stats.racksWon += s1;
-            p2Stats.racksWon += s2;
+            const team1 = [p1aStats, p1bStats].filter(Boolean) as NonNullable<typeof p1aStats>[];
+            const team2 = [p2aStats, p2bStats].filter(Boolean) as NonNullable<typeof p2aStats>[];
 
-            if (s1 > s2) p1Stats.gamesWon += 1;
-            if (s2 > s1) p2Stats.gamesWon += 1;
+            // Update basic stats for everyone in the match
+            for (const p of team1) {
+                p.gamesPlayed += 1;
+                p.racksPlayed += s1 + s2;
+                p.racksWon += s1;
+                p.racksLosed += s2;
+                if (s1 > s2) p.gamesWon += 1;
+                p.last10Games.push(s1 > s2);
+                if (p.last10Games.length > 10) p.last10Games.shift();
+            }
+            for (const p of team2) {
+                p.gamesPlayed += 1;
+                p.racksPlayed += s1 + s2;
+                p.racksWon += s2;
+                p.racksLosed += s1;
+                if (s2 > s1) p.gamesWon += 1;
+                p.last10Games.push(s2 > s1);
+                if (p.last10Games.length > 10) p.last10Games.shift();
+            }
 
             // ELO Calculation
-            // Probability of P1 winning a single rack:
-            // P1 = 1 / (1 + 2 ^ ((R2 - R1) / 100))
-            const r1 = p1Stats.rating;
-            const r2 = p2Stats.rating;
+            const r1 = team1.reduce((sum, p) => sum + p.rating, 0) / team1.length;
+            const r2 = team2.reduce((sum, p) => sum + p.rating, 0) / team2.length;
 
             const expectedScorePercentage1 = 1 / (1 + Math.pow(2, (r2 - r1) / SCALE_FACTOR));
             const expectedScorePercentage2 = 1 / (1 + Math.pow(2, (r1 - r2) / SCALE_FACTOR));
-
-            // Actual score for the MATCH (sum of racks)
-            // We treat the match as (s1 + s2) partial updates or one batched update
-            // Batched update:
-            // Delta = K * (ActualPoints - ExpectedPoints)
-            // ExpectedPoints = TotalRacks * ExpectedScorePercentage
 
             const totalRacks = s1 + s2;
             const expectedPoints1 = totalRacks * expectedScorePercentage1;
             const expectedPoints2 = totalRacks * expectedScorePercentage2;
 
-            // Determine K-Factor based on experience (racks played)
-            // Use the average K if they cross the threshold during these racks? Just use current state.
-            // We use the player's own K factor for their update.
-            const k1 = p1Stats.racksPlayed <= 100 ? K_PROVISIONAL : K_ESTABLISHED;
-            const k2 = p2Stats.racksPlayed <= 100 ? K_PROVISIONAL : K_ESTABLISHED;
-
-            const delta1 = k1 * (s1 - expectedPoints1);
-            const delta2 = k2 * (s2 - expectedPoints2);
-
-            p1Stats.rating += delta1;
-            p2Stats.rating += delta2;
-
-            p1Stats.racksLosed += s2;
-            p2Stats.racksLosed += s1;
-
-            p1Stats.racksWon += s1;
-            p2Stats.racksWon += s2;
-
-            p1Stats.last10Games.push(s1 > s2);
-            p2Stats.last10Games.push(s2 > s1);
-
-            if (p1Stats.last10Games.length > 10) {
-              p1Stats.last10Games.shift();
+            // Apply ELO update to each individual player based on their own K-factor
+            for (const p of team1) {
+                const k = p.racksPlayed <= 100 ? K_PROVISIONAL : K_ESTABLISHED;
+                p.rating += k * (s1 - expectedPoints1);
             }
-            if (p2Stats.last10Games.length > 10) {
-              p2Stats.last10Games.shift();
+            for (const p of team2) {
+                const k = p.racksPlayed <= 100 ? K_PROVISIONAL : K_ESTABLISHED;
+                p.rating += k * (s2 - expectedPoints2);
             }
         }
 

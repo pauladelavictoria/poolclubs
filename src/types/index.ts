@@ -1,3 +1,5 @@
+export type GameMode = 'single' | 'doubles';
+
 export type Game = {
   user_id: number
   id: string;
@@ -8,6 +10,11 @@ export type Game = {
   player_1_score: string;
   player_2_score: string;
   created_at: string;
+  mode: GameMode;
+  player_1b_id?: number;
+  player_1b_name?: string;
+  player_2b_id?: number;
+  player_2b_name?: string;
 }
 
 export type Category = 1 | 2 | 3;
