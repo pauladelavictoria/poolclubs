@@ -5,7 +5,7 @@ import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import Layout from "./Layout";
-import RankingTable from "@/components/RankingTable";
+import Ranking from "@/components/Ranking";
 import type { Category } from "@/types";
 
 type ViewMode = "combined" | "byCategory";
@@ -93,7 +93,7 @@ export default function RankingAllTimePage() {
               </div>
             </div>
 
-            <RankingTable
+            <Ranking
               gamesLabel="Últimos 10 partidos"
               ranking={ranking}
               rankingByCategory={rankingByCategory}
