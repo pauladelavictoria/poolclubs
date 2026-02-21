@@ -1,4 +1,5 @@
 import type { DailyRankingEntry } from "@/types";
+import { Link } from "react-router-dom";
 
 type ViewMode = "combined" | "byCategory";
 
@@ -38,7 +39,7 @@ export default function RankingTable({
             >
               <td className="py-2 pr-2 font-medium">
                 <span
-                  className="rounded-full px-3 py-2 ms-2"
+                  className="rounded-xl px-3 py-2 ms-2"
                   style={{
                     backgroundColor: RANKING_COLORS[index + 1],
                     color: index <= 2 ? "white" : undefined,
@@ -53,8 +54,13 @@ export default function RankingTable({
                   fontWeight: index <= 2 ? "bold" : undefined,
                 }}
               >
-                {entry.playerName}{" "}
-                {viewMode === "combined" && `(${entry.category}ª)`}
+                <Link
+                  to={`/players/${entry.playerId}`}
+                  className="text-white hover:text-blue-400 transition-colors"
+                >
+                  {entry.playerName}{" "}
+                  {viewMode === "combined" && `(${entry.category}ª)`}
+                </Link>
               </td>
               <td className="py-2 pr-2 text-right flex gap-1 items-center justify-end h-12">
                 {entry.last10Games
@@ -63,7 +69,7 @@ export default function RankingTable({
                         return (
                           <div
                             key={idx}
-                            className={`w-1 h-1 rounded-full ${gameWon ? "bg-green-500" : "bg-red-500"}`}
+                            className={`w-1 h-1 rounded-xl ${gameWon ? "bg-green-500" : "bg-red-500"}`}
                           />
                         );
                     })
@@ -72,7 +78,7 @@ export default function RankingTable({
                       .map((_, i) => (
                         <div
                           key={i}
-                          className={`w-1 h-1 rounded-full ${entry.gamesWon > i ? "bg-green-500" : "bg-red-500"}`}
+                          className={`w-1 h-1 rounded-xl ${entry.gamesWon > i ? "bg-green-500" : "bg-red-500"}`}
                         />
                       ))}
               </td>

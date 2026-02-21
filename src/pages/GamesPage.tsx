@@ -5,9 +5,10 @@ import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { Link } from "react-router-dom";
 import { HiChevronLeft, HiPlus } from "react-icons/hi";
 import type { Category } from "@/types";
+import GamesList from "@/components/GamesList";
 
 const FILTER_ALL = "";
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 50;
 
 const CATEGORY_NAMES: Record<Category, string> = {
   1: "Primera",
@@ -60,7 +61,7 @@ export default function GamesPage() {
                 </div>
                 <Link
                   to="/añadir-partido"
-                  className="bg-white hover:bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded-2xl transition-all duration-200 flex items-center"
+                  className="bg-white hover:bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded-xl transition-all duration-200 flex items-center"
                 >
                   <HiPlus className="h-6 w-6" aria-hidden />
                   Añadir partido
@@ -110,61 +111,11 @@ export default function GamesPage() {
 
             {gamesLoading ? (
               <div className="py-8 flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent-red"></div>
+                <div className="animate-spin rounded-xl h-8 w-8 border-t-2 border-b-2 border-accent-red"></div>
               </div>
             ) : (
               <>
-                <div className="space-y-3">
-                  {games.map((game) => {
-                    const {
-                      id,
-                      player_1_name,
-                      player_1_score,
-                      player_2_score,
-                      player_2_name,
-                      player_1b_name,
-                      player_2b_name,
-                      mode,
-                    } = game;
-                    const isDoubles = mode === "doubles";
-                    const team1 = isDoubles
-                      ? `${player_1_name} / ${player_1b_name}`
-                      : player_1_name;
-                    const team2 = isDoubles
-                      ? `${player_2_name} / ${player_2b_name}`
-                      : player_2_name;
-
-                    return (
-                      <div
-                        key={id}
-                        className="flex justify-between items-center p-4 bg-dark-bg hover:bg-dark-card-hover rounded-2xl border border-dark-border transition-colors group"
-                      >
-                        <div className="w-full flex items-center gap-1 text-gray-300">
-                          <span
-                            className={`flex-1 text-right ${
-                              player_1_score > player_2_score
-                                ? "font-bold text-white"
-                                : ""
-                            }`}
-                          >
-                            {team1}
-                          </span>
-                          <span>{player_1_score}</span>-
-                          <span>{player_2_score}</span>
-                          <span
-                            className={`flex-1 ${
-                              player_2_score > player_1_score
-                                ? "font-bold text-white"
-                                : ""
-                            }`}
-                          >
-                            {team2}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <GamesList games={games} showDates />
 
                 {totalCount > PAGE_SIZE && (
                   <div className="mt-6 flex items-center justify-center gap-4 border-t border-dark-border pt-4">
