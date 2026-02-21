@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 type ViewMode = "combined" | "byCategory";
 
 import Ranking from "@/components/Ranking";
+import GamesList from "@/components/GamesList";
 
 function getTodayYYYYMMDD() {
   return new Date().toISOString().split("T")[0];
@@ -149,45 +150,7 @@ export default function RankingDailyPage() {
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent-red"></div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {(games || []).map(
-                    ({
-                      id,
-                      player_1_name,
-                      player_1_score,
-                      player_2_score,
-                      player_2_name,
-                    }) => (
-                      <div
-                        key={id}
-                        className="flex justify-between items-center p-4 bg-dark-bg hover:bg-dark-card-hover rounded-2xl border border-dark-border transition-colors group"
-                      >
-                        <div className="w-full flex items-center gap-1 text-gray-300">
-                          <span
-                            className={`flex-1 text-right ${
-                              player_1_score > player_2_score
-                                ? "font-bold text-white"
-                                : ""
-                            }`}
-                          >
-                            {player_1_name}
-                          </span>
-                          <span>{player_1_score}</span>-
-                          <span>{player_2_score}</span>
-                          <span
-                            className={`flex-1 ${
-                              player_2_score > player_1_score
-                                ? "font-bold text-white"
-                                : ""
-                            }`}
-                          >
-                            {player_2_name}
-                          </span>
-                        </div>
-                      </div>
-                    ),
-                  )}
-                </div>
+                <GamesList games={games} />
               )}
             </div>
           </div>

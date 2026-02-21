@@ -12,6 +12,7 @@ import RankingDailyPage from "@/pages/RankingDailyPage";
 import RankingAllTimePage from "@/pages/RankingAllTimePage";
 import AddGamePage from "@/pages/AddGamePage";
 import PlayersPage from "@/pages/PlayersPage";
+import PlayerDetailPage from "@/pages/PlayerDetailPage";
 import { ProtectedRoute } from "@/ProtectedRoute";
 
 export default function App() {
@@ -27,10 +28,12 @@ export default function App() {
             <Route path="/ranking-diario" element={<RankingDailyPage />} />
             <Route path="/ranking" element={<RankingAllTimePage />} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route path="/players" element={<PlayersPage />} />
-            </Route>
+            <Route path="/players" element={<PlayersPage />} />
+            <Route path="/players/:id" element={<PlayerDetailPage />} />
 
+            <Route element={<ProtectedRoute />}>
+              {/* Add protected routes here later if needed */}
+            </Route>
           </Routes>
         </BrowserRouter>
         <ToastContainer />

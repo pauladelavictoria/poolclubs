@@ -4,8 +4,7 @@ import type { Game, Player, DailyRankingEntry, Category } from "@/types";
 const INITIAL_RATING = 500;
 const SCALE_FACTOR = 100;
 // K-Factors for different experience levels (in total racks played)
-const K_PROVISIONAL = 20; // First 100 racks
-const K_ESTABLISHED = 10; // After 100 racks
+const K_FACTOR = 5;
 
 export const useEloRanking = ({
     games,
@@ -34,6 +33,8 @@ export const useEloRanking = ({
         >();
 
         for (const player of players) {
+            if (player.name === "_Invitado") continue;
+            
             playerStats.set(player.id, {
                 rating: INITIAL_RATING,
                 gamesPlayed: 0,
@@ -112,12 +113,10 @@ export const useEloRanking = ({
 
             // Apply ELO update to each individual player based on their own K-factor
             for (const p of team1) {
-                const k = p.racksPlayed <= 100 ? K_PROVISIONAL : K_ESTABLISHED;
-                p.rating += k * (s1 - expectedPoints1);
+                p.rating += K_FACTOR * (s1 - expectedPoints1);
             }
             for (const p of team2) {
-                const k = p.racksPlayed <= 100 ? K_PROVISIONAL : K_ESTABLISHED;
-                p.rating += k * (s2 - expectedPoints2);
+                p.rating += K_FACTOR * (s2 - expectedPoints2);
             }
         }
 
