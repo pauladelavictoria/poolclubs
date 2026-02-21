@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Category } from "@/types";
 
 type PlayerFormProps = {
@@ -21,13 +21,6 @@ export default function PlayerForm({
   const [category, setCategory] = useState<Category>(
     initialValues?.category ?? 3,
   );
-
-  useEffect(() => {
-    if (initialValues) {
-      setName(initialValues.name);
-      setCategory(initialValues.category);
-    }
-  }, [initialValues]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
