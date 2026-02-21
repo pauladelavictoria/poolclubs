@@ -38,6 +38,8 @@
   "optionalDependencies": {
     "@esbuild/linux-x64": "^0.27.3",
     "@rollup/rollup-linux-x64-gnu": "^4.57.1",
-    "@rollup/rollup-linux-x64-musl": "^4.57.1"
+    "@rollup/rollup-linux-x64-musl": "^4.57.1",
+    "@swc/core-linux-x64-gnu": "^1.15.11",
+    "@swc/core-linux-x64-musl": "^1.15.11"
   }
 }
