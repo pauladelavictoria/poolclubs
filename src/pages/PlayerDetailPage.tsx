@@ -62,10 +62,7 @@ export default function PlayerDetailPage() {
 
       if (wonGame) gamesWon++;
 
-      const dateStr = new Date(game.created_at).toLocaleDateString("es-ES", {
-        day: "2-digit",
-        month: "short",
-      });
+      const dateStr = new Date(game.created_at).toLocaleString();
 
       const gameWinRate = (gamesWon / totalGames) * 100;
       const rackWinRate =
@@ -186,6 +183,7 @@ export default function PlayerDetailPage() {
                       tick={{ fill: "#888" }}
                       axisLine={{ stroke: "#333" }}
                       tickLine={{ stroke: "#333" }}
+                      tickFormatter={(val) => val.split(",")[0]}
                     />
                     <YAxis
                       stroke="#888"
@@ -203,23 +201,26 @@ export default function PlayerDetailPage() {
                         color: "#fff",
                       }}
                       itemStyle={{ color: "#fff" }}
+                      formatter={(value) => `${value}%`}
+                      itemSorter={(i) => (i.dataKey === "gameWinRate" ? -1 : 1)}
                     />
                     <Line
                       type="step"
-                      name="% Victorias"
+                      name="Mesas"
+                      dataKey="rackWinRate"
+                      stroke="#60a5fa"
+                      strokeWidth={2}
+                      strokeDasharray="3 3"
+                      dot={false}
+                    />
+                    <Line
+                      type="step"
+                      name="Partidos"
                       dataKey="gameWinRate"
                       stroke="#4ade80"
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 6 }}
-                    />
-                    <Line
-                      type="step"
-                      name="% Mesas Ganadas"
-                      dataKey="rackWinRate"
-                      stroke="#60a5fa"
-                      strokeWidth={2}
-                      dot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
