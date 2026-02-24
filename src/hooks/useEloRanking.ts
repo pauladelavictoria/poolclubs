@@ -2,9 +2,6 @@ import { useMemo } from "react";
 import type { Game, Player, DailyRankingEntry, Category } from "@/types";
 
 const INITIAL_RATING = 500;
-const SCALE_FACTOR = 100;
-// K-Factors for different experience levels (in total racks played)
-const K_FACTOR = 5;
 
 export const useEloRanking = ({
     games,
@@ -100,23 +97,24 @@ export const useEloRanking = ({
                 if (p.last10Games.length > 10) p.last10Games.shift();
             }
 
-            // ELO Calculation
+            // ELO Calculation (Match-based)
             const r1 = team1.reduce((sum, p) => sum + p.rating, 0) / team1.length;
             const r2 = team2.reduce((sum, p) => sum + p.rating, 0) / team2.length;
 
-            const expectedScorePercentage1 = 1 / (1 + Math.pow(2, (r2 - r1) / SCALE_FACTOR));
-            const expectedScorePercentage2 = 1 / (1 + Math.pow(2, (r1 - r2) / SCALE_FACTOR));
+            const expectedScore1 = 1 / (1 + Math.pow(10, (r2 - r1) / 400));
+            const expectedScore2 = 1 / (1 + Math.pow(10, (r1 - r2) / 400));
 
-            const totalRacks = s1 + s2;
-            const expectedPoints1 = totalRacks * expectedScorePercentage1;
-            const expectedPoints2 = totalRacks * expectedScorePercentage2;
+            const actualScore1 = s1 > s2 ? 1 : (s1 === s2 ? 0.5 : 0);
+            const actualScore2 = s2 > s1 ? 1 : (s1 === s2 ? 0.5 : 0);
 
             // Apply ELO update to each individual player based on their own K-factor
             for (const p of team1) {
-                p.rating += K_FACTOR * (s1 - expectedPoints1);
+                const k = p.gamesPlayed <= 20 ? 50 : 32; // Higher K-factor for new players
+                p.rating += k * (actualScore1 - expectedScore1);
             }
             for (const p of team2) {
-                p.rating += K_FACTOR * (s2 - expectedPoints2);
+                const k = p.gamesPlayed <= 20 ? 50 : 32; // Higher K-factor for new players
+                p.rating += k * (actualScore2 - expectedScore2);
             }
         }
 
