@@ -7,6 +7,9 @@ import type { Game } from "@/types";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { HiChevronLeft, HiPlus } from "react-icons/hi";
 import { Link } from "react-router-dom";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 
 export default function GamesPage() {
   const { register, handleSubmit, reset, watch, setValue } = useForm<Game>({
@@ -147,8 +150,8 @@ export default function GamesPage() {
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="flex flex-col xl:flex-row gap-2">
                 <div className="flex-1 flex flex-col gap-2">
-                  <select
-                    className="w-full border border-dark-border p-3 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red transition-colors"
+                  <Select
+                    className="p-3 rounded-2xl"
                     disabled={playersLoading}
                     {...register("player_1_name", { required: true })}
                   >
@@ -160,10 +163,10 @@ export default function GamesPage() {
                         {player.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   {isDoubles && (
-                    <select
-                      className="w-full border border-dark-border p-3 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red transition-colors"
+                    <Select
+                      className="p-3 rounded-2xl"
                       disabled={playersLoading}
                       {...register("player_1b_name", { required: isDoubles })}
                     >
@@ -173,26 +176,26 @@ export default function GamesPage() {
                           {player.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   )}
                 </div>
-                <input
+                <Input
                   type="number"
                   min={0}
-                  className="flex-1 border border-dark-border p-3 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red transition-colors"
+                  className="flex-1 p-3 rounded-2xl"
                   placeholder={isDoubles ? "Res. equipo 1" : "Res. jugador 1"}
                   {...register("player_1_score", { required: true })}
                 />
-                <input
+                <Input
                   type="number"
                   min={0}
-                  className="flex-1 border border-dark-border p-3 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red transition-colors"
+                  className="flex-1 p-3 rounded-2xl"
                   placeholder={isDoubles ? "Res. equipo 2" : "Res. jugador 2"}
                   {...register("player_2_score", { required: true })}
                 />
                 <div className="flex-1 flex flex-col gap-2">
-                  <select
-                    className="w-full border border-dark-border p-3 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red transition-colors"
+                  <Select
+                    className="p-3 rounded-2xl"
                     disabled={playersLoading}
                     {...register("player_2_name", { required: true })}
                   >
@@ -204,10 +207,10 @@ export default function GamesPage() {
                         {player.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   {isDoubles && (
-                    <select
-                      className="w-full border border-dark-border p-3 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red transition-colors"
+                    <Select
+                      className="p-3 rounded-2xl"
                       disabled={playersLoading}
                       {...register("player_2b_name", { required: isDoubles })}
                     >
@@ -217,21 +220,19 @@ export default function GamesPage() {
                           {player.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   )}
                 </div>
-                <button
+                <Button
                   type="submit"
-                  className={`${
-                    addDisabled
-                      ? "bg-gray-600 cursor-not-allowed"
-                      : "bg-accent-red hover:bg-accent-red-dark cursor-pointer"
-                  } text-white px-5 py-3 rounded-2xl transition-colors shadow-md flex items-center gap-2`}
+                  className={`w-max rounded-2xl shadow-md ${
+                    addDisabled ? "bg-gray-600" : ""
+                  }`}
                   disabled={addDisabled}
                 >
                   <HiPlus className="h-6 w-6" aria-hidden />
                   Añadir
-                </button>
+                </Button>
               </div>
             </form>
           </div>

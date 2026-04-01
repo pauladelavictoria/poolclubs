@@ -1,5 +1,9 @@
 import { useState } from "react";
 import type { Category } from "@/types";
+import { Input } from "./ui/Input";
+import { Select } from "./ui/Select";
+import { Label } from "./ui/Label";
+import { Button } from "./ui/Button";
 
 type PlayerFormProps = {
   initialValues?: {
@@ -31,59 +35,47 @@ export default function PlayerForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label
-          htmlFor="name"
-          className="block text-sm font-medium text-gray-300"
-        >
-          Nombre
-        </label>
-        <input
+        <Label htmlFor="name">Nombre</Label>
+        <Input
           type="text"
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-1 block w-full rounded-md border-dark-border bg-dark-bg text-white shadow-sm focus:border-accent-red focus:ring-accent-red sm:text-sm px-3 py-2 border placeholder-gray-500"
           required
           disabled={isSubmitting}
         />
       </div>
 
       <div>
-        <label
-          htmlFor="category"
-          className="block text-sm font-medium text-gray-300"
-        >
-          Categoría
-        </label>
-        <select
+        <Label htmlFor="category">Categoría</Label>
+        <Select
           id="category"
           value={category}
           onChange={(e) => setCategory(Number(e.target.value) as Category)}
-          className="mt-1 block w-full rounded-md border-dark-border bg-dark-bg text-white shadow-sm focus:border-accent-red focus:ring-accent-red sm:text-sm px-3 py-2 border"
           disabled={isSubmitting}
         >
           <option value={1}>Primera</option>
           <option value={2}>Segunda</option>
           <option value={3}>Tercera</option>
-        </select>
+        </Select>
       </div>
 
       <div className="flex justify-end gap-3 pt-2">
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={onCancel}
-          className="inline-flex justify-center rounded-md border border-dark-border bg-dark-card px-4 py-2 text-sm font-medium text-gray-300 shadow-sm hover:bg-dark-card-hover focus:outline-none focus:ring-2 focus:ring-accent-red focus:ring-offset-2 focus:ring-offset-dark-bg"
           disabled={isSubmitting}
         >
           Cancelar
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
+          variant="primary"
           disabled={isSubmitting || !name.trim()}
-          className="inline-flex justify-center rounded-md border border-transparent bg-accent-red px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-accent-red-hover focus:outline-none focus:ring-2 focus:ring-accent-red focus:ring-offset-2 focus:ring-offset-dark-bg disabled:opacity-50"
         >
           {isSubmitting ? "Guardando..." : "Guardar"}
-        </button>
+        </Button>
       </div>
     </form>
   );
