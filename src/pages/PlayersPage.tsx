@@ -8,6 +8,7 @@ import { HiPlus, HiPencil, HiChevronLeft } from "react-icons/hi";
 import type { Player, Category } from "@/types";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Button } from "@/components/ui/Button";
 
 const CATEGORY_NAMES: Record<Category, string> = {
   1: "Primera",
@@ -81,13 +82,14 @@ export default function PlayersPage() {
                 <h1 className="text-2xl font-bold">Jugadores</h1>
               </div>
               {user && (
-                <button
+                <Button
+                  variant="white"
                   onClick={openCreateModal}
-                  className="flex-shrink-0 bg-white hover:bg-gray-200 text-black font-medium py-2 px-4 rounded-xl transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap"
+                  className="flex-shrink-0 rounded-xl flex items-center gap-2 whitespace-nowrap"
                 >
                   <HiPlus className="h-5 w-5" />
                   <span>Añadir Jugador</span>
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -140,13 +142,13 @@ export default function PlayersPage() {
                         {user && (
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <button
+                              <Button
+                                variant="ghost"
                                 onClick={() => openEditModal(player)}
-                                className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-blue-900/20 rounded-md transition-colors"
                                 title="Editar"
                               >
                                 <HiPencil className="h-5 w-5" />
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         )}

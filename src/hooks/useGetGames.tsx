@@ -87,7 +87,10 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
 
     const { data, error, count } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error(error);
+      throw error;
+    }
 
     return {
       games: (data ?? []) as Game[],
@@ -96,40 +99,26 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
   }
 
   useEffect(() => {
+    const invalidateGames = () => {
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+    };
+
     const gamesChannel = supabase
       .channel("games-changes")
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "games",
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["games"] });
-        },
+        { event: "INSERT", schema: "public", table: "games" },
+        invalidateGames
       )
       .on(
         "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "games",
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["games"] });
-        },
+        { event: "UPDATE", schema: "public", table: "games" },
+        invalidateGames
       )
       .on(
         "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "games",
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["games"] });
-        },
+        { event: "DELETE", schema: "public", table: "games" },
+        invalidateGames
       )
       .subscribe();
 

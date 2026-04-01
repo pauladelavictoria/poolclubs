@@ -6,6 +6,8 @@ import { Link } from "react-router-dom";
 import { HiChevronLeft, HiPlus } from "react-icons/hi";
 import type { Category } from "@/types";
 import GamesList from "@/components/GamesList";
+import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 
 const FILTER_ALL = "";
 const PAGE_SIZE = 50;
@@ -73,13 +75,13 @@ export default function GamesPage() {
           <div className="px-6 py-5">
             <div className="flex justify-end gap-2 mb-4">
               <label className="flex items-center gap-2">
-                <select
+                <Select
                   value={playerFilter}
                   onChange={(e) => {
                     setPlayerFilter(e.target.value);
                     setPage(1);
                   }}
-                  className="border border-dark-border px-3 py-2 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red bg-dark-bg text-white min-w-[140px]"
+                  className="rounded-2xl min-w-[140px]"
                   aria-label="Filtrar partidos por jugador"
                 >
                   <option value={FILTER_ALL}>Jugadores</option>
@@ -88,24 +90,24 @@ export default function GamesPage() {
                       {player.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
 
               <label className="flex items-center gap-2">
-                <select
+                <Select
                   value={categoryFilter}
                   onChange={(e) => {
                     setCategoryFilter(e.target.value);
                     setPage(1);
                   }}
-                  className="border border-dark-border px-3 py-2 rounded-2xl focus:ring-2 focus:ring-accent-red focus:border-accent-red bg-dark-bg text-white min-w-[140px]"
+                  className="rounded-2xl min-w-[140px]"
                   aria-label="Filtrar partidos por categoría"
                 >
                   <option value={FILTER_ALL}>Categorías</option>
                   <option value="1">{CATEGORY_NAMES[1]}</option>
                   <option value="2">{CATEGORY_NAMES[2]}</option>
                   <option value="3">{CATEGORY_NAMES[3]}</option>
-                </select>
+                </Select>
               </label>
             </div>
 
@@ -119,27 +121,29 @@ export default function GamesPage() {
 
                 {totalCount > PAGE_SIZE && (
                   <div className="mt-6 flex items-center justify-center gap-4 border-t border-dark-border pt-4">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       onClick={handlePrevPage}
                       disabled={!hasPrevPage}
-                      className="rounded-2xl border border-dark-border bg-dark-bg px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-dark-card-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-dark-bg"
+                      className="rounded-2xl"
                       aria-label="Página anterior"
                     >
                       Anterior
-                    </button>
+                    </Button>
                     <span className="text-sm text-gray-400">
                       {page} / {totalPages}
                     </span>
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       onClick={handleNextPage}
                       disabled={!hasNextPage}
-                      className="rounded-2xl border border-dark-border bg-dark-bg px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-dark-card-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-dark-bg"
+                      className="rounded-2xl"
                       aria-label="Página siguiente"
                     >
                       Siguiente
-                    </button>
+                    </Button>
                   </div>
                 )}
               </>

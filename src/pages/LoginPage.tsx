@@ -1,5 +1,6 @@
 import Layout from "./Layout";
 import { supabase } from "@/supabaseClient";
+import { Button } from "@/components/ui/Button";
 
 export default function LoginPage() {
   return (
@@ -16,8 +17,9 @@ export default function LoginPage() {
           </div>
 
           <form className="p-6 space-y-6">
-            <button
+            <Button
               type="button"
+              variant="white"
               onClick={() =>
                 supabase.auth.signInWithOAuth({
                   provider: "google",
@@ -26,7 +28,7 @@ export default function LoginPage() {
                   },
                 })
               }
-              className="cursor-pointer w-full bg-white border border-gray-300 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center font-medium"
+              className="w-full py-3 px-4 rounded-lg flex items-center justify-center font-medium"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
@@ -48,7 +50,7 @@ export default function LoginPage() {
                 <path fill="none" d="M1 1h22v22H1z" />
               </svg>
               Continua con Google
-            </button>
+            </Button>
           </form>
         </div>
       </div>

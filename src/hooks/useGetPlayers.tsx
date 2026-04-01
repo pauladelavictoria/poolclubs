@@ -14,46 +14,35 @@ export const useGetPlayers = () => {
       .select("*")
       .order('name')
 
-    if (error) throw error;
+    if (error) {
+      console.error(error);
+      throw error;
+    }
 
     return data as Player[];
   }
 
   useEffect(() => {
+    const invalidatePlayers = () => {
+      queryClient.invalidateQueries({ queryKey: ["players"] });
+    };
+
     const eventsChannel = supabase
       .channel("players-changes")
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "players",
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["players"] });
-        }
+        { event: "INSERT", schema: "public", table: "players" },
+        invalidatePlayers
       )
       .on(
         "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "players",
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["players"] });
-        }
+        { event: "UPDATE", schema: "public", table: "players" },
+        invalidatePlayers
       )
       .on(
         "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "players",
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["players"] });
-        }
+        { event: "DELETE", schema: "public", table: "players" },
+        invalidatePlayers
       )
       .subscribe();
 
