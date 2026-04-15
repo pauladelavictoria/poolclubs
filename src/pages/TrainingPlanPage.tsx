@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import Layout from "./Layout";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
@@ -10,7 +10,6 @@ import { useMemo } from "react";
 
 export default function TrainingPlanPage() {
   const { playerId } = useParams<{ playerId: string }>();
-  const navigate = useNavigate();
   const playerIdNum = Number(playerId);
 
   const { data: players } = useGetPlayers();
