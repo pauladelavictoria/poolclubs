@@ -7,8 +7,6 @@ import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import DrillProgressChart from "@/components/DrillProgressChart";
 import { Select } from "@/components/ui/Select";
 import { HiChevronLeft } from "react-icons/hi";
-import { SKILL_TYPE_LABELS } from "@/types";
-import type { DrillSkillType } from "@/types";
 
 export default function TrainingProgressPage() {
   const { playerId: paramPlayerId } = useParams<{ playerId: string }>();

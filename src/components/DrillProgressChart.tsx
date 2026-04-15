@@ -67,10 +67,10 @@ export default function DrillProgressChart({
                 color: "#fff",
               }}
               itemStyle={{ color: "#fff" }}
-              formatter={(value: number, _name: string, props: { payload: { raw: string } }) => [
-                `${value}% (${props.payload.raw})`,
-                "Puntuación",
-              ]}
+              // formatter={(value: number , _name: string, props: { payload: { raw: string } }) => [
+              //   `${value || 0}% (${props.payload.raw})`,
+              //   "Puntuación",
+              // ]}
             />
             <Line
               type="monotone"

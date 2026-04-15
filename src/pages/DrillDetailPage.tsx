@@ -1,4 +1,4 @@
-import { useParams, useSearchParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
@@ -20,7 +20,6 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 export default function DrillDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const drillId = Number(id);
 
   const planId = searchParams.get("plan")
@@ -50,7 +49,7 @@ export default function DrillDetailPage() {
 
   // If coming from a training plan, get the plan hook for completing steps
   // We need to find the player_id from the plan step
-  const { data: planData, completeStep } = useTrainingPlan(
+  const { completeStep } = useTrainingPlan(
     planId ? undefined : undefined
   );
 
@@ -71,7 +70,6 @@ export default function DrillDetailPage() {
   const backLink = planId
     ? `/entrenamientos/plan/${searchParams.get("playerId") ?? ""}`
     : "/entrenamientos";
-  const backLabel = planId ? "Volver al plan" : undefined;
 
   if (isDrillLoading) {
     return (
