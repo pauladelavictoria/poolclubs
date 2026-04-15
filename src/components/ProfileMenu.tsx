@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
 export default function ProfileMenu() {
-  const { user } = useAuth();
+  const { user, player } = useAuth();
   const signOut = useSignOut();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -69,6 +69,31 @@ export default function ProfileMenu() {
                 {userName}
               </p>
             </div>
+            {player && (
+              <>
+                <Link
+                  to={`/players/${player.id}`}
+                  onClick={() => setIsOpen(false)}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-dark-card-hover rounded-xl"
+                >
+                  Mi perfil
+                </Link>
+                <Link
+                  to={`/entrenamientos/plan/${player.id}`}
+                  onClick={() => setIsOpen(false)}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-dark-card-hover rounded-xl"
+                >
+                  Mi entrenamiento
+                </Link>
+                <Link
+                  to={`/entrenamientos/progreso/${player.id}`}
+                  onClick={() => setIsOpen(false)}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-dark-card-hover rounded-xl"
+                >
+                  Mi progreso
+                </Link>
+              </>
+            )}
             <button
               onClick={() => {
                 handleSignOut();

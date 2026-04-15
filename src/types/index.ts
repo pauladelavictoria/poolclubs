@@ -25,6 +25,95 @@ export type Player = {
   category: Category;
 };
 
+// Training / Drills types
+export type DrillDifficulty = 'beginner' | 'intermediate' | 'advanced';
+export type DrillSkillType = 'potting' | 'position' | 'safety' | 'break' | 'banks';
+
+export type BallPosition = {
+  x: number;
+  y: number;
+  color: string;
+  label?: string;
+};
+
+export type ShotPath = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  type?: 'solid' | 'dashed';
+};
+
+export type Drill = {
+  id: number;
+  name: string;
+  description: string;
+  difficulty: DrillDifficulty;
+  skill_type: DrillSkillType;
+  setup_instructions: string;
+  scoring_method: string;
+  max_score: number;
+  ball_positions: BallPosition[];
+  shot_paths: ShotPath[];
+  created_at: string;
+};
+
+export type DrillLog = {
+  id: number;
+  drill_id: number;
+  player_id: number;
+  score: number;
+  max_score: number;
+  notes?: string;
+  created_at: string;
+};
+
+export type TrainingPlanStepStatus = 'pending' | 'completed' | 'skipped';
+
+export type TrainingPlan = {
+  id: number;
+  player_id: number;
+  active: boolean;
+  created_at: string;
+};
+
+export type TrainingPlanStep = {
+  id: number;
+  plan_id: number;
+  drill_id: number;
+  step_order: number;
+  status: TrainingPlanStepStatus;
+  drill_log_id?: number;
+  created_at: string;
+  drill?: Drill;
+};
+
+export const DIFFICULTY_TO_CATEGORY: Record<DrillDifficulty, Category> = {
+  advanced: 1,
+  intermediate: 2,
+  beginner: 3,
+};
+
+export const CATEGORY_TO_DIFFICULTY: Record<Category, DrillDifficulty> = {
+  1: 'advanced',
+  2: 'intermediate',
+  3: 'beginner',
+};
+
+export const DIFFICULTY_LABELS: Record<DrillDifficulty, string> = {
+  beginner: 'Principiante',
+  intermediate: 'Intermedio',
+  advanced: 'Avanzado',
+};
+
+export const SKILL_TYPE_LABELS: Record<DrillSkillType, string> = {
+  potting: 'Embocada',
+  position: 'Posición',
+  safety: 'Defensa',
+  break: 'Salida',
+  banks: 'Bandas',
+};
+
 export type DailyRankingEntry = {
   playerId: number;
   playerName: string;

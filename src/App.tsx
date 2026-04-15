@@ -13,7 +13,12 @@ import RankingAllTimePage from "@/pages/RankingAllTimePage";
 import AddGamePage from "@/pages/AddGamePage";
 import PlayersPage from "@/pages/PlayersPage";
 import PlayerDetailPage from "@/pages/PlayerDetailPage";
+import DrillsPage from "@/pages/DrillsPage";
+import DrillDetailPage from "@/pages/DrillDetailPage";
+import TrainingProgressPage from "@/pages/TrainingProgressPage";
+import TrainingPlanPage from "@/pages/TrainingPlanPage";
 import { ProtectedRoute } from "@/ProtectedRoute";
+import PlayerSelectModal from "@/components/PlayerSelectModal";
 
 export default function App() {
   return (
@@ -31,11 +36,17 @@ export default function App() {
             <Route path="/players" element={<PlayersPage />} />
             <Route path="/players/:id" element={<PlayerDetailPage />} />
 
+            <Route path="/entrenamientos" element={<DrillsPage />} />
+            <Route path="/entrenamientos/progreso/:playerId" element={<TrainingProgressPage />} />
+            <Route path="/entrenamientos/plan/:playerId" element={<TrainingPlanPage />} />
+            <Route path="/entrenamientos/:id" element={<DrillDetailPage />} />
+
             <Route element={<ProtectedRoute />}>
               {/* Add protected routes here later if needed */}
             </Route>
           </Routes>
         </BrowserRouter>
+        <PlayerSelectModal />
         <ToastContainer />
       </AuthProvider>
     </QueryClientProvider>
