@@ -6,22 +6,19 @@ interface PoolTableDiagramProps {
   compact?: boolean;
 }
 
-const POCKET_RADIUS = 1.8;
+// Table artwork, drawn at its own pixel size
+const TABLE_W = 1734;
+const TABLE_H = 922;
+
+// The felt inside the artwork. Drill coordinates are 0-100 x 0-50 over this
+// rect, so everything below is drawn in drill units inside one transform.
+const FELT = { x: 82, y: 87, w: 1569, h: 746 };
+const UNIT = FELT.w / 100; // ≈ 16.35 px per drill unit
+
 const BALL_RADIUS = 1.5;
-const RAIL_INSET = 2;
 
-const POCKETS = [
-  { x: 0, y: 0 },
-  { x: 50, y: 0 },
-  { x: 100, y: 0 },
-  { x: 0, y: 50 },
-  { x: 50, y: 50 },
-  { x: 100, y: 50 },
-];
-
-// Diamond markers on the rails (standard positions)
-const LONG_RAIL_DIAMONDS = [12.5, 25, 37.5, 50, 62.5, 75, 87.5];
-const SHORT_RAIL_DIAMONDS = [12.5, 25, 37.5];
+// A number or single letter fits on the ball; "blanca a mano" does not
+const SHORT_LABEL = /^([0-9]{1,2}|[A-Za-z])$/;
 
 const BALL_COLORS: Record<string, string> = {
   white: "#FFFFFF",
@@ -43,89 +40,8 @@ export default function PoolTableDiagram({
   const fontSize = compact ? 0 : 2.5;
 
   return (
-    <svg
-      viewBox="-2 -2 104 54"
-      className="w-full rounded-lg"
-      style={{ maxWidth: compact ? 200 : 500 }}
-    >
-      {/* Table border (wood) */}
-      <rect
-        x={-1.5}
-        y={-1.5}
-        width={103}
-        height={53}
-        rx={1.5}
-        fill="#5C3A1E"
-      />
-
-      {/* Felt */}
-      <rect x={0} y={0} width={100} height={50} rx={0.5} fill="#0B6623" />
-
-      {/* Rail lines */}
-      <rect
-        x={RAIL_INSET}
-        y={RAIL_INSET}
-        width={100 - RAIL_INSET * 2}
-        height={50 - RAIL_INSET * 2}
-        fill="none"
-        stroke="#0A5C1F"
-        strokeWidth={0.3}
-      />
-
-      {/* Diamond markers */}
-      {!compact && (
-        <>
-          {/* Top rail */}
-          {LONG_RAIL_DIAMONDS.map((x) => (
-            <circle key={`dt-${x}`} cx={x} cy={0.8} r={0.4} fill="#C8A96E" />
-          ))}
-          {/* Bottom rail */}
-          {LONG_RAIL_DIAMONDS.map((x) => (
-            <circle key={`db-${x}`} cx={x} cy={49.2} r={0.4} fill="#C8A96E" />
-          ))}
-          {/* Left rail */}
-          {SHORT_RAIL_DIAMONDS.map((y) => (
-            <circle
-              key={`dl-${y}`}
-              cx={0.8}
-              cy={y === 12.5 ? 12.5 : y === 25 ? 25 : 37.5}
-              r={0.4}
-              fill="#C8A96E"
-            />
-          ))}
-          {/* Right rail */}
-          {SHORT_RAIL_DIAMONDS.map((y) => (
-            <circle
-              key={`dr-${y}`}
-              cx={99.2}
-              cy={y === 12.5 ? 12.5 : y === 25 ? 25 : 37.5}
-              r={0.4}
-              fill="#C8A96E"
-            />
-          ))}
-        </>
-      )}
-
-      {/* Head string line */}
-      {!compact && (
-        <line
-          x1={25}
-          y1={RAIL_INSET}
-          x2={25}
-          y2={50 - RAIL_INSET}
-          stroke="#0A5C1F"
-          strokeWidth={0.2}
-          strokeDasharray="1 1"
-        />
-      )}
-
-      {/* Foot spot */}
-      {!compact && <circle cx={75} cy={25} r={0.5} fill="#0A5C1F" />}
-
-      {/* Pockets */}
-      {POCKETS.map((p, i) => (
-        <circle key={`pocket-${i}`} cx={p.x} cy={p.y} r={POCKET_RADIUS} fill="#1A1A1A" />
-      ))}
+    <svg viewBox={`0 0 ${TABLE_W} ${TABLE_H}`} className="w-full rounded-lg">
+      <image href="/table.svg" width={TABLE_W} height={TABLE_H} />
 
       {/* Arrow marker definition */}
       <defs>
@@ -149,60 +65,130 @@ export default function PoolTableDiagram({
         >
           <polygon points="0 0, 3 1, 0 2" fill="rgba(255,255,100,0.6)" />
         </marker>
+        {/* Keeps a striped ball's band inside the ball */}
+        <clipPath id="ball-clip">
+          <circle r={BALL_RADIUS} />
+        </clipPath>
+        {/* Lifts the balls off the felt, in place of an outline */}
+        <filter id="ball-shadow" x="-75%" y="-75%" width="250%" height="250%">
+          <feDropShadow
+            dx={0}
+            dy={0}
+            stdDeviation={0.5}
+            floodColor="#000000"
+            floodOpacity={0.5}
+          />
+        </filter>
       </defs>
 
-      {/* Shot paths */}
-      {shotPaths.map((path, i) => (
-        <line
-          key={`path-${i}`}
-          x1={path.x1}
-          y1={path.y1}
-          x2={path.x2}
-          y2={path.y2}
-          stroke={
-            path.type === "dashed"
-              ? "rgba(255,255,100,0.5)"
-              : "rgba(255,255,255,0.4)"
-          }
-          strokeWidth={0.5}
-          strokeDasharray={path.type === "dashed" ? "2 1" : undefined}
-          markerEnd={
-            path.type === "dashed"
-              ? "url(#arrowhead-dashed)"
-              : "url(#arrowhead)"
-          }
-        />
-      ))}
+      <g
+        transform={`translate(${FELT.x} ${FELT.y}) scale(${UNIT} ${FELT.h / 50})`}
+      >
+        {/* Head string line */}
+        {!compact && (
+          <line
+            x1={25}
+            y1={2}
+            x2={25}
+            y2={50}
+            stroke="#c8e3f369"
+            strokeWidth={0.2}
+            strokeDasharray="1 1"
+          />
+        )}
 
-      {/* Balls */}
-      {ballPositions.map((ball, i) => {
-        const fill = BALL_COLORS[ball.color] ?? ball.color;
-        const isWhite = ball.color === "white";
-        return (
-          <g key={`ball-${i}`}>
-            <circle
-              cx={ball.x}
-              cy={ball.y}
-              r={BALL_RADIUS}
-              fill={fill}
-              stroke={isWhite ? "#999" : "#000"}
-              strokeWidth={0.3}
-            />
-            {/* Ball label */}
-            {!compact && ball.label && fontSize > 0 && (
-              <text
-                x={ball.x}
-                y={ball.y + BALL_RADIUS + fontSize + 0.5}
-                textAnchor="middle"
-                fill="rgba(255,255,255,0.7)"
-                fontSize={fontSize}
-              >
-                {ball.label}
-              </text>
-            )}
-          </g>
-        );
-      })}
+        {/* Foot spot */}
+        {!compact && <circle cx={75} cy={25} r={0.5} fill="#c8e3f369" />}
+
+        {/* Shot paths */}
+        {shotPaths.map((path, i) => (
+          <line
+            key={`path-${i}`}
+            x1={path.x1}
+            y1={path.y1}
+            x2={path.x2}
+            y2={path.y2}
+            stroke={
+              path.type === "dashed"
+                ? "rgba(255,255,100,0.5)"
+                : "rgba(255,255,255,0.4)"
+            }
+            strokeWidth={0.5}
+            strokeDasharray={path.type === "dashed" ? "2 1" : undefined}
+            markerEnd={
+              path.type === "dashed"
+                ? "url(#arrowhead-dashed)"
+                : "url(#arrowhead)"
+            }
+          />
+        ))}
+
+        {/* Balls */}
+        {ballPositions.map((ball, i) => {
+          const fill = BALL_COLORS[ball.color] ?? ball.color;
+          const isWhite = ball.color === "white";
+          const striped = ball.label === "raya";
+          // Short labels go on the ball, anything longer sits underneath
+          const onBall =
+            !striped && !!ball.label && SHORT_LABEL.test(ball.label);
+          return (
+            <g key={`ball-${i}`} transform={`translate(${ball.x} ${ball.y})`}>
+              {striped ? (
+                <>
+                  <circle
+                    r={BALL_RADIUS}
+                    fill="#FFFFFF"
+                    filter="url(#ball-shadow)"
+                  />
+                  <rect
+                    x={-BALL_RADIUS}
+                    y={-BALL_RADIUS * 0.55}
+                    width={BALL_RADIUS * 2}
+                    height={BALL_RADIUS * 1.1}
+                    fill={fill}
+                    clipPath="url(#ball-clip)"
+                  />
+                </>
+              ) : (
+                <circle
+                  r={BALL_RADIUS}
+                  fill={fill}
+                  filter="url(#ball-shadow)"
+                />
+              )}
+
+              {/* Ball label */}
+              {!compact && onBall && (
+                <>
+                  {!isWhite && <circle r={0.8} fill="#FFFFFF" />}
+                  <text
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#111111"
+                    fontSize={ball.label!.length > 1 ? 1.05 : 1.35}
+                  >
+                    {ball.label}
+                  </text>
+                </>
+              )}
+              {!compact &&
+                ball.label &&
+                !onBall &&
+                !striped &&
+                fontSize > 0 && (
+                  <text
+                    y={BALL_RADIUS + fontSize + 0.5}
+                    textAnchor="middle"
+                    fill="rgba(255,255,255,0.7)"
+                    fontSize={fontSize}
+                  >
+                    {ball.label}
+                  </text>
+                )}
+            </g>
+          );
+        })}
+      </g>
     </svg>
   );
 }

@@ -27,7 +27,15 @@ export type Player = {
 
 // Training / Drills types
 export type DrillDifficulty = 'beginner' | 'intermediate' | 'advanced';
-export type DrillSkillType = 'potting' | 'position' | 'safety' | 'break' | 'banks';
+export type DrillSkillType =
+  | 'potting'
+  | 'position'
+  | 'safety'
+  | 'break'
+  | 'banks'
+  | 'kicks'
+  | 'patterns'
+  | 'specials';
 
 export type BallPosition = {
   x: number;
@@ -112,6 +120,9 @@ export const SKILL_TYPE_LABELS: Record<DrillSkillType, string> = {
   safety: 'Defensa',
   break: 'Salida',
   banks: 'Bandas',
+  kicks: 'Banda previa',
+  patterns: 'Patrones',
+  specials: 'Tiros especiales',
 };
 
 export type DailyRankingEntry = {

@@ -16,6 +16,9 @@ const SKILL_TYPES: DrillSkillType[] = [
   "safety",
   "break",
   "banks",
+  "kicks",
+  "patterns",
+  "specials",
 ];
 
 const DIFFICULTY_ORDER: Record<DrillDifficulty, number> = {
