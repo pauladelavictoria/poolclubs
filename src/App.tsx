@@ -20,10 +20,21 @@ import PlayersPage from "@/pages/PlayersPage";
 import PlayerDetailPage from "@/pages/PlayerDetailPage";
 import DrillsPage from "@/pages/DrillsPage";
 import DrillDetailPage from "@/pages/DrillDetailPage";
+import DrillEditorPage from "@/pages/DrillEditorPage";
 import TrainingProgressPage from "@/pages/TrainingProgressPage";
 import TrainingPlanPage from "@/pages/TrainingPlanPage";
 import { ProtectedRoute } from "@/ProtectedRoute";
+import { useAuth } from "@/hooks/useAuth";
 import PlayerSelectModal from "@/components/PlayerSelectModal";
+
+/** "/me/..." resolves to the signed-in player's own URL. Lets links exist before
+ *  we know their id; signed in but not linked yet, PlayerSelectModal takes over. */
+function MeRedirect({ suffix = "" }: { suffix?: string }) {
+  const { player } = useAuth();
+  return (
+    <Navigate to={player ? `/players/${player.id}${suffix}` : "/"} replace />
+  );
+}
 
 /** Redirect that carries route params across, e.g. "/players/:playerId/plan". */
 function Redirect({ to }: { to: string }) {
@@ -55,7 +66,17 @@ export default function App() {
               <Route path="players" element={<PlayersPage />} />
               <Route path="players/:id" element={<PlayerDetailPage />} />
 
+              {/* Browsing drills is public; logging a result and editing are not */}
+              <Route path="drills" element={<DrillsPage />} />
+              <Route path="drills/:id" element={<DrillDetailPage />} />
+
               <Route element={<ProtectedRoute />}>
+                <Route path="me" element={<MeRedirect />} />
+                <Route path="me/plan" element={<MeRedirect suffix="/plan" />} />
+                <Route
+                  path="me/progress"
+                  element={<MeRedirect suffix="/progress" />}
+                />
                 <Route
                   path="players/:playerId/plan"
                   element={<TrainingPlanPage />}
@@ -64,8 +85,10 @@ export default function App() {
                   path="players/:playerId/progress"
                   element={<TrainingProgressPage />}
                 />
-                <Route path="drills" element={<DrillsPage />} />
-                <Route path="drills/:id" element={<DrillDetailPage />} />
+                {/* Anyone signed in may author; DrillEditorPage turns away
+                    non-owners on the /edit route, since that needs the drill. */}
+                <Route path="drills/new" element={<DrillEditorPage />} />
+                <Route path="drills/:id/edit" element={<DrillEditorPage />} />
               </Route>
 
               {/* Old Spanish/mixed-language URLs */}

@@ -171,7 +171,7 @@ export default function PlayerDetailPage() {
                 className: "flex-1",
               })}
             >
-              Progreso
+              Progreso de entrenamiento
             </Link>
           </div>
         )}

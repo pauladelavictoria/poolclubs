@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import type { DailyRankingEntry } from "@/types";
 import { LuChevronRight, LuPlus } from "react-icons/lu";
 import PageHeader from "@/components/PageHeader";
 import GamesList from "@/components/GamesList";
@@ -6,6 +7,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
+import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
+import { useGetDrills } from "@/hooks/useGetDrills";
+import { scoreBand, scorePct } from "@/libs/scoreBand";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { BallBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
@@ -24,12 +28,47 @@ function SeeAll({ to, label }: { to: string; label: string }) {
   );
 }
 
+function RankingRow({
+  entry,
+  rank,
+  isMe,
+}: {
+  entry: DailyRankingEntry;
+  rank: number;
+  isMe: boolean;
+}) {
+  return (
+    <li>
+      <Link
+        to={`/players/${entry.playerId}`}
+        className={`flex items-center gap-3 rounded-control px-2 py-2 transition-colors duration-150 hover:bg-felt-raised ${
+          isMe ? "bg-strike-tint" : ""
+        }`}
+      >
+        <BallBadge rank={rank} />
+        <span className="min-w-0 flex-1 truncate font-medium text-ink">
+          {entry.playerName}
+        </span>
+        <ScoreString
+          results={entry.last10Games ?? []}
+          className="hidden sm:inline-flex"
+        />
+        <span className="font-mono text-body font-semibold tabular-nums text-ink">
+          {entry.points}
+        </span>
+      </Link>
+    </li>
+  );
+}
+
 export default function DashboardPage() {
   const { player } = useAuth();
   const { data: players } = useGetPlayers();
   // Same query key as the ranking page, so this is a cache hit either direction
   const { data: allGamesData, isLoading } = useGetGames({});
   const { data: recentData } = useGetGames({ pageSize: 5 });
+  const { data: recentLogs } = useGetDrillLogs({ limit: 5 });
+  const { data: drills } = useGetDrills();
 
   const ranking = useEloRanking({
     games: allGamesData?.games ?? [],
@@ -119,27 +158,24 @@ export default function DashboardPage() {
             ) : ranking && ranking.length > 0 ? (
               <ol className="p-2">
                 {ranking.slice(0, 5).map((entry, index) => (
-                  <li key={entry.playerId}>
-                    <Link
-                      to={`/players/${entry.playerId}`}
-                      className={`flex items-center gap-3 rounded-control px-2 py-2 transition-colors duration-150 hover:bg-felt-raised ${
-                        entry.playerId === player?.id ? "bg-strike-tint" : ""
-                      }`}
-                    >
-                      <BallBadge rank={index + 1} />
-                      <span className="min-w-0 flex-1 truncate font-medium text-ink">
-                        {entry.playerName}
-                      </span>
-                      <ScoreString
-                        results={entry.last10Games ?? []}
-                        className="hidden sm:inline-flex"
-                      />
-                      <span className="font-mono text-body font-semibold tabular-nums text-ink">
-                        {entry.points}
-                      </span>
-                    </Link>
-                  </li>
+                  <RankingRow
+                    key={entry.playerId}
+                    entry={entry}
+                    rank={index + 1}
+                    isMe={entry.playerId === player?.id}
+                  />
                 ))}
+                {me && myIndex >= 5 && (
+                  <>
+                    <li
+                      aria-hidden
+                      className="px-2 py-1 text-center font-mono text-caption leading-none text-ink-faint"
+                    >
+                      ···
+                    </li>
+                    <RankingRow entry={me} rank={myIndex + 1} isMe />
+                  </>
+                )}
               </ol>
             ) : (
               <p className="px-4 py-8 text-center text-body text-ink-faint">
@@ -156,6 +192,48 @@ export default function DashboardPage() {
             <div className="p-3">
               <GamesList games={recentData?.games ?? []} />
             </div>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <CardHeader
+              title="Últimos ejercicios"
+              action={<SeeAll to="/drills" label="Ver todos" />}
+            />
+            {recentLogs && recentLogs.length > 0 ? (
+              <ul className="p-2">
+                {recentLogs.map((log) => {
+                  const pct = scorePct(log.score, log.max_score);
+                  const band = scoreBand(pct);
+                  return (
+                    <li key={log.id}>
+                      <Link
+                        to={`/drills/${log.drill_id}`}
+                        className="flex items-baseline gap-3 rounded-control px-2 py-2 transition-colors duration-150 hover:bg-felt-raised"
+                      >
+                        <span className="min-w-0 flex-1 truncate text-body text-ink">
+                          {drills?.find((d) => d.id === log.drill_id)?.name ??
+                            `Ejercicio #${log.drill_id}`}
+                        </span>
+                        <span className="shrink-0 truncate text-caption text-ink-faint">
+                          {players?.find((p) => p.id === log.player_id)?.name}
+                        </span>
+                        <span
+                          className="w-12 shrink-0 text-right font-mono text-body font-semibold tabular-nums"
+                          style={{ color: band.color }}
+                          title={band.label}
+                        >
+                          {pct}%
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="px-4 py-8 text-center text-body text-ink-faint">
+                Aún no se ha registrado ningún ejercicio.
+              </p>
+            )}
           </Card>
         </div>
       </div>

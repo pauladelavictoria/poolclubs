@@ -5,10 +5,13 @@ import type { DrillLog } from "@/types";
 export type UseGetDrillLogsFilters = {
   player_id?: number;
   drill_id?: number;
+  /** Caps the rows fetched. Also what lets an unfiltered query run at all —
+   *  without it the whole table would come down. */
+  limit?: number;
 };
 
 export const useGetDrillLogs = (filters?: UseGetDrillLogsFilters) => {
-  const { player_id, drill_id } = filters ?? {};
+  const { player_id, drill_id, limit } = filters ?? {};
 
   async function fetchDrillLogs() {
     let query = supabase
@@ -22,6 +25,9 @@ export const useGetDrillLogs = (filters?: UseGetDrillLogsFilters) => {
     if (drill_id) {
       query = query.eq("drill_id", drill_id);
     }
+    if (limit) {
+      query = query.limit(limit);
+    }
 
     const { data, error } = await query;
 
@@ -34,8 +40,8 @@ export const useGetDrillLogs = (filters?: UseGetDrillLogsFilters) => {
   }
 
   return useQuery({
-    queryKey: ["drill_logs", player_id, drill_id],
+    queryKey: ["drill_logs", player_id, drill_id, limit],
     queryFn: fetchDrillLogs,
-    enabled: !!player_id || !!drill_id,
+    enabled: !!player_id || !!drill_id || !!limit,
   });
 };

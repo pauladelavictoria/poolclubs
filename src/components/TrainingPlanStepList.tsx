@@ -78,22 +78,27 @@ export default function TrainingPlanStepList({
               )}
             </div>
 
-            {isCurrent && drill ? (
+            {(isCurrent || isSkipped) && drill ? (
               <div className="flex shrink-0 items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => onSkip(step.id)}
-                  disabled={isSkipping}
-                  className="h-8 rounded-control px-2.5 text-caption text-ink-faint transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
-                >
-                  Saltar
-                </button>
+                {isCurrent && (
+                  <button
+                    type="button"
+                    onClick={() => onSkip(step.id)}
+                    disabled={isSkipping}
+                    className="h-8 rounded-control px-2.5 text-caption text-ink-faint transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
+                  >
+                    Saltar
+                  </button>
+                )}
                 <Link
                   to={`/drills/${drill.id}?plan=${planId}&step=${step.id}&playerId=${playerId}`}
-                  className={buttonClasses({ size: "sm" })}
+                  className={buttonClasses({
+                    size: "sm",
+                    variant: isSkipped ? "ghost" : "primary",
+                  })}
                 >
                   <LuPlay className="h-3.5 w-3.5" aria-hidden />
-                  Empezar
+                  {isSkipped ? "Retomar" : "Empezar"}
                 </Link>
               </div>
             ) : (
