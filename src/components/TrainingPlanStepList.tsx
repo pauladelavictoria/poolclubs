@@ -1,25 +1,33 @@
 import { Link } from "react-router-dom";
 import type { TrainingPlanStep } from "@/types";
 import { SKILL_TYPE_LABELS } from "@/types";
-import { HiCheck, HiForward, HiPlay } from "react-icons/hi2";
+import { LuCheck, LuSkipForward, LuPlay } from "react-icons/lu";
+import { buttonClasses } from "@/components/ui/buttonStyles";
 
 interface TrainingPlanStepListProps {
   steps: TrainingPlanStep[];
   planId: number;
+  playerId: number;
   onSkip: (stepId: number) => void;
   isSkipping?: boolean;
 }
 
+/**
+ * A plan is a queue with exactly one live item. The current step is the only
+ * row that carries colour or an action; everything else is either done or
+ * waiting, and reads that way at a glance.
+ */
 export default function TrainingPlanStepList({
   steps,
   planId,
+  playerId,
   onSkip,
   isSkipping,
 }: TrainingPlanStepListProps) {
   const currentStep = steps.find((s) => s.status === "pending");
 
   return (
-    <div className="flex flex-col gap-2">
+    <ol className="space-y-1.5">
       {steps.map((step) => {
         const isCurrent = step.id === currentStep?.id;
         const isCompleted = step.status === "completed";
@@ -27,92 +35,75 @@ export default function TrainingPlanStepList({
         const drill = step.drill;
 
         return (
-          <div
+          <li
             key={step.id}
-            className={`flex items-center gap-3 p-4 rounded-2xl border transition-colors ${
+            className={[
+              "flex items-center gap-3 rounded-control border px-3 py-2.5",
               isCurrent
-                ? "bg-accent-red/10 border-accent-red/50"
-                : isCompleted
-                  ? "bg-green-900/10 border-green-700/30"
-                  : isSkipped
-                    ? "bg-gray-800/50 border-dark-border opacity-50"
-                    : "bg-dark-bg border-dark-border"
-            }`}
+                ? "border-strike/40 bg-strike-tint"
+                : "border-hairline bg-pocket",
+              isSkipped ? "opacity-55" : "",
+            ].join(" ")}
           >
-            {/* Step number / status icon */}
-            <div
-              className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+            <span
+              className={[
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                "font-mono text-caption font-semibold tabular-nums",
                 isCompleted
-                  ? "bg-green-600 text-white"
-                  : isSkipped
-                    ? "bg-gray-600 text-gray-400"
-                    : isCurrent
-                      ? "bg-accent-red text-white"
-                      : "bg-dark-card text-gray-400 border border-dark-border"
-              }`}
+                  ? "bg-pot text-pocket"
+                  : isCurrent
+                    ? "bg-strike text-white"
+                    : "bg-ball-cue text-ink-faint",
+              ].join(" ")}
             >
               {isCompleted ? (
-                <HiCheck className="h-4 w-4" />
+                <LuCheck className="h-4 w-4" />
               ) : isSkipped ? (
-                <HiForward className="h-4 w-4" />
+                <LuSkipForward className="h-4 w-4" />
               ) : (
                 step.step_order
               )}
-            </div>
+            </span>
 
-            {/* Drill info */}
-            <div className="flex-1 min-w-0">
-              <div className="text-white font-medium text-sm truncate">
+            <div className="min-w-0 flex-1">
+              <div
+                className={`truncate ${isCurrent ? "font-medium text-ink" : "text-ink-soft"}`}
+              >
                 {drill?.name ?? `Ejercicio ${step.step_order}`}
               </div>
               {drill && (
-                <div className="text-xs text-gray-400">
+                <div className="truncate text-caption text-ink-faint">
                   {SKILL_TYPE_LABELS[drill.skill_type]}
                 </div>
               )}
             </div>
 
-            {/* Action */}
-            {isCurrent && drill && (
-              <div className="flex gap-2 flex-shrink-0">
+            {isCurrent && drill ? (
+              <div className="flex shrink-0 items-center gap-1">
                 <button
                   type="button"
                   onClick={() => onSkip(step.id)}
                   disabled={isSkipping}
-                  className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded-lg hover:bg-dark-card transition-colors"
+                  className="h-8 rounded-control px-2.5 text-caption text-ink-faint transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
                 >
                   Saltar
                 </button>
                 <Link
-                  to={`/entrenamientos/${drill.id}?plan=${planId}&step=${step.id}`}
-                  className="flex items-center gap-1 bg-accent-red hover:bg-accent-red-dark text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors"
+                  to={`/drills/${drill.id}?plan=${planId}&step=${step.id}&playerId=${playerId}`}
+                  className={buttonClasses({ size: "sm" })}
                 >
-                  <HiPlay className="h-3 w-3" />
+                  <LuPlay className="h-3.5 w-3.5" aria-hidden />
                   Empezar
                 </Link>
               </div>
-            )}
-
-            {!isCurrent && !isCompleted && !isSkipped && (
-              <span className="text-xs text-gray-500 flex-shrink-0">
-                Pendiente
+            ) : (
+              <span className="shrink-0 text-caption text-ink-faint">
+                {isCompleted ? "Completado" : isSkipped ? "Saltado" : "Pendiente"}
               </span>
             )}
-
-            {isCompleted && (
-              <span className="text-xs text-green-400 flex-shrink-0">
-                Completado
-              </span>
-            )}
-
-            {isSkipped && (
-              <span className="text-xs text-gray-500 flex-shrink-0">
-                Saltado
-              </span>
-            )}
-          </div>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }

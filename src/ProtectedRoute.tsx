@@ -1,16 +1,15 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, Outlet } from "react-router-dom";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export const ProtectedRoute = () => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-xl h-12 w-12 border-t-2 border-b-2 border-red-600 mb-4"></div>
-          <p className="text-gray-600">Checking authentication...</p>
-        </div>
+      <div className="mx-auto max-w-3xl space-y-3 px-3 py-6">
+        <Skeleton className="h-14 w-full" />
+        <Skeleton className="h-40 w-full rounded-card" />
       </div>
     );
   }

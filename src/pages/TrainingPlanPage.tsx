@@ -1,12 +1,14 @@
+import { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
-import Layout from "./Layout";
+import { toast } from "react-toastify";
+import PageHeader from "@/components/PageHeader";
+import TrainingPlanStepList from "@/components/TrainingPlanStepList";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
-import TrainingPlanStepList from "@/components/TrainingPlanStepList";
+import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { HiChevronLeft } from "react-icons/hi";
-import { toast } from "react-toastify";
-import { useMemo } from "react";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function TrainingPlanPage() {
   const { playerId } = useParams<{ playerId: string }>();
@@ -28,12 +30,9 @@ export default function TrainingPlanPage() {
     const completed = planData.steps.filter(
       (s) => s.status === "completed"
     ).length;
-    const skipped = planData.steps.filter(
-      (s) => s.status === "skipped"
-    ).length;
+    const skipped = planData.steps.filter((s) => s.status === "skipped").length;
     const pending = total - completed - skipped;
-    const isFinished = pending === 0;
-    return { total, completed, skipped, pending, isFinished };
+    return { total, completed, skipped, pending, isFinished: pending === 0 };
   }, [planData]);
 
   const handleNewPlan = () => {
@@ -41,153 +40,129 @@ export default function TrainingPlanPage() {
     generatePlan.mutate(
       { playerId: player.id, category: player.category },
       {
-        onSuccess: () => {
-          toast.success("Nuevo plan generado");
-        },
-        onError: () => {
-          toast.error("Error al generar el plan");
-        },
+        onSuccess: () => toast.success("Nuevo plan generado"),
+        onError: () => toast.error("Error al generar el plan"),
       }
     );
   };
 
-  const handleSkip = (stepId: number) => {
-    skipStep.mutate(stepId);
-  };
+  const header = (
+    <PageHeader
+      title="Plan de entrenamiento"
+      subtitle={player && `${player.name} · ${player.category}ª`}
+      back={`/players/${playerIdNum}`}
+    />
+  );
 
   if (isLoading) {
     return (
-      <Layout>
-        <div className="flex justify-center items-center min-h-[50vh]">
-          <div className="animate-spin rounded-xl h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+      <>
+        {header}
+        <div className="mx-auto max-w-xl space-y-2 px-3 py-4">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} className="h-[54px]" />
+          ))}
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link
-            to="/entrenamientos"
-            className="text-gray-400 hover:text-white transition-colors p-2 bg-dark-card rounded-xl"
-          >
-            <HiChevronLeft className="h-6 w-6" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-white">
-              Plan de entrenamiento
-            </h1>
-            {player && (
-              <p className="text-gray-400 text-sm">
-                {player.name} (Cat. {player.category})
-              </p>
-            )}
-          </div>
-        </div>
+    <>
+      {header}
 
-        {/* No plan */}
-        {!planData && (
-          <div className="bg-dark-card p-8 rounded-3xl border border-dark-border shadow-card text-center">
-            <p className="text-gray-400 mb-4">
-              No tienes un plan de entrenamiento activo.
-            </p>
-            <Button
-              className="rounded-2xl shadow-md"
-              onClick={handleNewPlan}
-              disabled={generatePlan.isPending}
-            >
-              {generatePlan.isPending
-                ? "Generando..."
-                : "Generar plan de entrenamiento"}
-            </Button>
-          </div>
-        )}
-
-        {/* Active plan */}
-        {planData && stats && (
+      <div className="mx-auto max-w-xl space-y-4 px-3 py-4">
+        {!planData || !stats ? (
+          <Card>
+            <EmptyState
+              title="Sin plan activo"
+              hint="Genera uno y tendrás diez ejercicios elegidos para tu categoría."
+              action={
+                <Button
+                  onClick={handleNewPlan}
+                  disabled={generatePlan.isPending}
+                >
+                  {generatePlan.isPending ? "Generando..." : "Generar plan"}
+                </Button>
+              }
+            />
+          </Card>
+        ) : (
           <>
-            {/* Progress bar */}
-            <div className="bg-dark-card p-4 rounded-2xl border border-dark-border shadow-card mb-6">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-400">Progreso</span>
-                <span className="text-white font-medium">
-                  {stats.completed}/{stats.total} completados
+            <Card className="p-5">
+              <div className="flex items-baseline justify-between">
+                <span className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
+                  Progreso
+                </span>
+                <span className="font-mono text-body tabular-nums text-ink">
+                  {stats.completed}
+                  <span className="text-ink-faint">/{stats.total}</span>
                 </span>
               </div>
-              <div className="h-3 bg-dark-bg rounded-full overflow-hidden">
+
+              <div
+                className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-pocket"
+                role="progressbar"
+                aria-valuenow={stats.completed}
+                aria-valuemin={0}
+                aria-valuemax={stats.total}
+              >
                 <div
-                  className="h-full bg-gradient-to-r from-accent-red to-green-500 rounded-full transition-all duration-500"
+                  className="h-full rounded-full bg-pot transition-[width] duration-300 ease-[var(--ease-out)]"
                   style={{
                     width: `${
                       stats.total > 0
-                        ? ((stats.completed + stats.skipped) / stats.total) *
-                          100
+                        ? ((stats.completed + stats.skipped) / stats.total) * 100
                         : 0
                     }%`,
                   }}
                 />
               </div>
+
               {stats.skipped > 0 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  {stats.skipped} ejercicio(s) saltado(s)
+                <p className="mt-2 text-caption text-ink-faint">
+                  {stats.skipped} saltado{stats.skipped === 1 ? "" : "s"}
                 </p>
               )}
-            </div>
+            </Card>
 
-            {/* Finished summary */}
             {stats.isFinished && (
-              <div className="bg-green-900/20 border border-green-700/30 p-6 rounded-3xl mb-6 text-center">
-                <h2 className="text-xl font-bold text-green-400 mb-2">
+              <Card className="border-pot/30 bg-pot/[0.07] p-5 text-center">
+                <h2 className="text-h3 font-semibold text-pot">
                   Plan completado
                 </h2>
-                <p className="text-gray-400 mb-4">
-                  Has completado {stats.completed} de {stats.total} ejercicios.
+                <p className="mt-1 text-body text-ink-soft">
+                  {stats.completed} de {stats.total} ejercicios hechos.
                 </p>
-                <div className="flex gap-3 justify-center">
-                  <Button
-                    className="rounded-2xl shadow-md"
-                    onClick={handleNewPlan}
-                    disabled={generatePlan.isPending}
-                  >
-                    {generatePlan.isPending
-                      ? "Generando..."
-                      : "Generar nuevo plan"}
-                  </Button>
-                  <Link
-                    to={`/entrenamientos/progreso/${playerIdNum}`}
-                    className="inline-flex items-center justify-center text-sm text-accent-red hover:text-white transition-colors px-4 py-2 rounded-2xl border border-dark-border hover:bg-dark-card-hover"
-                  >
-                    Ver progreso
-                  </Link>
-                </div>
-              </div>
+                <Button
+                  className="mt-4"
+                  onClick={handleNewPlan}
+                  disabled={generatePlan.isPending}
+                >
+                  {generatePlan.isPending ? "Generando..." : "Generar nuevo plan"}
+                </Button>
+              </Card>
             )}
 
-            {/* Step list */}
             <TrainingPlanStepList
               steps={planData.steps}
               planId={planData.plan.id}
-              onSkip={handleSkip}
+              playerId={playerIdNum}
+              onSkip={(stepId) => skipStep.mutate(stepId)}
               isSkipping={skipStep.isPending}
             />
 
-            {/* Bottom actions */}
-            {!stats.isFinished && (
-              <div className="mt-6 flex justify-center">
-                <Link
-                  to={`/entrenamientos/progreso/${playerIdNum}`}
-                  className="text-sm text-gray-400 hover:text-white transition-colors"
-                >
-                  Ver progreso general
-                </Link>
-              </div>
-            )}
+            <div className="flex justify-center">
+              <Link
+                to={`/players/${playerIdNum}/progress`}
+                className="text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-ink"
+              >
+                Ver progreso general
+              </Link>
+            </div>
           </>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

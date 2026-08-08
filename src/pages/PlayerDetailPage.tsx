@@ -1,9 +1,4 @@
 import { useParams, Link } from "react-router-dom";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
-import { useGetGames } from "@/hooks/useGetGames";
-import Layout from "./Layout";
-import GamesList from "@/components/GamesList";
-import { HiChevronLeft } from "react-icons/hi";
 import { useMemo } from "react";
 import {
   LineChart,
@@ -14,23 +9,41 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useGetGames } from "@/hooks/useGetGames";
+import { useAuth } from "@/hooks/useAuth";
+import PageHeader from "@/components/PageHeader";
+import GamesList from "@/components/GamesList";
+import { Card, CardHeader } from "@/components/ui/Card";
+import { Stat } from "@/components/ui/Stat";
+import { SkeletonRows } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { buttonClasses } from "@/components/ui/buttonStyles";
+import { CATEGORY_LABEL } from "@/components/ui/Ball";
+
+/* Chart ink, matched to the theme tokens */
+const AXIS = "#8d9793";
+const GRID = "rgba(255,255,255,0.07)";
+const LINE_GAMES = "#3fbf7f"; // pot green: frames taken
+const LINE_RACKS = "#5b9dd9"; // chalk blue: the supporting series
 
 export default function PlayerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const playerId = Number(id);
 
+  const { user } = useAuth();
   const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
   const player = players?.find((p) => p.id === playerId);
 
   const { data: gamesData, isLoading: isLoadingGames } = useGetGames({
     playerName: player?.name,
-    pageSize: 1000, // Fetch up to 1000 recent games for this player
+    pageSize: 1000,
   });
 
   const stats = useMemo(() => {
     if (!player || !gamesData?.games) return null;
 
-    const games = [...gamesData.games].reverse(); // Reverse to chronological order (oldest first)
+    const games = [...gamesData.games].reverse(); // oldest first
 
     let totalGames = 0;
     let gamesWon = 0;
@@ -62,8 +75,6 @@ export default function PlayerDetailPage() {
 
       if (wonGame) gamesWon++;
 
-      const dateStr = new Date(game.created_at).toLocaleString();
-
       const gameWinRate = (gamesWon / totalGames) * 100;
       const rackWinRate =
         racksWon + racksLost > 0
@@ -72,7 +83,7 @@ export default function PlayerDetailPage() {
 
       return {
         gameIndex: index + 1,
-        date: dateStr,
+        date: new Date(game.created_at).toLocaleString(),
         gameWinRate: parseFloat(gameWinRate.toFixed(1)),
         rackWinRate: parseFloat(rackWinRate.toFixed(1)),
         gamesWon,
@@ -98,109 +109,120 @@ export default function PlayerDetailPage() {
 
   if (isLoadingPlayers || isLoadingGames) {
     return (
-      <Layout>
-        <div className="flex justify-center items-center min-h-[50vh]">
-          <div className="animate-spin rounded-xl h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+      <>
+        <PageHeader title="Jugador" back="/players" />
+        <div className="mx-auto max-w-5xl px-3 py-4">
+          <Card className="p-3">
+            <SkeletonRows rows={6} />
+          </Card>
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (!player) {
     return (
-      <Layout>
-        <div className="p-8 text-center text-white">Jugador no encontrado</div>
-      </Layout>
+      <>
+        <PageHeader title="Jugador" back="/players" />
+        <div className="mx-auto max-w-5xl px-3 py-4">
+          <Card>
+            <EmptyState
+              title="Jugador no encontrado"
+              hint="Puede que se haya eliminado o que el enlace sea antiguo."
+              action={
+                <Link
+                  to="/players"
+                  className={buttonClasses({ variant: "secondary" })}
+                >
+                  Ver todos los jugadores
+                </Link>
+              }
+            />
+          </Card>
+        </div>
+      </>
     );
   }
 
   return (
-    <Layout>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Link
-            to="/players"
-            className="text-gray-400 hover:text-white transition-colors p-2 bg-dark-card rounded-xl"
-          >
-            <HiChevronLeft className="h-6 w-6" />
-          </Link>
-          <h1 className="text-3xl font-bold text-white">{player.name}</h1>
-          <span
-            className={`px-3 py-1 rounded-xl text-sm font-medium ${
-              player.category === 1
-                ? "bg-yellow-900/50 text-yellow-300 border border-yellow-700/50"
-                : player.category === 2
-                  ? "bg-gray-700/50 text-gray-300 border border-gray-600/50"
-                  : "bg-orange-900/50 text-orange-300 border border-orange-700/50"
-            }`}
-          >
-            Cat {player.category}
-          </span>
-        </div>
+    <>
+      <PageHeader
+        title={player.name}
+        subtitle={CATEGORY_LABEL[player.category]}
+        back="/players"
+      />
+
+      <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        {user && (
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to={`/players/${player.id}/plan`}
+              className={buttonClasses({
+                variant: "secondary",
+                className: "flex-1",
+              })}
+            >
+              Plan de entrenamiento
+            </Link>
+            <Link
+              to={`/players/${player.id}/progress`}
+              className={buttonClasses({
+                variant: "secondary",
+                className: "flex-1",
+              })}
+            >
+              Progreso
+            </Link>
+          </div>
+        )}
 
         {stats && stats.totalGames > 0 ? (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-8">
-              <div className="bg-dark-card p-4 rounded-2xl border border-dark-border shadow-card text-center">
-                <div className="text-sm text-gray-400 mb-1">
-                  Partidos ganados / jugados
-                </div>
-                <div className="text-2xl font-bold text-white">
-                  <div className="text-2xl font-bold text-gray-400">
-                    <span className="text-2xl font-bold text-green-400">
-                      {stats.gamesWon}
-                    </span>
-                    {" / "}
-                    {stats.gamesWon + stats.gamesLost}{" "}
-                    <span className="text-sm">({stats.winRate}%)</span>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-dark-card p-4 rounded-2xl border border-dark-border shadow-card text-center">
-                <div className="text-sm text-gray-400 mb-1">
-                  Mesas ganadas / jugadas
-                </div>
-                <div className="text-2xl font-bold text-gray-400">
-                  <span className="text-blue-400">{stats.racksWon}</span>{" "}
-                  <span className="text-gray-400">/</span>{" "}
-                  {stats.racksWon + stats.racksLost}{" "}
-                  <span className="text-sm">({stats.rackWinRate}%)</span>
-                </div>
-              </div>
-            </div>
+            <Card className="grid grid-cols-2 gap-5 p-5">
+              <Stat
+                label="Partidos ganados"
+                value={`${stats.winRate}%`}
+                delta={`${stats.gamesWon} de ${stats.totalGames}`}
+                tone="good"
+              />
+              <Stat
+                label="Mesas ganadas"
+                value={`${stats.rackWinRate}%`}
+                delta={`${stats.racksWon} de ${stats.racksWon + stats.racksLost}`}
+              />
+            </Card>
 
-            <div className="bg-dark-card p-4 md:p-6 rounded-3xl border border-dark-border shadow-card mb-8">
-              <h2 className="text-xl font-bold text-white mb-6 ml-2">
-                % Victorias a lo largo del tiempo
-              </h2>
-              <div className="h-64 md:h-80 w-full text-sm">
+            <Card className="overflow-hidden">
+              <CardHeader title="Victorias a lo largo del tiempo" />
+              <div className="h-64 w-full p-3 text-caption md:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={stats.chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                    <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
                     <XAxis
                       dataKey="date"
-                      stroke="#888"
-                      tick={{ fill: "#888" }}
-                      axisLine={{ stroke: "#333" }}
-                      tickLine={{ stroke: "#333" }}
+                      stroke={AXIS}
+                      tick={{ fill: AXIS, fontSize: 12 }}
+                      axisLine={{ stroke: GRID }}
+                      tickLine={{ stroke: GRID }}
                       tickFormatter={(val) => val.split(",")[0]}
                     />
                     <YAxis
-                      stroke="#888"
-                      tick={{ fill: "#888" }}
+                      stroke={AXIS}
+                      tick={{ fill: AXIS, fontSize: 12 }}
                       domain={[0, 100]}
-                      axisLine={{ stroke: "#333" }}
-                      tickLine={{ stroke: "#333" }}
+                      axisLine={{ stroke: GRID }}
+                      tickLine={{ stroke: GRID }}
                       tickFormatter={(val) => `${val}%`}
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#1a1a1a",
-                        borderColor: "#333",
-                        borderRadius: "0.5rem",
-                        color: "#fff",
+                        backgroundColor: "#1f2624",
+                        border: "1px solid rgba(255,255,255,0.13)",
+                        borderRadius: "10px",
+                        color: "#f4f2ec",
+                        fontSize: 14,
                       }}
-                      itemStyle={{ color: "#fff" }}
+                      itemStyle={{ color: "#f4f2ec" }}
                       formatter={(value) => `${value}%`}
                       itemSorter={(i) => (i.dataKey === "gameWinRate" ? -1 : 1)}
                     />
@@ -208,7 +230,7 @@ export default function PlayerDetailPage() {
                       type="step"
                       name="Mesas"
                       dataKey="rackWinRate"
-                      stroke="#60a5fa"
+                      stroke={LINE_RACKS}
                       strokeWidth={2}
                       strokeDasharray="3 3"
                       dot={false}
@@ -217,35 +239,41 @@ export default function PlayerDetailPage() {
                       type="step"
                       name="Partidos"
                       dataKey="gameWinRate"
-                      stroke="#4ade80"
+                      stroke={LINE_GAMES}
                       strokeWidth={2}
                       dot={false}
-                      activeDot={{ r: 6 }}
+                      activeDot={{ r: 5 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </Card>
 
-            <div className="bg-dark-card p-4 md:p-6 rounded-3xl border border-dark-border shadow-card mb-8">
-              <h2 className="text-xl font-bold text-white mb-6 ml-2">
-                Historial de Partidos
-              </h2>
-              <GamesList
-                games={gamesData?.games ?? []}
-                playerName={player.name}
-                showDates
-              />
-            </div>
+            <Card className="overflow-hidden">
+              <CardHeader title="Historial de partidos" />
+              <div className="p-3">
+                <GamesList
+                  games={gamesData?.games ?? []}
+                  playerName={player.name}
+                  showDates
+                />
+              </div>
+            </Card>
           </>
         ) : (
-          <div className="bg-dark-card p-8 rounded-3xl border border-dark-border shadow-card text-center">
-            <p className="text-gray-400">
-              Este jugador aún no tiene partidos registrados.
-            </p>
-          </div>
+          <Card>
+            <EmptyState
+              title="Sin partidos todavía"
+              hint={`${player.name} aparecerá en la clasificación en cuanto juegue el primero.`}
+              action={
+                <Link to="/games/new" className={buttonClasses({})}>
+                  Añadir partido
+                </Link>
+              }
+            />
+          </Card>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

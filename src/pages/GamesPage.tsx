@@ -1,27 +1,25 @@
 import { useState } from "react";
-import { useGetGames } from "@/hooks/useGetGames";
-import Layout from "./Layout";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { Link } from "react-router-dom";
-import { HiChevronLeft, HiPlus } from "react-icons/hi";
-import type { Category } from "@/types";
+import { LuPlus } from "react-icons/lu";
+import { useGetGames } from "@/hooks/useGetGames";
+import { useGetPlayers } from "@/hooks/useGetPlayers";
+import PageHeader from "@/components/PageHeader";
 import GamesList from "@/components/GamesList";
+import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonStyles";
+import { SkeletonRows } from "@/components/ui/Skeleton";
+import { CATEGORY_LABEL } from "@/components/ui/Ball";
 
 const FILTER_ALL = "";
 const PAGE_SIZE = 50;
-
-const CATEGORY_NAMES: Record<Category, string> = {
-  1: "Primera",
-  2: "Segunda",
-  3: "Tercera",
-};
 
 export default function GamesPage() {
   const [playerFilter, setPlayerFilter] = useState<string>(FILTER_ALL);
   const [categoryFilter, setCategoryFilter] = useState<string>(FILTER_ALL);
   const [page, setPage] = useState(1);
+
   const { data: gamesData, isLoading: gamesLoading } = useGetGames({
     page,
     pageSize: PAGE_SIZE,
@@ -32,115 +30,89 @@ export default function GamesPage() {
   const totalCount = gamesData?.totalCount ?? 0;
   const { data: players } = useGetPlayers();
 
-  const hasNextPage = page * PAGE_SIZE < totalCount;
-  const hasPrevPage = page > 1;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
 
-  const handlePrevPage = () => {
-    setPage((p) => Math.max(1, p - 1));
-  };
-
-  const handleNextPage = () => {
-    setPage((p) => p + 1);
-  };
-
   return (
-    <Layout>
-      <div>
-        <div className="bg-dark-card shadow-card overflow-hidden">
-          <div className="bg-gradient-to-r from-accent-red to-accent-red-dark p-4 text-white">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="w-full flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Link
-                    to="/"
-                    className="inline-flex items-center gap-2 text-white py-2 transition-colors hover:opacity-80"
-                    aria-label="Inicio"
-                  >
-                    <HiChevronLeft className="h-6 w-6" aria-hidden />
-                  </Link>
-                  <h1 className="text-2xl font-bold">Partidos</h1>
-                </div>
-                <Link
-                  to="/añadir-partido"
-                  className="bg-white hover:bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded-xl transition-all duration-200 flex items-center"
-                >
-                  <HiPlus className="h-6 w-6" aria-hidden />
-                  Añadir partido
-                </Link>
-              </div>
-            </div>
+    <>
+      <PageHeader title="Partidos">
+        <Link
+          to="/games/new"
+          className={buttonClasses({ size: "sm", className: "shrink-0" })}
+        >
+          <LuPlus className="h-4 w-4" aria-hidden />
+          Añadir partido
+        </Link>
+      </PageHeader>
+
+      <div className="mx-auto max-w-5xl px-3 py-4">
+        {/* Filters are a toolbar, not the content: compact, left-aligned, and
+            sized to their labels. Two half-width 40px selects made choosing a
+            filter look like the main task on the page. */}
+        <Card className="overflow-hidden">
+          <div className="flex flex-wrap items-center gap-2 border-b border-hairline px-3 py-2.5">
+            <Select
+              size="sm"
+              value={playerFilter}
+              onChange={(e) => {
+                setPlayerFilter(e.target.value);
+                setPage(1);
+              }}
+              className="max-w-[12rem]"
+              aria-label="Filtrar partidos por jugador"
+            >
+              <option value={FILTER_ALL}>Todos los jugadores</option>
+              {players?.map((player) => (
+                <option key={player.id} value={player.name}>
+                  {player.name}
+                </option>
+              ))}
+            </Select>
+
+            <Select
+              size="sm"
+              value={categoryFilter}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                setPage(1);
+              }}
+              aria-label="Filtrar partidos por categoría"
+            >
+              <option value={FILTER_ALL}>Todas las categorías</option>
+              <option value="1">{CATEGORY_LABEL[1]}</option>
+              <option value="2">{CATEGORY_LABEL[2]}</option>
+              <option value="3">{CATEGORY_LABEL[3]}</option>
+            </Select>
+
+            <span className="ml-auto hidden font-mono text-caption tabular-nums text-ink-faint sm:block">
+              {totalCount} partidos
+            </span>
           </div>
-          {/* List of items */}
-          <div className="px-6 py-5">
-            <div className="flex justify-end gap-2 mb-4">
-              <label className="flex items-center gap-2">
-                <Select
-                  value={playerFilter}
-                  onChange={(e) => {
-                    setPlayerFilter(e.target.value);
-                    setPage(1);
-                  }}
-                  className="rounded-2xl min-w-[140px]"
-                  aria-label="Filtrar partidos por jugador"
-                >
-                  <option value={FILTER_ALL}>Jugadores</option>
-                  {players?.map((player) => (
-                    <option key={player.id} value={player.name}>
-                      {player.name}
-                    </option>
-                  ))}
-                </Select>
-              </label>
 
-              <label className="flex items-center gap-2">
-                <Select
-                  value={categoryFilter}
-                  onChange={(e) => {
-                    setCategoryFilter(e.target.value);
-                    setPage(1);
-                  }}
-                  className="rounded-2xl min-w-[140px]"
-                  aria-label="Filtrar partidos por categoría"
-                >
-                  <option value={FILTER_ALL}>Categorías</option>
-                  <option value="1">{CATEGORY_NAMES[1]}</option>
-                  <option value="2">{CATEGORY_NAMES[2]}</option>
-                  <option value="3">{CATEGORY_NAMES[3]}</option>
-                </Select>
-              </label>
-            </div>
-
+          <div className="p-3">
             {gamesLoading ? (
-              <div className="py-8 flex justify-center">
-                <div className="animate-spin rounded-xl h-8 w-8 border-t-2 border-b-2 border-accent-red"></div>
-              </div>
+              <SkeletonRows rows={8} />
             ) : (
               <>
                 <GamesList games={games} showDates />
 
                 {totalCount > PAGE_SIZE && (
-                  <div className="mt-6 flex items-center justify-center gap-4 border-t border-dark-border pt-4">
+                  <div className="mt-5 flex items-center justify-center gap-4 border-t border-hairline pt-4">
                     <Button
-                      type="button"
                       variant="secondary"
-                      onClick={handlePrevPage}
-                      disabled={!hasPrevPage}
-                      className="rounded-2xl"
-                      aria-label="Página anterior"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1}
                     >
                       Anterior
                     </Button>
-                    <span className="text-sm text-gray-400">
+                    <span className="font-mono text-caption tabular-nums text-ink-faint">
                       {page} / {totalPages}
                     </span>
                     <Button
-                      type="button"
                       variant="secondary"
-                      onClick={handleNextPage}
-                      disabled={!hasNextPage}
-                      className="rounded-2xl"
-                      aria-label="Página siguiente"
+                      size="sm"
+                      onClick={() => setPage((p) => p + 1)}
+                      disabled={page * PAGE_SIZE >= totalCount}
                     >
                       Siguiente
                     </Button>
@@ -149,8 +121,8 @@ export default function GamesPage() {
               </>
             )}
           </div>
-        </div>
+        </Card>
       </div>
-    </Layout>
+    </>
   );
 }

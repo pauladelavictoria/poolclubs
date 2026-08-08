@@ -1,20 +1,18 @@
-import { useState } from "react";
-import Layout from "./Layout";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
-import { useManagePlayers } from "@/hooks/useManagePlayers"; // You'll need to create this export in index or import directly
-import { useAuth } from "@/hooks/useAuth";
-import PlayerForm from "@/components/PlayerForm";
-import { HiPlus, HiPencil, HiChevronLeft } from "react-icons/hi";
-import type { Player, Category } from "@/types";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Button } from "@/components/ui/Button";
-
-const CATEGORY_NAMES: Record<Category, string> = {
-  1: "Primera",
-  2: "Segunda",
-  3: "Tercera",
-};
+import { LuPlus, LuPencil, LuUsers } from "react-icons/lu";
+import PageHeader from "@/components/PageHeader";
+import PlayerForm from "@/components/PlayerForm";
+import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useManagePlayers } from "@/hooks/useManagePlayers";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardHeader } from "@/components/ui/Card";
+import { Button, IconButton } from "@/components/ui/Button";
+import { CATEGORY_LABEL } from "@/components/ui/Ball";
+import { SkeletonRows } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import type { Player, Category } from "@/types";
 
 export default function PlayersPage() {
   const { user } = useAuth();
@@ -28,7 +26,7 @@ export default function PlayersPage() {
     try {
       await createPlayer.mutateAsync(values);
       toast.success("Jugador creado correctamente");
-      setIsModalOpen(false);
+      closeModal();
     } catch (error) {
       console.error(error);
       toast.error("Error al crear el jugador");
@@ -36,27 +34,15 @@ export default function PlayersPage() {
   };
 
   const handleUpdate = async (values: { name: string; category: Category }) => {
-    console.log(values);
     if (!editingPlayer) return;
     try {
       await updatePlayer.mutateAsync({ id: editingPlayer.id, ...values });
       toast.success("Jugador actualizado correctamente");
-      setEditingPlayer(null);
-      setIsModalOpen(false);
+      closeModal();
     } catch (error) {
       console.error(error);
       toast.error("Error al actualizar el jugador");
     }
-  };
-
-  const openCreateModal = () => {
-    setEditingPlayer(null);
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (player: Player) => {
-    setEditingPlayer(player);
-    setIsModalOpen(true);
   };
 
   const closeModal = () => {
@@ -64,158 +50,121 @@ export default function PlayersPage() {
     setIsModalOpen(false);
   };
 
-  return (
-    <Layout>
-      <div>
-        <div className="bg-dark-card shadow-card overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-accent-red to-accent-red-dark p-4 text-white">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-3 w-full">
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-2 text-white py-2 transition-colors"
-                  aria-label="Inicio"
-                >
-                  <HiChevronLeft className="h-6 w-6" aria-hidden />
-                </Link>
-                <h1 className="text-2xl font-bold">Jugadores</h1>
-              </div>
-              {user && (
-                <Button
-                  variant="white"
-                  onClick={openCreateModal}
-                  className="flex-shrink-0 rounded-xl flex items-center gap-2 whitespace-nowrap"
-                >
-                  <HiPlus className="h-5 w-5" />
-                  <span>Añadir Jugador</span>
-                </Button>
-              )}
-            </div>
-          </div>
+  // A club thinks in divisions, so the roster is filed the same way. Grouping
+  // also earns the badge back as a heading instead of repeating it per row.
+  const byCategory = useMemo(() => {
+    const groups: Record<Category, Player[]> = { 1: [], 2: [], 3: [] };
+    for (const player of players ?? []) groups[player.category].push(player);
+    return groups;
+  }, [players]);
 
-          {/* Content */}
-          <div className="p-6">
-            {isLoading ? (
-              <div className="py-8 flex justify-center">
-                <div className="animate-spin rounded-xl h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-gray-300">
-                  <thead>
-                    <tr className="border-b border-dark-border text-sm text-gray-500 uppercase tracking-wide">
-                      <th className="py-3 px-3">Jugador</th>
-                      <th className="py-3 px-3">Categoría</th>
-                      {user && (
-                        <th className="py-3 px-3 text-right">Acciones</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(players || []).map((player) => (
-                      <tr
-                        key={player.id}
-                        className="border-b border-dark-border hover:bg-dark-card-hover transition-colors"
+  const populated = ([1, 2, 3] as const).filter(
+    (cat) => byCategory[cat].length > 0,
+  );
+
+  return (
+    <>
+      <PageHeader title="Jugadores">
+        {user && (
+          <Button
+            size="sm"
+            className="shrink-0"
+            onClick={() => {
+              setEditingPlayer(null);
+              setIsModalOpen(true);
+            }}
+          >
+            <LuPlus className="h-4 w-4" aria-hidden />
+            Añadir jugador
+          </Button>
+        )}
+      </PageHeader>
+
+      <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        {isLoading ? (
+          <Card>
+            <SkeletonRows rows={8} className="p-3" />
+          </Card>
+        ) : populated.length === 0 ? (
+          <Card>
+            <EmptyState
+              icon={<LuUsers className="h-5 w-5" />}
+              title="Aún no hay jugadores"
+              hint="Añade el primero para empezar a registrar partidos."
+            />
+          </Card>
+        ) : (
+          populated.map((cat) => (
+            <Card key={cat} className="overflow-hidden">
+              <CardHeader
+                title={CATEGORY_LABEL[cat]}
+                action={
+                  <span className="font-mono text-caption tabular-nums text-ink-faint">
+                    {byCategory[cat].length}
+                  </span>
+                }
+              />
+              {/* Names are short; one column of them wastes most of a desktop
+                  card, so they pair up once there's room. */}
+              <ul className="p-2 sm:grid sm:grid-cols-2 sm:gap-x-2">
+                {byCategory[cat].map((player) => (
+                  <li
+                    key={player.id}
+                    className="flex items-center gap-3 rounded-control px-2 transition-colors duration-150 hover:bg-felt-raised"
+                  >
+                    <Link
+                      to={`/players/${player.id}`}
+                      className="min-w-0 flex-1 truncate py-2.5 font-medium text-ink"
+                    >
+                      {player.name}
+                    </Link>
+                    {user && (
+                      <IconButton
+                        label={`Editar ${player.name}`}
+                        onClick={() => {
+                          setEditingPlayer(player);
+                          setIsModalOpen(true);
+                        }}
                       >
-                        <td className="py-3 px-3 font-medium">
-                          <Link
-                            to={`/players/${player.id}`}
-                            className="text-white hover:text-blue-400 hover:underline transition-colors"
-                          >
-                            {player.name}
-                          </Link>
-                        </td>
-                        <td className="py-3 px-3">
-                          <span
-                            className={`inline-flex items-center px-3 py-1 rounded-xl text-xs font-medium border ${
-                              player.category === 1
-                                ? "bg-yellow-900/50 text-yellow-300 border-yellow-700/50"
-                                : player.category === 2
-                                  ? "bg-gray-700/50 text-gray-300 border-gray-600/50"
-                                  : "bg-orange-900/50 text-orange-300 border-orange-700/50"
-                            }`}
-                          >
-                            {CATEGORY_NAMES[player.category]}
-                          </span>
-                        </td>
-                        {user && (
-                          <td className="py-3 px-3 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                onClick={() => openEditModal(player)}
-                                title="Editar"
-                              >
-                                <HiPencil className="h-5 w-5" />
-                              </Button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                    {(!players || players.length === 0) && (
-                      <tr>
-                        <td
-                          colSpan={user ? 3 : 2}
-                          className="py-8 text-center text-gray-400"
-                        >
-                          No hay jugadores registrados yet.
-                        </td>
-                      </tr>
+                        <LuPencil className="h-[18px] w-[18px]" />
+                      </IconButton>
                     )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ))
+        )}
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div
-              className="fixed inset-0 transition-opacity z-0"
-              aria-hidden="true"
-              onClick={closeModal}
-            >
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-
-            <span
-              className="hidden sm:inline-block sm:h-screen sm:align-middle"
-              aria-hidden="true"
-            >
-              &#8203;
-            </span>
-
-            <div className="inline-block transform overflow-hidden rounded-lg bg-dark-card border border-dark-border text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle z-[51] relative">
-              <div className="bg-dark-card px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <h3 className="text-lg font-medium leading-6 text-white mb-4">
-                  {editingPlayer ? "Editar Jugador" : "Añadir Jugador"}
-                </h3>
-                <PlayerForm
-                  initialValues={
-                    editingPlayer
-                      ? {
-                          name: editingPlayer.name,
-                          category: editingPlayer.category,
-                        }
-                      : undefined
-                  }
-                  onSubmit={editingPlayer ? handleUpdate : handleCreate}
-                  onCancel={closeModal}
-                  isSubmitting={
-                    createPlayer.isPending || updatePlayer.isPending
-                  }
-                />
-              </div>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4">
+          <div className="absolute inset-0" aria-hidden onClick={closeModal} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={editingPlayer ? "Editar jugador" : "Añadir jugador"}
+            className="relative w-full max-w-md rounded-t-sheet border border-hairline bg-felt p-5 sm:rounded-sheet"
+          >
+            <h2 className="mb-4 text-h3 font-semibold text-ink">
+              {editingPlayer ? "Editar jugador" : "Añadir jugador"}
+            </h2>
+            <PlayerForm
+              initialValues={
+                editingPlayer
+                  ? {
+                      name: editingPlayer.name,
+                      category: editingPlayer.category,
+                    }
+                  : undefined
+              }
+              onSubmit={editingPlayer ? handleUpdate : handleCreate}
+              onCancel={closeModal}
+              isSubmitting={createPlayer.isPending || updatePlayer.isPending}
+            />
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }

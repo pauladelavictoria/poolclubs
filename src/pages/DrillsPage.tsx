@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Layout from "./Layout";
+import { toast } from "react-toastify";
+import { LuTarget } from "react-icons/lu";
+import PageHeader from "@/components/PageHeader";
+import DrillCard from "@/components/DrillCard";
 import { useGetDrills } from "@/hooks/useGetDrills";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
-import DrillCard from "@/components/DrillCard";
+import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import { HiChevronLeft } from "react-icons/hi";
-import { toast } from "react-toastify";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { DrillDifficulty, DrillSkillType } from "@/types";
 import { DIFFICULTY_LABELS, SKILL_TYPE_LABELS } from "@/types";
 
@@ -26,93 +29,76 @@ export default function DrillsPage() {
   const { generatePlan } = useTrainingPlan(selectedPlayerId ?? undefined);
 
   const handleGeneratePlan = () => {
-    if (!selectedPlayerId) {
+    const player = players?.find((p) => p.id === selectedPlayerId);
+    if (!player) {
       toast.error("Selecciona un jugador");
       return;
     }
-    const player = players?.find((p) => p.id === selectedPlayerId);
-    if (!player) return;
 
     generatePlan.mutate(
       { playerId: player.id, category: player.category },
       {
-        onSuccess: () => {
-          navigate(`/entrenamientos/plan/${player.id}`);
-        },
-        onError: () => {
-          toast.error("Error al generar el plan");
-        },
+        onSuccess: () => navigate(`/players/${player.id}/plan`),
+        onError: () => toast.error("Error al generar el plan"),
       }
     );
   };
 
   return (
-    <Layout>
-      <div>
-        <div className="bg-dark-card shadow-card overflow-hidden">
-          <div className="bg-gradient-to-r from-accent-red to-accent-red-dark p-4 text-white">
-            <div className="flex items-center gap-3">
-              <Link
-                to="/"
-                className="inline-flex items-center gap-2 text-white py-2 transition-colors hover:opacity-80"
-                aria-label="Inicio"
-              >
-                <HiChevronLeft className="h-6 w-6" aria-hidden />
-              </Link>
-              <h1 className="text-2xl font-bold">Entrenamientos</h1>
-            </div>
-          </div>
+    <>
+      <PageHeader title="Entrenamiento" />
 
-          {/* Auto plan section */}
-          <div className="px-6 py-5 border-b border-dark-border">
-            <h2 className="text-lg font-medium text-white mb-3">
-              Plan automático
-            </h2>
-            <p className="text-sm text-gray-400 mb-4">
-              Genera un plan de entrenamiento personalizado con ~10 ejercicios
-              adaptados a tu nivel.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Select
-                className="p-3 rounded-2xl flex-1"
-                value={selectedPlayerId ?? ""}
-                onChange={(e) =>
-                  setSelectedPlayerId(
-                    e.target.value ? Number(e.target.value) : null
-                  )
-                }
-              >
-                <option value="">Seleccionar jugador</option>
-                {players?.map((player) => (
-                  <option key={player.id} value={player.id}>
-                    {player.name} (Cat. {player.category})
-                  </option>
-                ))}
-              </Select>
-              <Button
-                className="rounded-2xl shadow-md whitespace-nowrap"
-                onClick={handleGeneratePlan}
-                disabled={!selectedPlayerId || generatePlan.isPending}
-              >
-                {generatePlan.isPending
-                  ? "Generando..."
-                  : "Generar plan"}
-              </Button>
-              {selectedPlayerId && (
-                <Link
-                  to={`/entrenamientos/plan/${selectedPlayerId}`}
-                  className="inline-flex items-center justify-center text-sm text-accent-red hover:text-white transition-colors px-3 py-2 rounded-2xl border border-dark-border hover:bg-dark-card-hover"
-                >
-                  Ver plan actual
-                </Link>
-              )}
-            </div>
-          </div>
+      <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        {/* The primary action on this screen: get a plan. It leads. */}
+        <Card className="p-5">
+          <h2 className="text-h4 font-semibold text-ink">Plan automático</h2>
+          <p className="mt-1 max-w-[52ch] text-body text-ink-soft">
+            Diez ejercicios elegidos para tu categoría, en orden.
+          </p>
 
-          {/* Filters */}
-          <div className="px-6 py-4 border-b border-dark-border flex flex-col sm:flex-row gap-3">
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <Select
-              className="p-3 rounded-2xl flex-1"
+              className="flex-1"
+              aria-label="Jugador para el plan"
+              value={selectedPlayerId ?? ""}
+              onChange={(e) =>
+                setSelectedPlayerId(
+                  e.target.value ? Number(e.target.value) : null
+                )
+              }
+            >
+              <option value="">Seleccionar jugador</option>
+              {players?.map((player) => (
+                <option key={player.id} value={player.id}>
+                  {player.name} ({player.category}ª)
+                </option>
+              ))}
+            </Select>
+
+            <Button
+              onClick={handleGeneratePlan}
+              disabled={!selectedPlayerId || generatePlan.isPending}
+              className="shrink-0"
+            >
+              {generatePlan.isPending ? "Generando..." : "Generar plan"}
+            </Button>
+          </div>
+
+          {selectedPlayerId && (
+            <Link
+              to={`/players/${selectedPlayerId}/plan`}
+              className="mt-3 inline-block text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-ink"
+            >
+              Ver el plan actual
+            </Link>
+          )}
+        </Card>
+
+        <Card className="overflow-hidden">
+          <div className="flex flex-col gap-2 border-b border-hairline p-3 sm:flex-row">
+            <Select
+              className="flex-1"
+              aria-label="Filtrar por dificultad"
               value={difficulty}
               onChange={(e) =>
                 setDifficulty(e.target.value as DrillDifficulty | "")
@@ -127,8 +113,10 @@ export default function DrillsPage() {
                 </option>
               ))}
             </Select>
+
             <Select
-              className="p-3 rounded-2xl flex-1"
+              className="flex-1"
+              aria-label="Filtrar por tipo"
               value={skillType}
               onChange={(e) =>
                 setSkillType(e.target.value as DrillSkillType | "")
@@ -145,26 +133,40 @@ export default function DrillsPage() {
             </Select>
           </div>
 
-          {/* Drills grid */}
-          <div className="px-6 py-5">
+          <div className="p-3">
             {isLoading ? (
-              <div className="py-8 flex justify-center">
-                <div className="animate-spin rounded-xl h-8 w-8 border-t-2 border-b-2 border-accent-red"></div>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <Skeleton key={i} className="h-44 rounded-card" />
+                ))}
               </div>
             ) : drills && drills.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                 {drills.map((drill) => (
                   <DrillCard key={drill.id} drill={drill} />
                 ))}
               </div>
             ) : (
-              <div className="py-8 text-center text-gray-400">
-                No se encontraron ejercicios con estos filtros.
-              </div>
+              <EmptyState
+                icon={<LuTarget className="h-5 w-5" />}
+                title="Ningún ejercicio coincide"
+                hint="Prueba a quitar alguno de los filtros."
+                action={
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setDifficulty("");
+                      setSkillType("");
+                    }}
+                  >
+                    Quitar filtros
+                  </Button>
+                }
+              />
             )}
           </div>
-        </div>
+        </Card>
       </div>
-    </Layout>
+    </>
   );
 }

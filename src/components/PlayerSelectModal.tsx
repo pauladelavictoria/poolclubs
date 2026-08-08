@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import { toast } from "react-toastify";
+import { Label } from "@/components/ui/Label";
 
 export default function PlayerSelectModal() {
   const { user, player, isLoading, isPlayerLoading, linkPlayer } = useAuth();
@@ -11,10 +12,7 @@ export default function PlayerSelectModal() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [isLinking, setIsLinking] = useState(false);
 
-  // Don't show if: not logged in, still loading, or already linked
-  if (!user || isLoading || isPlayerLoading || player) {
-    return null;
-  }
+  if (!user || isLoading || isPlayerLoading || player) return null;
 
   const handleLink = async () => {
     if (!selectedId) return;
@@ -23,39 +21,52 @@ export default function PlayerSelectModal() {
       await linkPlayer(Number(selectedId));
       toast.success("Perfil vinculado correctamente");
     } catch {
-      toast.error("Error al vincular el perfil. ¿Ya está vinculado a otra cuenta?");
+      toast.error(
+        "Error al vincular el perfil. ¿Ya está vinculado a otra cuenta?"
+      );
     } finally {
       setIsLinking(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="w-full max-w-md mx-4 bg-dark-card rounded-3xl border border-dark-border shadow-card p-6">
-        <h2 className="text-xl font-bold text-white mb-2">
-          Selecciona tu perfil de jugador
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center sm:p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="link-player-title"
+        className="w-full max-w-md rounded-t-sheet border border-hairline bg-felt p-5 sm:rounded-sheet"
+      >
+        <h2
+          id="link-player-title"
+          className="text-h3 font-semibold text-ink"
+        >
+          ¿Quién eres?
         </h2>
-        <p className="text-sm text-gray-400 mb-6">
-          Para acceder a tu perfil y plan de entrenamiento, selecciona qué
-          jugador eres.
+        <p className="mt-1 max-w-[42ch] text-body text-ink-soft">
+          Vincula tu cuenta a un jugador del club para ver tu perfil y tu plan
+          de entrenamiento.
         </p>
 
-        <Select
-          className="p-3 rounded-2xl mb-4"
-          disabled={playersLoading}
-          value={selectedId}
-          onChange={(e) => setSelectedId(e.target.value)}
-        >
-          <option value="">Seleccionar jugador...</option>
-          {players?.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} (Cat. {p.category})
-            </option>
-          ))}
-        </Select>
+        <div className="mt-5 space-y-1.5">
+          <Label htmlFor="link-player">Jugador</Label>
+          <Select
+            id="link-player"
+            disabled={playersLoading}
+            value={selectedId}
+            onChange={(e) => setSelectedId(e.target.value)}
+          >
+            <option value="">Seleccionar jugador...</option>
+            {players?.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} ({p.category}ª)
+              </option>
+            ))}
+          </Select>
+        </div>
 
         <Button
-          className="w-full rounded-2xl shadow-md"
+          className="mt-5 w-full"
           onClick={handleLink}
           disabled={!selectedId || isLinking}
         >

@@ -9,6 +9,12 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { DrillLog } from "@/types";
+import { Card, CardHeader } from "@/components/ui/Card";
+
+/* Chart ink, matched to the theme tokens */
+const AXIS = "#8d9793";
+const GRID = "rgba(255,255,255,0.07)";
+const SCORE = "#3fbf7f";
 
 interface DrillProgressChartProps {
   logs: DrillLog[];
@@ -38,51 +44,48 @@ export default function DrillProgressChart({
   }
 
   return (
-    <div className="bg-dark-card p-4 md:p-6 rounded-3xl border border-dark-border shadow-card">
-      <h2 className="text-xl font-bold text-white mb-6 ml-2">{title}</h2>
-      <div className="h-64 md:h-80 w-full text-sm">
+    <Card className="overflow-hidden">
+      <CardHeader title={title} />
+      <div className="h-64 w-full p-3 text-caption md:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
             <XAxis
               dataKey="date"
-              stroke="#888"
-              tick={{ fill: "#888" }}
-              axisLine={{ stroke: "#333" }}
-              tickLine={{ stroke: "#333" }}
+              stroke={AXIS}
+              tick={{ fill: AXIS, fontSize: 12 }}
+              axisLine={{ stroke: GRID }}
+              tickLine={{ stroke: GRID }}
             />
             <YAxis
-              stroke="#888"
-              tick={{ fill: "#888" }}
+              stroke={AXIS}
+              tick={{ fill: AXIS, fontSize: 12 }}
               domain={[0, 100]}
-              axisLine={{ stroke: "#333" }}
-              tickLine={{ stroke: "#333" }}
+              axisLine={{ stroke: GRID }}
+              tickLine={{ stroke: GRID }}
               tickFormatter={(val) => `${val}%`}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "#1a1a1a",
-                borderColor: "#333",
-                borderRadius: "0.5rem",
-                color: "#fff",
+                backgroundColor: "#1f2624",
+                border: "1px solid rgba(255,255,255,0.13)",
+                borderRadius: "10px",
+                color: "#f4f2ec",
+                fontSize: 14,
               }}
-              itemStyle={{ color: "#fff" }}
-              // formatter={(value: number , _name: string, props: { payload: { raw: string } }) => [
-              //   `${value || 0}% (${props.payload.raw})`,
-              //   "Puntuación",
-              // ]}
+              itemStyle={{ color: "#f4f2ec" }}
             />
             <Line
               type="monotone"
               dataKey="score"
-              stroke="#4ade80"
+              stroke={SCORE}
               strokeWidth={2}
-              dot={{ r: 3, fill: "#4ade80" }}
-              activeDot={{ r: 6 }}
+              dot={{ r: 3, fill: SCORE }}
+              activeDot={{ r: 5 }}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </Card>
   );
 }

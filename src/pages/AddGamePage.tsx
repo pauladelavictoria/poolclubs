@@ -1,31 +1,35 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "react-toastify";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useAddGame } from "@/hooks/useAddGame";
-import { toast } from "react-toastify";
-import Layout from "./Layout";
-import type { Game } from "@/types";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
-import { HiChevronLeft, HiPlus } from "react-icons/hi";
-import { Link } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
+import GamesList from "@/components/GamesList";
+import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { Label } from "@/components/ui/Label";
+import { Segmented } from "@/components/ui/Segmented";
+import { SkeletonRows } from "@/components/ui/Skeleton";
+import type { Game } from "@/types";
 
-export default function GamesPage() {
-  const { register, handleSubmit, reset, watch, setValue } = useForm<Game>({
-    defaultValues: {
-      mode: "single",
-    },
+export default function AddGamePage() {
+  const { register, handleSubmit, reset, control, setValue } = useForm<Game>({
+    defaultValues: { mode: "single" },
   });
+
   const {
     data: gamesData,
     isLoading: gamesLoading,
     refetch: refetchGames,
   } = useGetGames({ pageSize: 10 });
   const { data: players, isLoading: playersLoading } = useGetPlayers();
-  const { mutate: handleAddGame } = useAddGame();
+  const { mutate: handleAddGame, isPending } = useAddGame();
 
-  const [
+  // `useWatch`, not `watch()`: the hook form is memoizable, so React Compiler
+  // doesn't bail out of optimising this whole component.
+  const {
     player_1_name,
     player_2_name,
     player_1b_name,
@@ -33,15 +37,7 @@ export default function GamesPage() {
     player_1_score,
     player_2_score,
     mode,
-  ] = watch([
-    "player_1_name",
-    "player_2_name",
-    "player_1b_name",
-    "player_2b_name",
-    "player_1_score",
-    "player_2_score",
-    "mode",
-  ]);
+  } = useWatch({ control });
 
   const isDoubles = mode === "doubles";
   const selectedPlayers = [
@@ -52,261 +48,172 @@ export default function GamesPage() {
 
   const hasDuplicatePlayers =
     new Set(selectedPlayers).size !== selectedPlayers.length;
+  const bothScoresIn = !!player_1_score && !!player_2_score;
+  const isTie = bothScoresIn && player_1_score === player_2_score;
+
+  const problem = hasDuplicatePlayers
+    ? "Un jugador no puede estar en los dos lados."
+    : isTie
+      ? "Un partido no puede acabar en empate."
+      : null;
+
+  const namesComplete =
+    !!player_1_name &&
+    !!player_2_name &&
+    (!isDoubles || (!!player_1b_name && !!player_2b_name));
 
   const addDisabled =
-    playersLoading ||
-    !player_1_name ||
-    !player_2_name ||
-    (isDoubles && (!player_1b_name || !player_2b_name)) ||
-    player_1_score === "" ||
-    player_2_score === "" ||
-    hasDuplicatePlayers ||
-    player_1_score === player_2_score;
+    playersLoading || isPending || !namesComplete || !bothScoresIn || !!problem;
 
   const onSubmit = (game: Game) => {
-    const player_1_id = players?.find((p) => p.name === game.player_1_name)?.id;
-    const player_2_id = players?.find((p) => p.name === game.player_2_name)?.id;
-    const player_1b_id = game.player_1b_name
-      ? players?.find((p) => p.name === game.player_1b_name)?.id
-      : undefined;
-    const player_2b_id = game.player_2b_name
-      ? players?.find((p) => p.name === game.player_2b_name)?.id
-      : undefined;
+    const byName = (name?: string) =>
+      name ? players?.find((p) => p.name === name)?.id : undefined;
 
-    if (typeof player_1_id === "number" && typeof player_2_id === "number") {
-      const fullGame: Game = {
+    const player_1_id = byName(game.player_1_name);
+    const player_2_id = byName(game.player_2_name);
+
+    if (typeof player_1_id !== "number" || typeof player_2_id !== "number") {
+      toast.error("No se han podido identificar los jugadores");
+      return;
+    }
+
+    handleAddGame(
+      {
         ...game,
         player_1_id,
         player_2_id,
-        player_1b_id,
-        player_2b_id,
-      };
-      handleAddGame(fullGame, {
+        player_1b_id: byName(game.player_1b_name),
+        player_2b_id: byName(game.player_2b_name),
+      },
+      {
         onSuccess: () => {
           toast.success("Partido añadido");
           reset();
           refetchGames();
         },
-        onError: () => {
-          toast.error("Ha ocurrido un error");
-        },
-      });
-    }
+        onError: () => toast.error("Ha ocurrido un error"),
+      },
+    );
   };
 
+  const playerOptions = players?.map((player) => (
+    <option key={player.id} value={player.name}>
+      {player.name}
+    </option>
+  ));
+
+  const scoreInput = "h-14 text-center font-mono text-h1 font-semibold";
+
   return (
-    <Layout>
-      <div>
-        <div className="bg-dark-card shadow-card overflow-hidden">
-          <div className="bg-gradient-to-r from-accent-red to-accent-red-dark p-4 text-white">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex items-center gap-3">
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-2 text-white py-2 transition-colors hover:opacity-80"
-                  aria-label="Inicio"
-                >
-                  <HiChevronLeft className="h-6 w-6" aria-hidden />
-                </Link>
-                <h1 className="text-2xl font-bold">Añadir nuevo partido</h1>
-              </div>
-            </div>
+    <>
+      <PageHeader title="Añadir partido" back="/games" />
+
+      <div className="mx-auto max-w-xl space-y-4 px-3 py-4">
+        <Card className="p-5">
+          <div className="mb-5 flex justify-center">
+            <Segmented
+              label="Modalidad"
+              value={isDoubles ? "doubles" : "single"}
+              onChange={(next) => {
+                reset();
+                setValue("mode", next);
+              }}
+              options={[
+                { value: "single", label: "Individual" },
+                { value: "doubles", label: "Parejas" },
+              ]}
+            />
           </div>
 
-          {/* Add form */}
-          <div className="px-6 py-6 border-b border-dark-border bg-white">
-            <div className="flex justify-end mb-4">
-              <div className="bg-gray-100 p-1 rounded-2xl flex gap-1 border border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    reset();
-                    setValue("mode", "single");
-                  }}
-                  className={`px-8 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    mode === "single"
-                      ? "bg-white text-accent-red shadow-md"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                  }`}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <fieldset className="space-y-1.5">
+              <Label>{isDoubles ? "Pareja 1" : "Jugador 1"}</Label>
+              <Select
+                disabled={playersLoading}
+                {...register("player_1_name", { required: true })}
+              >
+                <option value="">Seleccionar</option>
+                {playerOptions}
+              </Select>
+              {isDoubles && (
+                <Select
+                  disabled={playersLoading}
+                  {...register("player_1b_name", { required: isDoubles })}
                 >
-                  Individual
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    reset();
-                    setValue("mode", "doubles");
-                  }}
-                  className={`px-8 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    mode === "doubles"
-                      ? "bg-white text-accent-red shadow-md"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  Parejas
-                </button>
-              </div>
-            </div>
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="flex flex-col xl:flex-row gap-2">
-                <div className="flex-1 flex flex-col gap-2">
-                  <Select
-                    className="p-3 rounded-2xl"
-                    disabled={playersLoading}
-                    {...register("player_1_name", { required: true })}
-                  >
-                    <option value="">
-                      {isDoubles ? "Pareja 1: Jugador 1" : "Jugador 1"}
-                    </option>
-                    {players?.map((player) => (
-                      <option key={player.id} value={player.name}>
-                        {player.name}
-                      </option>
-                    ))}
-                  </Select>
-                  {isDoubles && (
-                    <Select
-                      className="p-3 rounded-2xl"
-                      disabled={playersLoading}
-                      {...register("player_1b_name", { required: isDoubles })}
-                    >
-                      <option value="">Pareja 1: Jugador 2</option>
-                      {players?.map((player) => (
-                        <option key={player.id} value={player.name}>
-                          {player.name}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                </div>
-                <Input
-                  type="number"
-                  min={0}
-                  className="flex-1 p-3 rounded-2xl"
-                  placeholder={isDoubles ? "Res. equipo 1" : "Res. jugador 1"}
-                  {...register("player_1_score", { required: true })}
-                />
-                <Input
-                  type="number"
-                  min={0}
-                  className="flex-1 p-3 rounded-2xl"
-                  placeholder={isDoubles ? "Res. equipo 2" : "Res. jugador 2"}
-                  {...register("player_2_score", { required: true })}
-                />
-                <div className="flex-1 flex flex-col gap-2">
-                  <Select
-                    className="p-3 rounded-2xl"
-                    disabled={playersLoading}
-                    {...register("player_2_name", { required: true })}
-                  >
-                    <option value="">
-                      {isDoubles ? "Pareja 2: Jugador 1" : "Jugador 2"}
-                    </option>
-                    {players?.map((player) => (
-                      <option key={player.id} value={player.name}>
-                        {player.name}
-                      </option>
-                    ))}
-                  </Select>
-                  {isDoubles && (
-                    <Select
-                      className="p-3 rounded-2xl"
-                      disabled={playersLoading}
-                      {...register("player_2b_name", { required: isDoubles })}
-                    >
-                      <option value="">Pareja 2: Jugador 2</option>
-                      {players?.map((player) => (
-                        <option key={player.id} value={player.name}>
-                          {player.name}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                </div>
-                <Button
-                  type="submit"
-                  className={`w-max rounded-2xl shadow-md ${
-                    addDisabled ? "bg-gray-600" : ""
-                  }`}
-                  disabled={addDisabled}
-                >
-                  <HiPlus className="h-6 w-6" aria-hidden />
-                  Añadir
-                </Button>
-              </div>
-            </form>
-          </div>
-
-          {/* List of items */}
-          {gamesData?.games && gamesData.games.length > 0 && (
-            <div className="px-6 py-5">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                <h2 className="text-lg text-center sm:text-left font-medium text-white">
-                  Últimos partidos
-                </h2>
-              </div>
-
-              {gamesLoading ? (
-                <div className="py-8 flex justify-center">
-                  <div className="animate-spin rounded-xl h-8 w-8 border-t-2 border-b-2 border-accent-red"></div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {gamesData.games.map((game) => {
-                    const {
-                      id,
-                      player_1_name,
-                      player_1_score,
-                      player_2_score,
-                      player_2_name,
-                      player_1b_name,
-                      player_2b_name,
-                      mode,
-                    } = game;
-                    const isDoubles = mode === "doubles";
-                    const team1 = isDoubles
-                      ? `${player_1_name} / ${player_1b_name}`
-                      : player_1_name;
-                    const team2 = isDoubles
-                      ? `${player_2_name} / ${player_2b_name}`
-                      : player_2_name;
-
-                    return (
-                      <div
-                        key={id}
-                        className="flex justify-between items-center p-4 bg-dark-bg hover:bg-dark-card-hover rounded-2xl border border-dark-border transition-colors group"
-                      >
-                        <div className="w-full flex items-center gap-1 text-gray-300">
-                          <span
-                            className={`flex-1 text-right ${
-                              player_1_score > player_2_score
-                                ? "font-bold text-white"
-                                : ""
-                            }`}
-                          >
-                            {team1}
-                          </span>
-                          <span>{player_1_score}</span>-
-                          <span>{player_2_score}</span>
-                          <span
-                            className={`flex-1 ${
-                              player_2_score > player_1_score
-                                ? "font-bold text-white"
-                                : ""
-                            }`}
-                          >
-                            {team2}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                  <option value="">Seleccionar compañero</option>
+                  {playerOptions}
+                </Select>
               )}
+            </fieldset>
+
+            {/* The result is what this screen is for, so it's the biggest thing on it */}
+            <div className="flex items-center gap-3">
+              <Input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                aria-label={isDoubles ? "Mesas pareja 1" : "Mesas jugador 1"}
+                placeholder="0"
+                className={scoreInput}
+                {...register("player_1_score", { required: true })}
+              />
+              <span aria-hidden className="text-h3 text-ink-ghost">
+                -
+              </span>
+              <Input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                aria-label={isDoubles ? "Mesas pareja 2" : "Mesas jugador 2"}
+                placeholder="0"
+                className={scoreInput}
+                {...register("player_2_score", { required: true })}
+              />
             </div>
-          )}
-        </div>
+
+            <fieldset className="space-y-1.5">
+              <Label>{isDoubles ? "Pareja 2" : "Jugador 2"}</Label>
+              <Select
+                disabled={playersLoading}
+                {...register("player_2_name", { required: true })}
+              >
+                <option value="">Seleccionar</option>
+                {playerOptions}
+              </Select>
+              {isDoubles && (
+                <Select
+                  disabled={playersLoading}
+                  {...register("player_2b_name", { required: isDoubles })}
+                >
+                  <option value="">Seleccionar compañero</option>
+                  {playerOptions}
+                </Select>
+              )}
+            </fieldset>
+
+            {problem && (
+              <p role="alert" className="text-body text-strike">
+                {problem}
+              </p>
+            )}
+
+            <Button type="submit" className="w-full" disabled={addDisabled}>
+              {isPending ? "Guardando..." : "Añadir partido"}
+            </Button>
+          </form>
+        </Card>
+
+        <Card className="overflow-hidden">
+          <CardHeader title="Últimos partidos" />
+          <div className="p-3">
+            {gamesLoading ? (
+              <SkeletonRows rows={4} />
+            ) : (
+              <GamesList games={gamesData?.games ?? []} />
+            )}
+          </div>
+        </Card>
       </div>
-    </Layout>
+    </>
   );
 }

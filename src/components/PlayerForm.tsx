@@ -34,7 +34,7 @@ export default function PlayerForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
+      <div className="space-y-1.5">
         <Label htmlFor="name">Nombre</Label>
         <Input
           type="text"
@@ -46,7 +46,7 @@ export default function PlayerForm({
         />
       </div>
 
-      <div>
+      <div className="space-y-1.5">
         <Label htmlFor="category">Categoría</Label>
         <Select
           id="category"

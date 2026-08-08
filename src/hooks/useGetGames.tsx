@@ -1,6 +1,5 @@
 import { supabase } from "@/supabaseClient";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Game, GameMode } from "@/types";
 
 export type UseGetGamesFilters = {
@@ -20,6 +19,8 @@ const getDateRange = (date: string) => {
   };
 };
 
+// Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
+// for the app, rather than one per hook instance.
 export const useGetGames = (filters?: UseGetGamesFilters) => {
   const {
     date,
@@ -29,7 +30,6 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
     category,
     mode,
   } = filters ?? {};
-  const queryClient = useQueryClient();
 
   async function fetchGames() {
     let query = supabase
@@ -97,36 +97,6 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
       totalCount: count ?? null,
     };
   }
-
-  useEffect(() => {
-    const invalidateGames = () => {
-      queryClient.invalidateQueries({ queryKey: ["games"] });
-    };
-
-    const gamesChannel = supabase
-      .channel("games-changes")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "games" },
-        invalidateGames
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "games" },
-        invalidateGames
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "games" },
-        invalidateGames
-      )
-      .subscribe();
-
-    // Cleaning
-    return () => {
-      supabase.removeChannel(gamesChannel);
-    };
-  }, [queryClient]);
 
   return useQuery({
     queryKey: ["games", date, page, pageSize, playerName, category, mode],

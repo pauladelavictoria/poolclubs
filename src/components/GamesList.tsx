@@ -1,5 +1,7 @@
 import type { Game } from "@/types";
 import React from "react";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LuSwords } from "react-icons/lu";
 
 interface GamesListProps {
   games: Game[];
@@ -7,6 +9,34 @@ interface GamesListProps {
   showDates?: boolean;
 }
 
+const DAY_FMT = new Intl.DateTimeFormat("es-ES", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+const TIME_FMT = new Intl.DateTimeFormat("es-ES", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+const midnight = (d: Date) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+function dayLabel(date: Date) {
+  const days = Math.round(
+    (midnight(new Date()).getTime() - midnight(date).getTime()) / 86_400_000,
+  );
+  if (days === 0) return "Hoy";
+  if (days === 1) return "Ayer";
+  return DAY_FMT.format(date);
+}
+
+/**
+ * A result is a score. The figure is the focal element — mono, tabular, large
+ * enough to read at arm's length in a dim room. The winning side gets the
+ * weight; the losing side is demoted rather than marked in red, because red
+ * means "act" everywhere else in this app.
+ */
 export default function GamesList({
   games,
   playerName,
@@ -14,14 +44,16 @@ export default function GamesList({
 }: GamesListProps) {
   if (!games || games.length === 0) {
     return (
-      <div className="py-8 text-center text-gray-500">
-        No hay partidos registrados.
-      </div>
+      <EmptyState
+        icon={<LuSwords className="h-5 w-5" />}
+        title="Todavía no hay partidos"
+        hint="Los resultados aparecerán aquí en cuanto se registre el primero."
+      />
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1.5">
       {games.map((game, index) => {
         const {
           id,
@@ -34,6 +66,7 @@ export default function GamesList({
           mode,
           created_at,
         } = game;
+
         const isDoubles = mode === "doubles";
         const team1 = isDoubles
           ? `${player_1_name} / ${player_1b_name}`
@@ -47,64 +80,60 @@ export default function GamesList({
         const p1Won = p1Score > p2Score;
         const p2Won = p2Score > p1Score;
 
-        let bgClass = "bg-dark-bg hover:bg-dark-card-hover border-dark-border";
+        // On a player's own page, mark the frames they took. Losses are simply
+        // left plain — absence reads as loss without spending a second colour.
+        let accent = "border-hairline";
         if (playerName) {
           const inTeam1 =
             player_1_name === playerName || player_1b_name === playerName;
           const inTeam2 =
             player_2_name === playerName || player_2b_name === playerName;
-
-          if (inTeam1) {
-            bgClass = p1Won
-              ? "bg-green-900/20 hover:bg-green-900/30 border-green-900/50"
-              : "bg-red-900/20 hover:bg-red-900/30 border-red-900/50";
-          } else if (inTeam2) {
-            bgClass = p2Won
-              ? "bg-green-900/20 hover:bg-green-900/30 border-green-900/50"
-              : "bg-red-900/20 hover:bg-red-900/30 border-red-900/50";
+          if ((inTeam1 && p1Won) || (inTeam2 && p2Won)) {
+            accent = "border-hairline border-l-2 border-l-pot";
           }
         }
 
-        const currentLocalDate = new Date(created_at).toLocaleDateString();
+        const date = new Date(created_at);
+        const day = date.toDateString();
+        const newDate =
+          index === 0 ||
+          day !== new Date(games[index - 1].created_at).toDateString();
 
-        const previousLocalDate =
-          index > 0
-            ? new Date(games[index - 1].created_at).toLocaleDateString()
-            : "";
-
-        const newDate = currentLocalDate !== previousLocalDate;
+        const side = (won: boolean) =>
+          won ? "font-semibold text-ink" : "text-ink-faint";
 
         return (
           <React.Fragment key={id}>
             {showDates && newDate && (
-              <h3 className="text-gray-400 font-semibold text-xs mt-6 mb-2 px-3 tracking-wider uppercase">
-                {currentLocalDate}
+              <h3 className="px-1 pb-1 pt-5 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint first:pt-0">
+                {dayLabel(date)}
               </h3>
             )}
             <div
-              className={`flex justify-between items-center p-4 rounded-2xl border transition-colors group ${bgClass}`}
+              className={`flex items-center gap-3 rounded-control border bg-pocket px-3 py-2.5 transition-colors duration-150 hover:bg-felt-raised ${accent}`}
             >
-              <div className="w-full flex items-center gap-1 text-gray-300">
-                <span
-                  className={`flex-1 text-right ${
-                    player_1_score > player_2_score
-                      ? "font-bold text-white"
-                      : ""
-                  }`}
-                >
-                  {team1}
+              <time
+                dateTime={created_at}
+                className="hidden w-10 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
+              >
+                {TIME_FMT.format(date)}
+              </time>
+              <span className={`flex-1 truncate text-right ${side(p1Won)}`}>
+                {team1}
+              </span>
+              <span className="shrink-0 font-mono text-h4 font-semibold tabular-nums">
+                <span className={p1Won ? "text-ink" : "text-ink-faint"}>
+                  {p1Score}
                 </span>
-                <span>{player_1_score}</span>-<span>{player_2_score}</span>
-                <span
-                  className={`flex-1 ${
-                    player_2_score > player_1_score
-                      ? "font-bold text-white"
-                      : ""
-                  }`}
-                >
-                  {team2}
+                <span className="px-1 text-ink-ghost">-</span>
+                <span className={p2Won ? "text-ink" : "text-ink-faint"}>
+                  {p2Score}
                 </span>
-              </div>
+              </span>
+              <span className={`flex-1 truncate ${side(p2Won)}`}>{team2}</span>
+              <span className="hidden w-10 shrink-0 text-right text-caption font-medium text-ink-ghost sm:block">
+                {isDoubles ? "2v2" : ""}
+              </span>
             </div>
           </React.Fragment>
         );
