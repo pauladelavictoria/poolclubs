@@ -3,10 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditDrill } from "@/libs/drillPermissions";
 import PageHeader from "@/components/PageHeader";
 import PoolTableDiagram from "@/components/PoolTableDiagram";
 import DrillLogForm from "@/components/DrillLogForm";
-import DrillProgressChart from "@/components/DrillProgressChart";
+import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { scoreBand, scorePct } from "@/libs/scoreBand";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -48,7 +51,10 @@ export default function DrillDetailPage() {
   });
 
   const { data: drillLogs } = useGetDrillLogs({ drill_id: drillId });
+  const { data: players } = useGetPlayers();
   const { completeStep } = useTrainingPlan(undefined);
+  const { user, isAdmin } = useAuth();
+  const canEdit = canEditDrill(drill?.created_by, user?.id, isAdmin);
 
   const handleLogSuccess = (drillLogId: number) => {
     if (planId && stepId) completeStep.mutate({ stepId, drillLogId });
@@ -61,7 +67,7 @@ export default function DrillDetailPage() {
     return (
       <>
         <PageHeader title="Ejercicio" back={backLink} />
-        <div className="mx-auto max-w-3xl space-y-4 px-3 py-4">
+        <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
           <Skeleton className="aspect-[2/1] w-full rounded-card" />
           <Skeleton className="h-32 w-full rounded-card" />
         </div>
@@ -73,7 +79,7 @@ export default function DrillDetailPage() {
     return (
       <>
         <PageHeader title="Ejercicio" back={backLink} />
-        <div className="mx-auto max-w-3xl px-3 py-4">
+        <div className="mx-auto max-w-5xl px-3 py-4">
           <Card>
             <EmptyState
               title="Ejercicio no encontrado"
@@ -99,9 +105,18 @@ export default function DrillDetailPage() {
         title={drill.name}
         subtitle={SKILL_TYPE_LABELS[drill.skill_type]}
         back={backLink}
-      />
+      >
+        {canEdit && (
+          <Link
+            to={`/drills/${drill.id}/edit`}
+            className={buttonClasses({ variant: "secondary", size: "sm" })}
+          >
+            Editar
+          </Link>
+        )}
+      </PageHeader>
 
-      <div className="mx-auto max-w-3xl space-y-4 px-3 py-4">
+      <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         {planId && planPlayerId && (
           <Link
             to={backLink}
@@ -156,37 +171,42 @@ export default function DrillDetailPage() {
         </Card>
 
         {drillLogs && drillLogs.length > 0 && (
-          <>
-            <DrillProgressChart
-              logs={drillLogs}
-              title="Historial de resultados"
-            />
-
-            <Card className="overflow-hidden">
-              <CardHeader title="Últimos resultados" />
-              <ul className="p-2">
-                {drillLogs.slice(0, 20).map((log) => (
+          <Card className="overflow-hidden">
+            <CardHeader title="Últimos resultados" />
+            <ul className="p-2">
+              {drillLogs.slice(0, 20).map((log) => {
+                const pct = scorePct(log.score, log.max_score);
+                const band = scoreBand(pct);
+                return (
                   <li
                     key={log.id}
-                    className="flex items-center gap-3 rounded-control px-2 py-2.5"
+                    className="flex items-baseline gap-3 rounded-control px-2 py-2"
                   >
-                    <time className="text-caption tabular-nums text-ink-faint">
+                    <span className="min-w-0 flex-1 truncate text-body text-ink">
+                      {players?.find((p) => p.id === log.player_id)?.name ??
+                        "—"}
+                    </span>
+                    <time
+                      dateTime={log.created_at}
+                      className="shrink-0 text-caption tabular-nums text-ink-faint"
+                    >
                       {new Date(log.created_at).toLocaleDateString()}
                     </time>
-                    {log.notes && (
-                      <span className="min-w-0 flex-1 truncate text-caption text-ink-faint">
-                        {log.notes}
-                      </span>
-                    )}
-                    <span className="ml-auto font-mono text-body font-semibold tabular-nums text-ink">
-                      {log.score}
-                      <span className="text-ink-faint">/{log.max_score}</span>
+                    <span className="shrink-0 font-mono text-caption tabular-nums text-ink-faint">
+                      {log.score}/{log.max_score}
+                    </span>
+                    <span
+                      className="w-12 shrink-0 text-right font-mono text-body font-semibold tabular-nums"
+                      style={{ color: band.color }}
+                      title={band.label}
+                    >
+                      {pct}%
                     </span>
                   </li>
-                ))}
-              </ul>
-            </Card>
-          </>
+                );
+              })}
+            </ul>
+          </Card>
         )}
       </div>
     </>

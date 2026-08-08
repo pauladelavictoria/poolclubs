@@ -64,6 +64,7 @@ export type Drill = {
   ball_positions: BallPosition[];
   shot_paths: ShotPath[];
   created_at: string;
+  created_by: string | null;
 };
 
 export type DrillLog = {

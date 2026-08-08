@@ -6,6 +6,8 @@ import PageHeader from "@/components/PageHeader";
 import DrillCard from "@/components/DrillCard";
 import { useGetDrills } from "@/hooks/useGetDrills";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useAuth } from "@/hooks/useAuth";
+import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
@@ -21,6 +23,7 @@ export default function DrillsPage() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
 
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: drills, isLoading } = useGetDrills({
     difficulty: difficulty || undefined,
     skill_type: skillType || undefined,
@@ -40,13 +43,22 @@ export default function DrillsPage() {
       {
         onSuccess: () => navigate(`/players/${player.id}/plan`),
         onError: () => toast.error("Error al generar el plan"),
-      }
+      },
     );
   };
 
   return (
     <>
-      <PageHeader title="Entrenamiento" />
+      <PageHeader title="Ejercicios">
+        {user && (
+          <Link
+            to="/drills/new"
+            className={buttonClasses({ variant: "secondary", size: "sm" })}
+          >
+            Nuevo ejercicio
+          </Link>
+        )}
+      </PageHeader>
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         {/* The primary action on this screen: get a plan. It leads. */}
@@ -63,7 +75,7 @@ export default function DrillsPage() {
               value={selectedPlayerId ?? ""}
               onChange={(e) =>
                 setSelectedPlayerId(
-                  e.target.value ? Number(e.target.value) : null
+                  e.target.value ? Number(e.target.value) : null,
                 )
               }
             >

@@ -1,7 +1,28 @@
+import { Navigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
+import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/Card";
+import { NEXT_KEY, isSafePath } from "@/libs/nextPath";
 
 export default function LoginPage() {
+  const { user, isLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const rawNext = searchParams.get("next");
+  const next = isSafePath(rawNext) ? rawNext : "/";
+
+  // Already signed in — nothing to do here but leave
+  if (!isLoading && user) return <Navigate to={next} replace />;
+
+  const signIn = () => {
+    // Google returns to the site root, so the destination has to outlive the
+    // page load. Layout picks it up again once the session lands.
+    sessionStorage.setItem(NEXT_KEY, next);
+    supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    });
+  };
+
   return (
     <div className="flex min-h-dvh items-center justify-center px-4">
       <Card className="w-full max-w-sm p-7 text-center">
@@ -17,12 +38,7 @@ export default function LoginPage() {
 
         <button
           type="button"
-          onClick={() =>
-            supabase.auth.signInWithOAuth({
-              provider: "google",
-              options: { redirectTo: window.location.origin },
-            })
-          }
+          onClick={signIn}
           className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-control bg-ink font-medium text-pocket transition-[background-color,transform] duration-150 ease-[var(--ease-out)] hover:bg-white active:scale-[0.97]"
         >
           <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" aria-hidden>

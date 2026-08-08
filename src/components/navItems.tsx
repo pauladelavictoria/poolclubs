@@ -21,13 +21,17 @@ export const PRIMARY_NAV: NavItem[] = [
   { to: "/", label: "Inicio", icon: LuHouse, end: true },
   { to: "/ranking", label: "Ranking", icon: LuTrophy, end: true },
   { to: "/games", label: "Partidos", icon: LuSwords, end: true },
-  { to: "/drills", label: "Entreno", icon: LuTarget, end: true },
+  { to: "/drills", label: "Ejercicios", icon: LuTarget, end: true },
 ];
 
 /** Full map, used by the drawer. */
 export const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
   {
-    heading: "Ranking",
+    heading: "Entrenamiento",
+    items: [{ to: "/drills", label: "Ejercicios", icon: LuTarget, end: true }],
+  },
+  {
+    heading: "Rankings",
     items: [
       { to: "/ranking", label: "Global", icon: LuTrophy, end: true },
       { to: "/ranking/daily", label: "Diario", icon: LuCalendarDays },
@@ -47,9 +51,6 @@ export const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
   },
   {
     heading: "Club",
-    items: [
-      { to: "/players", label: "Jugadores", icon: LuUsers, end: true },
-      { to: "/drills", label: "Ejercicios", icon: LuTarget, end: true },
-    ],
+    items: [{ to: "/players", label: "Jugadores", icon: LuUsers, end: true }],
   },
 ];

@@ -1,49 +1,48 @@
 import { useForm } from "react-hook-form";
+import { Link, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useAuth } from "@/hooks/useAuth";
 import { useAddDrillLog } from "@/hooks/useAddDrillLog";
-import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonStyles";
+import { loginLink } from "@/libs/nextPath";
 import type { Drill } from "@/types";
 
 interface DrillLogFormProps {
   drill: Drill;
-  defaultPlayerId?: number;
   onSuccess?: (drillLogId: number) => void;
 }
 
 type FormData = {
-  player_id: string;
   score: string;
   notes: string;
 };
 
-export default function DrillLogForm({
-  drill,
-  defaultPlayerId,
-  onSuccess,
-}: DrillLogFormProps) {
-  const { data: players, isLoading: playersLoading } = useGetPlayers();
+export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
+  const { user, player, isPlayerLoading } = useAuth();
+  const location = useLocation();
   const { mutate: addDrillLog, isPending } = useAddDrillLog();
-  const { register, handleSubmit, reset } = useForm<FormData>({
-    defaultValues: {
-      player_id: defaultPlayerId ? String(defaultPlayerId) : "",
-      score: "",
-      notes: "",
-    },
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>({
+    defaultValues: { score: "", notes: "" },
   });
 
   const onSubmit = (data: FormData) => {
-    const playerId = Number(data.player_id);
     const score = Number(data.score);
 
-    if (!playerId || isNaN(score)) return;
+    // The field rules below catch this first; this is the last gate before the
+    // row is written, so it does not rely on them.
+    if (!player || isNaN(score) || score < 0 || score > drill.max_score) return;
 
     addDrillLog(
       {
         drill_id: drill.id,
-        player_id: playerId,
+        player_id: player.id,
         score,
         max_score: drill.max_score,
         notes: data.notes || undefined,
@@ -61,44 +60,65 @@ export default function DrillLogForm({
     );
   };
 
+  if (!user) {
+    return (
+      <div className="space-y-3">
+        <p className="text-body text-ink-soft">
+          Inicia sesión para registrar tus resultados.
+        </p>
+        <Link
+          to={loginLink(location.pathname + location.search)}
+          className={buttonClasses({ variant: "primary" })}
+        >
+          Iniciar sesión
+        </Link>
+      </div>
+    );
+  }
+
+  if (!player) {
+    return (
+      <p className="text-body text-ink-soft">
+        {isPlayerLoading
+          ? "Cargando tu jugador..."
+          : "Vincula tu cuenta con un jugador para registrar resultados."}
+      </p>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
-      <Select
-       
-        disabled={playersLoading}
-        {...register("player_id", { required: true })}
-      >
-        <option value="">Seleccionar jugador</option>
-        {players?.map((player) => (
-          <option key={player.id} value={player.id}>
-            {player.name}
-          </option>
-        ))}
-      </Select>
+      <p className="text-caption text-ink-faint">
+        Registrando como{" "}
+        <span className="font-medium text-ink">{player.name}</span>
+      </p>
 
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-1.5">
         <Input
           type="number"
           min={0}
           max={drill.max_score}
-          className="flex-1"
+          aria-invalid={!!errors.score}
           placeholder={`Puntuación (máx. ${drill.max_score})`}
-          {...register("score", { required: true })}
+          {...register("score", {
+            required: "Introduce la puntuación",
+            min: { value: 0, message: "La puntuación no puede ser negativa" },
+            max: {
+              value: drill.max_score,
+              message: `El máximo de este ejercicio es ${drill.max_score}`,
+            },
+          })}
         />
+        {errors.score && (
+          <p role="alert" className="text-caption text-strike">
+            {errors.score.message}
+          </p>
+        )}
       </div>
 
-      <Input
-        type="text"
-       
-        placeholder="Notas (opcional)"
-        {...register("notes")}
-      />
+      <Input type="text" placeholder="Notas (opcional)" {...register("notes")} />
 
-      <Button
-        type="submit"
-       
-        disabled={isPending}
-      >
+      <Button type="submit" disabled={isPending}>
         {isPending ? "Registrando..." : "Registrar resultado"}
       </Button>
     </form>

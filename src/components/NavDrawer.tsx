@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSignOut } from "@/hooks/useSignOut";
 import { toast } from "react-toastify";
-import { NAV_SECTIONS } from "@/components/navItems";
+import { NAV_SECTIONS, type NavItem } from "@/components/navItems";
 import {
   LuUser,
   LuClipboardList,
@@ -46,6 +46,26 @@ export default function NavDrawer({
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
+  // Without a linked player these point at /me/*, which sits behind
+  // ProtectedRoute and so asks for login first.
+  const me = player ? `/players/${player.id}` : "/me";
+  const sections = NAV_SECTIONS.map((section) =>
+    section.heading === "Entrenamiento"
+      ? {
+          ...section,
+          items: [
+            ...section.items,
+            { to: `${me}/plan`, label: "Mi plan", icon: LuClipboardList },
+            {
+              to: `${me}/progress`,
+              label: "Mi progreso",
+              icon: LuChartColumn,
+            },
+          ] as NavItem[],
+        }
+      : section
+  );
+
   const handleSignOut = async () => {
     onClose();
     try {
@@ -81,22 +101,7 @@ export default function NavDrawer({
           </div>
         </div>
 
-        {player && (
-          <>
-            <Heading>Tú</Heading>
-            <NavLink to={`/players/${player.id}`} className={item}>
-              <LuUser className="h-[18px] w-[18px]" /> Mi perfil
-            </NavLink>
-            <NavLink to={`/players/${player.id}/plan`} className={item}>
-              <LuClipboardList className="h-[18px] w-[18px]" /> Mi plan
-            </NavLink>
-            <NavLink to={`/players/${player.id}/progress`} className={item}>
-              <LuChartColumn className="h-[18px] w-[18px]" /> Mi progreso
-            </NavLink>
-          </>
-        )}
-
-        {NAV_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.heading}>
             <Heading>{section.heading}</Heading>
             {section.items.map(({ to, label, icon: Icon, end }) => (
@@ -108,6 +113,9 @@ export default function NavDrawer({
         ))}
 
         <div className="mt-5 border-t border-hairline pt-3">
+          <NavLink to={me} end className={item}>
+            <LuUser className="h-[18px] w-[18px]" /> Mi perfil
+          </NavLink>
           {user ? (
             <button
               type="button"
