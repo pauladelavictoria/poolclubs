@@ -3,6 +3,7 @@ import type { DailyRankingEntry } from "@/types";
 import { LuChevronRight, LuPlus } from "react-icons/lu";
 import PageHeader from "@/components/PageHeader";
 import GamesList from "@/components/GamesList";
+import PlayerTabs from "@/components/PlayerTabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
@@ -122,25 +123,8 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link
-                to={`/players/${player.id}`}
-                className={buttonClasses({
-                  variant: "secondary",
-                  className: "flex-1",
-                })}
-              >
-                Mi perfil
-              </Link>
-              <Link
-                to={`/players/${player.id}/training/plan`}
-                className={buttonClasses({
-                  variant: "secondary",
-                  className: "flex-1",
-                })}
-              >
-                Mi plan
-              </Link>
+            <div className="mt-5">
+              <PlayerTabs playerId={player.id} as="buttons" />
             </div>
           </Card>
         )}
