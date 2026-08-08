@@ -133,7 +133,7 @@ export default function DashboardPage() {
                 Mi perfil
               </Link>
               <Link
-                to={`/players/${player.id}/plan`}
+                to={`/players/${player.id}/training/plan`}
                 className={buttonClasses({
                   variant: "secondary",
                   className: "flex-1",

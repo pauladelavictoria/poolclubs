@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PageHeader from "@/components/PageHeader";
 import TrainingPlanStepList from "@/components/TrainingPlanStepList";
+import PlayerTabs from "@/components/PlayerTabs";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { Card } from "@/components/ui/Card";
@@ -58,7 +59,7 @@ export default function TrainingPlanPage() {
     return (
       <>
         {header}
-        <div className="mx-auto max-w-xl space-y-2 px-3 py-4">
+        <div className="mx-auto max-w-5xl space-y-2 px-3 py-4">
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} className="h-[54px]" />
           ))}
@@ -71,7 +72,9 @@ export default function TrainingPlanPage() {
     <>
       {header}
 
-      <div className="mx-auto max-w-xl space-y-4 px-3 py-4">
+      <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PlayerTabs playerId={playerIdNum} />
+
         {!planData || !stats ? (
           <Card>
             <EmptyState
@@ -151,15 +154,6 @@ export default function TrainingPlanPage() {
               onSkip={(stepId) => skipStep.mutate(stepId)}
               isSkipping={skipStep.isPending}
             />
-
-            <div className="flex justify-center">
-              <Link
-                to={`/players/${playerIdNum}/progress`}
-                className="text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-ink"
-              >
-                Ver progreso general
-              </Link>
-            </div>
           </>
         )}
       </div>

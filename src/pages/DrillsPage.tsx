@@ -41,7 +41,7 @@ export default function DrillsPage() {
     generatePlan.mutate(
       { playerId: player.id, category: player.category },
       {
-        onSuccess: () => navigate(`/players/${player.id}/plan`),
+        onSuccess: () => navigate(`/players/${player.id}/training/plan`),
         onError: () => toast.error("Error al generar el plan"),
       },
     );
@@ -98,7 +98,7 @@ export default function DrillsPage() {
 
           {selectedPlayerId && (
             <Link
-              to={`/players/${selectedPlayerId}/plan`}
+              to={`/players/${selectedPlayerId}/training/plan`}
               className="mt-3 inline-block text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-ink"
             >
               Ver el plan actual
