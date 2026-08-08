@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       await fetchLinkedPlayer(user.id);
     },
-    [user, fetchLinkedPlayer]
+    [user, fetchLinkedPlayer],
   );
 
   useEffect(() => {
@@ -69,11 +69,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     getUser();
 
-    const { data } = supabase.auth.onAuthStateChange(async (_, session) => {
+    const { data } = supabase.auth.onAuthStateChange((_, session) => {
       const currentUser = session?.user || null;
       setUser(currentUser);
       if (currentUser) {
-        await fetchLinkedPlayer(currentUser.id);
+        setTimeout(() => fetchLinkedPlayer(currentUser.id), 0);
       } else {
         setPlayer(null);
       }

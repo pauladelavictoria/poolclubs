@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
+import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
@@ -8,7 +7,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      // `import.meta.dirname`, not `__dirname`: Vite's native config loader
+      // (the coming default) can't evaluate CJS globals.
+      "@": import.meta.dirname + "/src",
     },
   },
 });

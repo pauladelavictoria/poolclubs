@@ -1,59 +1,219 @@
 @import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 
+/*
+  Pool Valencia — a dim pool room.
+  Surfaces are green-tinted near-black and step by lightness only. Depth strategy is
+  surface-shift + hairline borders; there are no drop shadows (they don't read on dark).
+  Red is the only accent and it only ever means "act".
+*/
 @theme {
-  /* Dark theme colors */
-  --color-dark-bg: #0f0f0f;
-  --color-dark-card: #1a1a1a;
-  --color-dark-card-hover: #222222;
-  --color-dark-border: #2a2a2a;
-  
-  /* Accent colors */
-  --color-accent-red: #ef4444;
-  --color-accent-red-light: #f87171;
-  --color-accent-red-dark: #dc2626;
-  --color-accent-red-darker: #782323;
-  
-  /* Border radius */
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
-  --radius-3xl: 1.5rem;
-  
-  /* Shadows */
-  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -1px rgb(0 0 0 / 0.2);
-  --shadow-card-hover: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -2px rgb(0 0 0 / 0.3);
-  --shadow-glow-red: 0 0 20px rgb(239 68 68 / 0.3);
+  /* Type */
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+  /* Scale: 16px base, ~1.2 ratio, rounded to whole px and to the 4px grid at
+     the top end.*/
+  --text-caption: 0.75rem; /* 12 */
+  --text-body: 1rem; /* 16 */
+  --text-h4: 1.125rem; /* 18 */
+  --text-h3: 1.25rem; /* 20 */
+  --text-h2: 1.5rem; /* 24 */
+  --text-h1: 2rem; /* 32 */
+  --text-display: 3rem; /* 48 */
+
+  /* Surfaces — one hue, lightness only. pocket < felt < raised < rail */
+  --color-pocket: #090b0a; /* page canvas, and input fill (inputs are inset) */
+  --color-felt: #171d1b; /* cards, app bar */
+  --color-felt-raised: #1f2624; /* hover, drawer, popover */
+  --color-rail: #29312e; /* highest: active tab, tooltip */
+
+  /* Borders — low-opacity so they define an edge without demanding attention */
+  --color-hairline: rgba(255, 255, 255, 0.09);
+  --color-hairline-strong: rgba(255, 255, 255, 0.16);
+
+  /* Text — four levels. Ratios are against --color-felt (the card), the worst
+     case, since every level also gets used on the darker canvas. */
+  --color-ink: #f4f2ec; /* cue-ball ivory, primary — 16:1 */
+  --color-ink-soft: #b9c2be; /* secondary — 9.4:1 */
+  --color-ink-faint: #8d9793; /* metadata — 5.7:1, still AA at body size */
+  --color-ink-ghost: #5a6461; /* disabled only — intentionally sub-AA */
+
+  /* Accent — 3-ball red. Action only. */
+  --color-strike: #e23744;
+  --color-strike-deep: #b3212d; /* pressed */
+  --color-strike-tint: rgba(226, 55, 68, 0.14);
+
+  /* Chalk blue — focus rings only, so focus never reads as "action" */
+  --color-chalk: #5b9dd9;
+
+  /* Semantic: a frame is either potted or it isn't. Loss is absence, not a second red. */
+  --color-pot: #3fbf7f;
+
+  /* Object balls, for rank badges */
+  --color-ball-1: #f2b705;
+  --color-ball-2: #2f6fd0;
+  --color-ball-3: #d2342f;
+  --color-ball-cue: #2a312e;
+
+  /* Radius — locked scale. control < card < sheet. */
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-sheet: 20px;
+
+  /* Motion — custom ease-out; built-in curves are too weak */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* Legacy aliases: files not yet migrated still land on the new palette */
+  --color-dark-bg: var(--color-pocket);
+  --color-dark-card: var(--color-felt);
+  --color-dark-card-hover: var(--color-felt-raised);
+  --color-dark-border: var(--color-hairline);
+  --color-accent-red: var(--color-strike);
+  --color-accent-red-light: #ef5c66;
+  --color-accent-red-dark: var(--color-strike-deep);
+  --color-accent-red-darker: #7a1a22;
 }
 
-/* Background texture pattern */
-.bg-texture {
-  background-image: linear-gradient(
-    var(--color-accent-red-darker) 0%,
-    rgba(36, 1, 1, 0.775) 80%
-  );
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-pocket);
+    color: var(--color-ink);
+    font-size: var(--text-body);
+    line-height: 1.5;
+    /* The pendant lamp: one cone of light at the top of the canvas, nothing else. */
+    background-image: radial-gradient(
+      120% 60% at 50% -10%,
+      rgba(226, 55, 68, 0.07) 0%,
+      transparent 60%
+    );
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    /* Optical sizing: large type tightens */
+    letter-spacing: -0.02em;
+  }
+
+  p,
+  li {
+    text-wrap: pretty;
+  }
+
+  /* Every dynamic number holds its column */
+  th,
+  td,
+  time,
+  output {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-chalk);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Native controls can't be fully styled; at least make their popups legible */
+  option {
+    background-color: var(--color-felt-raised);
+    color: var(--color-ink);
+  }
 }
 
-/* Custom scrollbar */
+/* Side nav drawer: slides in, fades its backdrop. No JS animation. */
+dialog.drawer {
+  translate: -100% 0;
+  transition:
+    translate 240ms var(--ease-out),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+
+dialog.drawer[open] {
+  translate: 0 0;
+}
+
+dialog.drawer::backdrop {
+  background: rgb(0 0 0 / 0);
+  transition:
+    background 240ms var(--ease-out),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+
+dialog.drawer[open]::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+@starting-style {
+  dialog.drawer[open] {
+    translate: -100% 0;
+  }
+  dialog.drawer[open]::backdrop {
+    background: rgb(0 0 0 / 0);
+  }
+}
+
+/* Skeletons: a shimmer travelling across the placeholder, not a spinner */
+@keyframes sheen {
+  to {
+    background-position-x: -200%;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+      90deg,
+      var(--color-felt) 40%,
+      var(--color-felt-raised) 50%,
+      var(--color-felt) 60%
+    )
+    0 0 / 200% 100%;
+  animation: sheen 1.4s linear infinite;
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f0f0f;
+  background: var(--color-pocket);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
-  border-radius: 4px;
+  background: var(--color-rail);
+  border-radius: 999px;
+  border: 3px solid var(--color-pocket);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #333;
+  background: #2b3230;
 }
 
-/* Smooth transitions */
-* {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
+@media (prefers-reduced-motion: reduce) {
+  /* Keep opacity and color, drop movement */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 
+  dialog.drawer,
+  dialog.drawer[open] {
+    translate: 0 0;
+  }
+}

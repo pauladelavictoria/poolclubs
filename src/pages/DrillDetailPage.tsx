@@ -3,18 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
-import Layout from "./Layout";
+import PageHeader from "@/components/PageHeader";
 import PoolTableDiagram from "@/components/PoolTableDiagram";
 import DrillLogForm from "@/components/DrillLogForm";
 import DrillProgressChart from "@/components/DrillProgressChart";
-import { HiChevronLeft } from "react-icons/hi";
+import { Card, CardHeader } from "@/components/ui/Card";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { buttonClasses } from "@/components/ui/buttonStyles";
 import { DIFFICULTY_LABELS, SKILL_TYPE_LABELS } from "@/types";
 import type { Drill } from "@/types";
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "bg-green-900/50 text-green-300 border border-green-700/50",
-  intermediate: "bg-yellow-900/50 text-yellow-300 border border-yellow-700/50",
-  advanced: "bg-red-900/50 text-red-300 border border-red-700/50",
+const DIFFICULTY_DOT: Record<string, string> = {
+  beginner: "bg-pot",
+  intermediate: "bg-ball-1",
+  advanced: "bg-strike",
 };
 
 export default function DrillDetailPage() {
@@ -28,9 +31,9 @@ export default function DrillDetailPage() {
   const stepId = searchParams.get("step")
     ? Number(searchParams.get("step"))
     : undefined;
+  const planPlayerId = searchParams.get("playerId");
 
-  // Fetch the drill
-  const { data: drill, isLoading: isDrillLoading } = useQuery({
+  const { data: drill, isLoading } = useQuery({
     queryKey: ["drill", drillId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -44,168 +47,150 @@ export default function DrillDetailPage() {
     enabled: !!drillId,
   });
 
-  // Fetch logs for this drill (all players)
   const { data: drillLogs } = useGetDrillLogs({ drill_id: drillId });
-
-  // If coming from a training plan, get the plan hook for completing steps
-  // We need to find the player_id from the plan step
-  const { completeStep } = useTrainingPlan(
-    planId ? undefined : undefined
-  );
+  const { completeStep } = useTrainingPlan(undefined);
 
   const handleLogSuccess = (drillLogId: number) => {
-    // If this drill was opened from a training plan, complete the step
-    if (planId && stepId) {
-      completeStep.mutate(
-        { stepId, drillLogId },
-        {
-          onSuccess: () => {
-            // Navigate back to the plan
-          },
-        }
-      );
-    }
+    if (planId && stepId) completeStep.mutate({ stepId, drillLogId });
   };
 
-  const backLink = planId
-    ? `/entrenamientos/plan/${searchParams.get("playerId") ?? ""}`
-    : "/entrenamientos";
+  const backLink =
+    planId && planPlayerId ? `/players/${planPlayerId}/plan` : "/drills";
 
-  if (isDrillLoading) {
+  if (isLoading) {
     return (
-      <Layout>
-        <div className="flex justify-center items-center min-h-[50vh]">
-          <div className="animate-spin rounded-xl h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+      <>
+        <PageHeader title="Ejercicio" back={backLink} />
+        <div className="mx-auto max-w-3xl space-y-4 px-3 py-4">
+          <Skeleton className="aspect-[2/1] w-full rounded-card" />
+          <Skeleton className="h-32 w-full rounded-card" />
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (!drill) {
     return (
-      <Layout>
-        <div className="p-8 text-center text-white">
-          Ejercicio no encontrado
+      <>
+        <PageHeader title="Ejercicio" back={backLink} />
+        <div className="mx-auto max-w-3xl px-3 py-4">
+          <Card>
+            <EmptyState
+              title="Ejercicio no encontrado"
+              hint="Puede que se haya eliminado o que el enlace sea antiguo."
+              action={
+                <Link
+                  to="/drills"
+                  className={buttonClasses({ variant: "secondary" })}
+                >
+                  Ver todos los ejercicios
+                </Link>
+              }
+            />
+          </Card>
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link
-            to={backLink}
-            className="text-gray-400 hover:text-white transition-colors p-2 bg-dark-card rounded-xl"
-          >
-            <HiChevronLeft className="h-6 w-6" />
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-white">{drill.name}</h1>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <span
-                className={`px-3 py-1 rounded-xl text-xs font-medium ${DIFFICULTY_COLORS[drill.difficulty]}`}
-              >
-                {DIFFICULTY_LABELS[drill.difficulty]}
-              </span>
-              <span className="px-3 py-1 rounded-xl text-xs font-medium bg-blue-900/50 text-blue-300 border border-blue-700/50">
-                {SKILL_TYPE_LABELS[drill.skill_type]}
-              </span>
-            </div>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        title={drill.name}
+        subtitle={SKILL_TYPE_LABELS[drill.skill_type]}
+        back={backLink}
+      />
 
-        {/* Plan navigation */}
-        {planId && (
+      <div className="mx-auto max-w-3xl space-y-4 px-3 py-4">
+        {planId && planPlayerId && (
           <Link
             to={backLink}
-            className="block mb-4 p-3 bg-accent-red/10 border border-accent-red/30 rounded-2xl text-center text-accent-red hover:bg-accent-red/20 transition-colors text-sm font-medium"
+            className="block rounded-control border border-strike/40 bg-strike-tint px-4 py-2.5 text-center text-body font-medium text-strike transition-colors duration-150 hover:bg-strike/20"
           >
-            Volver al plan de entrenamiento
+            Volver al plan
           </Link>
         )}
 
-        {/* Diagram */}
-        <div className="bg-dark-card p-4 md:p-6 rounded-3xl border border-dark-border shadow-card mb-6">
-          <PoolTableDiagram
-            ballPositions={drill.ball_positions}
-            shotPaths={drill.shot_paths}
-          />
-        </div>
+        <Card className="p-3">
+          <div className="flex justify-center">
+            <PoolTableDiagram
+              ballPositions={drill.ball_positions}
+              shotPaths={drill.shot_paths}
+            />
+          </div>
+        </Card>
 
-        {/* Description */}
-        <div className="bg-dark-card p-4 md:p-6 rounded-3xl border border-dark-border shadow-card mb-6">
-          <p className="text-gray-300 mb-4">{drill.description}</p>
+        <Card className="p-5">
+          <div className="mb-3 flex items-center gap-2 text-caption text-ink-soft">
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className={`h-1.5 w-1.5 rounded-full ${DIFFICULTY_DOT[drill.difficulty]}`}
+              />
+              {DIFFICULTY_LABELS[drill.difficulty]}
+            </span>
+            <span className="text-ink-ghost">·</span>
+            <span className="text-ink-faint">
+              máx. {drill.max_score} puntos
+            </span>
+          </div>
 
-          <h3 className="text-white font-semibold mb-2">Preparación</h3>
-          <p className="text-gray-400 text-sm mb-4">
+          <p className="text-body text-ink-soft">{drill.description}</p>
+
+          <h3 className="mt-5 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
+            Preparación
+          </h3>
+          <p className="mt-1 text-body text-ink-soft">
             {drill.setup_instructions}
           </p>
 
-          <h3 className="text-white font-semibold mb-2">
-            Método de puntuación
+          <h3 className="mt-4 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
+            Puntuación
           </h3>
-          <p className="text-gray-400 text-sm">
-            {drill.scoring_method} (máx. {drill.max_score} pts)
-          </p>
-        </div>
+          <p className="mt-1 text-body text-ink-soft">{drill.scoring_method}</p>
+        </Card>
 
-        {/* Log form */}
-        <div className="bg-dark-card p-4 md:p-6 rounded-3xl border border-dark-border shadow-card mb-6">
-          <h2 className="text-xl font-bold text-white mb-4">
+        <Card className="p-5">
+          <h2 className="mb-4 text-h4 font-semibold text-ink">
             Registrar resultado
           </h2>
           <DrillLogForm drill={drill} onSuccess={handleLogSuccess} />
-        </div>
+        </Card>
 
-        {/* Progress chart */}
         {drillLogs && drillLogs.length > 0 && (
-          <div className="mb-6">
+          <>
             <DrillProgressChart
               logs={drillLogs}
               title="Historial de resultados"
             />
-          </div>
-        )}
 
-        {/* Recent logs */}
-        {drillLogs && drillLogs.length > 0 && (
-          <div className="bg-dark-card p-4 md:p-6 rounded-3xl border border-dark-border shadow-card">
-            <h2 className="text-xl font-bold text-white mb-4">
-              Últimos resultados
-            </h2>
-            <div className="space-y-2">
-              {drillLogs.slice(0, 20).map((log) => (
-                <div
-                  key={log.id}
-                  className="flex justify-between items-center p-3 bg-dark-bg rounded-2xl border border-dark-border"
-                >
-                  <div className="text-sm text-gray-400">
-                    {new Date(log.created_at).toLocaleDateString()}
-                  </div>
-                  <div className="text-white font-medium">
-                    {log.score}/{log.max_score}
-                    <span className="text-gray-400 text-sm ml-2">
-                      (
-                      {log.max_score > 0
-                        ? Math.round((log.score / log.max_score) * 100)
-                        : 0}
-                      %)
+            <Card className="overflow-hidden">
+              <CardHeader title="Últimos resultados" />
+              <ul className="p-2">
+                {drillLogs.slice(0, 20).map((log) => (
+                  <li
+                    key={log.id}
+                    className="flex items-center gap-3 rounded-control px-2 py-2.5"
+                  >
+                    <time className="text-caption tabular-nums text-ink-faint">
+                      {new Date(log.created_at).toLocaleDateString()}
+                    </time>
+                    {log.notes && (
+                      <span className="min-w-0 flex-1 truncate text-caption text-ink-faint">
+                        {log.notes}
+                      </span>
+                    )}
+                    <span className="ml-auto font-mono text-body font-semibold tabular-nums text-ink">
+                      {log.score}
+                      <span className="text-ink-faint">/{log.max_score}</span>
                     </span>
-                  </div>
-                  {log.notes && (
-                    <div className="text-xs text-gray-500 truncate max-w-[120px]">
-                      {log.notes}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

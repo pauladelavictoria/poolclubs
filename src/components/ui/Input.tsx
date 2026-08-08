@@ -1,17 +1,25 @@
 import * as React from "react";
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
-
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
-    return (
-      <input
-        type={type}
-        className={`mt-1 block w-full rounded-md border-dark-border bg-white text-gray-800 shadow-sm focus:border-accent-red focus:ring-accent-red sm:text-sm px-3 py-2 border placeholder-gray-500 disabled:opacity-50 ${className || ""}`}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
+/**
+ * Inputs are inset: filled darker than the surface around them, so "type here"
+ * reads without a heavy border. `color-scheme: dark` makes the native date
+ * picker and spinners render dark too.
+ */
+export const Input = React.forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement>
+>(({ className, type, ...props }, ref) => (
+  <input
+    ref={ref}
+    type={type}
+    className={[
+      "block h-10 w-full rounded-control border border-hairline bg-pocket px-3",
+      "text-body text-ink placeholder:text-ink-faint [color-scheme:dark]",
+      "transition-colors duration-150 hover:border-hairline-strong",
+      "disabled:cursor-not-allowed disabled:text-ink-ghost",
+      className || "",
+    ].join(" ")}
+    {...props}
+  />
+));
 Input.displayName = "Input";

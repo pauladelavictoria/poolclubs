@@ -64,7 +64,7 @@ export default function DrillLogForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
       <Select
-        className="p-3 rounded-2xl"
+       
         disabled={playersLoading}
         {...register("player_id", { required: true })}
       >
@@ -81,7 +81,7 @@ export default function DrillLogForm({
           type="number"
           min={0}
           max={drill.max_score}
-          className="flex-1 p-3 rounded-2xl"
+          className="flex-1"
           placeholder={`Puntuación (máx. ${drill.max_score})`}
           {...register("score", { required: true })}
         />
@@ -89,14 +89,14 @@ export default function DrillLogForm({
 
       <Input
         type="text"
-        className="p-3 rounded-2xl"
+       
         placeholder="Notas (opcional)"
         {...register("notes")}
       />
 
       <Button
         type="submit"
-        className="rounded-2xl shadow-md"
+       
         disabled={isPending}
       >
         {isPending ? "Registrando..." : "Registrar resultado"}

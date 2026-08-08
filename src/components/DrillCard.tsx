@@ -7,41 +7,45 @@ interface DrillCardProps {
   drill: Drill;
 }
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner:
-    "bg-green-900/50 text-green-300 border border-green-700/50",
-  intermediate:
-    "bg-yellow-900/50 text-yellow-300 border border-yellow-700/50",
-  advanced:
-    "bg-red-900/50 text-red-300 border border-red-700/50",
+/**
+ * Difficulty is the only thing here worth a colour, and it earns one because
+ * it's the thing you filter on. Skill type is metadata, so it stays neutral.
+ */
+const DIFFICULTY_DOT: Record<string, string> = {
+  beginner: "bg-pot",
+  intermediate: "bg-ball-1",
+  advanced: "bg-strike",
 };
 
 export default function DrillCard({ drill }: DrillCardProps) {
   return (
     <Link
-      to={`/entrenamientos/${drill.id}`}
-      className="bg-dark-bg hover:bg-dark-card-hover rounded-2xl border border-dark-border p-4 transition-colors block"
+      to={`/drills/${drill.id}`}
+      className="block rounded-card border border-hairline bg-felt p-3 transition-[background-color,border-color] duration-150 hover:border-hairline-strong hover:bg-felt-raised"
     >
-      <div className="mb-3">
+      <div className="mb-3 overflow-hidden rounded-[6px]">
         <PoolTableDiagram
           ballPositions={drill.ball_positions}
           shotPaths={drill.shot_paths}
           compact
         />
       </div>
-      <h3 className="text-white font-semibold text-sm mb-2 line-clamp-1">
-        {drill.name}
-      </h3>
-      <p className="text-gray-400 text-xs mb-3 line-clamp-2">
+
+      <h3 className="line-clamp-1 font-medium text-ink">{drill.name}</h3>
+      <p className="mt-0.5 line-clamp-2 text-caption text-ink-faint">
         {drill.description}
       </p>
-      <div className="flex flex-wrap gap-1.5">
-        <span
-          className={`px-2 py-0.5 rounded-lg text-xs font-medium ${DIFFICULTY_COLORS[drill.difficulty]}`}
-        >
+
+      <div className="mt-2.5 flex items-center gap-2 text-caption text-ink-soft">
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden
+            className={`h-1.5 w-1.5 rounded-full ${DIFFICULTY_DOT[drill.difficulty]}`}
+          />
           {DIFFICULTY_LABELS[drill.difficulty]}
         </span>
-        <span className="px-2 py-0.5 rounded-lg text-xs font-medium bg-blue-900/50 text-blue-300 border border-blue-700/50">
+        <span className="text-ink-ghost">·</span>
+        <span className="truncate text-ink-faint">
           {SKILL_TYPE_LABELS[drill.skill_type]}
         </span>
       </div>

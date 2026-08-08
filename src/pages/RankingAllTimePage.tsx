@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { HiChevronLeft } from "react-icons/hi";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
-import Layout from "./Layout";
+import PageHeader from "@/components/PageHeader";
 import Ranking from "@/components/Ranking";
+import { Card } from "@/components/ui/Card";
+import { Segmented } from "@/components/ui/Segmented";
 import type { Category } from "@/types";
 
 type ViewMode = "combined" | "byCategory";
@@ -13,7 +13,6 @@ type ViewMode = "combined" | "byCategory";
 export default function RankingAllTimePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
 
-  // Fetch all games (limit to 10000 for now to get "all-time")
   const { data: gamesData, isLoading: gamesLoading } = useGetGames({});
   const games = gamesData?.games ?? [];
 
@@ -24,84 +23,41 @@ export default function RankingAllTimePage() {
   const rankingByCategory = useMemo(() => {
     if (!ranking) return null;
     const byCat: Record<Category, typeof ranking> = { 1: [], 2: [], 3: [] };
-    for (const entry of ranking) {
-      byCat[entry.category].push(entry);
-    }
+    for (const entry of ranking) byCat[entry.category].push(entry);
     return byCat;
   }, [ranking]);
 
   return (
-    <Layout>
-      <div>
-        <div className="bg-dark-card shadow-card overflow-hidden">
-          <div className="bg-gradient-to-r from-accent-red to-accent-red-dark p-4 text-white">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="w-full flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Link
-                    to="/"
-                    className="inline-flex items-center gap-2 text-white py-2 transition-colors hover:opacity-80"
-                    aria-label="Inicio"
-                  >
-                    <HiChevronLeft className="h-6 w-6" aria-hidden />
-                  </Link>
-                  <h1 className="text-2xl font-bold">
-                    Ranking Global{" "}
-                    <span className="font-normal text-gray-200">
-                      {games.length > 0 && `(${games.length} partidos)`}
-                    </span>
-                  </h1>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center justify-end gap-4 mb-4 px-4 py-2">
-              <div
-                className="flex rounded-2xl border border-dark-border p-1 bg-dark-bg"
-                role="tablist"
-                aria-label="Vista del ranking"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={viewMode === "combined"}
-                  onClick={() => setViewMode("combined")}
-                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-                    viewMode === "combined"
-                      ? "bg-dark-card-hover text-white shadow-sm"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  Combinado
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={viewMode === "byCategory"}
-                  onClick={() => setViewMode("byCategory")}
-                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-                    viewMode === "byCategory"
-                      ? "bg-dark-card-hover text-white shadow-sm"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  Por categoría
-                </button>
-              </div>
-            </div>
+    <>
+      <PageHeader
+        title="Ranking global"
+        subtitle={games.length > 0 ? `${games.length} partidos` : undefined}
+      />
 
-            <Ranking
-              gamesLabel="Últimos 10 partidos"
-              ranking={ranking}
-              rankingByCategory={rankingByCategory}
-              viewMode={viewMode}
-              isLoading={gamesLoading || playersLoading}
-              emptyMessage="No hay partidos registrados aún."
+      <div className="mx-auto max-w-5xl px-3 py-4">
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between gap-3 border-b border-hairline px-3 py-2.5">
+            <h2 className="pl-1 text-h4 font-semibold text-ink">Clasificación</h2>
+            <Segmented
+              label="Vista del ranking"
+              value={viewMode}
+              onChange={setViewMode}
+              options={[
+                { value: "combined", label: "Combinado" },
+                { value: "byCategory", label: "Por categoría" },
+              ]}
             />
           </div>
-        </div>
+
+          <Ranking
+            ranking={ranking}
+            rankingByCategory={rankingByCategory}
+            viewMode={viewMode}
+            isLoading={gamesLoading || playersLoading}
+            emptyMessage="Aún no se ha registrado ningún partido."
+          />
+        </Card>
       </div>
-    </Layout>
+    </>
   );
 }
