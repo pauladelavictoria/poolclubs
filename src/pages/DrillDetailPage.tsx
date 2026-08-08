@@ -61,7 +61,7 @@ export default function DrillDetailPage() {
   };
 
   const backLink =
-    planId && planPlayerId ? `/players/${planPlayerId}/plan` : "/drills";
+    planId && planPlayerId ? `/players/${planPlayerId}/training/plan` : "/drills";
 
   if (isLoading) {
     return (

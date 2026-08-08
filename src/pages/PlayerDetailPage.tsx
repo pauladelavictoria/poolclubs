@@ -14,6 +14,7 @@ import { useGetGames } from "@/hooks/useGetGames";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
 import GamesList from "@/components/GamesList";
+import PlayerTabs from "@/components/PlayerTabs";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Stat } from "@/components/ui/Stat";
 import { SkeletonRows } from "@/components/ui/Skeleton";
@@ -153,28 +154,7 @@ export default function PlayerDetailPage() {
       />
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        {user && (
-          <div className="flex flex-wrap gap-2">
-            <Link
-              to={`/players/${player.id}/plan`}
-              className={buttonClasses({
-                variant: "secondary",
-                className: "flex-1",
-              })}
-            >
-              Plan de entrenamiento
-            </Link>
-            <Link
-              to={`/players/${player.id}/progress`}
-              className={buttonClasses({
-                variant: "secondary",
-                className: "flex-1",
-              })}
-            >
-              Progreso de entrenamiento
-            </Link>
-          </div>
-        )}
+        {user && <PlayerTabs playerId={player.id} />}
 
         {stats && stats.totalGames > 0 ? (
           <>

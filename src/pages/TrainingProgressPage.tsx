@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { LuTrash2 } from "react-icons/lu";
 import PageHeader from "@/components/PageHeader";
 import DrillProgressChart from "@/components/DrillProgressChart";
+import PlayerTabs from "@/components/PlayerTabs";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { useGetDrills } from "@/hooks/useGetDrills";
@@ -116,7 +117,9 @@ export default function TrainingProgressPage() {
         back={`/players/${selectedPlayerId}`}
       />
 
-      <div className="mx-auto max-w-3xl space-y-4 px-3 py-4">
+      <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        {selectedPlayerId && <PlayerTabs playerId={selectedPlayerId} />}
+
         {allLogs && allLogs.length > 0 && (
           <div className="flex flex-wrap gap-2">
             <Select

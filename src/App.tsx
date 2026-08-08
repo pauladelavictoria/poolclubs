@@ -2,13 +2,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./libs/queryClient";
 import { ToastContainer } from "react-toastify";
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-  useParams,
-} from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Layout from "@/pages/Layout";
 import DashboardPage from "@/pages/DashboardPage";
 import LoginPage from "@/pages/LoginPage";
@@ -33,17 +27,6 @@ function MeRedirect({ suffix = "" }: { suffix?: string }) {
   const { player } = useAuth();
   return (
     <Navigate to={player ? `/players/${player.id}${suffix}` : "/"} replace />
-  );
-}
-
-/** Redirect that carries route params across, e.g. "/players/:playerId/plan". */
-function Redirect({ to }: { to: string }) {
-  const params = useParams();
-  return (
-    <Navigate
-      to={to.replace(/:(\w+)/g, (_, key: string) => params[key] ?? "")}
-      replace
-    />
   );
 }
 
@@ -72,51 +55,27 @@ export default function App() {
 
               <Route element={<ProtectedRoute />}>
                 <Route path="me" element={<MeRedirect />} />
-                <Route path="me/plan" element={<MeRedirect suffix="/plan" />} />
                 <Route
-                  path="me/progress"
-                  element={<MeRedirect suffix="/progress" />}
+                  path="me/training"
+                  element={<MeRedirect suffix="/training" />}
                 />
                 <Route
-                  path="players/:playerId/plan"
-                  element={<TrainingPlanPage />}
+                  path="me/training/plan"
+                  element={<MeRedirect suffix="/training/plan" />}
                 />
                 <Route
-                  path="players/:playerId/progress"
+                  path="players/:playerId/training"
                   element={<TrainingProgressPage />}
+                />
+                <Route
+                  path="players/:playerId/training/plan"
+                  element={<TrainingPlanPage />}
                 />
                 {/* Anyone signed in may author; DrillEditorPage turns away
                     non-owners on the /edit route, since that needs the drill. */}
                 <Route path="drills/new" element={<DrillEditorPage />} />
                 <Route path="drills/:id/edit" element={<DrillEditorPage />} />
               </Route>
-
-              {/* Old Spanish/mixed-language URLs */}
-              <Route path="partidos" element={<Navigate to="/games" replace />} />
-              <Route
-                path="añadir-partido"
-                element={<Navigate to="/games/new" replace />}
-              />
-              <Route
-                path="ranking-diario"
-                element={<Navigate to="/ranking/daily" replace />}
-              />
-              <Route
-                path="entrenamientos"
-                element={<Navigate to="/drills" replace />}
-              />
-              <Route
-                path="entrenamientos/plan/:playerId"
-                element={<Redirect to="/players/:playerId/plan" />}
-              />
-              <Route
-                path="entrenamientos/progreso/:playerId"
-                element={<Redirect to="/players/:playerId/progress" />}
-              />
-              <Route
-                path="entrenamientos/:id"
-                element={<Redirect to="/drills/:id" />}
-              />
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

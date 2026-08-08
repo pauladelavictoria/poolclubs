@@ -55,9 +55,9 @@ export default function NavDrawer({
           ...section,
           items: [
             ...section.items,
-            { to: `${me}/plan`, label: "Mi plan", icon: LuClipboardList },
+            { to: `${me}/training/plan`, label: "Mi plan", icon: LuClipboardList },
             {
-              to: `${me}/progress`,
+              to: `${me}/training`,
               label: "Mi progreso",
               icon: LuChartColumn,
             },

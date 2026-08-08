@@ -14,6 +14,11 @@ import { Segmented } from "@/components/ui/Segmented";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import type { Game } from "@/types";
 
+const SIDES = [
+  { n: 1, single: "Jugador 1", doubles: "Pareja 1" },
+  { n: 2, single: "Jugador 2", doubles: "Pareja 2" },
+] as const;
+
 export default function AddGamePage() {
   const { register, handleSubmit, reset, control, setValue } = useForm<Game>({
     defaultValues: { mode: "single" },
@@ -126,70 +131,38 @@ export default function AddGamePage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <fieldset className="space-y-1.5">
-              <Label>{isDoubles ? "Pareja 1" : "Jugador 1"}</Label>
-              <Select
-                disabled={playersLoading}
-                {...register("player_1_name", { required: true })}
-              >
-                <option value="">Seleccionar</option>
-                {playerOptions}
-              </Select>
-              {isDoubles && (
-                <Select
-                  disabled={playersLoading}
-                  {...register("player_1b_name", { required: isDoubles })}
-                >
-                  <option value="">Seleccionar compañero</option>
-                  {playerOptions}
-                </Select>
-              )}
-            </fieldset>
-
-            {/* The result is what this screen is for, so it's the biggest thing on it */}
-            <div className="flex items-center gap-3">
-              <Input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                aria-label={isDoubles ? "Mesas pareja 1" : "Mesas jugador 1"}
-                placeholder="0"
-                className={scoreInput}
-                {...register("player_1_score", { required: true })}
-              />
-              <span aria-hidden className="text-h3 text-ink-ghost">
-                -
-              </span>
-              <Input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                aria-label={isDoubles ? "Mesas pareja 2" : "Mesas jugador 2"}
-                placeholder="0"
-                className={scoreInput}
-                {...register("player_2_score", { required: true })}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              {SIDES.map(({ n, single, doubles }) => (
+                <fieldset key={n} className="space-y-1.5">
+                  <Label>{isDoubles ? doubles : single}</Label>
+                  <Select
+                    disabled={playersLoading}
+                    {...register(`player_${n}_name`, { required: true })}
+                  >
+                    <option value="">Seleccionar</option>
+                    {playerOptions}
+                  </Select>
+                  {isDoubles && (
+                    <Select
+                      disabled={playersLoading}
+                      {...register(`player_${n}b_name`, { required: true })}
+                    >
+                      <option value="">Compañero</option>
+                      {playerOptions}
+                    </Select>
+                  )}
+                  <Input
+                    type="number"
+                    min={0}
+                    inputMode="numeric"
+                    aria-label={`Mesas ${isDoubles ? doubles : single}`}
+                    placeholder="0"
+                    className={scoreInput}
+                    {...register(`player_${n}_score`, { required: true })}
+                  />
+                </fieldset>
+              ))}
             </div>
-
-            <fieldset className="space-y-1.5">
-              <Label>{isDoubles ? "Pareja 2" : "Jugador 2"}</Label>
-              <Select
-                disabled={playersLoading}
-                {...register("player_2_name", { required: true })}
-              >
-                <option value="">Seleccionar</option>
-                {playerOptions}
-              </Select>
-              {isDoubles && (
-                <Select
-                  disabled={playersLoading}
-                  {...register("player_2b_name", { required: isDoubles })}
-                >
-                  <option value="">Seleccionar compañero</option>
-                  {playerOptions}
-                </Select>
-              )}
-            </fieldset>
 
             {problem && (
               <p role="alert" className="text-body text-strike">
