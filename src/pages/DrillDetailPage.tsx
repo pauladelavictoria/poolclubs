@@ -112,12 +112,10 @@ export default function DrillDetailPage() {
         )}
 
         <Card className="p-3">
-          <div className="flex justify-center">
-            <PoolTableDiagram
-              ballPositions={drill.ball_positions}
-              shotPaths={drill.shot_paths}
-            />
-          </div>
+          <PoolTableDiagram
+            ballPositions={drill.ball_positions}
+            shotPaths={drill.shot_paths}
+          />
         </Card>
 
         <Card className="p-5">
@@ -135,7 +133,7 @@ export default function DrillDetailPage() {
             </span>
           </div>
 
-          <p className="text-body text-ink-soft">{drill.description}</p>
+          <p className="text-h4 text-ink">{drill.description}</p>
 
           <h3 className="mt-5 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
             Preparación
