@@ -2,11 +2,11 @@ import {
   LuHouse,
   LuTrophy,
   LuSwords,
+  LuCircleDot,
   LuTarget,
-  LuUsers,
   LuCalendarDays,
   LuPlus,
-  LuHandshake,
+  LuSettings,
 } from "react-icons/lu";
 import type { Key } from "@/i18n";
 
@@ -23,12 +23,46 @@ export type NavItem = {
 export const PRIMARY_NAV: NavItem[] = [
   { to: "/", labelKey: "nav.home", icon: LuHouse, end: true },
   { to: "/ranking", labelKey: "nav.ranking", icon: LuTrophy, end: true },
-  { to: "/games", labelKey: "nav.games", icon: LuSwords, end: true },
+  { to: "/games", labelKey: "nav.games", icon: LuCircleDot, end: true },
   { to: "/drills", labelKey: "nav.drills", icon: LuTarget, end: true },
 ];
 
-/** Full map, used by the drawer. */
+/**
+ * Full map, used by the drawer, in the order the club is thought about: where
+ * you are, what you played, what you practise, where that puts you.
+ * The club identity and switcher sit above these — they're not a destination.
+ * The roster is part of club settings, so it isn't a nav entry.
+ */
 export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
+  {
+    headingKey: "nav.club",
+    items: [
+      {
+        to: "/club",
+        labelKey: "nav.clubSettings",
+        icon: LuSettings,
+        end: true,
+      },
+    ],
+  },
+  {
+    headingKey: "nav.games",
+    items: [
+      {
+        to: "/games",
+        labelKey: "nav.allGames",
+        icon: LuCircleDot,
+        end: true,
+      },
+      {
+        to: "/challenges",
+        labelKey: "nav.challenges",
+        icon: LuSwords,
+        end: true,
+      },
+      { to: "/games/new", labelKey: "nav.addGame", icon: LuPlus },
+    ],
+  },
   {
     headingKey: "nav.training",
     items: [
@@ -49,37 +83,6 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         labelKey: "nav.rankingDaily",
         icon: LuCalendarDays,
       },
-    ],
-  },
-  {
-    headingKey: "nav.games",
-    items: [
-      {
-        to: "/games",
-        labelKey: "nav.allGames",
-        icon: LuSwords,
-        end: true,
-      },
-      { to: "/games/new", labelKey: "nav.addGame", icon: LuPlus },
-      {
-        to: "/challenges",
-        labelKey: "nav.challenges",
-        icon: LuSwords,
-        end: true,
-      },
-    ],
-  },
-  {
-    headingKey: "nav.club",
-    items: [
-      { to: "/players", labelKey: "nav.players", icon: LuUsers, end: true },
-      {
-        to: "/club",
-        labelKey: "nav.clubSettings",
-        icon: LuHandshake,
-        end: true,
-      },
-      { to: "/clubs/new", labelKey: "club.create", icon: LuPlus, end: true },
     ],
   },
 ];

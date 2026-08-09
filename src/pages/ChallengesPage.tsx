@@ -115,10 +115,10 @@ export default function ChallengesPage() {
               hint={t("challenge.emptyHint")}
               action={
                 <Link
-                  to="/players"
+                  to="/club"
                   className={buttonClasses({ variant: "secondary" })}
                 >
-                  {t("nav.players")}
+                  {t("club.membersTitle")}
                 </Link>
               }
             />

@@ -5,14 +5,15 @@ import { useSignOut } from "@/hooks/useSignOut";
 import { toast } from "react-toastify";
 import { NAV_SECTIONS, type NavItem } from "@/components/navItems";
 import { LANGS, useT, type Lang } from "@/i18n";
-import { Select } from "@/components/ui/Select";
 import {
   LuUser,
   LuClipboardList,
   LuChartColumn,
   LuLogOut,
-  LuLanguages,
   LuHandshake,
+  LuChevronDown,
+  LuCheck,
+  LuPlus,
 } from "react-icons/lu";
 
 const item = ({ isActive }: { isActive: boolean }) =>
@@ -102,17 +103,67 @@ export default function NavDrawer({
       }}
     >
       <nav className="p-3" onClick={onClose}>
-        <div className="flex items-center gap-3 px-3 pb-4 pt-2">
+        <div className="flex items-center gap-3 px-3 pb-3 pt-2">
           <img src="/ball.png" alt="" className="h-9 w-9 rounded-full" />
-          <div className="min-w-0">
-            <div className="truncate text-h4 font-semibold">
-              {t("common.appName")}
-            </div>
-            <div className="truncate text-caption text-ink-faint">
-              {activeClub?.name ?? t("club.noClub")}
-            </div>
+          <div className="min-w-0 truncate text-h4 font-semibold">
+            {t("common.appName")}
           </div>
         </div>
+
+        {/* Which club you're in, and the way out of it. Native <details> is the
+            popup: click-to-open, Esc, and no outside-click listener to write.
+            Its own click handler, since the nav closes the drawer on any click
+            inside it and opening the list shouldn't dismiss it. */}
+        {user && (
+          <details
+            className="group rounded-control border border-hairline bg-felt-raised"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <summary className="flex h-11 cursor-pointer list-none items-center gap-2.5 px-3 [&::-webkit-details-marker]:hidden">
+              <LuHandshake className="h-[18px] w-[18px] shrink-0 text-ink-soft" />
+              <span className="min-w-0 flex-1 truncate text-body font-medium">
+                {activeClub?.name ?? t("club.noClub")}
+              </span>
+              <LuChevronDown
+                className="h-4 w-4 shrink-0 text-ink-faint transition-transform duration-150 group-open:rotate-180"
+                aria-hidden
+              />
+            </summary>
+            <div className="border-t border-hairline p-1">
+              {switchable.map((m) => (
+                <button
+                  key={m.club_id}
+                  type="button"
+                  onClick={() => {
+                    setActiveClub(m.club_id);
+                    onClose();
+                  }}
+                  className="flex h-9 w-full items-center gap-2 rounded-control px-2 text-left text-body text-ink-soft transition-colors duration-150 hover:bg-felt hover:text-ink"
+                >
+                  <LuCheck
+                    className={`h-4 w-4 shrink-0 ${
+                      m.club_id === activeClub?.id
+                        ? "text-strike"
+                        : "opacity-0"
+                    }`}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1 truncate">
+                    {m.club?.name}
+                  </span>
+                </button>
+              ))}
+              <NavLink
+                to="/clubs/new"
+                onClick={onClose}
+                className="flex h-9 items-center gap-2 rounded-control px-2 text-body text-ink-soft transition-colors duration-150 hover:bg-felt hover:text-ink"
+              >
+                <LuPlus className="h-4 w-4 shrink-0" aria-hidden />
+                {t("club.create")}
+              </NavLink>
+            </div>
+          </details>
+        )}
 
         {sections.map((section) => (
           <div key={section.headingKey}>
@@ -143,47 +194,33 @@ export default function NavDrawer({
             </NavLink>
           )}
 
-          {/* One club is the normal case and needs no control. */}
-          {switchable.length > 1 && (
-            <div
-              className="mt-1 flex h-10 items-center gap-3 px-3"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <LuHandshake className="h-[18px] w-[18px] shrink-0 text-ink-soft" />
-              <Select
-                size="sm"
-                aria-label={t("club.switch")}
-                value={activeClub?.id ?? ""}
-                onChange={(e) => setActiveClub(Number(e.target.value))}
-              >
-                {switchable.map((m) => (
-                  <option key={m.club_id} value={m.club_id}>
-                    {m.club?.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          )}
-
-          {/* Its own click handler: the drawer closes on any click inside the
-              nav, and picking a language shouldn't dismiss it mid-choice. */}
+          {/* Three languages fit as one row of buttons, so the choice is
+              visible instead of hidden behind a <select>. Its own click
+              handler: picking a language shouldn't dismiss the drawer. */}
           <div
-            className="mt-1 flex h-10 items-center gap-3 px-3"
+            className="mt-2 flex gap-1 px-3"
+            role="group"
+            aria-label={t("nav.language")}
             onClick={(e) => e.stopPropagation()}
           >
-            <LuLanguages className="h-[18px] w-[18px] shrink-0 text-ink-soft" />
-            <Select
-              size="sm"
-              aria-label={t("nav.language")}
-              value={lang}
-              onChange={(e) => setLang(e.target.value as Lang)}
-            >
-              {LANGS.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.name}
-                </option>
-              ))}
-            </Select>
+            {LANGS.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => setLang(l.code as Lang)}
+                aria-pressed={l.code === lang}
+                title={l.name}
+                className={[
+                  "h-8 flex-1 rounded-control border text-caption font-medium uppercase",
+                  "transition-colors duration-150",
+                  l.code === lang
+                    ? "border-strike bg-strike-tint text-strike"
+                    : "border-hairline text-ink-faint hover:border-hairline-strong hover:text-ink",
+                ].join(" ")}
+              >
+                {l.code}
+              </button>
+            ))}
           </div>
         </div>
       </nav>
