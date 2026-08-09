@@ -6,6 +6,8 @@
  * frame is a bead pushed across (solid); a lost one is left open (hollow, the
  * wire visible through it).
  */
+import { useT } from "@/i18n";
+
 export function ScoreString({
   results,
   className = "",
@@ -14,17 +16,19 @@ export function ScoreString({
   results: boolean[];
   className?: string;
 }) {
+  const { t } = useT();
   const beads = results.slice(0, 10).reverse();
   if (beads.length === 0) return null;
 
   const won = beads.filter(Boolean).length;
+  const counts = { won, total: beads.length };
 
   return (
     <span
       className={`relative inline-flex items-center gap-[3px] ${className}`}
-      title={`${won} de ${beads.length} ganados`}
+      title={t("scoreString.title", counts)}
       role="img"
-      aria-label={`Últimos ${beads.length} partidos: ${won} ganados`}
+      aria-label={t("scoreString.aria", counts)}
     >
       {/* the wire */}
       <span

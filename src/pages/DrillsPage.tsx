@@ -15,9 +15,11 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { DrillDifficulty, DrillSkillType } from "@/types";
-import { DIFFICULTY_LABELS, SKILL_TYPE_LABELS } from "@/types";
+import { DIFFICULTIES, SKILL_TYPES } from "@/types";
+import { useT } from "@/i18n";
 
 export default function DrillsPage() {
+  const { t } = useT();
   const [difficulty, setDifficulty] = useState<DrillDifficulty | "">("");
   const [skillType, setSkillType] = useState<DrillSkillType | "">("");
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
@@ -34,7 +36,7 @@ export default function DrillsPage() {
   const handleGeneratePlan = () => {
     const player = players?.find((p) => p.id === selectedPlayerId);
     if (!player) {
-      toast.error("Selecciona un jugador");
+      toast.error(t("drills.selectPlayerError"));
       return;
     }
 
@@ -42,20 +44,20 @@ export default function DrillsPage() {
       { playerId: player.id, category: player.category },
       {
         onSuccess: () => navigate(`/players/${player.id}/training/plan`),
-        onError: () => toast.error("Error al generar el plan"),
+        onError: () => toast.error(t("drills.planError")),
       },
     );
   };
 
   return (
     <>
-      <PageHeader title="Ejercicios">
+      <PageHeader title={t("drills.title")}>
         {user && (
           <Link
             to="/drills/new"
             className={buttonClasses({ variant: "secondary", size: "sm" })}
           >
-            Nuevo ejercicio
+            {t("drills.new")}
           </Link>
         )}
       </PageHeader>
@@ -63,15 +65,17 @@ export default function DrillsPage() {
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         {/* The primary action on this screen: get a plan. It leads. */}
         <Card className="p-5">
-          <h2 className="text-h4 font-semibold text-ink">Plan automático</h2>
+          <h2 className="text-h4 font-semibold text-ink">
+            {t("drills.autoPlan")}
+          </h2>
           <p className="mt-1 max-w-[52ch] text-body text-ink-soft">
-            Diez ejercicios elegidos para tu categoría, en orden.
+            {t("drills.autoPlanHint")}
           </p>
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <Select
               className="flex-1"
-              aria-label="Jugador para el plan"
+              aria-label={t("drills.planPlayer")}
               value={selectedPlayerId ?? ""}
               onChange={(e) =>
                 setSelectedPlayerId(
@@ -79,10 +83,10 @@ export default function DrillsPage() {
                 )
               }
             >
-              <option value="">Seleccionar jugador</option>
+              <option value="">{t("drills.selectPlayer")}</option>
               {players?.map((player) => (
                 <option key={player.id} value={player.id}>
-                  {player.name} ({player.category}ª)
+                  {player.name} ({t("category.short", { n: player.category })})
                 </option>
               ))}
             </Select>
@@ -92,7 +96,9 @@ export default function DrillsPage() {
               disabled={!selectedPlayerId || generatePlan.isPending}
               className="shrink-0"
             >
-              {generatePlan.isPending ? "Generando..." : "Generar plan"}
+              {generatePlan.isPending
+                ? t("drills.generating")
+                : t("drills.generatePlan")}
             </Button>
           </div>
 
@@ -101,7 +107,7 @@ export default function DrillsPage() {
               to={`/players/${selectedPlayerId}/training/plan`}
               className="mt-3 inline-block text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-ink"
             >
-              Ver el plan actual
+              {t("drills.viewCurrentPlan")}
             </Link>
           )}
         </Card>
@@ -110,36 +116,32 @@ export default function DrillsPage() {
           <div className="flex flex-col gap-2 border-b border-hairline p-3 sm:flex-row">
             <Select
               className="flex-1"
-              aria-label="Filtrar por dificultad"
+              aria-label={t("drills.filterDifficulty")}
               value={difficulty}
               onChange={(e) =>
                 setDifficulty(e.target.value as DrillDifficulty | "")
               }
             >
-              <option value="">Todas las dificultades</option>
-              {(
-                Object.entries(DIFFICULTY_LABELS) as [DrillDifficulty, string][]
-              ).map(([key, label]) => (
+              <option value="">{t("drills.allDifficulties")}</option>
+              {DIFFICULTIES.map((key) => (
                 <option key={key} value={key}>
-                  {label}
+                  {t(`difficulty.${key}`)}
                 </option>
               ))}
             </Select>
 
             <Select
               className="flex-1"
-              aria-label="Filtrar por tipo"
+              aria-label={t("drills.filterSkill")}
               value={skillType}
               onChange={(e) =>
                 setSkillType(e.target.value as DrillSkillType | "")
               }
             >
-              <option value="">Todos los tipos</option>
-              {(
-                Object.entries(SKILL_TYPE_LABELS) as [DrillSkillType, string][]
-              ).map(([key, label]) => (
+              <option value="">{t("drills.allSkills")}</option>
+              {SKILL_TYPES.map((key) => (
                 <option key={key} value={key}>
-                  {label}
+                  {t(`skill.${key}`)}
                 </option>
               ))}
             </Select>
@@ -161,8 +163,8 @@ export default function DrillsPage() {
             ) : (
               <EmptyState
                 icon={<LuTarget className="h-5 w-5" />}
-                title="Ningún ejercicio coincide"
-                hint="Prueba a quitar alguno de los filtros."
+                title={t("drills.noneMatch")}
+                hint={t("drills.noneMatchHint")}
                 action={
                   <Button
                     variant="secondary"
@@ -171,7 +173,7 @@ export default function DrillsPage() {
                       setSkillType("");
                     }}
                   >
-                    Quitar filtros
+                    {t("common.clearFilters")}
                   </Button>
                 }
               />

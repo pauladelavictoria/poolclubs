@@ -109,22 +109,24 @@ export const CATEGORY_TO_DIFFICULTY: Record<Category, DrillDifficulty> = {
   3: 'beginner',
 };
 
-export const DIFFICULTY_LABELS: Record<DrillDifficulty, string> = {
-  beginner: 'Principiante',
-  intermediate: 'Intermedio',
-  advanced: 'Avanzado',
-};
+/* Display order for the filters and the editor. The labels themselves live in
+   src/i18n as `difficulty.${key}` and `skill.${key}`. */
+export const DIFFICULTIES: DrillDifficulty[] = [
+  'beginner',
+  'intermediate',
+  'advanced',
+];
 
-export const SKILL_TYPE_LABELS: Record<DrillSkillType, string> = {
-  potting: 'Embocada',
-  position: 'Posición',
-  safety: 'Defensa',
-  break: 'Salida',
-  banks: 'Bandas',
-  kicks: 'Banda previa',
-  patterns: 'Patrones',
-  specials: 'Tiros especiales',
-};
+export const SKILL_TYPES: DrillSkillType[] = [
+  'potting',
+  'position',
+  'safety',
+  'break',
+  'banks',
+  'kicks',
+  'patterns',
+  'specials',
+];
 
 export type DailyRankingEntry = {
   playerId: number;

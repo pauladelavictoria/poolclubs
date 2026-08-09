@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import type { Drill } from "@/types";
-import { DIFFICULTY_LABELS, SKILL_TYPE_LABELS } from "@/types";
 import PoolTableDiagram from "./PoolTableDiagram";
+import { useT } from "@/i18n";
 
 interface DrillCardProps {
   drill: Drill;
@@ -18,6 +18,8 @@ const DIFFICULTY_DOT: Record<string, string> = {
 };
 
 export default function DrillCard({ drill }: DrillCardProps) {
+  const { t } = useT();
+
   return (
     <Link
       to={`/drills/${drill.id}`}
@@ -42,11 +44,11 @@ export default function DrillCard({ drill }: DrillCardProps) {
             aria-hidden
             className={`h-1.5 w-1.5 rounded-full ${DIFFICULTY_DOT[drill.difficulty]}`}
           />
-          {DIFFICULTY_LABELS[drill.difficulty]}
+          {t(`difficulty.${drill.difficulty}`)}
         </span>
         <span className="text-ink-ghost">·</span>
         <span className="truncate text-ink-faint">
-          {SKILL_TYPE_LABELS[drill.skill_type]}
+          {t(`skill.${drill.skill_type}`)}
         </span>
       </div>
     </Link>

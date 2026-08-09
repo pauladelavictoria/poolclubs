@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { BallBadge, CategoryBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
 import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/i18n";
 
 type ViewMode = "combined" | "byCategory";
 
@@ -23,10 +24,11 @@ export default function RankingTable({
   viewMode,
 }: RankingTableProps) {
   const { player } = useAuth();
+  const { t } = useT();
 
   return (
     <table className="w-full">
-      <caption className="sr-only">Clasificación</caption>
+      <caption className="sr-only">{t("ranking.standings")}</caption>
       <thead>
         <tr className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
           {/* 16 padding + 28 ball + 12 gap. At w-11 the cell was exactly the
@@ -38,17 +40,17 @@ export default function RankingTable({
               divisions can be scanned down, an inline badge can't. */}
           {viewMode === "combined" && (
             <th scope="col" className="w-14 py-2 pr-3 text-left font-medium">
-              Cat.
+              {t("ranking.categoryShort")}
             </th>
           )}
           <th scope="col" className="py-2 text-left font-medium">
-            Jugador
+            {t("ranking.player")}
           </th>
           <th
             scope="col"
             className="hidden py-2 pr-6 text-right font-medium md:table-cell"
           >
-            Ganados
+            {t("ranking.won")}
           </th>
           <th
             scope="col"
@@ -57,7 +59,7 @@ export default function RankingTable({
             {gamesLabel}
           </th>
           <th scope="col" className="py-2 pr-4 text-right font-medium">
-            Puntos
+            {t("ranking.points")}
           </th>
         </tr>
       </thead>

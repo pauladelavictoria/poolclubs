@@ -9,12 +9,13 @@ import { useManagePlayers } from "@/hooks/useManagePlayers";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button, IconButton } from "@/components/ui/Button";
-import { CATEGORY_LABEL } from "@/components/ui/Ball";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { Player, Category } from "@/types";
+import { useT } from "@/i18n";
 
 export default function PlayersPage() {
+  const { t } = useT();
   const { user } = useAuth();
   const { data: players, isLoading } = useGetPlayers();
   const { createPlayer, updatePlayer } = useManagePlayers();
@@ -25,11 +26,11 @@ export default function PlayersPage() {
   const handleCreate = async (values: { name: string; category: Category }) => {
     try {
       await createPlayer.mutateAsync(values);
-      toast.success("Jugador creado correctamente");
+      toast.success(t("players.created"));
       closeModal();
     } catch (error) {
       console.error(error);
-      toast.error("Error al crear el jugador");
+      toast.error(t("players.createError"));
     }
   };
 
@@ -37,11 +38,11 @@ export default function PlayersPage() {
     if (!editingPlayer) return;
     try {
       await updatePlayer.mutateAsync({ id: editingPlayer.id, ...values });
-      toast.success("Jugador actualizado correctamente");
+      toast.success(t("players.updated"));
       closeModal();
     } catch (error) {
       console.error(error);
-      toast.error("Error al actualizar el jugador");
+      toast.error(t("players.updateError"));
     }
   };
 
@@ -64,7 +65,7 @@ export default function PlayersPage() {
 
   return (
     <>
-      <PageHeader title="Jugadores">
+      <PageHeader title={t("players.title")}>
         {user && (
           <Button
             size="sm"
@@ -75,7 +76,7 @@ export default function PlayersPage() {
             }}
           >
             <LuPlus className="h-4 w-4" aria-hidden />
-            Añadir jugador
+            {t("players.add")}
           </Button>
         )}
       </PageHeader>
@@ -89,15 +90,15 @@ export default function PlayersPage() {
           <Card>
             <EmptyState
               icon={<LuUsers className="h-5 w-5" />}
-              title="Aún no hay jugadores"
-              hint="Añade el primero para empezar a registrar partidos."
+              title={t("players.emptyTitle")}
+              hint={t("players.emptyHint")}
             />
           </Card>
         ) : (
           populated.map((cat) => (
             <Card key={cat} className="overflow-hidden">
               <CardHeader
-                title={CATEGORY_LABEL[cat]}
+                title={t(`category.${cat}`)}
                 action={
                   <span className="font-mono text-caption tabular-nums text-ink-faint">
                     {byCategory[cat].length}
@@ -120,7 +121,7 @@ export default function PlayersPage() {
                     </Link>
                     {user && (
                       <IconButton
-                        label={`Editar ${player.name}`}
+                        label={t("players.editNamed", { name: player.name })}
                         onClick={() => {
                           setEditingPlayer(player);
                           setIsModalOpen(true);
@@ -143,11 +144,13 @@ export default function PlayersPage() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={editingPlayer ? "Editar jugador" : "Añadir jugador"}
+            aria-label={
+              editingPlayer ? t("players.edit") : t("players.add")
+            }
             className="relative w-full max-w-md rounded-t-sheet border border-hairline bg-felt p-5 sm:rounded-sheet"
           >
             <h2 className="mb-4 text-h3 font-semibold text-ink">
-              {editingPlayer ? "Editar jugador" : "Añadir jugador"}
+              {editingPlayer ? t("players.edit") : t("players.add")}
             </h2>
             <PlayerForm
               initialValues={

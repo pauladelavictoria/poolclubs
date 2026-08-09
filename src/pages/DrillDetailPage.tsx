@@ -14,8 +14,8 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { DIFFICULTY_LABELS, SKILL_TYPE_LABELS } from "@/types";
 import type { Drill } from "@/types";
+import { useT } from "@/i18n";
 
 const DIFFICULTY_DOT: Record<string, string> = {
   beginner: "bg-pot",
@@ -24,6 +24,7 @@ const DIFFICULTY_DOT: Record<string, string> = {
 };
 
 export default function DrillDetailPage() {
+  const { t, locale } = useT();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const drillId = Number(id);
@@ -66,7 +67,7 @@ export default function DrillDetailPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Ejercicio" back={backLink} />
+        <PageHeader title={t("drills.detailTitle")} back={backLink} />
         <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
           <Skeleton className="aspect-[2/1] w-full rounded-card" />
           <Skeleton className="h-32 w-full rounded-card" />
@@ -78,18 +79,18 @@ export default function DrillDetailPage() {
   if (!drill) {
     return (
       <>
-        <PageHeader title="Ejercicio" back={backLink} />
+        <PageHeader title={t("drills.detailTitle")} back={backLink} />
         <div className="mx-auto max-w-5xl px-3 py-4">
           <Card>
             <EmptyState
-              title="Ejercicio no encontrado"
-              hint="Puede que se haya eliminado o que el enlace sea antiguo."
+              title={t("drills.notFound")}
+              hint={t("drills.notFoundHint")}
               action={
                 <Link
                   to="/drills"
                   className={buttonClasses({ variant: "secondary" })}
                 >
-                  Ver todos los ejercicios
+                  {t("drills.seeAll")}
                 </Link>
               }
             />
@@ -103,7 +104,7 @@ export default function DrillDetailPage() {
     <>
       <PageHeader
         title={drill.name}
-        subtitle={SKILL_TYPE_LABELS[drill.skill_type]}
+        subtitle={t(`skill.${drill.skill_type}`)}
         back={backLink}
       >
         {canEdit && (
@@ -111,7 +112,7 @@ export default function DrillDetailPage() {
             to={`/drills/${drill.id}/edit`}
             className={buttonClasses({ variant: "secondary", size: "sm" })}
           >
-            Editar
+            {t("common.edit")}
           </Link>
         )}
       </PageHeader>
@@ -122,7 +123,7 @@ export default function DrillDetailPage() {
             to={backLink}
             className="block rounded-control border border-strike/40 bg-strike-tint px-4 py-2.5 text-center text-body font-medium text-strike transition-colors duration-150 hover:bg-strike/20"
           >
-            Volver al plan
+            {t("drills.backToPlan")}
           </Link>
         )}
 
@@ -140,39 +141,39 @@ export default function DrillDetailPage() {
                 aria-hidden
                 className={`h-1.5 w-1.5 rounded-full ${DIFFICULTY_DOT[drill.difficulty]}`}
               />
-              {DIFFICULTY_LABELS[drill.difficulty]}
+              {t(`difficulty.${drill.difficulty}`)}
             </span>
             <span className="text-ink-ghost">·</span>
             <span className="text-ink-faint">
-              máx. {drill.max_score} puntos
+              {t("drills.maxPoints", { n: drill.max_score })}
             </span>
           </div>
 
           <p className="text-h4 text-ink">{drill.description}</p>
 
           <h3 className="mt-5 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
-            Preparación
+            {t("drills.setup")}
           </h3>
           <p className="mt-1 text-body text-ink-soft">
             {drill.setup_instructions}
           </p>
 
           <h3 className="mt-4 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
-            Puntuación
+            {t("drills.scoring")}
           </h3>
           <p className="mt-1 text-body text-ink-soft">{drill.scoring_method}</p>
         </Card>
 
         <Card className="p-5">
           <h2 className="mb-4 text-h4 font-semibold text-ink">
-            Registrar resultado
+            {t("drills.logResult")}
           </h2>
           <DrillLogForm drill={drill} onSuccess={handleLogSuccess} />
         </Card>
 
         {drillLogs && drillLogs.length > 0 && (
           <Card className="overflow-hidden">
-            <CardHeader title="Últimos resultados" />
+            <CardHeader title={t("drills.recentResults")} />
             <ul className="p-2">
               {drillLogs.slice(0, 20).map((log) => {
                 const pct = scorePct(log.score, log.max_score);
@@ -190,7 +191,7 @@ export default function DrillDetailPage() {
                       dateTime={log.created_at}
                       className="shrink-0 text-caption tabular-nums text-ink-faint"
                     >
-                      {new Date(log.created_at).toLocaleDateString()}
+                      {new Date(log.created_at).toLocaleDateString(locale)}
                     </time>
                     <span className="shrink-0 font-mono text-caption tabular-nums text-ink-faint">
                       {log.score}/{log.max_score}
@@ -198,7 +199,7 @@ export default function DrillDetailPage() {
                     <span
                       className="w-12 shrink-0 text-right font-mono text-body font-semibold tabular-nums"
                       style={{ color: band.color }}
-                      title={band.label}
+                      title={t(`score.${band.key}`)}
                     >
                       {pct}%
                     </span>

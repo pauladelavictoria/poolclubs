@@ -11,8 +11,10 @@ import { useManageDrills, type DrillInput } from "@/hooks/useManageDrills";
 import { useAuth } from "@/hooks/useAuth";
 import { canEditDrill } from "@/libs/drillPermissions";
 import type { Drill } from "@/types";
+import { useT } from "@/i18n";
 
 export default function DrillEditorPage() {
+  const { t } = useT();
   const { id } = useParams<{ id: string }>();
   const drillId = id ? Number(id) : undefined;
   const navigate = useNavigate();
@@ -37,7 +39,7 @@ export default function DrillEditorPage() {
   const backLink = drillId ? `/drills/${drillId}` : "/drills";
 
   const handleSubmit = (values: DrillInput) => {
-    const onError = () => toast.error("No se pudo guardar el ejercicio");
+    const onError = () => toast.error(t("drills.saveError"));
 
     if (drillId) {
       updateDrill.mutate(
@@ -54,10 +56,10 @@ export default function DrillEditorPage() {
 
   const handleDelete = () => {
     if (!drillId) return;
-    if (!confirm("¿Eliminar este ejercicio?")) return;
+    if (!confirm(t("drills.deleteConfirm"))) return;
     deleteDrill.mutate(drillId, {
       onSuccess: () => navigate("/drills"),
-      onError: () => toast.error("No se pudo eliminar el ejercicio"),
+      onError: () => toast.error(t("drills.deleteError")),
     });
   };
 
@@ -66,7 +68,7 @@ export default function DrillEditorPage() {
   if (drillId && (isLoading || isPlayerLoading)) {
     return (
       <>
-        <PageHeader title="Editar ejercicio" back={backLink} />
+        <PageHeader title={t("drills.editTitle")} back={backLink} />
         <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
           <Skeleton className="aspect-[2/1] w-full rounded-card" />
           <Skeleton className="h-64 w-full rounded-card" />
@@ -78,12 +80,12 @@ export default function DrillEditorPage() {
   if (drillId && !drill) {
     return (
       <>
-        <PageHeader title="Editar ejercicio" back="/drills" />
+        <PageHeader title={t("drills.editTitle")} back="/drills" />
         <div className="mx-auto max-w-5xl px-3 py-4">
           <Card>
             <EmptyState
-              title="Ejercicio no encontrado"
-              hint="Puede que se haya eliminado o que el enlace sea antiguo."
+              title={t("drills.notFound")}
+              hint={t("drills.notFoundHint")}
             />
           </Card>
         </div>
@@ -100,7 +102,7 @@ export default function DrillEditorPage() {
   return (
     <>
       <PageHeader
-        title={drill ? "Editar ejercicio" : "Nuevo ejercicio"}
+        title={drill ? t("drills.editTitle") : t("drills.newTitle")}
         back={backLink}
       />
       <div className="mx-auto max-w-5xl px-3 py-4">

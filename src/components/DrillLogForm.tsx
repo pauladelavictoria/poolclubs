@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { loginLink } from "@/libs/nextPath";
 import type { Drill } from "@/types";
+import { useT } from "@/i18n";
 
 interface DrillLogFormProps {
   drill: Drill;
@@ -20,6 +21,7 @@ type FormData = {
 };
 
 export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
+  const { t } = useT();
   const { user, player, isPlayerLoading } = useAuth();
   const location = useLocation();
   const { mutate: addDrillLog, isPending } = useAddDrillLog();
@@ -49,12 +51,12 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
       },
       {
         onSuccess: (result) => {
-          toast.success("Resultado registrado");
+          toast.success(t("drillLog.saved"));
           reset();
           onSuccess?.(result.id);
         },
         onError: () => {
-          toast.error("Ha ocurrido un error");
+          toast.error(t("common.error"));
         },
       }
     );
@@ -63,14 +65,12 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
   if (!user) {
     return (
       <div className="space-y-3">
-        <p className="text-body text-ink-soft">
-          Inicia sesión para registrar tus resultados.
-        </p>
+        <p className="text-body text-ink-soft">{t("drillLog.signInPrompt")}</p>
         <Link
           to={loginLink(location.pathname + location.search)}
           className={buttonClasses({ variant: "primary" })}
         >
-          Iniciar sesión
+          {t("auth.signIn")}
         </Link>
       </div>
     );
@@ -80,8 +80,8 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
     return (
       <p className="text-body text-ink-soft">
         {isPlayerLoading
-          ? "Cargando tu jugador..."
-          : "Vincula tu cuenta con un jugador para registrar resultados."}
+          ? t("drillLog.loadingPlayer")
+          : t("drillLog.linkPrompt")}
       </p>
     );
   }
@@ -89,7 +89,7 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
       <p className="text-caption text-ink-faint">
-        Registrando como{" "}
+        {t("drillLog.loggingAs")}{" "}
         <span className="font-medium text-ink">{player.name}</span>
       </p>
 
@@ -99,13 +99,15 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
           min={0}
           max={drill.max_score}
           aria-invalid={!!errors.score}
-          placeholder={`Puntuación (máx. ${drill.max_score})`}
+          placeholder={t("drillLog.scorePlaceholder", {
+            max: drill.max_score,
+          })}
           {...register("score", {
-            required: "Introduce la puntuación",
-            min: { value: 0, message: "La puntuación no puede ser negativa" },
+            required: t("drillLog.required"),
+            min: { value: 0, message: t("drillLog.negative") },
             max: {
               value: drill.max_score,
-              message: `El máximo de este ejercicio es ${drill.max_score}`,
+              message: t("drillLog.max", { max: drill.max_score }),
             },
           })}
         />
@@ -116,10 +118,14 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
         )}
       </div>
 
-      <Input type="text" placeholder="Notas (opcional)" {...register("notes")} />
+      <Input
+        type="text"
+        placeholder={t("drillLog.notesPlaceholder")}
+        {...register("notes")}
+      />
 
       <Button type="submit" disabled={isPending}>
-        {isPending ? "Registrando..." : "Registrar resultado"}
+        {isPending ? t("drillLog.saving") : t("drillLog.submit")}
       </Button>
     </form>
   );

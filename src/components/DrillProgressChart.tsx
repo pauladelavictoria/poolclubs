@@ -11,6 +11,7 @@ import {
 import type { DrillLog } from "@/types";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { bandGradientStops, scoreColor, scorePct } from "@/libs/scoreBand";
+import { useT } from "@/i18n";
 
 /* Chart ink, matched to the theme tokens */
 const AXIS = "#8d9793";
@@ -23,8 +24,10 @@ interface DrillProgressChartProps {
 
 export default function DrillProgressChart({
   logs,
-  title = "Evolución del entrenamiento",
+  title,
 }: DrillProgressChartProps) {
+  const { t, locale } = useT();
+
   const chartData = useMemo(() => {
     if (!logs || logs.length === 0) return [];
 
@@ -36,10 +39,10 @@ export default function DrillProgressChart({
         // date, and recharts resolves a category axis by value: every one of
         // them would hand the tooltip the first row that carries that label.
         index: idx + 1,
-        label: `${at.toLocaleDateString(undefined, {
+        label: `${at.toLocaleDateString(locale, {
           day: "numeric",
           month: "short",
-        })} · ${at.toLocaleTimeString(undefined, {
+        })} · ${at.toLocaleTimeString(locale, {
           hour: "2-digit",
           minute: "2-digit",
         })}`,
@@ -47,7 +50,7 @@ export default function DrillProgressChart({
         raw: `${log.score}/${log.max_score}`,
       };
     });
-  }, [logs]);
+  }, [logs, locale]);
 
   // The gradient is defined over the line's own bounding box, so its stops
   // depend on the range actually drawn, not on the 0–100 axis.
@@ -63,7 +66,7 @@ export default function DrillProgressChart({
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader title={title} />
+      <CardHeader title={title ?? t("training.chartTitle")} />
       <div className="h-64 w-full p-3 text-caption md:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData}>
@@ -104,7 +107,7 @@ export default function DrillProgressChart({
               labelFormatter={(i) => chartData[Number(i) - 1]?.label ?? ""}
               formatter={(value, _name, item) => [
                 `${value}% · ${item.payload.raw}`,
-                "Resultado",
+                t("training.result"),
               ]}
             />
             <Line

@@ -3,8 +3,8 @@
  * recharts (which only takes colour values, never classes).
  */
 export type ScoreBand = {
+  /** Also the translation key: `score.${key}` */
   key: 'low' | 'midlow' | 'mid' | 'midhigh' | 'high';
-  label: string;
   color: string;
   /** Inclusive lower bound, in percent */
   min: number;
@@ -12,11 +12,11 @@ export type ScoreBand = {
 
 // Ordered high to low: the first band whose `min` a score clears wins.
 export const SCORE_BANDS: ScoreBand[] = [
-  { key: 'high', label: 'Excelente', color: '#3fbf7f', min: 80 },
-  { key: 'midhigh', label: 'Bien', color: '#9ccc4a', min: 60 },
-  { key: 'mid', label: 'Correcto', color: '#f2b705', min: 40 },
-  { key: 'midlow', label: 'Flojo', color: '#e8833a', min: 20 },
-  { key: 'low', label: 'Bajo', color: '#e23744', min: 0 },
+  { key: 'high', color: '#3fbf7f', min: 80 },
+  { key: 'midhigh', color: '#9ccc4a', min: 60 },
+  { key: 'mid', color: '#f2b705', min: 40 },
+  { key: 'midlow', color: '#e8833a', min: 20 },
+  { key: 'low', color: '#e23744', min: 0 },
 ];
 
 /** @param pct 0–100 */

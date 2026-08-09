@@ -10,8 +10,10 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useT } from "@/i18n";
 
 export default function TrainingPlanPage() {
+  const { t } = useT();
   const { playerId } = useParams<{ playerId: string }>();
   const playerIdNum = Number(playerId);
 
@@ -41,16 +43,19 @@ export default function TrainingPlanPage() {
     generatePlan.mutate(
       { playerId: player.id, category: player.category },
       {
-        onSuccess: () => toast.success("Nuevo plan generado"),
-        onError: () => toast.error("Error al generar el plan"),
+        onSuccess: () => toast.success(t("training.newPlanCreated")),
+        onError: () => toast.error(t("drills.planError")),
       }
     );
   };
 
   const header = (
     <PageHeader
-      title="Plan de entrenamiento"
-      subtitle={player && `${player.name} · ${player.category}ª`}
+      title={t("training.planTitle")}
+      subtitle={
+        player &&
+        `${player.name} · ${t("category.short", { n: player.category })}`
+      }
       back={`/players/${playerIdNum}`}
     />
   );
@@ -78,14 +83,16 @@ export default function TrainingPlanPage() {
         {!planData || !stats ? (
           <Card>
             <EmptyState
-              title="Sin plan activo"
-              hint="Genera uno y tendrás diez ejercicios elegidos para tu categoría."
+              title={t("training.noPlan")}
+              hint={t("training.noPlanHint")}
               action={
                 <Button
                   onClick={handleNewPlan}
                   disabled={generatePlan.isPending}
                 >
-                  {generatePlan.isPending ? "Generando..." : "Generar plan"}
+                  {generatePlan.isPending
+                    ? t("drills.generating")
+                    : t("drills.generatePlan")}
                 </Button>
               }
             />
@@ -95,7 +102,7 @@ export default function TrainingPlanPage() {
             <Card className="p-5">
               <div className="flex items-baseline justify-between">
                 <span className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
-                  Progreso
+                  {t("training.progress")}
                 </span>
                 <span className="font-mono text-body tabular-nums text-ink">
                   {stats.completed}
@@ -124,7 +131,9 @@ export default function TrainingPlanPage() {
 
               {stats.skipped > 0 && (
                 <p className="mt-2 text-caption text-ink-faint">
-                  {stats.skipped} saltado{stats.skipped === 1 ? "" : "s"}
+                  {stats.skipped === 1
+                    ? t("training.skippedOne", { n: stats.skipped })
+                    : t("training.skippedOther", { n: stats.skipped })}
                 </p>
               )}
             </Card>
@@ -132,17 +141,22 @@ export default function TrainingPlanPage() {
             {stats.isFinished && (
               <Card className="border-pot/30 bg-pot/[0.07] p-5 text-center">
                 <h2 className="text-h3 font-semibold text-pot">
-                  Plan completado
+                  {t("training.planDone")}
                 </h2>
                 <p className="mt-1 text-body text-ink-soft">
-                  {stats.completed} de {stats.total} ejercicios hechos.
+                  {t("training.planDoneHint", {
+                    done: stats.completed,
+                    total: stats.total,
+                  })}
                 </p>
                 <Button
                   className="mt-4"
                   onClick={handleNewPlan}
                   disabled={generatePlan.isPending}
                 >
-                  {generatePlan.isPending ? "Generando..." : "Generar nuevo plan"}
+                  {generatePlan.isPending
+                    ? t("drills.generating")
+                    : t("training.generateNewPlan")}
                 </Button>
               </Card>
             )}

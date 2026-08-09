@@ -20,7 +20,7 @@ import { Stat } from "@/components/ui/Stat";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { CATEGORY_LABEL } from "@/components/ui/Ball";
+import { useT } from "@/i18n";
 
 /* Chart ink, matched to the theme tokens */
 const AXIS = "#8d9793";
@@ -31,6 +31,7 @@ const LINE_RACKS = "#5b9dd9"; // chalk blue: the supporting series
 export default function PlayerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const playerId = Number(id);
+  const { t, locale } = useT();
 
   const { user } = useAuth();
   const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
@@ -84,7 +85,7 @@ export default function PlayerDetailPage() {
 
       return {
         gameIndex: index + 1,
-        date: new Date(game.created_at).toLocaleString(),
+        date: new Date(game.created_at).toLocaleString(locale),
         gameWinRate: parseFloat(gameWinRate.toFixed(1)),
         rackWinRate: parseFloat(rackWinRate.toFixed(1)),
         gamesWon,
@@ -106,12 +107,12 @@ export default function PlayerDetailPage() {
           : "0",
       chartData,
     };
-  }, [player, gamesData]);
+  }, [player, gamesData, locale]);
 
   if (isLoadingPlayers || isLoadingGames) {
     return (
       <>
-        <PageHeader title="Jugador" back="/players" />
+        <PageHeader title={t("players.detailTitle")} back="/players" />
         <div className="mx-auto max-w-5xl px-3 py-4">
           <Card className="p-3">
             <SkeletonRows rows={6} />
@@ -124,18 +125,18 @@ export default function PlayerDetailPage() {
   if (!player) {
     return (
       <>
-        <PageHeader title="Jugador" back="/players" />
+        <PageHeader title={t("players.detailTitle")} back="/players" />
         <div className="mx-auto max-w-5xl px-3 py-4">
           <Card>
             <EmptyState
-              title="Jugador no encontrado"
-              hint="Puede que se haya eliminado o que el enlace sea antiguo."
+              title={t("players.notFound")}
+              hint={t("players.notFoundHint")}
               action={
                 <Link
                   to="/players"
                   className={buttonClasses({ variant: "secondary" })}
                 >
-                  Ver todos los jugadores
+                  {t("players.seeAll")}
                 </Link>
               }
             />
@@ -149,7 +150,7 @@ export default function PlayerDetailPage() {
     <>
       <PageHeader
         title={player.name}
-        subtitle={CATEGORY_LABEL[player.category]}
+        subtitle={t(`category.${player.category}`)}
         back="/players"
       />
 
@@ -160,20 +161,26 @@ export default function PlayerDetailPage() {
           <>
             <Card className="grid grid-cols-2 gap-5 p-5">
               <Stat
-                label="Partidos ganados"
+                label={t("players.gamesWon")}
                 value={`${stats.winRate}%`}
-                delta={`${stats.gamesWon} de ${stats.totalGames}`}
+                delta={t("players.ofTotal", {
+                  n: stats.gamesWon,
+                  total: stats.totalGames,
+                })}
                 tone="good"
               />
               <Stat
-                label="Mesas ganadas"
+                label={t("players.racksWon")}
                 value={`${stats.rackWinRate}%`}
-                delta={`${stats.racksWon} de ${stats.racksWon + stats.racksLost}`}
+                delta={t("players.ofTotal", {
+                  n: stats.racksWon,
+                  total: stats.racksWon + stats.racksLost,
+                })}
               />
             </Card>
 
             <Card className="overflow-hidden">
-              <CardHeader title="Victorias a lo largo del tiempo" />
+              <CardHeader title={t("players.winsOverTime")} />
               <div className="h-64 w-full p-3 text-caption md:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={stats.chartData}>
@@ -208,7 +215,7 @@ export default function PlayerDetailPage() {
                     />
                     <Line
                       type="step"
-                      name="Mesas"
+                      name={t("players.racks")}
                       dataKey="rackWinRate"
                       stroke={LINE_RACKS}
                       strokeWidth={2}
@@ -217,7 +224,7 @@ export default function PlayerDetailPage() {
                     />
                     <Line
                       type="step"
-                      name="Partidos"
+                      name={t("players.games")}
                       dataKey="gameWinRate"
                       stroke={LINE_GAMES}
                       strokeWidth={2}
@@ -230,7 +237,7 @@ export default function PlayerDetailPage() {
             </Card>
 
             <Card className="overflow-hidden">
-              <CardHeader title="Historial de partidos" />
+              <CardHeader title={t("games.history")} />
               <div className="p-3">
                 <GamesList
                   games={gamesData?.games ?? []}
@@ -243,11 +250,11 @@ export default function PlayerDetailPage() {
         ) : (
           <Card>
             <EmptyState
-              title="Sin partidos todavía"
-              hint={`${player.name} aparecerá en la clasificación en cuanto juegue el primero.`}
+              title={t("players.noGamesTitle")}
+              hint={t("players.noGamesHint", { name: player.name })}
               action={
                 <Link to="/games/new" className={buttonClasses({})}>
-                  Añadir partido
+                  {t("games.add")}
                 </Link>
               }
             />

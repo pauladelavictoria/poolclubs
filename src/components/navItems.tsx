@@ -7,10 +7,12 @@ import {
   LuCalendarDays,
   LuPlus,
 } from "react-icons/lu";
+import type { Key } from "@/i18n";
 
 export type NavItem = {
   to: string;
-  label: string;
+  /** Translated at render time, so the rail relabels itself with the language. */
+  labelKey: Key;
   icon: React.ComponentType<{ className?: string }>;
   /** `end` so a parent route doesn't stay highlighted on its children. */
   end?: boolean;
@@ -18,39 +20,41 @@ export type NavItem = {
 
 /** The five thumb-reachable destinations. Everything else lives in the drawer. */
 export const PRIMARY_NAV: NavItem[] = [
-  { to: "/", label: "Inicio", icon: LuHouse, end: true },
-  { to: "/ranking", label: "Ranking", icon: LuTrophy, end: true },
-  { to: "/games", label: "Partidos", icon: LuSwords, end: true },
-  { to: "/drills", label: "Ejercicios", icon: LuTarget, end: true },
+  { to: "/", labelKey: "nav.home", icon: LuHouse, end: true },
+  { to: "/ranking", labelKey: "nav.ranking", icon: LuTrophy, end: true },
+  { to: "/games", labelKey: "nav.games", icon: LuSwords, end: true },
+  { to: "/drills", labelKey: "nav.drills", icon: LuTarget, end: true },
 ];
 
 /** Full map, used by the drawer. */
-export const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
+export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
   {
-    heading: "Entrenamiento",
-    items: [{ to: "/drills", label: "Ejercicios", icon: LuTarget, end: true }],
-  },
-  {
-    heading: "Rankings",
+    headingKey: "nav.training",
     items: [
-      { to: "/ranking", label: "Global", icon: LuTrophy, end: true },
-      { to: "/ranking/daily", label: "Diario", icon: LuCalendarDays },
+      { to: "/drills", labelKey: "nav.drills", icon: LuTarget, end: true },
     ],
   },
   {
-    heading: "Partidos",
+    headingKey: "nav.rankings",
+    items: [
+      { to: "/ranking", labelKey: "nav.rankingGlobal", icon: LuTrophy, end: true },
+      { to: "/ranking/daily", labelKey: "nav.rankingDaily", icon: LuCalendarDays },
+    ],
+  },
+  {
+    headingKey: "nav.games",
     items: [
       {
         to: "/games",
-        label: "Todos los partidos",
+        labelKey: "nav.allGames",
         icon: LuSwords,
         end: true,
       },
-      { to: "/games/new", label: "Añadir partido", icon: LuPlus },
+      { to: "/games/new", labelKey: "nav.addGame", icon: LuPlus },
     ],
   },
   {
-    heading: "Club",
-    items: [{ to: "/players", label: "Jugadores", icon: LuUsers, end: true }],
+    headingKey: "nav.club",
+    items: [{ to: "/players", labelKey: "nav.players", icon: LuUsers, end: true }],
   },
 ];
