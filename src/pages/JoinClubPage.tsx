@@ -27,7 +27,11 @@ export default function JoinClubPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const { user, isLoading, memberships } = useAuth();
-  const { data: preview, isLoading: previewLoading, isError } = useClubPreview(code);
+  const {
+    data: preview,
+    isLoading: previewLoading,
+    isError,
+  } = useClubPreview(code);
   const { joinClub } = useJoinOrCreateClub();
 
   const [claimId, setClaimId] = useState("");
@@ -53,7 +57,11 @@ export default function JoinClubPage() {
 
   // Empty input means join_club() falls back to the OAuth name, so that is what
   // gets checked. Claiming an existing row skips the check entirely.
-  const wanted = (name.trim() || user?.user_metadata?.full_name || "Player").toLowerCase();
+  const wanted = (
+    name.trim() ||
+    user?.user_metadata?.full_name ||
+    "Player"
+  ).toLowerCase();
   const nameTaken = !claimId && !!preview?.takenNames.has(wanted);
 
   const submit = () => {
@@ -68,8 +76,14 @@ export default function JoinClubPage() {
           toast.success(t("club.requestSent"));
           navigate("/");
         },
-        onError: (e: { code?: string }) =>
-          toast.error(t(e?.code === "23505" ? "club.nameTaken" : "club.joinError")),
+        onError: (e) =>
+          toast.error(
+            t(
+              (e as { code?: string })?.code === "23505"
+                ? "club.nameTaken"
+                : "club.joinError",
+            ),
+          ),
       },
     );
   };
@@ -163,7 +177,9 @@ export default function JoinClubPage() {
                 onClick={submit}
                 disabled={joinClub.isPending || nameTaken}
               >
-                {joinClub.isPending ? t("common.saving") : t("club.requestJoin")}
+                {joinClub.isPending
+                  ? t("common.saving")
+                  : t("club.requestJoin")}
               </Button>
             </div>
           </Card>
