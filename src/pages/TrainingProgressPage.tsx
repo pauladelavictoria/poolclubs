@@ -15,10 +15,12 @@ import { Stat } from "@/components/ui/Stat";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { DIFFICULTY_LABELS, type DrillDifficulty } from "@/types";
+import { DIFFICULTIES, type DrillDifficulty } from "@/types";
 import { scoreBand, scorePct } from "@/libs/scoreBand";
+import { useT } from "@/i18n";
 
 export default function TrainingProgressPage() {
+  const { t, locale } = useT();
   // The URL is the single source of truth for which player is shown
   const { playerId } = useParams<{ playerId: string }>();
   const selectedPlayerId = playerId ? Number(playerId) : null;
@@ -102,7 +104,7 @@ export default function TrainingProgressPage() {
 
   // Deleting a result is not undoable and it moves the averages, so it asks
   function handleDelete(id: number) {
-    if (!window.confirm("¿Borrar este resultado? No se puede deshacer."))
+    if (!window.confirm(t("training.deleteConfirm")))
       return;
     deleteLog.mutate(id, {
       onError: (e) => window.alert(e.message),
@@ -112,7 +114,7 @@ export default function TrainingProgressPage() {
   return (
     <>
       <PageHeader
-        title="Progreso"
+        title={t("training.progressTitle")}
         subtitle={player?.name}
         back={`/players/${selectedPlayerId}`}
       />
@@ -130,14 +132,12 @@ export default function TrainingProgressPage() {
                 // The chosen drill may not exist in the new difficulty
                 setDrillId("");
               }}
-              aria-label="Filtrar por dificultad"
+              aria-label={t("drills.filterDifficulty")}
             >
-              <option value="">Toda dificultad</option>
-              {(
-                Object.entries(DIFFICULTY_LABELS) as [DrillDifficulty, string][]
-              ).map(([value, label]) => (
+              <option value="">{t("training.allDifficulty")}</option>
+              {DIFFICULTIES.map((value) => (
                 <option key={value} value={value}>
-                  {label}
+                  {t(`difficulty.${value}`)}
                 </option>
               ))}
             </Select>
@@ -148,9 +148,9 @@ export default function TrainingProgressPage() {
               onChange={(e) =>
                 setDrillId(e.target.value ? Number(e.target.value) : "")
               }
-              aria-label="Filtrar por ejercicio"
+              aria-label={t("training.filterDrill")}
             >
-              <option value="">Todos los ejercicios</option>
+              <option value="">{t("training.allDrills")}</option>
               {drillOptions.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -168,8 +168,8 @@ export default function TrainingProgressPage() {
           <Card>
             {allLogs && allLogs.length > 0 ? (
               <EmptyState
-                title="Ningún resultado con estos filtros"
-                hint="Prueba con otra dificultad u otro ejercicio."
+                title={t("training.noResultsFiltered")}
+                hint={t("training.noResultsFilteredHint")}
                 action={
                   <button
                     type="button"
@@ -179,20 +179,20 @@ export default function TrainingProgressPage() {
                     }}
                     className={buttonClasses({ variant: "secondary" })}
                   >
-                    Quitar filtros
+                    {t("common.clearFilters")}
                   </button>
                 }
               />
             ) : (
               <EmptyState
-                title="Sin resultados todavía"
-                hint="Registra el resultado de un ejercicio y el progreso empezará a dibujarse aquí."
+                title={t("training.noResults")}
+                hint={t("training.noResultsHint")}
                 action={
                   <Link
                     to="/drills"
                     className={buttonClasses({ variant: "secondary" })}
                   >
-                    Ver ejercicios
+                    {t("training.seeDrills")}
                   </Link>
                 }
               />
@@ -201,19 +201,27 @@ export default function TrainingProgressPage() {
         ) : (
           <>
             <Card className="grid grid-cols-2 gap-5 p-5 sm:grid-cols-4">
-              <Stat label="Intentos" value={stats.totalAttempts} />
               <Stat
-                label="Media"
+                label={t("training.attempts")}
+                value={stats.totalAttempts}
+              />
+              <Stat
+                label={t("training.average")}
                 value={`${stats.avgScore}%`}
                 tone="good"
                 delta={
                   stats.trend === null
                     ? undefined
-                    : `${stats.trend > 0 ? "+" : ""}${stats.trend} pts`
+                    : t("common.pts", {
+                        n: `${stats.trend > 0 ? "+" : ""}${stats.trend}`,
+                      })
                 }
               />
-              <Stat label="Ejercicios" value={stats.uniqueDrills} />
-              <Stat label="Mejor" value={`${stats.bestScore}%`} />
+              <Stat
+                label={t("training.drills")}
+                value={stats.uniqueDrills}
+              />
+              <Stat label={t("training.best")} value={`${stats.bestScore}%`} />
             </Card>
 
             {logs && logs.length > 1 && <DrillProgressChart logs={logs} />}
@@ -221,10 +229,13 @@ export default function TrainingProgressPage() {
             {logs && logs.length > 0 && (
               <Card className="overflow-hidden">
                 <CardHeader
-                  title="Últimos resultados"
+                  title={t("drills.recentResults")}
                   action={
                     <span className="text-caption tabular-nums text-ink-faint">
-                      {Math.min(logs.length, 30)} de {logs.length}
+                      {t("training.shownOf", {
+                        shown: Math.min(logs.length, 30),
+                        total: logs.length,
+                      })}
                     </span>
                   }
                 />
@@ -233,7 +244,7 @@ export default function TrainingProgressPage() {
                     const pct = scorePct(log.score, log.max_score);
                     const band = scoreBand(pct);
                     const date = new Date(log.created_at);
-                    const day = date.toLocaleDateString(undefined, {
+                    const day = date.toLocaleDateString(locale, {
                       weekday: "short",
                       day: "numeric",
                       month: "short",
@@ -267,7 +278,8 @@ export default function TrainingProgressPage() {
                           >
                             <div className="flex items-baseline gap-3">
                               <span className="flex-1 truncate text-body text-ink">
-                                {drill?.name ?? `Ejercicio #${log.drill_id}`}
+                                {drill?.name ??
+                                  t("drills.numbered", { id: log.drill_id })}
                               </span>
                               <span className="font-mono text-caption tabular-nums text-ink-faint">
                                 {log.score}/{log.max_score}
@@ -275,7 +287,7 @@ export default function TrainingProgressPage() {
                               <span
                                 className="w-12 text-right font-mono text-body font-semibold tabular-nums"
                                 style={{ color: band.color }}
-                                title={band.label}
+                                title={t(`score.${band.key}`)}
                               >
                                 {pct}%
                               </span>
@@ -297,7 +309,7 @@ export default function TrainingProgressPage() {
                                 dateTime={log.created_at}
                                 className="text-caption tabular-nums text-ink-faint"
                               >
-                                {date.toLocaleTimeString(undefined, {
+                                {date.toLocaleTimeString(locale, {
                                   hour: "2-digit",
                                   minute: "2-digit",
                                 })}
@@ -315,10 +327,11 @@ export default function TrainingProgressPage() {
                               type="button"
                               onClick={() => handleDelete(log.id)}
                               disabled={deleteLog.isPending}
-                              title="Borrar resultado"
-                              aria-label={`Borrar el resultado de ${
-                                drill?.name ?? "este ejercicio"
-                              } del ${day}`}
+                              title={t("training.deleteResult")}
+                              aria-label={t("training.deleteResultNamed", {
+                                drill: drill?.name ?? t("training.thisDrill"),
+                                day,
+                              })}
                               className="absolute right-1 top-1/2 -translate-y-1/2 rounded-control bg-felt p-2 text-ink-faint opacity-0 transition-colors duration-150 hover:bg-felt-raised hover:text-strike focus-visible:opacity-100 disabled:cursor-not-allowed group-hover:opacity-100 max-sm:opacity-100"
                             >
                               <LuTrash2 aria-hidden />

@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import type { TrainingPlanStep } from "@/types";
-import { SKILL_TYPE_LABELS } from "@/types";
 import { LuCheck, LuSkipForward, LuPlay } from "react-icons/lu";
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { useT } from "@/i18n";
 
 interface TrainingPlanStepListProps {
   steps: TrainingPlanStep[];
@@ -24,6 +24,7 @@ export default function TrainingPlanStepList({
   onSkip,
   isSkipping,
 }: TrainingPlanStepListProps) {
+  const { t } = useT();
   const currentStep = steps.find((s) => s.status === "pending");
 
   return (
@@ -69,11 +70,12 @@ export default function TrainingPlanStepList({
               <div
                 className={`truncate ${isCurrent ? "font-medium text-ink" : "text-ink-soft"}`}
               >
-                {drill?.name ?? `Ejercicio ${step.step_order}`}
+                {drill?.name ??
+                  t("drills.stepNumbered", { n: step.step_order })}
               </div>
               {drill && (
                 <div className="truncate text-caption text-ink-faint">
-                  {SKILL_TYPE_LABELS[drill.skill_type]}
+                  {t(`skill.${drill.skill_type}`)}
                 </div>
               )}
             </div>
@@ -87,7 +89,7 @@ export default function TrainingPlanStepList({
                     disabled={isSkipping}
                     className="h-8 rounded-control px-2.5 text-caption text-ink-faint transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
                   >
-                    Saltar
+                    {t("training.skip")}
                   </button>
                 )}
                 <Link
@@ -98,12 +100,16 @@ export default function TrainingPlanStepList({
                   })}
                 >
                   <LuPlay className="h-3.5 w-3.5" aria-hidden />
-                  {isSkipped ? "Retomar" : "Empezar"}
+                  {isSkipped ? t("training.resume") : t("training.start")}
                 </Link>
               </div>
             ) : (
               <span className="shrink-0 text-caption text-ink-faint">
-                {isCompleted ? "Completado" : isSkipped ? "Saltado" : "Pendiente"}
+                {isCompleted
+                  ? t("training.completed")
+                  : isSkipped
+                    ? t("training.skipped")
+                    : t("training.pending")}
               </span>
             )}
           </li>

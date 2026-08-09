@@ -7,10 +7,12 @@ import Ranking from "@/components/Ranking";
 import { Card } from "@/components/ui/Card";
 import { Segmented } from "@/components/ui/Segmented";
 import type { Category } from "@/types";
+import { useT } from "@/i18n";
 
 type ViewMode = "combined" | "byCategory";
 
 export default function RankingAllTimePage() {
+  const { t } = useT();
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
 
   const { data: gamesData, isLoading: gamesLoading } = useGetGames({});
@@ -30,21 +32,25 @@ export default function RankingAllTimePage() {
   return (
     <>
       <PageHeader
-        title="Ranking global"
-        subtitle={games.length > 0 ? `${games.length} partidos` : undefined}
+        title={t("ranking.globalTitle")}
+        subtitle={
+          games.length > 0 ? t("games.count", { n: games.length }) : undefined
+        }
       />
 
       <div className="mx-auto max-w-5xl px-3 py-4">
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between gap-3 border-b border-hairline px-3 py-2.5">
-            <h2 className="pl-1 text-h4 font-semibold text-ink">Clasificación</h2>
+            <h2 className="pl-1 text-h4 font-semibold text-ink">
+              {t("ranking.standings")}
+            </h2>
             <Segmented
-              label="Vista del ranking"
+              label={t("ranking.view")}
               value={viewMode}
               onChange={setViewMode}
               options={[
-                { value: "combined", label: "Combinado" },
-                { value: "byCategory", label: "Por categoría" },
+                { value: "combined", label: t("ranking.combined") },
+                { value: "byCategory", label: t("ranking.byCategory") },
               ]}
             />
           </div>
@@ -54,7 +60,7 @@ export default function RankingAllTimePage() {
             rankingByCategory={rankingByCategory}
             viewMode={viewMode}
             isLoading={gamesLoading || playersLoading}
-            emptyMessage="Aún no se ha registrado ningún partido."
+            emptyMessage={t("ranking.emptyAllTime")}
           />
         </Card>
       </div>

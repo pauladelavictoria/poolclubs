@@ -4,11 +4,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSignOut } from "@/hooks/useSignOut";
 import { toast } from "react-toastify";
 import { NAV_SECTIONS, type NavItem } from "@/components/navItems";
+import { LANGS, useT, type Lang } from "@/i18n";
+import { Select } from "@/components/ui/Select";
 import {
   LuUser,
   LuClipboardList,
   LuChartColumn,
   LuLogOut,
+  LuLanguages,
 } from "react-icons/lu";
 
 const item = ({ isActive }: { isActive: boolean }) =>
@@ -38,6 +41,7 @@ export default function NavDrawer({
   const ref = useRef<HTMLDialogElement>(null);
   const { user, player } = useAuth();
   const signOut = useSignOut();
+  const { t, lang, setLang } = useT();
 
   useEffect(() => {
     const dialog = ref.current;
@@ -50,15 +54,19 @@ export default function NavDrawer({
   // ProtectedRoute and so asks for login first.
   const me = player ? `/players/${player.id}` : "/me";
   const sections = NAV_SECTIONS.map((section) =>
-    section.heading === "Entrenamiento"
+    section.headingKey === "nav.training"
       ? {
           ...section,
           items: [
             ...section.items,
-            { to: `${me}/training/plan`, label: "Mi plan", icon: LuClipboardList },
+            {
+              to: `${me}/training/plan`,
+              labelKey: "nav.myPlan",
+              icon: LuClipboardList,
+            },
             {
               to: `${me}/training`,
-              label: "Mi progreso",
+              labelKey: "nav.myProgress",
               icon: LuChartColumn,
             },
           ] as NavItem[],
@@ -70,10 +78,10 @@ export default function NavDrawer({
     onClose();
     try {
       await signOut.mutateAsync();
-      toast.success("Has cerrado sesión correctamente");
+      toast.success(t("auth.signedOut"));
     } catch (error) {
       console.error(error);
-      toast.error("Error al cerrar sesión");
+      toast.error(t("auth.signOutError"));
     }
   };
 
@@ -82,7 +90,7 @@ export default function NavDrawer({
       ref={ref}
       // Native <dialog> gives backdrop, Esc-to-close and focus trap free
       className="drawer fixed left-0 top-0 m-0 h-dvh max-h-dvh w-[19rem] max-w-[86vw] overflow-y-auto border-r border-hairline bg-felt text-ink"
-      aria-label="Navegación"
+      aria-label={t("nav.navigation")}
       onClose={onClose}
       onClick={(e) => {
         if (e.target === ref.current) onClose();
@@ -102,11 +110,11 @@ export default function NavDrawer({
         </div>
 
         {sections.map((section) => (
-          <div key={section.heading}>
-            <Heading>{section.heading}</Heading>
-            {section.items.map(({ to, label, icon: Icon, end }) => (
+          <div key={section.headingKey}>
+            <Heading>{t(section.headingKey)}</Heading>
+            {section.items.map(({ to, labelKey, icon: Icon, end }) => (
               <NavLink key={to} to={to} end={end} className={item}>
-                <Icon className="h-[18px] w-[18px]" /> {label}
+                <Icon className="h-[18px] w-[18px]" /> {t(labelKey)}
               </NavLink>
             ))}
           </div>
@@ -114,7 +122,7 @@ export default function NavDrawer({
 
         <div className="mt-5 border-t border-hairline pt-3">
           <NavLink to={me} end className={item}>
-            <LuUser className="h-[18px] w-[18px]" /> Mi perfil
+            <LuUser className="h-[18px] w-[18px]" /> {t("nav.myProfile")}
           </NavLink>
           {user ? (
             <button
@@ -122,15 +130,34 @@ export default function NavDrawer({
               onClick={handleSignOut}
               className="flex h-10 w-full items-center gap-3 rounded-control px-3 text-body text-ink-soft transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
             >
-              <LuLogOut className="h-[18px] w-[18px]" /> Cerrar
-              sesión
+              <LuLogOut className="h-[18px] w-[18px]" /> {t("auth.signOut")}
             </button>
           ) : (
             <NavLink to="/login" className={item}>
-              <LuLogOut className="h-[18px] w-[18px]" /> Iniciar
-              sesión
+              <LuLogOut className="h-[18px] w-[18px]" /> {t("auth.signIn")}
             </NavLink>
           )}
+
+          {/* Its own click handler: the drawer closes on any click inside the
+              nav, and picking a language shouldn't dismiss it mid-choice. */}
+          <div
+            className="mt-1 flex h-10 items-center gap-3 px-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <LuLanguages className="h-[18px] w-[18px] shrink-0 text-ink-soft" />
+            <Select
+              size="sm"
+              aria-label={t("nav.language")}
+              value={lang}
+              onChange={(e) => setLang(e.target.value as Lang)}
+            >
+              {LANGS.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
       </nav>
     </dialog>

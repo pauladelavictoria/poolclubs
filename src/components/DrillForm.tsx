@@ -21,8 +21,8 @@ import {
   type Selection,
 } from "@/libs/drillGeometry";
 import {
-  DIFFICULTY_LABELS,
-  SKILL_TYPE_LABELS,
+  DIFFICULTIES,
+  SKILL_TYPES,
   type BallPosition,
   type Drill,
   type DrillDifficulty,
@@ -30,6 +30,7 @@ import {
   type ShotPath,
 } from "@/types";
 import type { DrillInput } from "@/hooks/useManageDrills";
+import { useT } from "@/i18n";
 
 type BallEntry = (typeof BALLS)[number];
 /** What is being dragged out of the toolbar. */
@@ -107,6 +108,7 @@ export default function DrillForm({
   onDelete,
   isSubmitting = false,
 }: DrillFormProps) {
+  const { t } = useT();
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [difficulty, setDifficulty] = useState<DrillDifficulty>(
@@ -388,11 +390,10 @@ export default function DrillForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const score = Number(maxScore);
-    if (!name.trim()) return toast.error("El ejercicio necesita un nombre");
+    if (!name.trim()) return toast.error(t("drillForm.nameRequired"));
     if (!Number.isFinite(score) || score < 1)
-      return toast.error("La puntuación máxima debe ser al menos 1");
-    if (balls.length === 0)
-      return toast.error("Coloca al menos una bola en la mesa");
+      return toast.error(t("drillForm.maxScoreMin"));
+    if (balls.length === 0) return toast.error(t("drillForm.needBall"));
 
     onSubmit({
       name: name.trim(),
@@ -425,7 +426,9 @@ export default function DrillForm({
                   key={entry.label ?? "cue"}
                   type="button"
                   aria-label={
-                    entry.label ? `Bola ${entry.label}` : "Bola blanca"
+                    entry.label
+                      ? t("drillForm.ball", { label: entry.label })
+                      : t("drillForm.cueBall")
                   }
                   aria-pressed={active}
                   className={[
@@ -449,7 +452,7 @@ export default function DrillForm({
 
             <button
               type="button"
-              aria-label="Flecha"
+              aria-label={t("drillForm.arrow")}
               className={[
                 PALETTE_ITEM_CLASSES,
                 "flex items-center justify-center text-ink-soft hover:bg-felt-raised hover:text-ink",
@@ -472,7 +475,7 @@ export default function DrillForm({
               disabled={history.length === 0}
             >
               <LuUndo2 className="mr-1.5 h-4 w-4" aria-hidden />
-              Deshacer
+              {t("drillForm.undo")}
             </Button>
             <Button
               type="button"
@@ -482,7 +485,7 @@ export default function DrillForm({
               disabled={!selected}
             >
               <LuTrash2 className="mr-1.5 h-4 w-4" aria-hidden />
-              Borrar
+              {t("drillForm.erase")}
             </Button>
           </div>
         </div>
@@ -522,20 +525,19 @@ export default function DrillForm({
           </PoolTableDiagram>
 
           <p className="mt-2 text-caption text-ink-faint">
-            Arrastra una bola o la flecha desde la barra hasta la mesa. Una vez
-            colocadas, arrástralas para moverlas.
+            {t("drillForm.canvasHint")}
           </p>
         </div>
 
         {selectedBall && (
           <div className="border-t border-hairline p-3">
             <Label htmlFor="ball-label" className="mb-2">
-              Etiqueta
+              {t("drillForm.label")}
             </Label>
             <Input
               id="ball-label"
               value={selectedBall.label ?? ""}
-              placeholder="Número, letra o texto"
+              placeholder={t("drillForm.labelPlaceholder")}
               // Once per edit, not once per keystroke
               onFocus={pushHistory}
               onChange={(e) => setBallLabel(e.target.value || undefined)}
@@ -564,32 +566,32 @@ export default function DrillForm({
               })}
             </div>
             <p className="mt-2 text-caption text-ink-ghost">
-              Una etiqueta sustituye al número de la bola.
+              {t("drillForm.labelHint")}
             </p>
           </div>
         )}
 
         {selectedPath && (
           <div className="flex items-center gap-2 border-t border-hairline p-3">
-            <Label htmlFor="path-type">Trazo</Label>
+            <Label htmlFor="path-type">{t("drillForm.path")}</Label>
             <Select
               id="path-type"
               size="sm"
               value={selectedPath.type ?? "solid"}
               onChange={(e) => setPathType(e.target.value as ShotPath["type"])}
             >
-              <option value="solid">Continuo</option>
-              <option value="dashed">Discontinuo</option>
+              <option value="solid">{t("drillForm.solid")}</option>
+              <option value="dashed">{t("drillForm.dashed")}</option>
             </Select>
           </div>
         )}
       </Card>
 
       <Card className="overflow-hidden">
-        <CardHeader title="Detalles" />
+        <CardHeader title={t("drillForm.details")} />
         <div className="space-y-4 p-4">
           <div className="space-y-1.5">
-            <Label htmlFor="drill-name">Nombre</Label>
+            <Label htmlFor="drill-name">{t("drillForm.name")}</Label>
             <Input
               id="drill-name"
               value={name}
@@ -600,7 +602,9 @@ export default function DrillForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="drill-description">Descripción</Label>
+            <Label htmlFor="drill-description">
+              {t("drillForm.description")}
+            </Label>
             <textarea
               id="drill-description"
               rows={2}
@@ -613,7 +617,9 @@ export default function DrillForm({
 
           <div className="flex flex-col gap-4 sm:flex-row">
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor="drill-difficulty">Dificultad</Label>
+              <Label htmlFor="drill-difficulty">
+                {t("drillForm.difficulty")}
+              </Label>
               <Select
                 id="drill-difficulty"
                 value={difficulty}
@@ -622,32 +628,25 @@ export default function DrillForm({
                 }
                 disabled={isSubmitting}
               >
-                {(
-                  Object.entries(DIFFICULTY_LABELS) as [
-                    DrillDifficulty,
-                    string,
-                  ][]
-                ).map(([key, label]) => (
+                {DIFFICULTIES.map((key) => (
                   <option key={key} value={key}>
-                    {label}
+                    {t(`difficulty.${key}`)}
                   </option>
                 ))}
               </Select>
             </div>
 
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor="drill-skill">Tipo</Label>
+              <Label htmlFor="drill-skill">{t("drillForm.skill")}</Label>
               <Select
                 id="drill-skill"
                 value={skillType}
                 onChange={(e) => setSkillType(e.target.value as DrillSkillType)}
                 disabled={isSubmitting}
               >
-                {(
-                  Object.entries(SKILL_TYPE_LABELS) as [DrillSkillType, string][]
-                ).map(([key, label]) => (
+                {SKILL_TYPES.map((key) => (
                   <option key={key} value={key}>
-                    {label}
+                    {t(`skill.${key}`)}
                   </option>
                 ))}
               </Select>
@@ -655,7 +654,7 @@ export default function DrillForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="drill-setup">Preparación</Label>
+            <Label htmlFor="drill-setup">{t("drillForm.setup")}</Label>
             <textarea
               id="drill-setup"
               rows={2}
@@ -667,7 +666,7 @@ export default function DrillForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="drill-scoring">Puntuación</Label>
+            <Label htmlFor="drill-scoring">{t("drillForm.scoring")}</Label>
             <textarea
               id="drill-scoring"
               rows={2}
@@ -679,7 +678,7 @@ export default function DrillForm({
           </div>
 
           <div className="space-y-1.5 sm:max-w-[12rem]">
-            <Label htmlFor="drill-max-score">Puntuación máxima</Label>
+            <Label htmlFor="drill-max-score">{t("drillForm.maxScore")}</Label>
             <Input
               id="drill-max-score"
               type="number"
@@ -700,11 +699,11 @@ export default function DrillForm({
             onClick={onDelete}
             disabled={isSubmitting}
           >
-            Eliminar
+            {t("common.delete")}
           </Button>
         )}
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Guardando..." : "Guardar"}
+          {isSubmitting ? t("common.saving") : t("common.save")}
         </Button>
       </div>
     </form>

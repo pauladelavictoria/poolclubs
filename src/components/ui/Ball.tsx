@@ -1,4 +1,5 @@
 import type { Category } from "@/types";
+import { useT } from "@/i18n";
 
 /**
  * Rank as an object ball. Pool numbers its balls, so the podium doesn't need
@@ -42,12 +43,6 @@ export function BallBadge({
   );
 }
 
-const CATEGORY_LABEL: Record<Category, string> = {
-  1: "Primera",
-  2: "Segunda",
-  3: "Tercera",
-};
-
 /**
  * Division. Still no hue — red means "act" and green means "won frame", and a
  * third colour here would spend the budget on a label. Prominence comes from
@@ -60,14 +55,15 @@ export function CategoryBadge({
   category: Category;
   full?: boolean;
 }) {
+  const { t } = useT();
+  const label = t(`category.${category}`);
+
   return (
     <span
       className="inline-flex h-6 items-center rounded-control border border-hairline-strong bg-rail px-2 font-mono text-caption font-semibold uppercase tracking-[0.06em] text-ink"
-      title={CATEGORY_LABEL[category]}
+      title={label}
     >
-      {full ? CATEGORY_LABEL[category] : `${category}ª`}
+      {full ? label : t("category.short", { n: category })}
     </span>
   );
 }
-
-export { CATEGORY_LABEL };

@@ -4,6 +4,7 @@ import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
 import { Label } from "./ui/Label";
 import { Button } from "./ui/Button";
+import { useT } from "@/i18n";
 
 type PlayerFormProps = {
   initialValues?: {
@@ -21,6 +22,7 @@ export default function PlayerForm({
   onCancel,
   isSubmitting = false,
 }: PlayerFormProps) {
+  const { t } = useT();
   const [name, setName] = useState(initialValues?.name ?? "");
   const [category, setCategory] = useState<Category>(
     initialValues?.category ?? 3,
@@ -35,7 +37,7 @@ export default function PlayerForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="name">Nombre</Label>
+        <Label htmlFor="name">{t("players.name")}</Label>
         <Input
           type="text"
           id="name"
@@ -47,16 +49,16 @@ export default function PlayerForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="category">Categoría</Label>
+        <Label htmlFor="category">{t("players.category")}</Label>
         <Select
           id="category"
           value={category}
           onChange={(e) => setCategory(Number(e.target.value) as Category)}
           disabled={isSubmitting}
         >
-          <option value={1}>Primera</option>
-          <option value={2}>Segunda</option>
-          <option value={3}>Tercera</option>
+          <option value={1}>{t("category.1")}</option>
+          <option value={2}>{t("category.2")}</option>
+          <option value={3}>{t("category.3")}</option>
         </Select>
       </div>
 
@@ -67,14 +69,14 @@ export default function PlayerForm({
           onClick={onCancel}
           disabled={isSubmitting}
         >
-          Cancelar
+          {t("common.cancel")}
         </Button>
         <Button
           type="submit"
           variant="primary"
           disabled={isSubmitting || !name.trim()}
         >
-          {isSubmitting ? "Guardando..." : "Guardar"}
+          {isSubmitting ? t("common.saving") : t("common.save")}
         </Button>
       </div>
     </form>

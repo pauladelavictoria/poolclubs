@@ -2,8 +2,8 @@ import type { DailyRankingEntry, Category } from "@/types";
 import RankingTable from "./RankingTable";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { CATEGORY_LABEL } from "@/components/ui/Ball";
 import { LuTrophy } from "react-icons/lu";
+import { useT } from "@/i18n";
 
 type ViewMode = "combined" | "byCategory";
 
@@ -21,16 +21,18 @@ export default function Ranking({
   rankingByCategory,
   viewMode,
   isLoading,
-  emptyMessage = "No hay partidos registrados para este criterio.",
-  gamesLabel = "Forma",
+  emptyMessage,
+  gamesLabel,
 }: RankingProps) {
+  const { t } = useT();
+
   if (isLoading) return <SkeletonRows rows={8} className="p-3" />;
 
   const empty = (
     <EmptyState
       icon={<LuTrophy className="h-5 w-5" />}
-      title="Sin clasificación"
-      hint={emptyMessage}
+      title={t("ranking.emptyTitle")}
+      hint={emptyMessage ?? t("ranking.emptyDefault")}
     />
   );
 
@@ -39,7 +41,7 @@ export default function Ranking({
     return (
       <RankingTable
         entries={ranking}
-        gamesLabel={gamesLabel}
+        gamesLabel={gamesLabel ?? t("ranking.form")}
         viewMode={viewMode}
       />
     );
@@ -61,15 +63,17 @@ export default function Ranking({
               was carrying more structural weight than it could show. */}
           <div className="flex items-center justify-between gap-3 border-b border-hairline bg-felt-raised px-4 py-3">
             <h3 className="text-h3 font-semibold text-ink">
-              {CATEGORY_LABEL[cat]}
+              {t(`category.${cat}`)}
             </h3>
             <span className="font-mono text-caption tabular-nums text-ink-faint">
-              {rankingByCategory[cat].length} jugadores
+              {t("ranking.playersCount", {
+                n: rankingByCategory[cat].length,
+              })}
             </span>
           </div>
           <RankingTable
             entries={rankingByCategory[cat]}
-            gamesLabel={gamesLabel}
+            gamesLabel={gamesLabel ?? t("ranking.form")}
             viewMode={viewMode}
           />
         </section>

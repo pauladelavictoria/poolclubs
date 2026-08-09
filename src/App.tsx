@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/context/AuthContext";
+import { I18nProvider } from "@/i18n";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./libs/queryClient";
 import { ToastContainer } from "react-toastify";
@@ -33,7 +34,8 @@ function MeRedirect({ suffix = "" }: { suffix?: string }) {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <I18nProvider>
+        <AuthProvider>
         <BrowserRouter>
           <Routes>
             <Route element={<Layout />}>
@@ -88,7 +90,8 @@ export default function App() {
           autoClose={2600}
           hideProgressBar
         />
-      </AuthProvider>
+        </AuthProvider>
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

@@ -13,13 +13,12 @@ import { Label } from "@/components/ui/Label";
 import { Segmented } from "@/components/ui/Segmented";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import type { Game } from "@/types";
+import { useT } from "@/i18n";
 
-const SIDES = [
-  { n: 1, single: "Jugador 1", doubles: "Pareja 1" },
-  { n: 2, single: "Jugador 2", doubles: "Pareja 2" },
-] as const;
+const SIDES = [1, 2] as const;
 
 export default function AddGamePage() {
+  const { t } = useT();
   const { register, handleSubmit, reset, control, setValue } = useForm<Game>({
     defaultValues: { mode: "single" },
   });
@@ -57,9 +56,9 @@ export default function AddGamePage() {
   const isTie = bothScoresIn && player_1_score === player_2_score;
 
   const problem = hasDuplicatePlayers
-    ? "Un jugador no puede estar en los dos lados."
+    ? t("games.duplicatePlayer")
     : isTie
-      ? "Un partido no puede acabar en empate."
+      ? t("games.tie")
       : null;
 
   const namesComplete =
@@ -78,7 +77,7 @@ export default function AddGamePage() {
     const player_2_id = byName(game.player_2_name);
 
     if (typeof player_1_id !== "number" || typeof player_2_id !== "number") {
-      toast.error("No se han podido identificar los jugadores");
+      toast.error(t("games.playersNotIdentified"));
       return;
     }
 
@@ -92,11 +91,11 @@ export default function AddGamePage() {
       },
       {
         onSuccess: () => {
-          toast.success("Partido añadido");
+          toast.success(t("games.added"));
           reset();
           refetchGames();
         },
-        onError: () => toast.error("Ha ocurrido un error"),
+        onError: () => toast.error(t("common.error")),
       },
     );
   };
@@ -111,57 +110,62 @@ export default function AddGamePage() {
 
   return (
     <>
-      <PageHeader title="Añadir partido" back="/games" />
+      <PageHeader title={t("games.add")} back="/games" />
 
       <div className="mx-auto max-w-xl space-y-4 px-3 py-4">
         <Card className="p-5">
           <div className="mb-5 flex justify-center">
             <Segmented
-              label="Modalidad"
+              label={t("games.mode")}
               value={isDoubles ? "doubles" : "single"}
               onChange={(next) => {
                 reset();
                 setValue("mode", next);
               }}
               options={[
-                { value: "single", label: "Individual" },
-                { value: "doubles", label: "Parejas" },
+                { value: "single", label: t("games.single") },
+                { value: "doubles", label: t("games.doubles") },
               ]}
             />
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="grid grid-cols-2 gap-3">
-              {SIDES.map(({ n, single, doubles }) => (
-                <fieldset key={n} className="space-y-1.5">
-                  <Label>{isDoubles ? doubles : single}</Label>
-                  <Select
-                    disabled={playersLoading}
-                    {...register(`player_${n}_name`, { required: true })}
-                  >
-                    <option value="">Seleccionar</option>
-                    {playerOptions}
-                  </Select>
-                  {isDoubles && (
+              {SIDES.map((n) => {
+                const side = isDoubles
+                  ? t("games.pair", { n })
+                  : t("games.player", { n });
+                return (
+                  <fieldset key={n} className="space-y-1.5">
+                    <Label>{side}</Label>
                     <Select
                       disabled={playersLoading}
-                      {...register(`player_${n}b_name`, { required: true })}
+                      {...register(`player_${n}_name`, { required: true })}
                     >
-                      <option value="">Compañero</option>
+                      <option value="">{t("common.select")}</option>
                       {playerOptions}
                     </Select>
-                  )}
-                  <Input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    aria-label={`Mesas ${isDoubles ? doubles : single}`}
-                    placeholder="0"
-                    className={scoreInput}
-                    {...register(`player_${n}_score`, { required: true })}
-                  />
-                </fieldset>
-              ))}
+                    {isDoubles && (
+                      <Select
+                        disabled={playersLoading}
+                        {...register(`player_${n}b_name`, { required: true })}
+                      >
+                        <option value="">{t("games.partner")}</option>
+                        {playerOptions}
+                      </Select>
+                    )}
+                    <Input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      aria-label={t("games.racksFor", { side })}
+                      placeholder="0"
+                      className={scoreInput}
+                      {...register(`player_${n}_score`, { required: true })}
+                    />
+                  </fieldset>
+                );
+              })}
             </div>
 
             {problem && (
@@ -171,13 +175,13 @@ export default function AddGamePage() {
             )}
 
             <Button type="submit" className="w-full" disabled={addDisabled}>
-              {isPending ? "Guardando..." : "Añadir partido"}
+              {isPending ? t("common.saving") : t("games.add")}
             </Button>
           </form>
         </Card>
 
         <Card className="overflow-hidden">
-          <CardHeader title="Últimos partidos" />
+          <CardHeader title={t("games.recent")} />
           <div className="p-3">
             {gamesLoading ? (
               <SkeletonRows rows={4} />

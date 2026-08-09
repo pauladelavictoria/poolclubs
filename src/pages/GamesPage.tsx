@@ -10,12 +10,13 @@ import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { SkeletonRows } from "@/components/ui/Skeleton";
-import { CATEGORY_LABEL } from "@/components/ui/Ball";
+import { useT } from "@/i18n";
 
 const FILTER_ALL = "";
 const PAGE_SIZE = 50;
 
 export default function GamesPage() {
+  const { t } = useT();
   const [playerFilter, setPlayerFilter] = useState<string>(FILTER_ALL);
   const [categoryFilter, setCategoryFilter] = useState<string>(FILTER_ALL);
   const [page, setPage] = useState(1);
@@ -34,13 +35,13 @@ export default function GamesPage() {
 
   return (
     <>
-      <PageHeader title="Partidos">
+      <PageHeader title={t("games.title")}>
         <Link
           to="/games/new"
           className={buttonClasses({ size: "sm", className: "shrink-0" })}
         >
           <LuPlus className="h-4 w-4" aria-hidden />
-          Añadir partido
+          {t("games.add")}
         </Link>
       </PageHeader>
 
@@ -58,9 +59,9 @@ export default function GamesPage() {
                 setPage(1);
               }}
               className="max-w-[12rem]"
-              aria-label="Filtrar partidos por jugador"
+              aria-label={t("games.filterByPlayer")}
             >
-              <option value={FILTER_ALL}>Todos los jugadores</option>
+              <option value={FILTER_ALL}>{t("games.allPlayers")}</option>
               {players?.map((player) => (
                 <option key={player.id} value={player.name}>
                   {player.name}
@@ -75,16 +76,16 @@ export default function GamesPage() {
                 setCategoryFilter(e.target.value);
                 setPage(1);
               }}
-              aria-label="Filtrar partidos por categoría"
+              aria-label={t("games.filterByCategory")}
             >
-              <option value={FILTER_ALL}>Todas las categorías</option>
-              <option value="1">{CATEGORY_LABEL[1]}</option>
-              <option value="2">{CATEGORY_LABEL[2]}</option>
-              <option value="3">{CATEGORY_LABEL[3]}</option>
+              <option value={FILTER_ALL}>{t("games.allCategories")}</option>
+              <option value="1">{t("category.1")}</option>
+              <option value="2">{t("category.2")}</option>
+              <option value="3">{t("category.3")}</option>
             </Select>
 
             <span className="ml-auto hidden font-mono text-caption tabular-nums text-ink-faint sm:block">
-              {totalCount} partidos
+              {t("games.count", { n: totalCount })}
             </span>
           </div>
 
@@ -103,7 +104,7 @@ export default function GamesPage() {
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page <= 1}
                     >
-                      Anterior
+                      {t("common.previous")}
                     </Button>
                     <span className="font-mono text-caption tabular-nums text-ink-faint">
                       {page} / {totalPages}
@@ -114,7 +115,7 @@ export default function GamesPage() {
                       onClick={() => setPage((p) => p + 1)}
                       disabled={page * PAGE_SIZE >= totalCount}
                     >
-                      Siguiente
+                      {t("common.next")}
                     </Button>
                   </div>
                 )}

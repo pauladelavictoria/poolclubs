@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/i18n";
 
 /**
  * Identity only. Navigation and sign-out live in the drawer, so this is a
@@ -7,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
  */
 export default function ProfileMenu() {
   const { user, player } = useAuth();
+  const { t } = useT();
 
   if (!user) {
     return (
@@ -14,7 +16,7 @@ export default function ProfileMenu() {
         to="/login"
         className="inline-flex h-8 shrink-0 items-center rounded-control border border-hairline bg-felt-raised px-3 text-caption font-medium text-ink transition-colors duration-150 hover:border-hairline-strong"
       >
-        Entrar
+        {t("auth.signInShort")}
       </Link>
     );
   }
@@ -27,7 +29,7 @@ export default function ProfileMenu() {
       to={player ? `/players/${player.id}` : "/"}
       className="shrink-0 rounded-full transition-opacity duration-150 hover:opacity-80"
       title={userName}
-      aria-label="Tu perfil"
+      aria-label={t("auth.yourProfile")}
     >
       {avatarUrl ? (
         <img

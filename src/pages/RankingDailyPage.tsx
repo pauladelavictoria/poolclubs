@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { LuPlus, LuTv, LuX } from "react-icons/lu";
+import { LuPlus, LuTv } from "react-icons/lu";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useDailyRanking } from "@/hooks/useDailyRanking";
@@ -12,6 +12,7 @@ import { Segmented } from "@/components/ui/Segmented";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import type { Category } from "@/types";
+import { useT } from "@/i18n";
 
 type ViewMode = "combined" | "byCategory";
 
@@ -27,6 +28,7 @@ function parseDateParam(param: string | null): string {
 }
 
 export default function RankingDailyPage() {
+  const { t } = useT();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedDate = parseDateParam(searchParams.get("date"));
 
@@ -67,19 +69,19 @@ export default function RankingDailyPage() {
 
   return (
     <>
-      <PageHeader title="Ranking diario">
+      <PageHeader title={t("ranking.dailyTitle")}>
         <input
           type="date"
           value={selectedDate}
           onChange={handleDateChange}
-          aria-label="Seleccionar fecha"
+          aria-label={t("ranking.selectDate")}
           className="h-8 shrink-0 rounded-control border border-hairline bg-pocket px-2 text-caption tabular-nums text-ink [color-scheme:dark] transition-colors duration-150 hover:border-hairline-strong"
         />
         <button
           type="button"
           onClick={toggleTv}
-          title="Modo TV"
-          aria-label="Modo TV"
+          title={t("ranking.tvMode")}
+          aria-label={t("ranking.tvMode")}
           className={buttonClasses({
             size: "sm",
             variant: "secondary",
@@ -93,7 +95,7 @@ export default function RankingDailyPage() {
           className={buttonClasses({ size: "sm", className: "shrink-0" })}
         >
           <LuPlus className="h-4 w-4" aria-hidden />
-          Añadir partido
+          {t("games.add")}
         </Link>
       </PageHeader>
 
@@ -107,15 +109,15 @@ export default function RankingDailyPage() {
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between gap-3 border-b border-hairline px-3 py-2.5">
             <h2 className="pl-1 text-h4 font-semibold text-ink">
-              Clasificación
+              {t("ranking.standings")}
             </h2>
             <Segmented
-              label="Vista del ranking"
+              label={t("ranking.view")}
               value={viewMode}
               onChange={setViewMode}
               options={[
-                { value: "combined", label: "Combinado" },
-                { value: "byCategory", label: "Por categoría" },
+                { value: "combined", label: t("ranking.combined") },
+                { value: "byCategory", label: t("ranking.byCategory") },
               ]}
             />
           </div>
@@ -125,13 +127,13 @@ export default function RankingDailyPage() {
             rankingByCategory={rankingByCategory}
             viewMode={viewMode}
             isLoading={gamesLoading || playersLoading}
-            emptyMessage="No hay partidos en esta fecha. La clasificación aparecerá al registrarse el primero."
+            emptyMessage={t("ranking.emptyDaily")}
           />
         </Card>
 
         <Card className="overflow-hidden">
           <CardHeader
-            title="Partidos"
+            title={t("games.title")}
             action={
               <span className="font-mono text-body tabular-nums text-ink-faint">
                 {games.length}

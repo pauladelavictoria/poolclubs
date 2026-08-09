@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { useT, type Key } from "@/i18n";
 
-const TABS = [
-  { suffix: "", label: "Partidos" },
-  { suffix: "/training/plan", label: "Plan de entrenamiento" },
-  { suffix: "/training", label: "Progreso de entrenamiento" },
+const TABS: { suffix: string; labelKey: Key }[] = [
+  { suffix: "", labelKey: "players.tabGames" },
+  { suffix: "/training/plan", labelKey: "players.tabPlan" },
+  { suffix: "/training", labelKey: "players.tabProgress" },
 ];
 
 export default function PlayerTabs({
@@ -15,10 +16,11 @@ export default function PlayerTabs({
   as?: "tabs" | "buttons";
 }) {
   const isTabs = as === "tabs";
+  const { t } = useT();
 
   return (
     <nav
-      aria-label="Vistas del jugador"
+      aria-label={t("players.tabsLabel")}
       className={
         isTabs
           ? "flex gap-0.5 rounded-control border border-hairline bg-pocket p-0.5"
@@ -27,7 +29,7 @@ export default function PlayerTabs({
             "grid gap-2 sm:grid-cols-3"
       }
     >
-      {TABS.map(({ suffix, label }) => (
+      {TABS.map(({ suffix, labelKey }) => (
         <NavLink
           key={suffix}
           to={`/players/${playerId}${suffix}`}
@@ -45,7 +47,7 @@ export default function PlayerTabs({
               : buttonClasses({ variant: "secondary" })
           }
         >
-          {label}
+          {t(labelKey)}
         </NavLink>
       ))}
     </nav>

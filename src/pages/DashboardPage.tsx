@@ -16,6 +16,7 @@ import { BallBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { useT } from "@/i18n";
 
 function SeeAll({ to, label }: { to: string; label: string }) {
   return (
@@ -63,6 +64,7 @@ function RankingRow({
 }
 
 export default function DashboardPage() {
+  const { t } = useT();
   const { player } = useAuth();
   const { data: players } = useGetPlayers();
   // Same query key as the ranking page, so this is a cache hit either direction
@@ -81,13 +83,13 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Inicio">
+      <PageHeader title={t("nav.home")}>
         <Link
           to="/games/new"
           className={buttonClasses({ size: "sm", className: "shrink-0" })}
         >
           <LuPlus className="h-4 w-4" aria-hidden />
-          Añadir partido
+          {t("games.add")}
         </Link>
       </PageHeader>
 
@@ -99,7 +101,7 @@ export default function DashboardPage() {
         {player && (
           <Card className="p-5">
             <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
-              Tu posición
+              {t("dashboard.yourStanding")}
             </p>
             <div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
               <div className="flex min-w-0 items-center gap-4">
@@ -109,7 +111,9 @@ export default function DashboardPage() {
                     {player.name}
                   </p>
                   <p className="mt-0.5 font-mono text-caption tabular-nums text-ink-faint">
-                    {me ? `${me.points} pts` : "Sin partidos todavía"}
+                    {me
+                      ? t("common.pts", { n: me.points })
+                      : t("dashboard.noGamesYet")}
                   </p>
                 </div>
               </div>
@@ -117,7 +121,10 @@ export default function DashboardPage() {
                 <div className="shrink-0 text-right">
                   <ScoreString results={me.last10Games ?? []} />
                   <p className="mt-2 font-mono text-caption tabular-nums text-ink-faint">
-                    {me.gamesWon}/{me.gamesPlayed} ganados
+                    {t("dashboard.wonOf", {
+                      won: me.gamesWon,
+                      played: me.gamesPlayed,
+                    })}
                   </p>
                 </div>
               )}
@@ -134,8 +141,8 @@ export default function DashboardPage() {
         <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
           <Card className="overflow-hidden">
             <CardHeader
-              title="Ranking global"
-              action={<SeeAll to="/ranking" label="Ver todo" />}
+              title={t("dashboard.globalRanking")}
+              action={<SeeAll to="/ranking" label={t("common.seeAll")} />}
             />
             {isLoading ? (
               <SkeletonRows rows={5} className="p-3" />
@@ -163,15 +170,15 @@ export default function DashboardPage() {
               </ol>
             ) : (
               <p className="px-4 py-8 text-center text-body text-ink-faint">
-                Aún no se ha registrado ningún partido.
+                {t("dashboard.noGamesRecorded")}
               </p>
             )}
           </Card>
 
           <Card className="overflow-hidden">
             <CardHeader
-              title="Últimos partidos"
-              action={<SeeAll to="/games" label="Ver todos" />}
+              title={t("dashboard.recentGames")}
+              action={<SeeAll to="/games" label={t("common.seeAllPlural")} />}
             />
             <div className="p-3">
               <GamesList games={recentData?.games ?? []} />
@@ -180,8 +187,8 @@ export default function DashboardPage() {
 
           <Card className="overflow-hidden">
             <CardHeader
-              title="Últimos ejercicios"
-              action={<SeeAll to="/drills" label="Ver todos" />}
+              title={t("dashboard.recentDrills")}
+              action={<SeeAll to="/drills" label={t("common.seeAllPlural")} />}
             />
             {recentLogs && recentLogs.length > 0 ? (
               <ul className="p-2">
@@ -196,7 +203,7 @@ export default function DashboardPage() {
                       >
                         <span className="min-w-0 flex-1 truncate text-body text-ink">
                           {drills?.find((d) => d.id === log.drill_id)?.name ??
-                            `Ejercicio #${log.drill_id}`}
+                            t("drills.numbered", { id: log.drill_id })}
                         </span>
                         <span className="shrink-0 truncate text-caption text-ink-faint">
                           {players?.find((p) => p.id === log.player_id)?.name}
@@ -204,7 +211,7 @@ export default function DashboardPage() {
                         <span
                           className="w-12 shrink-0 text-right font-mono text-body font-semibold tabular-nums"
                           style={{ color: band.color }}
-                          title={band.label}
+                          title={t(`score.${band.key}`)}
                         >
                           {pct}%
                         </span>
@@ -215,7 +222,7 @@ export default function DashboardPage() {
               </ul>
             ) : (
               <p className="px-4 py-8 text-center text-body text-ink-faint">
-                Aún no se ha registrado ningún ejercicio.
+                {t("dashboard.noDrillsRecorded")}
               </p>
             )}
           </Card>

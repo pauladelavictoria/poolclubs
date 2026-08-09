@@ -5,8 +5,10 @@ import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
+import { useT } from "@/i18n";
 
 export default function PlayerSelectModal() {
+  const { t } = useT();
   const { user, player, isLoading, isPlayerLoading, linkPlayer } = useAuth();
   const { data: players, isLoading: playersLoading } = useGetPlayers();
   const [selectedId, setSelectedId] = useState<string>("");
@@ -19,11 +21,9 @@ export default function PlayerSelectModal() {
     setIsLinking(true);
     try {
       await linkPlayer(Number(selectedId));
-      toast.success("Perfil vinculado correctamente");
+      toast.success(t("auth.linked"));
     } catch {
-      toast.error(
-        "Error al vincular el perfil. ¿Ya está vinculado a otra cuenta?"
-      );
+      toast.error(t("auth.linkError"));
     } finally {
       setIsLinking(false);
     }
@@ -41,25 +41,24 @@ export default function PlayerSelectModal() {
           id="link-player-title"
           className="text-h3 font-semibold text-ink"
         >
-          ¿Quién eres?
+          {t("auth.whoAreYou")}
         </h2>
         <p className="mt-1 max-w-[42ch] text-body text-ink-soft">
-          Vincula tu cuenta a un jugador del club para ver tu perfil y tu plan
-          de entrenamiento.
+          {t("auth.linkIntro")}
         </p>
 
         <div className="mt-5 space-y-1.5">
-          <Label htmlFor="link-player">Jugador</Label>
+          <Label htmlFor="link-player">{t("ranking.player")}</Label>
           <Select
             id="link-player"
             disabled={playersLoading}
             value={selectedId}
             onChange={(e) => setSelectedId(e.target.value)}
           >
-            <option value="">Seleccionar jugador...</option>
+            <option value="">{t("auth.selectPlayer")}</option>
             {players?.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} ({p.category}ª)
+                {p.name} ({t("category.short", { n: p.category })})
               </option>
             ))}
           </Select>
@@ -70,7 +69,7 @@ export default function PlayerSelectModal() {
           onClick={handleLink}
           disabled={!selectedId || isLinking}
         >
-          {isLinking ? "Vinculando..." : "Confirmar"}
+          {isLinking ? t("auth.linking") : t("auth.confirm")}
         </Button>
       </div>
     </div>

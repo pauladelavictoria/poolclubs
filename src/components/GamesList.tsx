@@ -2,6 +2,7 @@ import type { Game } from "@/types";
 import React from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LuSwords } from "react-icons/lu";
+import { useT } from "@/i18n";
 
 interface GamesListProps {
   games: Game[];
@@ -9,27 +10,13 @@ interface GamesListProps {
   showDates?: boolean;
 }
 
-const DAY_FMT = new Intl.DateTimeFormat("es-ES", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-});
-const TIME_FMT = new Intl.DateTimeFormat("es-ES", {
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
 const midnight = (d: Date) =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-function dayLabel(date: Date) {
-  const days = Math.round(
+const daysAgo = (date: Date) =>
+  Math.round(
     (midnight(new Date()).getTime() - midnight(date).getTime()) / 86_400_000,
   );
-  if (days === 0) return "Hoy";
-  if (days === 1) return "Ayer";
-  return DAY_FMT.format(date);
-}
 
 /**
  * A result is a score. The figure is the focal element — mono, tabular, large
@@ -42,12 +29,31 @@ export default function GamesList({
   playerName,
   showDates,
 }: GamesListProps) {
+  const { t, locale } = useT();
+
+  const dayFmt = new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  const timeFmt = new Intl.DateTimeFormat(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const dayLabel = (date: Date) => {
+    const days = daysAgo(date);
+    if (days === 0) return t("games.today");
+    if (days === 1) return t("games.yesterday");
+    return dayFmt.format(date);
+  };
+
   if (!games || games.length === 0) {
     return (
       <EmptyState
         icon={<LuSwords className="h-5 w-5" />}
-        title="Todavía no hay partidos"
-        hint="Los resultados aparecerán aquí en cuanto se registre el primero."
+        title={t("games.emptyTitle")}
+        hint={t("games.emptyHint")}
       />
     );
   }
@@ -116,7 +122,7 @@ export default function GamesList({
                 dateTime={created_at}
                 className="hidden w-10 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
               >
-                {TIME_FMT.format(date)}
+                {timeFmt.format(date)}
               </time>
               <span className={`flex-1 truncate text-right ${side(p1Won)}`}>
                 {team1}
