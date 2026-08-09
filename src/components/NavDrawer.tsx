@@ -12,6 +12,7 @@ import {
   LuChartColumn,
   LuLogOut,
   LuLanguages,
+  LuHandshake,
 } from "react-icons/lu";
 
 const item = ({ isActive }: { isActive: boolean }) =>
@@ -39,9 +40,13 @@ export default function NavDrawer({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const { user, player } = useAuth();
+  const { user, player, activeClub, memberships, setActiveClub } = useAuth();
   const signOut = useSignOut();
   const { t, lang, setLang } = useT();
+
+  // Only clubs you are actually in are switchable; a pending request is not a
+  // place you can go yet.
+  const switchable = memberships.filter((m) => m.status === "active");
 
   useEffect(() => {
     const dialog = ref.current;
@@ -100,12 +105,12 @@ export default function NavDrawer({
         <div className="flex items-center gap-3 px-3 pb-4 pt-2">
           <img src="/ball.png" alt="" className="h-9 w-9 rounded-full" />
           <div className="min-w-0">
-            <div className="truncate text-h4 font-semibold">PoolValencia</div>
-            {player && (
-              <div className="truncate text-caption text-ink-faint">
-                {player.name}
-              </div>
-            )}
+            <div className="truncate text-h4 font-semibold">
+              {t("common.appName")}
+            </div>
+            <div className="truncate text-caption text-ink-faint">
+              {activeClub?.name ?? t("club.noClub")}
+            </div>
           </div>
         </div>
 
@@ -136,6 +141,28 @@ export default function NavDrawer({
             <NavLink to="/login" className={item}>
               <LuLogOut className="h-[18px] w-[18px]" /> {t("auth.signIn")}
             </NavLink>
+          )}
+
+          {/* One club is the normal case and needs no control. */}
+          {switchable.length > 1 && (
+            <div
+              className="mt-1 flex h-10 items-center gap-3 px-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <LuHandshake className="h-[18px] w-[18px] shrink-0 text-ink-soft" />
+              <Select
+                size="sm"
+                aria-label={t("club.switch")}
+                value={activeClub?.id ?? ""}
+                onChange={(e) => setActiveClub(Number(e.target.value))}
+              >
+                {switchable.map((m) => (
+                  <option key={m.club_id} value={m.club_id}>
+                    {m.club?.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
           )}
 
           {/* Its own click handler: the drawer closes on any click inside the

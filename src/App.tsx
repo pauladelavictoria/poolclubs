@@ -18,12 +18,16 @@ import DrillDetailPage from "@/pages/DrillDetailPage";
 import DrillEditorPage from "@/pages/DrillEditorPage";
 import TrainingProgressPage from "@/pages/TrainingProgressPage";
 import TrainingPlanPage from "@/pages/TrainingPlanPage";
+import ChallengesPage from "@/pages/ChallengesPage";
+import ClubPage from "@/pages/ClubPage";
+import ClubOnboardingPage from "@/pages/ClubOnboardingPage";
+import JoinClubPage from "@/pages/JoinClubPage";
 import { ProtectedRoute } from "@/ProtectedRoute";
+import { RequireClub } from "@/RequireClub";
 import { useAuth } from "@/hooks/useAuth";
-import PlayerSelectModal from "@/components/PlayerSelectModal";
 
 /** "/me/..." resolves to the signed-in player's own URL. Lets links exist before
- *  we know their id; signed in but not linked yet, PlayerSelectModal takes over. */
+ *  we know their id. */
 function MeRedirect({ suffix = "" }: { suffix?: string }) {
   const { player } = useAuth();
   return (
@@ -39,51 +43,62 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route element={<Layout />}>
-              <Route index element={<DashboardPage />} />
+              {/* The only two doors that open from outside a club. */}
               <Route path="login" element={<LoginPage />} />
+              <Route path="join/:code" element={<JoinClubPage />} />
 
-              <Route path="ranking" element={<RankingAllTimePage />} />
-              <Route path="ranking/daily" element={<RankingDailyPage />} />
-
-              <Route path="games" element={<GamesPage />} />
-              <Route path="games/new" element={<AddGamePage />} />
-
-              <Route path="players" element={<PlayersPage />} />
-              <Route path="players/:id" element={<PlayerDetailPage />} />
-
-              {/* Browsing drills is public; logging a result and editing are not */}
-              <Route path="drills" element={<DrillsPage />} />
-              <Route path="drills/:id" element={<DrillDetailPage />} />
-
+              {/* Clubs are members-only, so every page below needs both an
+                  account and an approved membership. */}
               <Route element={<ProtectedRoute />}>
-                <Route path="me" element={<MeRedirect />} />
-                <Route
-                  path="me/training"
-                  element={<MeRedirect suffix="/training" />}
-                />
-                <Route
-                  path="me/training/plan"
-                  element={<MeRedirect suffix="/training/plan" />}
-                />
-                <Route
-                  path="players/:playerId/training"
-                  element={<TrainingProgressPage />}
-                />
-                <Route
-                  path="players/:playerId/training/plan"
-                  element={<TrainingPlanPage />}
-                />
-                {/* Anyone signed in may author; DrillEditorPage turns away
-                    non-owners on the /edit route, since that needs the drill. */}
-                <Route path="drills/new" element={<DrillEditorPage />} />
-                <Route path="drills/:id/edit" element={<DrillEditorPage />} />
+                {/* Outside RequireClub: starting or joining a second club is
+                    the one club-scoped thing members already in one can do. */}
+                <Route path="clubs/new" element={<ClubOnboardingPage />} />
+
+                <Route element={<RequireClub />}>
+                  <Route index element={<DashboardPage />} />
+
+                  <Route path="ranking" element={<RankingAllTimePage />} />
+                  <Route path="ranking/daily" element={<RankingDailyPage />} />
+
+                  <Route path="games" element={<GamesPage />} />
+                  <Route path="games/new" element={<AddGamePage />} />
+                  <Route path="challenges" element={<ChallengesPage />} />
+
+                  <Route path="players" element={<PlayersPage />} />
+                  <Route path="players/:id" element={<PlayerDetailPage />} />
+                  <Route path="club" element={<ClubPage />} />
+
+                  <Route path="drills" element={<DrillsPage />} />
+                  <Route path="drills/:id" element={<DrillDetailPage />} />
+
+                  <Route path="me" element={<MeRedirect />} />
+                  <Route
+                    path="me/training"
+                    element={<MeRedirect suffix="/training" />}
+                  />
+                  <Route
+                    path="me/training/plan"
+                    element={<MeRedirect suffix="/training/plan" />}
+                  />
+                  <Route
+                    path="players/:playerId/training"
+                    element={<TrainingProgressPage />}
+                  />
+                  <Route
+                    path="players/:playerId/training/plan"
+                    element={<TrainingPlanPage />}
+                  />
+                  {/* Drills are one global library shared by every club;
+                      DrillEditorPage turns away non-owners on /edit. */}
+                  <Route path="drills/new" element={<DrillEditorPage />} />
+                  <Route path="drills/:id/edit" element={<DrillEditorPage />} />
+                </Route>
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
         </BrowserRouter>
-        <PlayerSelectModal />
         <ToastContainer
           theme="dark"
           position="bottom-center"

@@ -33,7 +33,9 @@ export default function LoginPage() {
           alt=""
           className="mx-auto mb-5 h-14 w-14 rounded-full"
         />
-        <h1 className="text-h2 font-semibold text-ink">PoolValencia</h1>
+        {/* The product name, not a club's — the login screen runs before we
+            know which club you belong to. */}
+        <h1 className="text-h2 font-semibold text-ink">{t("common.appName")}</h1>
         <p className="mx-auto mt-1 max-w-[30ch] text-body text-ink-soft">
           {t("auth.tagline")}
         </p>

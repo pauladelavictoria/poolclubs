@@ -31,5 +31,28 @@ export function startRealtime() {
       { event: "*", schema: "public", table: "games" },
       () => queryClient.invalidateQueries({ queryKey: ["games"] })
     )
+    // Drill logs share the home feed with games, so they refresh with them.
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "drill_logs" },
+      () => queryClient.invalidateQueries({ queryKey: ["drill_logs"] })
+    )
+    // Social tables: a conversation that needs a manual refresh is not one.
+    // The keys are prefixes, so the club id in ["comments", clubId] still matches.
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "comments" },
+      () => queryClient.invalidateQueries({ queryKey: ["comments"] })
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "reactions" },
+      () => queryClient.invalidateQueries({ queryKey: ["reactions"] })
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "challenges" },
+      () => queryClient.invalidateQueries({ queryKey: ["challenges"] })
+    )
     .subscribe();
 }

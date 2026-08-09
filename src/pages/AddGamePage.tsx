@@ -1,5 +1,8 @@
+import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useAddGame } from "@/hooks/useAddGame";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
@@ -30,6 +33,23 @@ export default function AddGamePage() {
   } = useGetGames({ pageSize: 10 });
   const { data: players, isLoading: playersLoading } = useGetPlayers();
   const { mutate: handleAddGame, isPending } = useAddGame();
+
+  // Arriving from an accepted challenge: prefill the two names and close the
+  // challenge once the result lands, so the loop ends where it started.
+  const [searchParams] = useSearchParams();
+  const challengeId = Number(searchParams.get("challenge")) || null;
+  const { data: challenges } = useGetChallenges();
+  const { respondToChallenge } = useManageChallenges();
+  const challenge = challenges?.find((c) => c.id === challengeId) ?? null;
+
+  useEffect(() => {
+    if (!challenge || !players) return;
+    const name = (id: number) => players.find((p) => p.id === id)?.name;
+    const from = name(challenge.from_player_id);
+    const to = name(challenge.to_player_id);
+    if (from) setValue("player_1_name", from);
+    if (to) setValue("player_2_name", to);
+  }, [challenge, players, setValue]);
 
   // `useWatch`, not `watch()`: the hook form is memoizable, so React Compiler
   // doesn't bail out of optimising this whole component.
@@ -90,8 +110,15 @@ export default function AddGamePage() {
         player_2b_id: byName(game.player_2b_name),
       },
       {
-        onSuccess: () => {
+        onSuccess: (saved) => {
           toast.success(t("games.added"));
+          if (challenge) {
+            respondToChallenge.mutate({
+              id: challenge.id,
+              status: "played",
+              gameId: saved.id,
+            });
+          }
           reset();
           refetchGames();
         },

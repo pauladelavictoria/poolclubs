@@ -4,6 +4,7 @@ import { LuTrash2 } from "react-icons/lu";
 import PageHeader from "@/components/PageHeader";
 import DrillProgressChart from "@/components/DrillProgressChart";
 import PlayerTabs from "@/components/PlayerTabs";
+import SocialBar from "@/components/SocialBar";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { useGetDrills } from "@/hooks/useGetDrills";
@@ -337,6 +338,9 @@ export default function TrainingProgressPage() {
                               <LuTrash2 aria-hidden />
                             </button>
                           )}
+                        </div>
+                        <div className="px-2 pb-1">
+                          <SocialBar target={{ drillLogId: log.id }} />
                         </div>
                       </li>
                     );

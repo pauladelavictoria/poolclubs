@@ -7,14 +7,14 @@ import { bandGradientStops, scoreBand, scorePct } from "./scoreBand.ts";
 
 // Every boundary lands in the band that owns it
 assert.equal(scoreBand(100).key, "high");
-assert.equal(scoreBand(90).key, "high");
-assert.equal(scoreBand(89).key, "midhigh");
-assert.equal(scoreBand(75).key, "midhigh");
-assert.equal(scoreBand(74).key, "mid");
-assert.equal(scoreBand(60).key, "mid");
-assert.equal(scoreBand(59).key, "midlow");
-assert.equal(scoreBand(40).key, "midlow");
-assert.equal(scoreBand(39).key, "low");
+assert.equal(scoreBand(80).key, "high");
+assert.equal(scoreBand(79).key, "midhigh");
+assert.equal(scoreBand(60).key, "midhigh");
+assert.equal(scoreBand(59).key, "mid");
+assert.equal(scoreBand(40).key, "mid");
+assert.equal(scoreBand(39).key, "midlow");
+assert.equal(scoreBand(20).key, "midlow");
+assert.equal(scoreBand(19).key, "low");
 assert.equal(scoreBand(0).key, "low");
 
 // scorePct never divides by zero and never leaves 0–100
@@ -31,12 +31,12 @@ assert.deepEqual(bandGradientStops(92, 98), [
 ]);
 
 // A flat line (hi === lo) can't divide by its range
-assert.deepEqual(bandGradientStops(50, 50), [{ offset: 0, color: "#e8833a" }]);
+assert.deepEqual(bandGradientStops(50, 50), [{ offset: 0, color: "#f2b705" }]);
 
 // Crossing one boundary doubles the stop so the switch is hard, not blended
-assert.deepEqual(bandGradientStops(80, 100), [
+assert.deepEqual(bandGradientStops(70, 90), [
   { offset: 0, color: "#3fbf7f" },
-  { offset: 0.5, color: "#3fbf7f" }, // 90 sits halfway down 100→80
+  { offset: 0.5, color: "#3fbf7f" }, // 80 sits halfway down 90→70
   { offset: 0.5, color: "#9ccc4a" },
   { offset: 1, color: "#9ccc4a" },
 ]);

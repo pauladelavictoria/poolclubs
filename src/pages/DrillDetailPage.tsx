@@ -8,6 +8,7 @@ import { canEditDrill } from "@/libs/drillPermissions";
 import PageHeader from "@/components/PageHeader";
 import PoolTableDiagram from "@/components/PoolTableDiagram";
 import DrillLogForm from "@/components/DrillLogForm";
+import SocialBar from "@/components/SocialBar";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { scoreBand, scorePct } from "@/libs/scoreBand";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -179,30 +180,30 @@ export default function DrillDetailPage() {
                 const pct = scorePct(log.score, log.max_score);
                 const band = scoreBand(pct);
                 return (
-                  <li
-                    key={log.id}
-                    className="flex items-baseline gap-3 rounded-control px-2 py-2"
-                  >
-                    <span className="min-w-0 flex-1 truncate text-body text-ink">
-                      {players?.find((p) => p.id === log.player_id)?.name ??
-                        "—"}
-                    </span>
-                    <time
-                      dateTime={log.created_at}
-                      className="shrink-0 text-caption tabular-nums text-ink-faint"
-                    >
-                      {new Date(log.created_at).toLocaleDateString(locale)}
-                    </time>
-                    <span className="shrink-0 font-mono text-caption tabular-nums text-ink-faint">
-                      {log.score}/{log.max_score}
-                    </span>
-                    <span
-                      className="w-12 shrink-0 text-right font-mono text-body font-semibold tabular-nums"
-                      style={{ color: band.color }}
-                      title={t(`score.${band.key}`)}
-                    >
-                      {pct}%
-                    </span>
+                  <li key={log.id} className="rounded-control px-2 py-2">
+                    <div className="flex items-baseline gap-3">
+                      <span className="min-w-0 flex-1 truncate text-body text-ink">
+                        {players?.find((p) => p.id === log.player_id)?.name ??
+                          "—"}
+                      </span>
+                      <time
+                        dateTime={log.created_at}
+                        className="shrink-0 text-caption tabular-nums text-ink-faint"
+                      >
+                        {new Date(log.created_at).toLocaleDateString(locale)}
+                      </time>
+                      <span className="shrink-0 font-mono text-caption tabular-nums text-ink-faint">
+                        {log.score}/{log.max_score}
+                      </span>
+                      <span
+                        className="w-12 shrink-0 text-right font-mono text-body font-semibold tabular-nums"
+                        style={{ color: band.color }}
+                        title={t(`score.${band.key}`)}
+                      >
+                        {pct}%
+                      </span>
+                    </div>
+                    <SocialBar target={{ drillLogId: log.id }} />
                   </li>
                 );
               })}

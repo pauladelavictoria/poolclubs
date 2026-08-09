@@ -1,22 +1,18 @@
 import type { Game } from "@/types";
 import React from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
+import SocialBar from "@/components/SocialBar";
 import { LuSwords } from "react-icons/lu";
+import { dayLabel } from "@/libs/dayLabel";
 import { useT } from "@/i18n";
 
 interface GamesListProps {
   games: Game[];
   playerName?: string;
   showDates?: boolean;
+  /** Off for the TV board, which nobody is standing close enough to tap. */
+  showSocial?: boolean;
 }
-
-const midnight = (d: Date) =>
-  new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-const daysAgo = (date: Date) =>
-  Math.round(
-    (midnight(new Date()).getTime() - midnight(date).getTime()) / 86_400_000,
-  );
 
 /**
  * A result is a score. The figure is the focal element — mono, tabular, large
@@ -28,25 +24,14 @@ export default function GamesList({
   games,
   playerName,
   showDates,
+  showSocial = true,
 }: GamesListProps) {
   const { t, locale } = useT();
 
-  const dayFmt = new Intl.DateTimeFormat(locale, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
   const timeFmt = new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
   });
-
-  const dayLabel = (date: Date) => {
-    const days = daysAgo(date);
-    if (days === 0) return t("games.today");
-    if (days === 1) return t("games.yesterday");
-    return dayFmt.format(date);
-  };
 
   if (!games || games.length === 0) {
     return (
@@ -112,7 +97,7 @@ export default function GamesList({
           <React.Fragment key={id}>
             {showDates && newDate && (
               <h3 className="px-1 pb-1 pt-5 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint first:pt-0">
-                {dayLabel(date)}
+                {dayLabel(date, t, locale)}
               </h3>
             )}
             <div
@@ -141,6 +126,7 @@ export default function GamesList({
                 {isDoubles ? "2v2" : ""}
               </span>
             </div>
+            {showSocial && <SocialBar target={{ gameId: id }} />}
           </React.Fragment>
         );
       })}
