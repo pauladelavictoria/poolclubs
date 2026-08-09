@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Avatar } from "@/components/ui/Avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/i18n";
 
@@ -31,17 +32,7 @@ export default function ProfileMenu() {
       title={userName}
       aria-label={t("auth.yourProfile")}
     >
-      {avatarUrl ? (
-        <img
-          src={avatarUrl}
-          alt=""
-          className="h-8 w-8 rounded-full object-cover outline outline-1 -outline-offset-1 outline-white/10"
-        />
-      ) : (
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-felt-raised text-caption font-semibold text-ink-soft outline outline-1 -outline-offset-1 outline-white/10">
-          {userName?.charAt(0).toUpperCase()}
-        </span>
-      )}
+      <Avatar name={userName ?? "?"} url={avatarUrl} className="h-8 w-8" />
     </Link>
   );
 }

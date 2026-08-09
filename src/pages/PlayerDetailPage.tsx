@@ -13,6 +13,7 @@ import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
+import ChallengeButton from "@/components/ChallengeButton";
 import GamesList from "@/components/GamesList";
 import PlayerTabs from "@/components/PlayerTabs";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -155,7 +156,14 @@ export default function PlayerDetailPage() {
       />
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        {user && <PlayerTabs playerId={player.id} />}
+        {user && (
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <PlayerTabs playerId={player.id} />
+            </div>
+            <ChallengeButton toPlayerId={player.id} />
+          </div>
+        )}
 
         {stats && stats.totalGames > 0 ? (
           <>

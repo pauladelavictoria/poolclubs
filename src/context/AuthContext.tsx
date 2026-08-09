@@ -1,60 +1,102 @@
 import { createContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "@/supabaseClient";
-import type { Player } from "@/types";
+import { queryClient } from "@/libs/queryClient";
+import type { Club, Membership } from "@/types";
+
+const ACTIVE_CLUB_KEY = "activeClub";
 
 type AuthContextType = {
   user: any;
   isLoading: boolean;
-  player: Player | null;
+  /** Every club the user belongs to, pending ones included. */
+  memberships: Membership[];
   isPlayerLoading: boolean;
-  linkPlayer: (playerId: number) => Promise<void>;
+  activeClub: Club | null;
+  activeClubId: number | null;
+  setActiveClub: (clubId: number) => void;
+  /** The user's player row in the active club. Named `player` because every
+   *  consumer predates clubs and still means "me". */
+  player: Membership | null;
+  refreshMemberships: () => Promise<void>;
 };
+
+const noop = async () => {};
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
-  player: null,
+  memberships: [],
   isPlayerLoading: false,
-  linkPlayer: async () => {},
+  activeClub: null,
+  activeClubId: null,
+  setActiveClub: () => {},
+  player: null,
+  refreshMemberships: noop,
 });
+
+/** Providers disagree on the field name; Google sends both, GitHub only one. */
+const avatarOf = (user: any): string | undefined =>
+  user?.user_metadata?.avatar_url || user?.user_metadata?.picture || undefined;
+
+const readStoredClub = () => {
+  const raw = localStorage.getItem(ACTIVE_CLUB_KEY);
+  return raw ? Number(raw) || null : null;
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [player, setPlayer] = useState<Player | null>(null);
+  const [memberships, setMemberships] = useState<Membership[]>([]);
   const [isPlayerLoading, setIsPlayerLoading] = useState(false);
+  const [storedClubId, setStoredClubId] = useState<number | null>(readStoredClub);
 
-  const fetchLinkedPlayer = useCallback(async (userId: string) => {
-    setIsPlayerLoading(true);
-    const { data, error } = await supabase
-      .from("players")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (!error && data) {
-      setPlayer(data as Player);
-    } else {
-      setPlayer(null);
-    }
-    setIsPlayerLoading(false);
-  }, []);
-
-  const linkPlayer = useCallback(
-    async (playerId: number) => {
-      if (!user) return;
-      const { error } = await supabase
+  const fetchMemberships = useCallback(
+    async (userId: string, avatarUrl?: string) => {
+      setIsPlayerLoading(true);
+      const { data, error } = await supabase
         .from("players")
-        .update({ user_id: user.id })
-        .eq("id", playerId);
+        .select("*, club:clubs(*)")
+        .eq("user_id", userId);
 
-      if (error) throw error;
+      const rows = !error && data ? (data as Membership[]) : [];
 
-      await fetchLinkedPlayer(user.id);
+      // Only the owner can read their own auth metadata, so the OAuth picture is
+      // copied onto the player rows — otherwise every other member sees an
+      // initial. Written on sign-in and whenever the provider changes the URL.
+      if (avatarUrl && rows.some((m) => m.avatar_url !== avatarUrl)) {
+        await supabase
+          .from("players")
+          .update({ avatar_url: avatarUrl })
+          .eq("user_id", userId);
+        rows.forEach((m) => (m.avatar_url = avatarUrl));
+        queryClient.invalidateQueries({ queryKey: ["players"] });
+      }
+
+      setMemberships(rows);
+      setIsPlayerLoading(false);
     },
-    [user, fetchLinkedPlayer],
+    [],
   );
+
+  const refreshMemberships = useCallback(async () => {
+    if (user) await fetchMemberships(user.id, avatarOf(user));
+  }, [user, fetchMemberships]);
+
+  // Stored club wins, but only while it is still one of yours — being removed
+  // from a club should not leave the app pointing at data it can no longer read.
+  const active =
+    memberships.find((m) => m.club_id === storedClubId && m.status === "active") ??
+    memberships.find((m) => m.status === "active") ??
+    null;
+
+  const setActiveClub = useCallback((clubId: number) => {
+    localStorage.setItem(ACTIVE_CLUB_KEY, String(clubId));
+    setStoredClubId(clubId);
+    // Every cached query is scoped to the old club. Drop the lot rather than
+    // flashing another club's ranking for a frame.
+    queryClient.clear();
+  }, []);
 
   useEffect(() => {
     const getUser = async () => {
@@ -62,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const currentUser = data.user || null;
       setUser(currentUser);
       if (currentUser) {
-        await fetchLinkedPlayer(currentUser.id);
+        await fetchMemberships(currentUser.id, avatarOf(currentUser));
       }
       setIsLoading(false);
     };
@@ -73,20 +115,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const currentUser = session?.user || null;
       setUser(currentUser);
       if (currentUser) {
-        setTimeout(() => fetchLinkedPlayer(currentUser.id), 0);
+        setTimeout(
+          () => fetchMemberships(currentUser.id, avatarOf(currentUser)),
+          0,
+        );
       } else {
-        setPlayer(null);
+        setMemberships([]);
       }
     });
 
     return () => {
       data.subscription.unsubscribe();
     };
-  }, [fetchLinkedPlayer]);
+  }, [fetchMemberships]);
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, player, isPlayerLoading, linkPlayer }}
+      value={{
+        user,
+        isLoading,
+        memberships,
+        isPlayerLoading,
+        activeClub: active?.club ?? null,
+        activeClubId: active?.club_id ?? null,
+        setActiveClub,
+        player: active,
+        refreshMemberships,
+      }}
     >
       {children}
     </AuthContext.Provider>

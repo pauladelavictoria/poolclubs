@@ -6,6 +6,7 @@ import {
   LuUsers,
   LuCalendarDays,
   LuPlus,
+  LuHandshake,
 } from "react-icons/lu";
 import type { Key } from "@/i18n";
 
@@ -37,8 +38,17 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
   {
     headingKey: "nav.rankings",
     items: [
-      { to: "/ranking", labelKey: "nav.rankingGlobal", icon: LuTrophy, end: true },
-      { to: "/ranking/daily", labelKey: "nav.rankingDaily", icon: LuCalendarDays },
+      {
+        to: "/ranking",
+        labelKey: "nav.rankingGlobal",
+        icon: LuTrophy,
+        end: true,
+      },
+      {
+        to: "/ranking/daily",
+        labelKey: "nav.rankingDaily",
+        icon: LuCalendarDays,
+      },
     ],
   },
   {
@@ -51,10 +61,25 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         end: true,
       },
       { to: "/games/new", labelKey: "nav.addGame", icon: LuPlus },
+      {
+        to: "/challenges",
+        labelKey: "nav.challenges",
+        icon: LuSwords,
+        end: true,
+      },
     ],
   },
   {
     headingKey: "nav.club",
-    items: [{ to: "/players", labelKey: "nav.players", icon: LuUsers, end: true }],
+    items: [
+      { to: "/players", labelKey: "nav.players", icon: LuUsers, end: true },
+      {
+        to: "/club",
+        labelKey: "nav.clubSettings",
+        icon: LuHandshake,
+        end: true,
+      },
+      { to: "/clubs/new", labelKey: "club.create", icon: LuPlus, end: true },
+    ],
   },
 ];

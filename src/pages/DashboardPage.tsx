@@ -1,77 +1,27 @@
 import { Link } from "react-router-dom";
-import type { DailyRankingEntry } from "@/types";
-import { LuChevronRight, LuPlus } from "react-icons/lu";
+import { LuChevronRight, LuPlus, LuSwords } from "react-icons/lu";
 import PageHeader from "@/components/PageHeader";
-import GamesList from "@/components/GamesList";
+import ActivityFeed from "@/components/ActivityFeed";
 import PlayerTabs from "@/components/PlayerTabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
-import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
-import { useGetDrills } from "@/hooks/useGetDrills";
-import { scoreBand, scorePct } from "@/libs/scoreBand";
+import { useMyChallenges } from "@/hooks/useChallenges";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { BallBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
-import { SkeletonRows } from "@/components/ui/Skeleton";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useT } from "@/i18n";
 
-function SeeAll({ to, label }: { to: string; label: string }) {
-  return (
-    <Link
-      to={to}
-      className="inline-flex items-center gap-0.5 text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-ink"
-    >
-      {label}
-      <LuChevronRight className="h-3.5 w-3.5" aria-hidden />
-    </Link>
-  );
-}
-
-function RankingRow({
-  entry,
-  rank,
-  isMe,
-}: {
-  entry: DailyRankingEntry;
-  rank: number;
-  isMe: boolean;
-}) {
-  return (
-    <li>
-      <Link
-        to={`/players/${entry.playerId}`}
-        className={`flex items-center gap-3 rounded-control px-2 py-2 transition-colors duration-150 hover:bg-felt-raised ${
-          isMe ? "bg-strike-tint" : ""
-        }`}
-      >
-        <BallBadge rank={rank} />
-        <span className="min-w-0 flex-1 truncate font-medium text-ink">
-          {entry.playerName}
-        </span>
-        <ScoreString
-          results={entry.last10Games ?? []}
-          className="hidden sm:inline-flex"
-        />
-        <span className="font-mono text-body font-semibold tabular-nums text-ink">
-          {entry.points}
-        </span>
-      </Link>
-    </li>
-  );
-}
-
 export default function DashboardPage() {
   const { t } = useT();
-  const { player } = useAuth();
+  const { player, activeClub } = useAuth();
+  const myChallenges = useMyChallenges();
   const { data: players } = useGetPlayers();
+  const nameOf = (id: number) => players?.find((p) => p.id === id)?.name ?? "—";
   // Same query key as the ranking page, so this is a cache hit either direction
-  const { data: allGamesData, isLoading } = useGetGames({});
-  const { data: recentData } = useGetGames({ pageSize: 5 });
-  const { data: recentLogs } = useGetDrillLogs({ limit: 5 });
-  const { data: drills } = useGetDrills();
+  const { data: allGamesData } = useGetGames({});
 
   const ranking = useEloRanking({
     games: allGamesData?.games ?? [],
@@ -83,7 +33,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageHeader title={t("nav.home")}>
+      <PageHeader title={activeClub?.name ?? t("nav.home")}>
         <Link
           to="/games/new"
           className={buttonClasses({ size: "sm", className: "shrink-0" })}
@@ -94,10 +44,61 @@ export default function DashboardPage() {
       </PageHeader>
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        {/* Your standing — the one thing you opened the app to see, so it gets
-            the full width and the only hero-size ball on the page. The rank is
-            the ball itself rather than "#8" beside one; saying it twice would
-            split the focal point. */}
+        {/* Your open challenges. Above the fold or they may as well not
+            exist — the ones waiting on an answer sit first and tinted. */}
+        {myChallenges.length > 0 && (
+          <Card className="overflow-hidden">
+            <CardHeader
+              title={t("challenge.title")}
+              action={
+                <LuChevronRight
+                  className="h-4 w-4 shrink-0 text-ink-faint"
+                  aria-hidden
+                />
+              }
+            />
+            <ul className="divide-y divide-hairline">
+              {myChallenges.map((c) => {
+                const waitingOnMe =
+                  c.status === "pending" && c.to_player_id === player?.id;
+                return (
+                  <li key={c.id}>
+                    <Link
+                      to="/challenges"
+                      className={`flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-pocket ${
+                        waitingOnMe ? "bg-strike-tint" : ""
+                      }`}
+                    >
+                      <LuSwords
+                        className={`h-4 w-4 shrink-0 ${waitingOnMe ? "text-strike" : "text-ink-faint"}`}
+                        aria-hidden
+                      />
+                      <span className="min-w-0 flex-1 truncate text-body text-ink">
+                        {c.from_player_id === player?.id
+                          ? t("challenge.youVs", {
+                              name: nameOf(c.to_player_id),
+                            })
+                          : t("challenge.vsYou", {
+                              name: nameOf(c.from_player_id),
+                            })}
+                      </span>
+                      <span className="shrink-0 text-caption text-ink-faint">
+                        {t(
+                          c.status === "accepted"
+                            ? "challenge.on"
+                            : waitingOnMe
+                              ? "challenge.incoming"
+                              : "challenge.waiting",
+                        )}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+        )}
+
         {player && (
           <Card className="p-5">
             <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
@@ -136,97 +137,14 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Two peers under the hero: at one column each row is ~490px, so the
-            score sits close to the names instead of swimming. */}
-        <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-          <Card className="overflow-hidden">
-            <CardHeader
-              title={t("dashboard.globalRanking")}
-              action={<SeeAll to="/ranking" label={t("common.seeAll")} />}
-            />
-            {isLoading ? (
-              <SkeletonRows rows={5} className="p-3" />
-            ) : ranking && ranking.length > 0 ? (
-              <ol className="p-2">
-                {ranking.slice(0, 5).map((entry, index) => (
-                  <RankingRow
-                    key={entry.playerId}
-                    entry={entry}
-                    rank={index + 1}
-                    isMe={entry.playerId === player?.id}
-                  />
-                ))}
-                {me && myIndex >= 5 && (
-                  <>
-                    <li
-                      aria-hidden
-                      className="px-2 py-1 text-center font-mono text-caption leading-none text-ink-faint"
-                    >
-                      ···
-                    </li>
-                    <RankingRow entry={me} rank={myIndex + 1} isMe />
-                  </>
-                )}
-              </ol>
-            ) : (
-              <p className="px-4 py-8 text-center text-body text-ink-faint">
-                {t("dashboard.noGamesRecorded")}
-              </p>
-            )}
-          </Card>
-
-          <Card className="overflow-hidden">
-            <CardHeader
-              title={t("dashboard.recentGames")}
-              action={<SeeAll to="/games" label={t("common.seeAllPlural")} />}
-            />
-            <div className="p-3">
-              <GamesList games={recentData?.games ?? []} />
-            </div>
-          </Card>
-
-          <Card className="overflow-hidden">
-            <CardHeader
-              title={t("dashboard.recentDrills")}
-              action={<SeeAll to="/drills" label={t("common.seeAllPlural")} />}
-            />
-            {recentLogs && recentLogs.length > 0 ? (
-              <ul className="p-2">
-                {recentLogs.map((log) => {
-                  const pct = scorePct(log.score, log.max_score);
-                  const band = scoreBand(pct);
-                  return (
-                    <li key={log.id}>
-                      <Link
-                        to={`/drills/${log.drill_id}`}
-                        className="flex items-baseline gap-3 rounded-control px-2 py-2 transition-colors duration-150 hover:bg-felt-raised"
-                      >
-                        <span className="min-w-0 flex-1 truncate text-body text-ink">
-                          {drills?.find((d) => d.id === log.drill_id)?.name ??
-                            t("drills.numbered", { id: log.drill_id })}
-                        </span>
-                        <span className="shrink-0 truncate text-caption text-ink-faint">
-                          {players?.find((p) => p.id === log.player_id)?.name}
-                        </span>
-                        <span
-                          className="w-12 shrink-0 text-right font-mono text-body font-semibold tabular-nums"
-                          style={{ color: band.color }}
-                          title={t(`score.${band.key}`)}
-                        >
-                          {pct}%
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="px-4 py-8 text-center text-body text-ink-faint">
-                {t("dashboard.noDrillsRecorded")}
-              </p>
-            )}
-          </Card>
-        </div>
+        {/* Matches and drills in one stream — what the club did, in the order
+            it happened, each row open to reactions and comments. */}
+        <section>
+          <h2 className="px-1 pb-2 text-h4 font-semibold text-ink">
+            {t("dashboard.activity")}
+          </h2>
+          <ActivityFeed />
+        </section>
       </div>
     </>
   );
