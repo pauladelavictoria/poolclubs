@@ -1,57 +1,62 @@
-# Vite Typescript/React Supabase
+# 🎱 PoolBook
 
-## Install Supabase
+> The ultimate social network and practice companion for pool enthusiasts.
 
-You need Docker to install supabase locally.
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-```bash
-npm install supabase --save-dev
-npx supabase init
-npx supabase start
-```
+---
 
-## Create table
+## 🌟 Overview
 
-Run sample-db.sql query in supabase studio > SQL editor.
+**PoolBook** brings pool players together on a single platform. Whether you want to practice targeted drills, challenge local players to matches, climb competitive rankings, or build a thriving community at your local pool hall, PoolBook gives you the tools to elevate your game and stay connected.
 
-Don't forget to enable Realtime in Table Editor > Tasks > Realtime on.
+---
 
-## Migrations
+## ✨ Key Features
 
-Files in `sql/` are applied by hand, in this order. `sample-db.sql` is stale for
-`players` and `games` — the live shape of those two tables is not in the repo.
+### 🎯 Practice & Drills
+* **Drill Library:** Create, customize, and browse pool drills (position play, safety shots, cue ball control, and breaking).
+* **Track Results:** Log shot attempts, completion times, success percentages, and personal bests.
+* **Progress Analytics:** Monitor skill improvement over time with detailed performance stats.
 
-1. `supabase-migration-drills.sql`, then the `drills-seed-*.sql` you want
-   (**`drills-seed-bu.sql` starts with `DELETE FROM drills`**)
-2. `supabase-migration-player-user-link.sql`
-3. `supabase-migration-drills-write.sql`
-4. `supabase-migration-players-policy-split.sql`
-5. `supabase-migration-drill-logs-delete.sql`
-6. `supabase-migration-clubs.sql` — turns the single club into tenants and makes
-   every club members-only. Read its header first: it needs player 1 linked to
-   an account, and it drops policies by name, so check `pg_policies` for any
-   added through the dashboard.
-7. `supabase-migration-social.sql` — challenges, comments, reactions.
+### 🏆 Clubs & Communities
+* **Create & Join Clubs:** Form local leagues, venue clubs, or online training groups.
+* **Club Roster & Wall:** Share announcements, view active members, and track internal club rankings.
 
-## Install project
+### ⚔️ Match Challenges & Rankings
+* **Direct Challenges:** Challenge other players to matches (8-Ball, 9-Ball, 10-Ball, Straight Pool, etc.).
+* **Competitive Leaderboards:** Skill-based ranking system (ELO / handicap system) to see where you stand locally and globally.
+* **Match Logging:** Track scores, match history, and head-to-head records.
 
-```
-bun install
-```
+### 💬 Social Feed & Interactions
+* **Activity Feed:** Share match results, drill achievements, and video/photo highlights of great runouts.
+* **Reactions & Comments:** Like, react, and comment on friend and club activity.
 
-## Set env vars in .env
+---
 
-You'll need the anon key and supabase API url.
+## 🛠 Tech Stack
 
-```
-bun run dev
-```
+*(Update this section to match your project's technology)*
 
-## List of installed packages
+* **Frontend:** React / TypeScript / Tailwind CSS
+* **Backend / Database:** Node.js / PostgreSQL / Supabase
+* **Authentication:** Supabase Auth
 
-- react-router-dom
-- react-icons
-- react-hook-form
-- @tanstack/react-query
-- react-toastify
-- tailwind
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Ensure you have the following installed:
+* [Node.js](https://nodejs.org/) (`>= 18.0.0`)
+* `npm`, `pnpm`, or `yarn`
+* [Git](https://git-scm.com/)
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/satellitestudiodesign/poolbook.git
+   cd poolbook
