@@ -134,10 +134,10 @@ export default function PlayerDetailPage() {
               hint={t("players.notFoundHint")}
               action={
                 <Link
-                  to="/players"
+                  to="/club"
                   className={buttonClasses({ variant: "secondary" })}
                 >
-                  {t("players.seeAll")}
+                  {t("club.membersTitle")}
                 </Link>
               }
             />

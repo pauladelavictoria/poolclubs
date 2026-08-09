@@ -11,7 +11,6 @@ import GamesPage from "@/pages/GamesPage";
 import AddGamePage from "@/pages/AddGamePage";
 import RankingDailyPage from "@/pages/RankingDailyPage";
 import RankingAllTimePage from "@/pages/RankingAllTimePage";
-import PlayersPage from "@/pages/PlayersPage";
 import PlayerDetailPage from "@/pages/PlayerDetailPage";
 import DrillsPage from "@/pages/DrillsPage";
 import DrillDetailPage from "@/pages/DrillDetailPage";
@@ -64,7 +63,11 @@ export default function App() {
                   <Route path="games/new" element={<AddGamePage />} />
                   <Route path="challenges" element={<ChallengesPage />} />
 
-                  <Route path="players" element={<PlayersPage />} />
+                  {/* The roster moved into club settings; old links still resolve. */}
+                  <Route
+                    path="players"
+                    element={<Navigate to="/club" replace />}
+                  />
                   <Route path="players/:id" element={<PlayerDetailPage />} />
                   <Route path="club" element={<ClubPage />} />
 

@@ -1,29 +1,35 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { LuCheck, LuCopy, LuUserMinus } from "react-icons/lu";
+import { LuCheck, LuCopy, LuUserMinus, LuPencil, LuPlus } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubMembers, useManageClub } from "@/hooks/useClub";
+import { useManagePlayers } from "@/hooks/useManagePlayers";
 import PageHeader from "@/components/PageHeader";
+import PlayerForm from "@/components/PlayerForm";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { Button } from "@/components/ui/Button";
+import { Button, IconButton } from "@/components/ui/Button";
 import { SkeletonRows } from "@/components/ui/Skeleton";
+import type { Player, Category } from "@/types";
 import { useT } from "@/i18n";
 
 /**
- * The club's own page. Everyone gets the invite link — anyone may invite. Only
- * the owner sees the approve/remove controls, mirroring the RLS in
- * sql/supabase-migration-clubs.sql.
+ * The club's own page: settings, invites and the roster. Everyone gets the
+ * invite link — anyone may invite. Only the owner sees the approve/remove
+ * controls, mirroring the RLS in sql/supabase-migration-clubs.sql.
  */
 export default function ClubPage() {
   const { t } = useT();
-  const { activeClub, isClubAdmin, player } = useAuth();
+  const { activeClub, isClubAdmin, player, user } = useAuth();
   const { data: members, isLoading } = useClubMembers();
   const { approveMember, removeMember, renameClub } = useManageClub();
+  const { createPlayer, updatePlayer } = useManagePlayers();
 
   const [name, setName] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
   if (!activeClub) return null;
 
@@ -39,6 +45,29 @@ export default function ClubPage() {
     } catch {
       // Clipboard is blocked outside a secure context; the input is selectable.
       toast.error(t("club.copyError"));
+    }
+  };
+
+  const closeModal = () => {
+    setEditingPlayer(null);
+    setIsModalOpen(false);
+  };
+
+  const savePlayer = async (values: { name: string; category: Category }) => {
+    try {
+      if (editingPlayer) {
+        await updatePlayer.mutateAsync({ id: editingPlayer.id, ...values });
+        toast.success(t("players.updated"));
+      } else {
+        await createPlayer.mutateAsync(values);
+        toast.success(t("players.created"));
+      }
+      closeModal();
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        t(editingPlayer ? "players.updateError" : "players.createError"),
+      );
     }
   };
 
@@ -148,8 +177,26 @@ export default function ClubPage() {
           </Card>
         )}
 
+        {/* The roster lives here rather than on its own page: adding a guest
+            player and approving a member are the same job. */}
         <Card className="overflow-hidden">
-          <CardHeader title={t("club.membersTitle")} />
+          <CardHeader
+            title={t("club.membersTitle")}
+            action={
+              user && (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setEditingPlayer(null);
+                    setIsModalOpen(true);
+                  }}
+                >
+                  <LuPlus className="h-4 w-4" aria-hidden />
+                  {t("players.add")}
+                </Button>
+              )
+            }
+          />
           {isLoading ? (
             <div className="p-3">
               <SkeletonRows rows={4} />
@@ -171,6 +218,17 @@ export default function ClubPage() {
                       ? t("club.owner")
                       : t("category.short", { n: m.category })}
                   </span>
+                  {user && (
+                    <IconButton
+                      label={t("players.editNamed", { name: m.name })}
+                      onClick={() => {
+                        setEditingPlayer(m);
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      <LuPencil className="h-[18px] w-[18px]" />
+                    </IconButton>
+                  )}
                   {/* Removing takes their games and drill logs with them, so it
                       asks first. */}
                   {isClubAdmin && m.id !== player?.id && (
@@ -195,6 +253,35 @@ export default function ClubPage() {
           )}
         </Card>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4">
+          <div className="absolute inset-0" aria-hidden onClick={closeModal} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={editingPlayer ? t("players.edit") : t("players.add")}
+            className="relative w-full max-w-md rounded-t-sheet border border-hairline bg-felt p-5 sm:rounded-sheet"
+          >
+            <h2 className="mb-4 text-h3 font-semibold text-ink">
+              {editingPlayer ? t("players.edit") : t("players.add")}
+            </h2>
+            <PlayerForm
+              initialValues={
+                editingPlayer
+                  ? {
+                      name: editingPlayer.name,
+                      category: editingPlayer.category,
+                    }
+                  : undefined
+              }
+              onSubmit={savePlayer}
+              onCancel={closeModal}
+              isSubmitting={createPlayer.isPending || updatePlayer.isPending}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
