@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
+import { useAuth } from "@/hooks/useAuth";
 import type { Player, Category } from "@/types";
 
 export type CreatePlayerInput = {
@@ -15,15 +16,20 @@ export type UpdatePlayerInput = {
 
 export const useManagePlayers = () => {
   const queryClient = useQueryClient();
+  const { activeClubId } = useAuth();
 
   const onSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["players"] });
   };
 
+  // A player added here is a guest with no account — active straight away.
+  // People who sign in arrive through join_club() as 'pending' instead.
   async function createPlayerFn(newPlayer: CreatePlayerInput) {
+    if (!activeClubId) throw new Error("no active club");
+
     const { data, error } = await supabase
       .from("players")
-      .insert([newPlayer])
+      .insert([{ ...newPlayer, club_id: activeClubId, status: "active" }])
       .select()
       .single();
 

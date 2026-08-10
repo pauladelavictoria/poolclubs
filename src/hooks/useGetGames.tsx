@@ -1,6 +1,6 @@
 import { supabase } from "@/supabaseClient";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import type { Game, GameMode } from "@/types";
 
 export type UseGetGamesFilters = {
@@ -20,6 +20,8 @@ const getDateRange = (date: string) => {
   };
 };
 
+// Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
+// for the app, rather than one per hook instance.
 export const useGetGames = (filters?: UseGetGamesFilters) => {
   const {
     date,
@@ -29,12 +31,15 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
     category,
     mode,
   } = filters ?? {};
-  const queryClient = useQueryClient();
+  const { activeClubId } = useAuth();
 
   async function fetchGames() {
     let query = supabase
       .from("games")
       .select("*", { count: "exact" })
+      // Player names are only unique inside a club, and the filters below match
+      // on name — without this scope, two clubs sharing a "Juan" would bleed.
+      .eq("club_id", activeClubId)
       .order("created_at", { ascending: false });
 
     if (mode) {
@@ -61,6 +66,7 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
       const { data: playersInCategory } = await supabase
         .from("players")
         .select("name")
+        .eq("club_id", activeClubId)
         .eq("category", category);
 
       if (playersInCategory && playersInCategory.length > 0) {
@@ -98,38 +104,9 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
     };
   }
 
-  useEffect(() => {
-    const invalidateGames = () => {
-      queryClient.invalidateQueries({ queryKey: ["games"] });
-    };
-
-    const gamesChannel = supabase
-      .channel("games-changes")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "games" },
-        invalidateGames
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "games" },
-        invalidateGames
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "games" },
-        invalidateGames
-      )
-      .subscribe();
-
-    // Cleaning
-    return () => {
-      supabase.removeChannel(gamesChannel);
-    };
-  }, [queryClient]);
-
   return useQuery({
-    queryKey: ["games", date, page, pageSize, playerName, category, mode],
+    queryKey: ["games", activeClubId, date, page, pageSize, playerName, category, mode],
     queryFn: fetchGames,
+    enabled: !!activeClubId,
   });
 };

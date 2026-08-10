@@ -1,13 +1,11 @@
 import type { DailyRankingEntry } from "@/types";
 import { Link } from "react-router-dom";
+import { BallBadge, CategoryBadge } from "@/components/ui/Ball";
+import { ScoreString } from "@/components/ui/ScoreString";
+import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/i18n";
 
 type ViewMode = "combined" | "byCategory";
-
-const RANKING_COLORS: Record<number, string> = {
-  1: "rgb(223, 180, 36)",
-  2: "rgb(157, 162, 165)",
-  3: "rgb(204, 112, 21)",
-};
 
 interface RankingTableProps {
   entries: DailyRankingEntry[];
@@ -15,80 +13,106 @@ interface RankingTableProps {
   viewMode: ViewMode;
 }
 
+/**
+ * The rating is the focal element: mono, tabular, heaviest thing in the row.
+ * Name sits one tier below it, form and division are metadata. Rows are
+ * separated by space and hover, not by a hairline under every one.
+ */
 export default function RankingTable({
   entries,
   gamesLabel,
   viewMode,
 }: RankingTableProps) {
+  const { player } = useAuth();
+  const { t } = useT();
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-gray-300">
-        <thead>
-          <tr className="border-b border-dark-border text-sm text-gray-500 uppercase tracking-wide">
-            <th className="py-2 pr-2 ps-5">#</th>
-            <th className="py-2 pr-2">Jugador</th>
-            <th className="py-2 pr-2 text-right">{gamesLabel}</th>
-            <th className="py-2 pr-4 text-right">Puntos</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry, index) => (
-            <tr
-              key={entry.playerId}
-              className="border-b border-dark-border hover:bg-dark-card-hover"
-            >
-              <td className="py-2 pr-2 font-medium">
-                <span
-                  className="rounded-xl px-3 py-2 ms-2"
-                  style={{
-                    backgroundColor: RANKING_COLORS[index + 1],
-                    color: index <= 2 ? "white" : undefined,
-                  }}
-                >
-                  {index + 1}
-                </span>
+    <table className="w-full">
+      <caption className="sr-only">{t("ranking.standings")}</caption>
+      <thead>
+        <tr className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
+          {/* 16 padding + 28 ball + 12 gap. At w-11 the cell was exactly the
+              ball, so the name sat flush against it. */}
+          <th scope="col" className="w-14 py-2 pl-4 pr-3 text-left font-medium">
+            #
+          </th>
+          {/* Its own column, not a tail on the name: a left-anchored strip of
+              divisions can be scanned down, an inline badge can't. */}
+          {viewMode === "combined" && (
+            <th scope="col" className="w-14 py-2 pr-3 text-left font-medium">
+              {t("ranking.categoryShort")}
+            </th>
+          )}
+          <th scope="col" className="py-2 text-left font-medium">
+            {t("ranking.player")}
+          </th>
+          <th
+            scope="col"
+            className="hidden py-2 pr-6 text-right font-medium md:table-cell"
+          >
+            {t("ranking.won")}
+          </th>
+          <th
+            scope="col"
+            className="hidden py-2 text-right font-medium sm:table-cell"
+          >
+            {gamesLabel}
+          </th>
+          <th scope="col" className="py-2 pr-4 text-right font-medium">
+            {t("ranking.points")}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {entries.map((entry, index) => (
+          <tr
+            key={entry.playerId}
+            className={`transition-colors duration-150 hover:bg-felt-raised ${
+              entry.playerId === player?.id ? "bg-strike-tint" : ""
+            }`}
+          >
+            <td className="py-2.5 pl-4 pr-3">
+              <BallBadge rank={index + 1} />
+            </td>
+
+            {viewMode === "combined" && (
+              <td className="py-2.5 pr-3">
+                <CategoryBadge category={entry.category} />
               </td>
-              <td
-                className="py-2 pr-2"
-                style={{
-                  fontWeight: index <= 2 ? "bold" : undefined,
-                }}
+            )}
+
+            <td className="py-2.5 pr-3">
+              <Link
+                to={`/app/players/${entry.playerId}`}
+                className="block truncate font-medium text-ink transition-colors duration-150 hover:text-strike"
               >
-                <Link
-                  to={`/players/${entry.playerId}`}
-                  className="text-white hover:text-blue-400 transition-colors"
-                >
-                  {entry.playerName}{" "}
-                  {viewMode === "combined" && `(${entry.category}ª)`}
-                </Link>
-              </td>
-              <td className="py-2 pr-2 text-right flex gap-1 items-center justify-end h-12">
-                {entry.last10Games
-                  ? entry.last10Games.map((gameWon, idx) => {
-                      if (idx < entry.gamesPlayed)
-                        return (
-                          <div
-                            key={idx}
-                            className={`w-1 h-1 rounded-xl ${gameWon ? "bg-green-500" : "bg-red-500"}`}
-                          />
-                        );
-                    })
-                  : new Array(entry.gamesPlayed)
-                      .fill(0)
-                      .map((_, i) => (
-                        <div
-                          key={i}
-                          className={`w-1 h-1 rounded-xl ${entry.gamesWon > i ? "bg-green-500" : "bg-red-500"}`}
-                        />
-                      ))}
-              </td>
-              <td className="py-2 pr-4 text-right font-semibold me-4">
+                {entry.playerName}
+              </Link>
+              {/* Form drops under the name once the column is gone */}
+              <div className="mt-1 sm:hidden">
+                <ScoreString results={entry.last10Games ?? []} />
+              </div>
+            </td>
+
+            <td className="hidden py-2.5 pr-6 text-right md:table-cell">
+              <span className="font-mono text-caption tabular-nums text-ink-faint">
+                {entry.gamesWon}
+                <span className="text-ink-ghost">/{entry.gamesPlayed}</span>
+              </span>
+            </td>
+
+            <td className="hidden py-2.5 text-right sm:table-cell">
+              <ScoreString results={entry.last10Games ?? []} />
+            </td>
+
+            <td className="py-2.5 pr-4 text-right">
+              <span className="font-mono text-h4 font-semibold tabular-nums text-ink">
                 {entry.points}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

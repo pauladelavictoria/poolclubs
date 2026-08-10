@@ -1,17 +1,23 @@
 import { supabase } from "@/supabaseClient";
-// import { useAuth } from "./useAuth";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import type { Player } from "@/types";
 
+// Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
+// for the app, rather than one per hook instance.
+//
+// The club comes from context, not from the caller: every call site means "the
+// club I am looking at", so threading it through as an argument would only give
+// them a chance to get it wrong.
 export const useGetPlayers = () => {
-  // const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const { activeClubId } = useAuth();
 
   async function fetchPlayers() {
     const { data, error } = await supabase
       .from("players")
       .select("*")
+      .eq("club_id", activeClubId)
+      .eq("status", "active")
       .order('name')
 
     if (error) {
@@ -22,38 +28,9 @@ export const useGetPlayers = () => {
     return data as Player[];
   }
 
-  useEffect(() => {
-    const invalidatePlayers = () => {
-      queryClient.invalidateQueries({ queryKey: ["players"] });
-    };
-
-    const eventsChannel = supabase
-      .channel("players-changes")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "players" },
-        invalidatePlayers
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "players" },
-        invalidatePlayers
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "players" },
-        invalidatePlayers
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(eventsChannel);
-    };
-  }, [queryClient]);
-
   return useQuery({
-    queryKey: ["players"],
+    queryKey: ["players", activeClubId],
     queryFn: fetchPlayers,
-    // enabled: !!user,
+    enabled: !!activeClubId,
   });
 };

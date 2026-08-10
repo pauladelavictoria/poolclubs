@@ -1,13 +1,11 @@
 import type { DailyRankingEntry, Category } from "@/types";
 import RankingTable from "./RankingTable";
+import { SkeletonRows } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LuTrophy } from "react-icons/lu";
+import { useT } from "@/i18n";
 
 type ViewMode = "combined" | "byCategory";
-
-const CATEGORY_NAMES: Record<Category, string> = {
-  1: "Primera",
-  2: "Segunda",
-  3: "Tercera",
-};
 
 interface RankingProps {
   ranking: DailyRankingEntry[] | null;
@@ -23,63 +21,63 @@ export default function Ranking({
   rankingByCategory,
   viewMode,
   isLoading,
-  emptyMessage = "No hay partidos registrados para este criterio.",
-  gamesLabel = "Partidos",
+  emptyMessage,
+  gamesLabel,
 }: RankingProps) {
-  if (isLoading) {
-    return (
-      <div className="py-8 flex justify-center">
-        <div className="animate-spin rounded-xl h-8 w-8 border-t-2 border-b-2 border-accent-red"></div>
-      </div>
-    );
-  }
+  const { t } = useT();
+
+  if (isLoading) return <SkeletonRows rows={8} className="p-3" />;
+
+  const empty = (
+    <EmptyState
+      icon={<LuTrophy className="h-5 w-5" />}
+      title={t("ranking.emptyTitle")}
+      hint={emptyMessage ?? t("ranking.emptyDefault")}
+    />
+  );
 
   if (viewMode === "combined") {
-    if (!ranking || ranking.length === 0) {
-      return <p className="py-6 text-center text-gray-400">{emptyMessage}</p>;
-    }
-
+    if (!ranking || ranking.length === 0) return empty;
     return (
       <RankingTable
         entries={ranking}
-        gamesLabel={gamesLabel}
+        gamesLabel={gamesLabel ?? t("ranking.form")}
         viewMode={viewMode}
       />
     );
   }
 
-  // viewMode === "byCategory"
-  if (!rankingByCategory) {
-    return <p className="py-6 text-center text-gray-400">{emptyMessage}</p>;
-  }
+  if (!rankingByCategory) return empty;
 
-  const hasAny =
-    rankingByCategory[1].length > 0 ||
-    rankingByCategory[2].length > 0 ||
-    rankingByCategory[3].length > 0;
-
-  if (!hasAny) {
-    return <p className="py-6 text-center text-gray-400">{emptyMessage}</p>;
-  }
+  const populated = ([1, 2, 3] as const).filter(
+    (cat) => rankingByCategory[cat].length > 0
+  );
+  if (populated.length === 0) return empty;
 
   return (
-    <div className="space-y-8">
-      {([1, 2, 3] as const).map((cat) => {
-        const entries = rankingByCategory[cat];
-        if (entries.length === 0) return null;
-        return (
-          <div key={cat}>
-            <h3 className="mb-3 text-base font-semibold text-white flex items-center gap-2 ps-4">
-              {CATEGORY_NAMES[cat]}
+    <div className="divide-y divide-hairline">
+      {populated.map((cat) => (
+        <section key={cat}>
+          {/* The division is the only thing separating one table from the next,
+              so it gets a banded header at heading size — a tracked 11px caption
+              was carrying more structural weight than it could show. */}
+          <div className="flex items-center justify-between gap-3 border-b border-hairline bg-felt-raised px-4 py-3">
+            <h3 className="text-h3 font-semibold text-ink">
+              {t(`category.${cat}`)}
             </h3>
-            <RankingTable
-              entries={entries}
-              gamesLabel={gamesLabel}
-              viewMode={viewMode}
-            />
+            <span className="font-mono text-caption tabular-nums text-ink-faint">
+              {t("ranking.playersCount", {
+                n: rankingByCategory[cat].length,
+              })}
+            </span>
           </div>
-        );
-      })}
+          <RankingTable
+            entries={rankingByCategory[cat]}
+            gamesLabel={gamesLabel ?? t("ranking.form")}
+            viewMode={viewMode}
+          />
+        </section>
+      ))}
     </div>
   );
 }
