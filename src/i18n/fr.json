@@ -1,5 +1,5 @@
 {
-  "common.appName": "PocketClub",
+  "common.appName": "PoolClubs",
   "common.save": "Enregistrer",
   "common.saved": "Enregistré",
   "common.saving": "Enregistrement...",
@@ -353,7 +353,7 @@
   "landing.rankingShotBody": "Un classement, mis à jour dès qu'un résultat est enregistré. Affiche-le sur la télé du club et le débat est clos.",
   "landing.finalTitle": "On replace les billes.",
   "landing.finalBody": "Crée un club, invite les habitués, enregistre les matchs de ce soir.",
-  "landing.altHero": "PocketClub sur un téléphone, avec le classement du club",
+  "landing.altHero": "PoolClubs sur un téléphone, avec le classement du club",
   "landing.altRanking": "L'écran du classement général sur un grand écran",
   "landing.altDrill": "Un exercice avec son schéma de table et sa notation",
   "landing.altChallenge": "Un défi ouvert entre deux joueurs du club",

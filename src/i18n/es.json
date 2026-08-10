@@ -1,5 +1,5 @@
 {
-  "common.appName": "PocketClub",
+  "common.appName": "PoolClubs",
   "common.save": "Guardar",
   "common.saved": "Guardado",
   "common.saving": "Guardando...",
@@ -353,7 +353,7 @@
   "landing.rankingShotBody": "Un ranking, actualizado en cuanto se registra un resultado. Ponlo en la tele del club y se acabó la discusión.",
   "landing.finalTitle": "A montar las bolas.",
   "landing.finalBody": "Crea un club, invita a los habituales y registra los partidos de esta noche.",
-  "landing.altHero": "PocketClub en un móvil, con el ranking del club",
+  "landing.altHero": "PoolClubs en un móvil, con el ranking del club",
   "landing.altRanking": "La pantalla del ranking general en una pantalla grande",
   "landing.altDrill": "Un ejercicio con su diagrama de mesa y su puntuación",
   "landing.altChallenge": "Un reto abierto entre dos jugadores del club",

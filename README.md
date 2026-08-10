@@ -1,4 +1,4 @@
-# 🎱 PoolBook
+# 🎱 PoolClubs
 
 > The ultimate social network and practice companion for pool enthusiasts.
 
@@ -9,7 +9,7 @@
 
 ## 🌟 Overview
 
-**PoolBook** brings pool players together on a single platform. Whether you want to practice targeted drills, challenge local players to matches, climb competitive rankings, or build a thriving community at your local pool hall, PoolBook gives you the tools to elevate your game and stay connected.
+**PoolClubs** brings pool players together on a single platform. Whether you want to practice targeted drills, challenge local players to matches, climb competitive rankings, or build a thriving community at your local pool hall, PoolClubs gives you the tools to elevate your game and stay connected.
 
 ---
 
@@ -58,5 +58,5 @@ Ensure you have the following installed:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/satellitestudiodesign/poolbook.git
-   cd poolbook
+   git clone https://github.com/satellitestudiodesign/poolclubs.git
+   cd poolclubs

@@ -1,7 +1,7 @@
 {
   "id": "/app",
-  "name": "PocketClub",
-  "short_name": "PocketClub",
+  "name": "PoolClubs",
+  "short_name": "PoolClubs",
   "description": "Pool club rankings, matches and training plans.",
   "start_url": "/app",
   "scope": "/app",
