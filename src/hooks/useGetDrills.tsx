@@ -10,32 +10,20 @@ export type UseGetDrillsFilters = {
 export const useGetDrills = (filters?: UseGetDrillsFilters) => {
   const { difficulty, skill_type } = filters ?? {};
 
-  async function fetchDrills() {
-    let query = supabase
-      .from("drills")
-      .select("*")
-      .order("difficulty")
-      .order("name");
-
-    if (difficulty) {
-      query = query.eq("difficulty", difficulty);
-    }
-    if (skill_type) {
-      query = query.eq("skill_type", skill_type);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-
-    return data as Drill[];
-  }
-
   return useQuery({
     queryKey: ["drills", difficulty, skill_type],
-    queryFn: fetchDrills,
+    queryFn: async () => {
+      let query = supabase
+        .from("drills")
+        .select("*")
+        .order("difficulty")
+        .order("name");
+
+      if (difficulty) query = query.eq("difficulty", difficulty);
+      if (skill_type) query = query.eq("skill_type", skill_type);
+
+      const { data } = await query.throwOnError();
+      return data as Drill[];
+    },
   });
 };

@@ -20,6 +20,11 @@ const getDateRange = (date: string) => {
   };
 };
 
+const nameMatches = (name: string) => {
+  const escaped = `"${name.replace(/"/g, '\\"')}"`;
+  return `player_1_name.eq.${escaped},player_2_name.eq.${escaped},player_1b_name.eq.${escaped},player_2b_name.eq.${escaped}`;
+};
+
 // Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
 // for the app, rather than one per hook instance.
 export const useGetGames = (filters?: UseGetGamesFilters) => {
@@ -53,10 +58,7 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
     }
 
     if (playerName) {
-      const escaped = `"${playerName.replace(/"/g, '\\"')}"`;
-      query = query.or(
-        `player_1_name.eq.${escaped},player_2_name.eq.${escaped},player_1b_name.eq.${escaped},player_2b_name.eq.${escaped}`,
-      );
+      query = query.or(nameMatches(playerName));
     }
 
     // For category filtering, we need to fetch and filter client-side
@@ -67,22 +69,16 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
         .from("players")
         .select("name")
         .eq("club_id", activeClubId)
-        .eq("category", category);
+        .eq("category", category)
+        .throwOnError();
 
-      if (playersInCategory && playersInCategory.length > 0) {
-        const playerNames = playersInCategory.map((p) => p.name);
-        // Filter games where either player is in the category
-        const conditions = playerNames
-          .map((name) => {
-            const escaped = `"${name.replace(/"/g, '\\"')}"`;
-            return `player_1_name.eq.${escaped},player_2_name.eq.${escaped},player_1b_name.eq.${escaped},player_2b_name.eq.${escaped}`;
-          })
-          .join(",");
-        query = query.or(conditions);
-      } else {
+      if (playersInCategory.length === 0) {
         // No players in this category, return empty
         return { games: [], totalCount: 0 };
       }
+      query = query.or(
+        playersInCategory.map((p) => nameMatches(p.name)).join(","),
+      );
     }
 
     if (page >= 1 && pageSize && pageSize >= 1) {
@@ -91,21 +87,25 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
       query = query.range(from, to);
     }
 
-    const { data, error, count } = await query;
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
+    const { data, count } = await query.throwOnError();
 
     return {
-      games: (data ?? []) as Game[],
+      games: data as Game[],
       totalCount: count ?? null,
     };
   }
 
   return useQuery({
-    queryKey: ["games", activeClubId, date, page, pageSize, playerName, category, mode],
+    queryKey: [
+      "games",
+      activeClubId,
+      date,
+      page,
+      pageSize,
+      playerName,
+      category,
+      mode,
+    ],
     queryFn: fetchGames,
     enabled: !!activeClubId,
   });

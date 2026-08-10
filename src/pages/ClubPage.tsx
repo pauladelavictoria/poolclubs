@@ -63,8 +63,8 @@ export default function ClubPage() {
         toast.success(t("players.created"));
       }
       closeModal();
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Logged by the mutation cache; this is the part the user sees.
       toast.error(
         t(editingPlayer ? "players.updateError" : "players.createError"),
       );

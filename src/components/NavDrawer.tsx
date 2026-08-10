@@ -86,8 +86,8 @@ export default function NavDrawer({
     try {
       await signOut.mutateAsync();
       toast.success(t("auth.signedOut"));
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Logged by the mutation cache; this is the part the user sees.
       toast.error(t("auth.signOutError"));
     }
   };

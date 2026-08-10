@@ -32,11 +32,11 @@ export default function AvatarUpload({
     setBusy(true);
     try {
       const dataUrl = await toAvatarDataUrl(file);
-      const { error } = await supabase
+      await supabase
         .from("players")
         .update({ avatar_url: dataUrl })
-        .eq("user_id", user.id);
-      if (error) throw error;
+        .eq("user_id", user.id)
+        .throwOnError();
       queryClient.invalidateQueries({ queryKey: ["players"] });
       await refreshMemberships();
       toast.success(t("common.saved"));

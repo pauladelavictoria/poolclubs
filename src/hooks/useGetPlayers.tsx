@@ -12,25 +12,21 @@ import type { Player } from "@/types";
 export const useGetPlayers = () => {
   const { activeClubId } = useAuth();
 
-  async function fetchPlayers() {
-    const { data, error } = await supabase
-      .from("players")
-      .select("*")
-      .eq("club_id", activeClubId)
-      .eq("status", "active")
-      .order('name')
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-
-    return data as Player[];
-  }
-
   return useQuery({
     queryKey: ["players", activeClubId],
-    queryFn: fetchPlayers,
     enabled: !!activeClubId,
+    // `.throwOnError()` hands the failure to react-query, which logs it once in
+    // libs/queryClient.ts. Same everywhere; see that file.
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("players")
+        .select("*")
+        .eq("club_id", activeClubId)
+        .eq("status", "active")
+        .order("name")
+        .throwOnError();
+
+      return data as Player[];
+    },
   });
 };

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
+import type { DrillLog } from "@/types";
 
 type AddDrillLogInput = {
   drill_id: number;
@@ -12,23 +13,17 @@ type AddDrillLogInput = {
 export const useAddDrillLog = () => {
   const queryClient = useQueryClient();
 
-  async function addDrillLog(log: AddDrillLogInput) {
-    const { data, error } = await supabase
-      .from("drill_logs")
-      .insert([log])
-      .select()
-      .single();
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-
-    return data;
-  }
-
   return useMutation({
-    mutationFn: addDrillLog,
+    mutationFn: async (log: AddDrillLogInput) => {
+      const { data } = await supabase
+        .from("drill_logs")
+        .insert([log])
+        .select()
+        .single()
+        .throwOnError();
+
+      return data as DrillLog;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["drill_logs"] });
     },

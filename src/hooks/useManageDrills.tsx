@@ -14,49 +14,40 @@ export const useManageDrills = () => {
     if (drill) queryClient.invalidateQueries({ queryKey: ["drill", drill.id] });
   };
 
-  async function createDrillFn(newDrill: DrillInput) {
-    const { data, error } = await supabase
-      .from("drills")
-      .insert([newDrill])
-      .select()
-      .single();
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-    return data as Drill;
-  }
-
-  async function updateDrillFn({ id, ...updates }: DrillInput & { id: number }) {
-    const { data, error } = await supabase
-      .from("drills")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-    return data as Drill;
-  }
-
-  async function deleteDrillFn(id: number) {
-    const { error } = await supabase.from("drills").delete().eq("id", id);
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-  }
-
   return {
-    createDrill: useMutation({ mutationFn: createDrillFn, onSuccess }),
-    updateDrill: useMutation({ mutationFn: updateDrillFn, onSuccess }),
+    createDrill: useMutation({
+      mutationFn: async (newDrill: DrillInput) => {
+        const { data } = await supabase
+          .from("drills")
+          .insert([newDrill])
+          .select()
+          .single()
+          .throwOnError();
+
+        return data as Drill;
+      },
+      onSuccess,
+    }),
+
+    updateDrill: useMutation({
+      mutationFn: async ({ id, ...updates }: DrillInput & { id: number }) => {
+        const { data } = await supabase
+          .from("drills")
+          .update(updates)
+          .eq("id", id)
+          .select()
+          .single()
+          .throwOnError();
+
+        return data as Drill;
+      },
+      onSuccess,
+    }),
+
     deleteDrill: useMutation({
-      mutationFn: deleteDrillFn,
+      mutationFn: async (id: number) => {
+        await supabase.from("drills").delete().eq("id", id).throwOnError();
+      },
       onSuccess: () => onSuccess(),
     }),
   };

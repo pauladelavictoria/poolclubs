@@ -1,6 +1,10 @@
-import { QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
+
+const log = (error: unknown) => console.error(error);
 
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: log }),
+  mutationCache: new MutationCache({ onError: log }),
   defaultOptions: {
     queries: {
       staleTime: 5 * 60_000,

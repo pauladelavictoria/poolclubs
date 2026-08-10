@@ -21,13 +21,13 @@ export const useClubMembers = () => {
     queryKey: ["club-members", activeClubId],
     enabled: !!activeClubId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("players")
         .select("*")
         .eq("club_id", activeClubId)
-        .order("name");
+        .order("name")
+        .throwOnError();
 
-      if (error) throw error;
       return data as Player[];
     },
   });
@@ -48,11 +48,11 @@ export const useManageClub = () => {
   return {
     approveMember: useMutation({
       mutationFn: async (playerId: number) => {
-        const { error } = await supabase
+        await supabase
           .from("players")
           .update({ status: "active" })
-          .eq("id", playerId);
-        if (error) throw error;
+          .eq("id", playerId)
+          .throwOnError();
       },
       onSuccess,
     }),
@@ -60,19 +60,22 @@ export const useManageClub = () => {
     // Removing drops their games and drill logs with them (ON DELETE CASCADE).
     removeMember: useMutation({
       mutationFn: async (playerId: number) => {
-        const { error } = await supabase.from("players").delete().eq("id", playerId);
-        if (error) throw error;
+        await supabase
+          .from("players")
+          .delete()
+          .eq("id", playerId)
+          .throwOnError();
       },
       onSuccess,
     }),
 
     renameClub: useMutation({
       mutationFn: async (name: string) => {
-        const { error } = await supabase
+        await supabase
           .from("clubs")
           .update({ name: name.trim() })
-          .eq("id", activeClubId);
-        if (error) throw error;
+          .eq("id", activeClubId)
+          .throwOnError();
       },
       onSuccess,
     }),
@@ -94,10 +97,10 @@ export const useJoinOrCreateClub = () => {
   return {
     createClub: useMutation({
       mutationFn: async (name: string) => {
-        const { data, error } = await supabase.rpc("create_club", {
-          club_name: name,
-        });
-        if (error) throw error;
+        const { data } = await supabase
+          .rpc("create_club", { club_name: name })
+          .throwOnError();
+
         return settle(data as number);
       },
     }),
@@ -114,12 +117,14 @@ export const useJoinOrCreateClub = () => {
          *  disambiguate. NULL falls back to the OAuth full_name. */
         displayName?: string;
       }) => {
-        const { data, error } = await supabase.rpc("join_club", {
-          code,
-          claim_player_id: claimPlayerId ?? null,
-          display_name: displayName?.trim() || null,
-        });
-        if (error) throw error;
+        const { data } = await supabase
+          .rpc("join_club", {
+            code,
+            claim_player_id: claimPlayerId ?? null,
+            display_name: displayName?.trim() || null,
+          })
+          .throwOnError();
+
         return settle(data as number);
       },
     }),
@@ -134,8 +139,9 @@ export const useClubPreview = (code: string | undefined) =>
     enabled: !!code,
     retry: false,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("club_preview", { code });
-      if (error) throw error;
+      const { data } = await supabase
+        .rpc("club_preview", { code })
+        .throwOnError();
 
       const rows = (data ?? []) as ClubPreview[];
       if (rows.length === 0) throw new Error("unknown join code");

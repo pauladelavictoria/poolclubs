@@ -32,13 +32,13 @@ export const useComments = () => {
     queryKey: ["comments", activeClubId],
     enabled: !!activeClubId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("comments")
         .select("*")
         .eq("club_id", activeClubId)
-        .order("created_at");
+        .order("created_at")
+        .throwOnError();
 
-      if (error) throw error;
       return data as Comment[];
     },
   });
@@ -51,12 +51,12 @@ export const useReactions = () => {
     queryKey: ["reactions", activeClubId],
     enabled: !!activeClubId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("reactions")
         .select("*")
-        .eq("club_id", activeClubId);
+        .eq("club_id", activeClubId)
+        .throwOnError();
 
-      if (error) throw error;
       return data as Reaction[];
     },
   });
@@ -83,10 +83,10 @@ export const useSocialActions = () => {
         target: SocialTarget;
         body: string;
       }) => {
-        const { error } = await supabase
+        await supabase
           .from("comments")
-          .insert([{ ...base(), ...targetColumns(target), body: body.trim() }]);
-        if (error) throw error;
+          .insert([{ ...base(), ...targetColumns(target), body: body.trim() }])
+          .throwOnError();
       },
       // Appended at the end because useComments orders by created_at ascending.
       ...optimisticList<{ target: SocialTarget; body: string }, Comment>(
@@ -107,8 +107,7 @@ export const useSocialActions = () => {
 
     deleteComment: useMutation({
       mutationFn: async (id: number) => {
-        const { error } = await supabase.from("comments").delete().eq("id", id);
-        if (error) throw error;
+        await supabase.from("comments").delete().eq("id", id).throwOnError();
       },
       ...optimisticList<number, Comment>(commentsKey, (rows, id) =>
         rows.filter((c) => c.id !== id),
@@ -135,20 +134,20 @@ export const useSocialActions = () => {
         );
 
         if (mine) {
-          const { error } = await supabase
+          await supabase
             .from("reactions")
             .delete()
-            .eq("id", mine.id);
-          if (error) throw error;
+            .eq("id", mine.id)
+            .throwOnError();
           return;
         }
 
-        const { error } = await supabase
+        await supabase
           .from("reactions")
           .insert([
             { club_id, author_player_id, ...targetColumns(target), emoji },
-          ]);
-        if (error) throw error;
+          ])
+          .throwOnError();
       },
       ...optimisticList<{ target: SocialTarget; emoji: string }, Reaction>(
         reactionsKey,

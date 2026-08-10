@@ -43,12 +43,13 @@ export default function DrillDetailPage() {
   const { data: drill, isLoading } = useQuery({
     queryKey: ["drill", drillId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("drills")
         .select("*")
         .eq("id", drillId)
-        .single();
-      if (error) throw error;
+        .single()
+        .throwOnError();
+
       return data as Drill;
     },
     enabled: !!drillId,

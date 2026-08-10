@@ -254,7 +254,7 @@
   "category.1": "Première",
   "category.2": "Deuxième",
   "category.3": "Troisième",
-  "category.short": "Div {n}",
+  "category.short": "{n}",
 
   "difficulty.beginner": "Débutant",
   "difficulty.intermediate": "Intermédiaire",

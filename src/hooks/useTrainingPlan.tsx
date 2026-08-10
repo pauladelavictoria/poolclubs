@@ -147,30 +147,29 @@ export const useTrainingPlan = (playerId?: number) => {
     queryFn: async () => {
       if (!playerId) return null;
 
-      const { data: plans, error: planError } = await supabase
+      const { data: plans } = await supabase
         .from("training_plans")
         .select("*")
         .eq("player_id", playerId)
         .eq("active", true)
         .order("created_at", { ascending: false })
-        .limit(1);
+        .limit(1)
+        .throwOnError();
 
-      if (planError) throw planError;
-      if (!plans || plans.length === 0) return null;
+      if (plans.length === 0) return null;
 
       const plan = plans[0] as TrainingPlan;
 
-      const { data: steps, error: stepsError } = await supabase
+      const { data: steps } = await supabase
         .from("training_plan_steps")
         .select("*, drill:drills(*)")
         .eq("plan_id", plan.id)
-        .order("step_order");
-
-      if (stepsError) throw stepsError;
+        .order("step_order")
+        .throwOnError();
 
       return {
         plan,
-        steps: (steps ?? []) as TrainingPlanStep[],
+        steps: steps as TrainingPlanStep[],
       };
     },
     enabled: !!playerId,
@@ -190,12 +189,14 @@ export const useTrainingPlan = (playerId?: number) => {
         .from("training_plans")
         .update({ active: false })
         .eq("player_id", playerId)
-        .eq("active", true);
+        .eq("active", true)
+        .throwOnError();
 
       // Fetch all drills
       const { data: allDrills } = await supabase
         .from("drills")
-        .select("*");
+        .select("*")
+        .throwOnError();
 
       // Fetch recent logs for this player
       const { data: recentLogs } = await supabase
@@ -203,11 +204,12 @@ export const useTrainingPlan = (playerId?: number) => {
         .select("*")
         .eq("player_id", playerId)
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(100)
+        .throwOnError();
 
       const selectedDrills = selectDrillsForPlan(
-        (allDrills ?? []) as Drill[],
-        (recentLogs ?? []) as DrillLog[],
+        allDrills as Drill[],
+        recentLogs as DrillLog[],
         category
       );
 
@@ -216,13 +218,12 @@ export const useTrainingPlan = (playerId?: number) => {
       }
 
       // Create plan
-      const { data: newPlan, error: planError } = await supabase
+      const { data: newPlan } = await supabase
         .from("training_plans")
         .insert([{ player_id: playerId }])
         .select()
-        .single();
-
-      if (planError) throw planError;
+        .single()
+        .throwOnError();
 
       // Create steps
       const steps = selectedDrills.map((drill, idx) => ({
@@ -232,11 +233,7 @@ export const useTrainingPlan = (playerId?: number) => {
         status: "pending" as const,
       }));
 
-      const { error: stepsError } = await supabase
-        .from("training_plan_steps")
-        .insert(steps);
-
-      if (stepsError) throw stepsError;
+      await supabase.from("training_plan_steps").insert(steps).throwOnError();
 
       return newPlan as TrainingPlan;
     },
@@ -254,12 +251,11 @@ export const useTrainingPlan = (playerId?: number) => {
       stepId: number;
       drillLogId: number;
     }) => {
-      const { error } = await supabase
+      await supabase
         .from("training_plan_steps")
         .update({ status: "completed", drill_log_id: drillLogId })
-        .eq("id", stepId);
-
-      if (error) throw error;
+        .eq("id", stepId)
+        .throwOnError();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["training_plan", playerId] });
@@ -269,12 +265,11 @@ export const useTrainingPlan = (playerId?: number) => {
   // Skip a step
   const skipStep = useMutation({
     mutationFn: async (stepId: number) => {
-      const { error } = await supabase
+      await supabase
         .from("training_plan_steps")
         .update({ status: "skipped" })
-        .eq("id", stepId);
-
-      if (error) throw error;
+        .eq("id", stepId)
+        .throwOnError();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["training_plan", playerId] });

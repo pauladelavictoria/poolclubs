@@ -13,13 +13,13 @@ export const useGetChallenges = () => {
     queryKey: ["challenges", activeClubId],
     enabled: !!activeClubId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("challenges")
         .select("*")
         .eq("club_id", activeClubId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .throwOnError();
 
-      if (error) throw error;
       return data as Challenge[];
     },
   });
@@ -52,15 +52,17 @@ export const useManageChallenges = () => {
       }) => {
         if (!activeClubId || !player) throw new Error("no active club");
 
-        const { error } = await supabase.from("challenges").insert([
-          {
-            club_id: activeClubId,
-            from_player_id: player.id,
-            to_player_id: toPlayerId,
-            message: message?.trim() || null,
-          },
-        ]);
-        if (error) throw error;
+        await supabase
+          .from("challenges")
+          .insert([
+            {
+              club_id: activeClubId,
+              from_player_id: player.id,
+              to_player_id: toPlayerId,
+              message: message?.trim() || null,
+            },
+          ])
+          .throwOnError();
       },
       // Prepended: useGetChallenges orders by created_at descending.
       ...optimisticList<{ toPlayerId: number; message?: string }, Challenge>(
@@ -91,11 +93,11 @@ export const useManageChallenges = () => {
         status: ChallengeStatus;
         gameId?: string;
       }) => {
-        const { error } = await supabase
+        await supabase
           .from("challenges")
           .update({ status, ...(gameId ? { game_id: gameId } : {}) })
-          .eq("id", id);
-        if (error) throw error;
+          .eq("id", id)
+          .throwOnError();
       },
       ...optimisticList<
         { id: number; status: ChallengeStatus; gameId?: string },
@@ -109,11 +111,7 @@ export const useManageChallenges = () => {
 
     cancelChallenge: useMutation({
       mutationFn: async (id: number) => {
-        const { error } = await supabase
-          .from("challenges")
-          .delete()
-          .eq("id", id);
-        if (error) throw error;
+        await supabase.from("challenges").delete().eq("id", id).throwOnError();
       },
       ...optimisticList<number, Challenge>(key, (rows, id) =>
         rows.filter((c) => c.id !== id),
