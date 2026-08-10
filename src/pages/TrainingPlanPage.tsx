@@ -56,7 +56,7 @@ export default function TrainingPlanPage() {
         player &&
         `${player.name} · ${t("category.short", { n: player.category })}`
       }
-      back={`/players/${playerIdNum}`}
+      back={`/app/players/${playerIdNum}`}
     />
   );
 

@@ -254,7 +254,7 @@
   "category.1": "First",
   "category.2": "Second",
   "category.3": "Third",
-  "category.short": "Div {n}",
+  "category.short": "{n}",
 
   "difficulty.beginner": "Beginner",
   "difficulty.intermediate": "Intermediate",

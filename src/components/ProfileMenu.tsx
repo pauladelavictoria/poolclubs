@@ -29,7 +29,7 @@ export default function ProfileMenu() {
 
   return (
     <Link
-      to={player ? `/players/${player.id}` : "/"}
+      to={player ? `/app/players/${player.id}` : "/app/me"}
       className="shrink-0 rounded-full transition-opacity duration-150 hover:opacity-80"
       title={userName}
       aria-label={t("auth.yourProfile")}

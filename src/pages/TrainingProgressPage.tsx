@@ -117,7 +117,7 @@ export default function TrainingProgressPage() {
       <PageHeader
         title={t("training.progressTitle")}
         subtitle={player?.name}
-        back={`/players/${selectedPlayerId}`}
+        back={`/app/players/${selectedPlayerId}`}
       />
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
