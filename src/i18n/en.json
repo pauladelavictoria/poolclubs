@@ -1,5 +1,5 @@
 {
-  "common.appName": "PocketClub",
+  "common.appName": "PoolClubs",
   "common.save": "Save",
   "common.saved": "Saved",
   "common.saving": "Saving...",
@@ -353,7 +353,7 @@
   "landing.rankingShotBody": "One ranking, updated the moment a result goes in. Pull it up on the club TV and let it settle the argument.",
   "landing.finalTitle": "Rack them up.",
   "landing.finalBody": "Start a club, invite the regulars, record tonight's matches.",
-  "landing.altHero": "PocketClub on a phone, showing the club ranking",
+  "landing.altHero": "PoolClubs on a phone, showing the club ranking",
   "landing.altRanking": "The overall ranking screen on a large display",
   "landing.altDrill": "A drill with its table diagram and scoring",
   "landing.altChallenge": "An open challenge between two club players",
