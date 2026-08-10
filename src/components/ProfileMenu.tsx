@@ -14,7 +14,7 @@ export default function ProfileMenu() {
   if (!user) {
     return (
       <Link
-        to="/login"
+        to="/app/login"
         className="inline-flex h-8 shrink-0 items-center rounded-control border border-hairline bg-felt-raised px-3 text-caption font-medium text-ink transition-colors duration-150 hover:border-hairline-strong"
       >
         {t("auth.signInShort")}
@@ -22,7 +22,9 @@ export default function ProfileMenu() {
     );
   }
 
-  const avatarUrl = user.user_metadata?.avatar_url;
+  // The player row wins: it carries an uploaded picture, the auth metadata only
+  // ever has the provider's.
+  const avatarUrl = player?.avatar_url ?? user.user_metadata?.avatar_url;
   const userName = user.user_metadata?.full_name || user.email;
 
   return (

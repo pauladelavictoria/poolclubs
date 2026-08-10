@@ -50,7 +50,7 @@ export default function JoinClubPage() {
   }
 
   if (!user) {
-    return <Navigate to={loginLink(`/join/${code}`)} replace />;
+    return <Navigate to={loginLink(`/app/join/${code}`)} replace />;
   }
 
   const already = memberships.find((m) => m.club_id === preview?.clubId);
@@ -74,7 +74,7 @@ export default function JoinClubPage() {
       {
         onSuccess: () => {
           toast.success(t("club.requestSent"));
-          navigate("/");
+          navigate("/app");
         },
         onError: (e) =>
           toast.error(
@@ -101,7 +101,7 @@ export default function JoinClubPage() {
               title={t("club.badCode")}
               hint={t("club.badCodeHint")}
               action={
-                <Button variant="secondary" onClick={() => navigate("/")}>
+                <Button variant="secondary" onClick={() => navigate("/app")}>
                   {t("common.back")}
                 </Button>
               }
@@ -117,7 +117,7 @@ export default function JoinClubPage() {
                   : t("club.awaitingHint")
               }
               action={
-                <Button variant="secondary" onClick={() => navigate("/")}>
+                <Button variant="secondary" onClick={() => navigate("/app")}>
                   {t("common.back")}
                 </Button>
               }

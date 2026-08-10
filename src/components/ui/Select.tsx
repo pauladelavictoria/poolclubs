@@ -2,7 +2,7 @@ import * as React from "react";
 
 /**
  * Native <select> on purpose: it gives the iOS/Android wheel and full keyboard
- * support for free. `color-scheme: dark` makes the browser draw its own arrow
+ * support for free. The root's `color-scheme` makes the browser draw its own arrow
  * and option list dark, so nothing needs hand-rolling.
  */
 // Width lives here rather than in the base classes: `w-full` and a call-site
@@ -28,7 +28,7 @@ export const Select = React.forwardRef<
     className={[
       "block rounded-control border border-hairline bg-pocket",
       SIZES[size],
-      "text-ink [color-scheme:dark]",
+      "text-ink",
       "transition-colors duration-150 hover:border-hairline-strong",
       "disabled:cursor-not-allowed disabled:text-ink-ghost",
       className || "",

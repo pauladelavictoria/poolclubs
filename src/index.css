@@ -4,9 +4,11 @@
 
 /*
   Pool Valencia — a dim pool room.
-  Surfaces are green-tinted near-black and step by lightness only. Depth strategy is
-  surface-shift + hairline borders; there are no drop shadows (they don't read on dark).
-  Red is the only accent and it only ever means "act".
+  Surfaces are blue-tinted near-black and step by lightness only, picking up the
+  cloth. Depth strategy is surface-shift + hairline borders; there are no drop
+  shadows (they don't read on dark).
+  Yellow — the 9 ball — is the only accent and it only ever means "act". Red is
+  left to mean failure: errors and the bottom score band, nothing else.
 */
 @theme {
   /* Type */
@@ -24,10 +26,10 @@
   --text-display: 3rem; /* 48 */
 
   /* Surfaces — one hue, lightness only. pocket < felt < raised < rail */
-  --color-pocket: #090b0a; /* page canvas, and input fill (inputs are inset) */
-  --color-felt: #171d1b; /* cards, app bar */
-  --color-felt-raised: #1f2624; /* hover, drawer, popover */
-  --color-rail: #29312e; /* highest: active tab, tooltip */
+  --color-pocket: #090b0e; /* page canvas, and input fill (inputs are inset) */
+  --color-felt: #171c22; /* cards, app bar */
+  --color-felt-raised: #1f242c; /* hover, drawer, popover */
+  --color-rail: #292f38; /* highest: active tab, tooltip */
 
   /* Borders — low-opacity so they define an edge without demanding attention */
   --color-hairline: rgba(255, 255, 255, 0.09);
@@ -36,14 +38,22 @@
   /* Text — four levels. Ratios are against --color-felt (the card), the worst
      case, since every level also gets used on the darker canvas. */
   --color-ink: #f4f2ec; /* cue-ball ivory, primary — 16:1 */
-  --color-ink-soft: #b9c2be; /* secondary — 9.4:1 */
-  --color-ink-faint: #8d9793; /* metadata — 5.7:1, still AA at body size */
-  --color-ink-ghost: #5a6461; /* disabled only — intentionally sub-AA */
+  --color-ink-soft: #b9c0cb; /* secondary — 9.4:1 */
+  --color-ink-faint: #8d95a1; /* metadata — 5.7:1, still AA at body size */
+  --color-ink-ghost: #5a626e; /* disabled only — intentionally sub-AA */
 
-  /* Accent — 3-ball red. Action only. */
-  --color-strike: #e23744;
-  --color-strike-deep: #b3212d; /* pressed */
-  --color-strike-tint: rgba(226, 55, 68, 0.14);
+  /* Accent — 9-ball yellow. Action only. Bright enough that anything sitting
+     on it is dark: a filled accent always carries --color-pocket text. */
+  --color-strike: #f4c53c;
+  --color-strike-light: #ffd45c; /* hover */
+  --color-strike-deep: #d2a41f; /* pressed */
+  --color-strike-tint: rgba(244, 197, 60, 0.14);
+
+  /* The pendant lamp over the page and over a hero. Warm and dim; in light mode
+     it turns down to almost nothing, because a lamp on a white wall is not a
+     thing you can see. */
+  --lamp: rgba(244, 197, 60, 0.06);
+  --lamp-strong: rgba(244, 197, 60, 0.13);
 
   /* Chalk blue — focus rings only, so focus never reads as "action" */
   --color-chalk: #5b9dd9;
@@ -55,7 +65,7 @@
   --color-ball-1: #f2b705;
   --color-ball-2: #2f6fd0;
   --color-ball-3: #d2342f;
-  --color-ball-cue: #2a312e;
+  --color-ball-cue: #2a303a;
 
   /* Radius — locked scale. control < card < sheet. */
   --radius-control: 10px;
@@ -71,16 +81,70 @@
   --color-dark-card: var(--color-felt);
   --color-dark-card-hover: var(--color-felt-raised);
   --color-dark-border: var(--color-hairline);
-  --color-accent-red: var(--color-strike);
+  /* Red stopped being the accent when yellow took over, so these hold real
+     reds: they are what error text is written in. */
+  --color-accent-red: #e23744;
   --color-accent-red-light: #ef5c66;
-  --color-accent-red-dark: var(--color-strike-deep);
+  --color-accent-red-dark: #b3212d;
   --color-accent-red-darker: #7a1a22;
+}
+
+/*
+  Light mode. Every token above is semantic, so the whole app turns over by
+  redefining the same custom properties — no `dark:` variant on any element.
+
+  There is no `prefers-color-scheme` rule here on purpose: the boot script in
+  index.html always writes an explicit <html data-theme>, from the stored choice
+  or from the system preference. One selector, one place the values live.
+
+  The accent is the one token that can't just be re-lit. A yellow bright enough
+  to shout on near-black is invisible on white, so light mode runs the same hue
+  down to a deep gold: still readable as text, still a fill that carries pale
+  text on top.
+*/
+:root[data-theme="light"] {
+  --color-pocket: #f3f5f9;
+  --color-felt: #ffffff;
+  --color-felt-raised: #eef1f6;
+  --color-rail: #e1e6ee;
+
+  --color-hairline: rgba(9, 11, 14, 0.1);
+  --color-hairline-strong: rgba(9, 11, 14, 0.2);
+
+  --color-ink: #12161c; /* against the card — 16:1 */
+  --color-ink-soft: #49525e; /* 8.6:1 */
+  --color-ink-faint: #69727e; /* 5.2:1 */
+  --color-ink-ghost: #a2aab5; /* disabled only — intentionally sub-AA */
+
+  --color-strike: #966c00; /* 5.2:1 as text, and pale text sits on it at 4.9:1 */
+  --color-strike-light: #7d5a00; /* hover: light mode darkens where dark mode lifts */
+  --color-strike-deep: #684a00; /* pressed */
+  --color-strike-tint: rgba(150, 108, 0, 0.12);
+
+  --lamp: rgba(150, 108, 0, 0.05);
+  --lamp-strong: rgba(150, 108, 0, 0.07);
+
+  --color-chalk: #1f6fb2;
+  --color-pot: #12794a;
+  --color-ball-cue: #dbe1ea;
+
+  --color-accent-red: #c1121f;
+  --color-accent-red-light: #d93a45;
+  --color-accent-red-dark: #96101a;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* For the landing page's in-page anchors */
+    scroll-behavior: smooth;
   }
 
   body {
@@ -91,7 +155,7 @@
     /* The pendant lamp: one cone of light at the top of the canvas, nothing else. */
     background-image: radial-gradient(
       120% 60% at 50% -10%,
-      rgba(226, 55, 68, 0.07) 0%,
+      var(--lamp) 0%,
       transparent 60%
     );
     background-attachment: fixed;
@@ -183,6 +247,41 @@ dialog.drawer[open]::backdrop {
   animation: sheen 1.4s linear infinite;
 }
 
+/* Landing page only.
+   Two moves, both native CSS: a staggered entrance for the hero, and a
+   scroll-linked reveal for everything below the fold. No animation library,
+   no scroll listener — `view()` runs the reveal on the compositor, and
+   browsers without it simply show the content (the @supports guard). */
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+.rise {
+  animation: rise 700ms var(--ease-out) backwards;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 26%;
+    }
+  }
+}
+
+/* The lamp cone again, but aimed at one element instead of the page. */
+.spot {
+  background-image: radial-gradient(
+    60% 50% at 50% 0%,
+    var(--lamp-strong) 0%,
+    transparent 70%
+  );
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -199,7 +298,7 @@ dialog.drawer[open]::backdrop {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2b3230;
+  background: var(--color-ink-ghost);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -210,6 +309,10 @@ dialog.drawer[open]::backdrop {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 
   dialog.drawer,

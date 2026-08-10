@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSignOut } from "@/hooks/useSignOut";
 import { toast } from "react-toastify";
 import { NAV_SECTIONS, type NavItem } from "@/components/navItems";
+import ThemeToggle from "@/components/ThemeToggle";
 import { LANGS, useT, type Lang } from "@/i18n";
 import {
   LuUser,
@@ -58,7 +59,7 @@ export default function NavDrawer({
 
   // Without a linked player these point at /me/*, which sits behind
   // ProtectedRoute and so asks for login first.
-  const me = player ? `/players/${player.id}` : "/me";
+  const me = player ? `/app/players/${player.id}` : "/app/me";
   const sections = NAV_SECTIONS.map((section) =>
     section.headingKey === "nav.training"
       ? {
@@ -77,7 +78,7 @@ export default function NavDrawer({
             },
           ] as NavItem[],
         }
-      : section
+      : section,
   );
 
   const handleSignOut = async () => {
@@ -142,9 +143,7 @@ export default function NavDrawer({
                 >
                   <LuCheck
                     className={`h-4 w-4 shrink-0 ${
-                      m.club_id === activeClub?.id
-                        ? "text-strike"
-                        : "opacity-0"
+                      m.club_id === activeClub?.id ? "text-strike" : "opacity-0"
                     }`}
                     aria-hidden
                   />
@@ -154,7 +153,7 @@ export default function NavDrawer({
                 </button>
               ))}
               <NavLink
-                to="/clubs/new"
+                to="/app/clubs/new"
                 onClick={onClose}
                 className="flex h-9 items-center gap-2 rounded-control px-2 text-body text-ink-soft transition-colors duration-150 hover:bg-felt hover:text-ink"
               >
@@ -189,10 +188,16 @@ export default function NavDrawer({
               <LuLogOut className="h-[18px] w-[18px]" /> {t("auth.signOut")}
             </button>
           ) : (
-            <NavLink to="/login" className={item}>
+            <NavLink to="/app/login" className={item}>
               <LuLogOut className="h-[18px] w-[18px]" /> {t("auth.signIn")}
             </NavLink>
           )}
+
+          {/* Same stop-propagation as the languages below: changing how the
+              app looks shouldn't also close the drawer you're looking at. */}
+          <div className="mt-2 px-3" onClick={(e) => e.stopPropagation()}>
+            <ThemeToggle className="w-full" />
+          </div>
 
           {/* Three languages fit as one row of buttons, so the choice is
               visible instead of hidden behind a <select>. Its own click

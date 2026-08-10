@@ -33,7 +33,7 @@ export default function ClubOnboardingPage() {
     createClub.mutate(name, {
       onSuccess: () => {
         toast.success(t("club.created"));
-        navigate("/");
+        navigate("/app");
       },
       onError: () => toast.error(t("common.error")),
     });
@@ -93,7 +93,7 @@ export default function ClubOnboardingPage() {
             onSubmit={(e) => {
               e.preventDefault();
               const clean = code.trim().toLowerCase();
-              if (clean) navigate(`/join/${encodeURIComponent(clean)}`);
+              if (clean) navigate(`/app/join/${encodeURIComponent(clean)}`);
             }}
           >
             <div className="space-y-1.5">

@@ -15,12 +15,14 @@ export const BALL_RADIUS = 1.5;
 export const BALL_COLORS: Record<string, string> = {
   white: "#FFFFFF",
   yellow: "#FDD835",
-  blue: "#1565C0",
+  blue: "#2F86E0",
   red: "#D32F2F",
   purple: "#7B1FA2",
   orange: "#EF6C00",
-  green: "#2E7D32",
-  maroon: "#6D1B1B",
+  // Brighter than a real 6-ball: the felt is green, and a dark green ball on
+  // it disappears at diagram size no matter how good the shadow is.
+  green: "#3A9D46",
+  maroon: "#8C2B2B",
   black: "#212121",
 };
 
@@ -81,6 +83,10 @@ export const clampBall = (p: { x: number; y: number }) => ({
  * Pointer position -> drill units. The svg keeps its aspect ratio, so one
  * factor converts client px to artwork px; the felt offset and the two unit
  * sizes do the rest.
+ *
+ * The viewBox says which way up the table is drawn, so a caller never has to
+ * tell us twice: taller than wide means the artwork is turned a quarter turn
+ * anticlockwise, and the two axes swap on the way back out.
  */
 export function pointToUnits(
   svg: SVGSVGElement,
@@ -88,11 +94,21 @@ export function pointToUnits(
   clientY: number
 ) {
   const rect = svg.getBoundingClientRect();
-  const scale = rect.width / TABLE_W;
-  return {
-    x: ((clientX - rect.left) / scale - FELT.x) / UNIT_X,
-    y: ((clientY - rect.top) / scale - FELT.y) / UNIT_Y,
-  };
+  const box = svg.viewBox.baseVal;
+  const portrait = box.height > box.width;
+  const scale = rect.width / (portrait ? TABLE_H : TABLE_W);
+  const vx = (clientX - rect.left) / scale;
+  const vy = (clientY - rect.top) / scale;
+
+  return portrait
+    ? {
+        x: (TABLE_W - vy - FELT.x) / UNIT_X,
+        y: (vx - FELT.y) / UNIT_Y,
+      }
+    : {
+        x: (vx - FELT.x) / UNIT_X,
+        y: (vy - FELT.y) / UNIT_Y,
+      };
 }
 
 /** Distance from p to the segment ab, in drill units. */

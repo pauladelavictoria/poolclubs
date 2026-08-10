@@ -83,7 +83,7 @@ export default function RankingTable({
 
             <td className="py-2.5 pr-3">
               <Link
-                to={`/players/${entry.playerId}`}
+                to={`/app/players/${entry.playerId}`}
                 className="block truncate font-medium text-ink transition-colors duration-150 hover:text-strike"
               >
                 {entry.playerName}

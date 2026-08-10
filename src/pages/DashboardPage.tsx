@@ -35,7 +35,7 @@ export default function DashboardPage() {
     <>
       <PageHeader title={activeClub?.name ?? t("nav.home")}>
         <Link
-          to="/games/new"
+          to="/app/games/new"
           className={buttonClasses({ size: "sm", className: "shrink-0" })}
         >
           <LuPlus className="h-4 w-4" aria-hidden />
@@ -64,7 +64,7 @@ export default function DashboardPage() {
                 return (
                   <li key={c.id}>
                     <Link
-                      to="/challenges"
+                      to="/app/challenges"
                       className={`flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-pocket ${
                         waitingOnMe ? "bg-strike-tint" : ""
                       }`}

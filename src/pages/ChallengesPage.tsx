@@ -115,7 +115,7 @@ export default function ChallengesPage() {
               hint={t("challenge.emptyHint")}
               action={
                 <Link
-                  to="/club"
+                  to="/app/club"
                   className={buttonClasses({ variant: "secondary" })}
                 >
                   {t("club.membersTitle")}
@@ -167,7 +167,7 @@ export default function ChallengesPage() {
                   {accepted.map((c) => (
                     <Row key={c.id} c={c}>
                       <Link
-                        to={`/games/new?challenge=${c.id}`}
+                        to={`/app/games/new?challenge=${c.id}`}
                         className={buttonClasses({ size: "sm" })}
                       >
                         {t("challenge.recordResult")}

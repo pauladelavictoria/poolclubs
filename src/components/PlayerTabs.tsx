@@ -32,7 +32,7 @@ export default function PlayerTabs({
       {TABS.map(({ suffix, labelKey }) => (
         <NavLink
           key={suffix}
-          to={`/players/${playerId}${suffix}`}
+          to={`/app/players/${playerId}${suffix}`}
           // /training is a prefix of /training/plan, so every tab matches exactly
           end
           className={({ isActive }) =>

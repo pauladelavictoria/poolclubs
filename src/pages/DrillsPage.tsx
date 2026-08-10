@@ -43,7 +43,7 @@ export default function DrillsPage() {
     generatePlan.mutate(
       { playerId: player.id, category: player.category },
       {
-        onSuccess: () => navigate(`/players/${player.id}/training/plan`),
+        onSuccess: () => navigate(`/app/players/${player.id}/training/plan`),
         onError: () => toast.error(t("drills.planError")),
       },
     );
@@ -54,7 +54,7 @@ export default function DrillsPage() {
       <PageHeader title={t("drills.title")}>
         {user && (
           <Link
-            to="/drills/new"
+            to="/app/drills/new"
             className={buttonClasses({ variant: "secondary", size: "sm" })}
           >
             {t("drills.new")}
@@ -104,7 +104,7 @@ export default function DrillsPage() {
 
           {selectedPlayerId && (
             <Link
-              to={`/players/${selectedPlayerId}/training/plan`}
+              to={`/app/players/${selectedPlayerId}/training/plan`}
               className="mt-3 inline-block text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-ink"
             >
               {t("drills.viewCurrentPlan")}
@@ -112,8 +112,11 @@ export default function DrillsPage() {
           )}
         </Card>
 
-        <Card className="overflow-hidden">
-          <div className="flex flex-col gap-2 border-b border-hairline p-3 sm:flex-row">
+        {/* The filters are their own control strip. The drills below are cards
+            in their own right, so wrapping the grid in another card would put
+            a border around a field of borders. */}
+        <Card className="p-3">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Select
               className="flex-1"
               aria-label={t("drills.filterDifficulty")}
@@ -146,40 +149,51 @@ export default function DrillsPage() {
               ))}
             </Select>
           </div>
-
-          <div className="p-3">
-            {isLoading ? (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                {Array.from({ length: 6 }, (_, i) => (
-                  <Skeleton key={i} className="h-44 rounded-card" />
-                ))}
-              </div>
-            ) : drills && drills.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                {drills.map((drill) => (
-                  <DrillCard key={drill.id} drill={drill} />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon={<LuTarget className="h-5 w-5" />}
-                title={t("drills.noneMatch")}
-                hint={t("drills.noneMatchHint")}
-                action={
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setDifficulty("");
-                      setSkillType("");
-                    }}
-                  >
-                    {t("common.clearFilters")}
-                  </Button>
-                }
-              />
-            )}
-          </div>
         </Card>
+
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }, (_, i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-card border border-hairline bg-felt"
+              >
+                {/* Same shape as the card it stands in for, table included, so
+                    nothing jumps when the drills arrive. */}
+                <Skeleton className="aspect-[922/1734] w-full rounded-none" />
+                <div className="p-3">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="mt-2 h-3 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : drills && drills.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {drills.map((drill) => (
+              <DrillCard key={drill.id} drill={drill} />
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <EmptyState
+              icon={<LuTarget className="h-5 w-5" />}
+              title={t("drills.noneMatch")}
+              hint={t("drills.noneMatchHint")}
+              action={
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setDifficulty("");
+                    setSkillType("");
+                  }}
+                >
+                  {t("common.clearFilters")}
+                </Button>
+              }
+            />
+          </Card>
+        )}
       </div>
     </>
   );
