@@ -143,7 +143,9 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* For the landing page's in-page anchors */
+  }
+
+  html[data-smooth] {
     scroll-behavior: smooth;
   }
 
@@ -317,7 +319,9 @@ dialog.drawer[open]::backdrop {
     transition-duration: 0.01ms !important;
   }
 
-  html {
+  /* [data-smooth] included so this still outranks the landing page's opt-in */
+  html,
+  html[data-smooth] {
     scroll-behavior: auto;
   }
 

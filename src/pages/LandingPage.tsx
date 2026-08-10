@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   LuTrophy,
@@ -77,6 +78,13 @@ function Shot({
 
 export default function LandingPage() {
   const { t, lang, setLang } = useT();
+
+  useEffect(() => {
+    document.documentElement.dataset.smooth = "";
+    return () => {
+      delete document.documentElement.dataset.smooth;
+    };
+  }, []);
 
   const features: {
     icon: typeof LuTrophy;

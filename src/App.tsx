@@ -7,8 +7,10 @@ import { useTheme } from "@/libs/theme";
 import { ToastContainer } from "react-toastify";
 import {
   Navigate,
+  Outlet,
   Route,
   RouterProvider,
+  ScrollRestoration,
   createBrowserRouter,
   createRoutesFromElements,
 } from "react-router-dom";
@@ -48,9 +50,18 @@ function MeRedirect({ suffix = "" }: { suffix?: string }) {
   );
 }
 
+function Root() {
+  return (
+    <>
+      <ScrollRestoration />
+      <Outlet />
+    </>
+  );
+}
+
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route>
+    <Route element={<Root />}>
       {/* The public front door. Everything a signed-in member uses lives
         under /app, which is also the PWA's start URL — so installing
         the app skips the pitch. */}
