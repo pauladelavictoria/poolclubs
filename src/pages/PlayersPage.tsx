@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { LuUsers } from "react-icons/lu";
+import { LuUsers, LuSearch, LuX } from "react-icons/lu";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useEloRanking } from "@/hooks/useEloRanking";
@@ -10,6 +10,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Segmented } from "@/components/ui/Segmented";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import type { Category, Player } from "@/types";
 import { useT } from "@/i18n";
 
@@ -84,6 +86,7 @@ function PlayerCard({
 export default function PlayersPage() {
   const { t } = useT();
   const [sort, setSort] = useState<SortMode>("name");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: players, isLoading: playersLoading } = useGetPlayers();
   const { data: gamesData, isLoading: gamesLoading } = useGetGames({});
@@ -101,17 +104,24 @@ export default function PlayersPage() {
     return byId;
   }, [ranking]);
 
+  const filteredPlayers = useMemo(() => {
+    const roster = players ?? [];
+    if (!searchQuery.trim()) return roster;
+    const q = searchQuery.toLowerCase();
+    return roster.filter((p) => p.name.toLowerCase().includes(q));
+  }, [players, searchQuery]);
+
   // useGetPlayers already orders by name, so alphabetical is the list as it
   // arrives; grouping is what the other mode adds.
   const sections = useMemo(() => {
-    const roster = players ?? [];
+    const roster = filteredPlayers;
     if (sort === "name") return [{ key: "all", heading: null, players: roster }];
     return CATEGORIES.map((cat: Category) => ({
       key: String(cat),
       heading: t(`category.${cat}`),
       players: roster.filter((p) => p.category === cat),
     })).filter((section) => section.players.length > 0);
-  }, [players, sort, t]);
+  }, [filteredPlayers, sort, t]);
 
   const isLoading = playersLoading || gamesLoading;
 
@@ -127,19 +137,42 @@ export default function PlayersPage() {
       />
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        <Card className="flex items-center justify-between gap-3 p-3">
+        <Card className="flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
           <h2 className="pl-1 text-h4 font-semibold text-ink">
             {t("club.membersTitle")}
           </h2>
-          <Segmented
-            label={t("players.sort")}
-            value={sort}
-            onChange={setSort}
-            options={[
-              { value: "name", label: t("players.alphabetical") },
-              { value: "category", label: t("ranking.byCategory") },
-            ]}
-          />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 md:flex-grow md:justify-end">
+            <div className="relative w-full sm:max-w-xs">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-ink-faint">
+                <LuSearch className="h-4 w-4" />
+              </span>
+              <Input
+                type="text"
+                placeholder={t("players.searchPlaceholder")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-ink-faint hover:text-ink transition-colors"
+                >
+                  <LuX className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <Segmented
+              label={t("players.sort")}
+              value={sort}
+              onChange={setSort}
+              options={[
+                { value: "name", label: t("players.alphabetical") },
+                { value: "category", label: t("ranking.byCategory") },
+              ]}
+            />
+          </div>
         </Card>
 
         {isLoading ? (
@@ -158,8 +191,18 @@ export default function PlayersPage() {
           <Card>
             <EmptyState
               icon={<LuUsers className="h-5 w-5" />}
-              title={t("players.emptyTitle")}
-              hint={t("players.emptyHint")}
+              title={searchQuery ? t("players.noResultsFiltered") : t("players.emptyTitle")}
+              hint={searchQuery ? t("players.noResultsFilteredHint") : t("players.emptyHint")}
+              action={
+                searchQuery ? (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setSearchQuery("")}
+                  >
+                    {t("common.clearFilters")}
+                  </Button>
+                ) : undefined
+              }
             />
           </Card>
         ) : (
