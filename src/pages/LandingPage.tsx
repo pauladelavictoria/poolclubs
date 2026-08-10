@@ -141,7 +141,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-dvh overflow-x-clip">
-      <header className="sticky top-0 z-30 border-b border-hairline bg-pocket/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-hairline bg-pocket/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
           <img src="/ball.png" alt="" className="h-7 w-7 rounded-full" />
           <span className="font-semibold tracking-tight text-ink">

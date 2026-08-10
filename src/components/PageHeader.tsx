@@ -22,7 +22,9 @@ export default function PageHeader({ title, subtitle, back, children }: Props) {
   const { t } = useT();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-hairline bg-felt/85 backdrop-blur-xl">
+    // pt clears the status bar: viewport-fit=cover puts the page under it, and
+    // the bar's own background is what fills the gap.
+    <header className="sticky top-0 z-30 border-b border-hairline bg-felt/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-3">
         {back && (
           <Link

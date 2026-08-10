@@ -126,7 +126,7 @@ export default function ClubPage() {
                 readOnly
                 value={link}
                 onFocus={(e) => e.currentTarget.select()}
-                className="font-mono text-caption"
+                className="font-mono"
                 aria-label={t("club.inviteTitle")}
               />
               <Button variant="secondary" onClick={copy} className="shrink-0">

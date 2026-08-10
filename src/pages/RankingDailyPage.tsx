@@ -75,7 +75,7 @@ export default function RankingDailyPage() {
           value={selectedDate}
           onChange={handleDateChange}
           aria-label={t("ranking.selectDate")}
-          className="h-8 shrink-0 rounded-control border border-hairline bg-pocket px-2 text-caption tabular-nums text-ink transition-colors duration-150 hover:border-hairline-strong"
+          className="h-8 shrink-0 rounded-control border border-hairline bg-pocket px-2 text-body tabular-nums text-ink transition-colors duration-150 hover:border-hairline-strong"
         />
         <button
           type="button"

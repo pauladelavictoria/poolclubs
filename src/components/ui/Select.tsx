@@ -9,8 +9,10 @@ import * as React from "react";
 // `w-auto` are the same utility, so which one wins isn't the order they're
 // concatenated in. One declaration per size, no conflict to lose.
 const SIZES = {
-  /** Filter bars and toolbars: sized to its label, so a row of them fits a row. */
-  sm: "h-8 w-auto max-w-full px-2 text-caption",
+  /** Filter bars and toolbars: sized to its label, so a row of them fits a row.
+   *  Body size despite being the small variant — iOS zooms in on focusing any
+   *  form control under 16px and does not zoom back out. Height stays at 32px. */
+  sm: "h-8 w-auto max-w-full px-2 text-body",
   /** Forms, where the control is the point and fills its field. */
   md: "h-10 w-full px-3 text-body",
 } as const;
