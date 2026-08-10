@@ -32,31 +32,3 @@
 ### 💬 Social Feed & Interactions
 * **Activity Feed:** Share match results, drill achievements, and video/photo highlights of great runouts.
 * **Reactions & Comments:** Like, react, and comment on friend and club activity.
-
----
-
-## 🛠 Tech Stack
-
-*(Update this section to match your project's technology)*
-
-* **Frontend:** React / TypeScript / Tailwind CSS
-* **Backend / Database:** Node.js / PostgreSQL / Supabase
-* **Authentication:** Supabase Auth
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-Ensure you have the following installed:
-* [Node.js](https://nodejs.org/) (`>= 18.0.0`)
-* `npm`, `pnpm`, or `yarn`
-* [Git](https://git-scm.com/)
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/satellitestudiodesign/poolclubs.git
-   cd poolclubs
