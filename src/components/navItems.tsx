@@ -21,10 +21,10 @@ export type NavItem = {
 
 /** The five thumb-reachable destinations. Everything else lives in the drawer. */
 export const PRIMARY_NAV: NavItem[] = [
-  { to: "/", labelKey: "nav.home", icon: LuHouse, end: true },
-  { to: "/ranking", labelKey: "nav.ranking", icon: LuTrophy, end: true },
-  { to: "/games", labelKey: "nav.games", icon: LuCircleDot, end: true },
-  { to: "/drills", labelKey: "nav.drills", icon: LuTarget, end: true },
+  { to: "/app", labelKey: "nav.home", icon: LuHouse, end: true },
+  { to: "/app/ranking", labelKey: "nav.ranking", icon: LuTrophy, end: true },
+  { to: "/app/games", labelKey: "nav.games", icon: LuCircleDot, end: true },
+  { to: "/app/drills", labelKey: "nav.drills", icon: LuTarget, end: true },
 ];
 
 /**
@@ -38,7 +38,7 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
     headingKey: "nav.club",
     items: [
       {
-        to: "/club",
+        to: "/app/club",
         labelKey: "nav.clubSettings",
         icon: LuSettings,
         end: true,
@@ -49,37 +49,37 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
     headingKey: "nav.games",
     items: [
       {
-        to: "/games",
+        to: "/app/games",
         labelKey: "nav.allGames",
         icon: LuCircleDot,
         end: true,
       },
       {
-        to: "/challenges",
+        to: "/app/challenges",
         labelKey: "nav.challenges",
         icon: LuSwords,
         end: true,
       },
-      { to: "/games/new", labelKey: "nav.addGame", icon: LuPlus },
+      { to: "/app/games/new", labelKey: "nav.addGame", icon: LuPlus },
     ],
   },
   {
     headingKey: "nav.training",
     items: [
-      { to: "/drills", labelKey: "nav.drills", icon: LuTarget, end: true },
+      { to: "/app/drills", labelKey: "nav.drills", icon: LuTarget, end: true },
     ],
   },
   {
     headingKey: "nav.rankings",
     items: [
       {
-        to: "/ranking",
+        to: "/app/ranking",
         labelKey: "nav.rankingGlobal",
         icon: LuTrophy,
         end: true,
       },
       {
-        to: "/ranking/daily",
+        to: "/app/ranking/daily",
         labelKey: "nav.rankingDaily",
         icon: LuCalendarDays,
       },

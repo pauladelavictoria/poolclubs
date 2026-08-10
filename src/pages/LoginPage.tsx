@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 import { NEXT_KEY, isSafePath } from "@/libs/nextPath";
 import { useT } from "@/i18n";
 
@@ -10,19 +14,67 @@ export default function LoginPage() {
   const { t } = useT();
   const [searchParams] = useSearchParams();
   const rawNext = searchParams.get("next");
-  const next = isSafePath(rawNext) ? rawNext : "/";
+  const next = isSafePath(rawNext) ? rawNext : "/app";
+
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [busy, setBusy] = useState(false);
+  // One slot for both the error and the "check your inbox" note — only one of
+  // the two is ever on screen.
+  const [note, setNote] = useState<{ text: string; ok?: boolean } | null>(null);
 
   // Already signed in — nothing to do here but leave
   if (!isLoading && user) return <Navigate to={next} replace />;
 
   const signIn = () => {
-    // Google returns to the site root, so the destination has to outlive the
-    // page load. Layout picks it up again once the session lands.
+    // Google returns to a fixed URL, so the destination has to outlive the
+    // page load. Layout picks it up again once the session lands — which means
+    // coming back inside /app, not on the public landing at "/".
     sessionStorage.setItem(NEXT_KEY, next);
     supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: `${window.location.origin}/app` },
     });
+  };
+
+  const submitEmail = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const email = String(form.get("email"));
+    const password = String(form.get("password"));
+    const fullName = String(form.get("name") ?? "").trim();
+
+    setBusy(true);
+    setNote(null);
+    // Same round-trip as OAuth: the confirmation link reloads the app at the
+    // site root, so ?next= has to survive in sessionStorage.
+    sessionStorage.setItem(NEXT_KEY, next);
+
+    const { data, error } =
+      mode === "signin"
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({
+            email,
+            password,
+            // Same key Google fills, so join_club() and the profile menu read
+            // one field regardless of how the account was made.
+            options: {
+              emailRedirectTo: `${window.location.origin}/app`,
+              data: { full_name: fullName },
+            },
+          });
+    setBusy(false);
+
+    if (error) {
+      // Supabase messages are English-only; ours are translated, and vaguer on
+      // purpose — "wrong password" tells a stranger the account exists.
+      setNote({ text: t(mode === "signin" ? "auth.badCredentials" : "auth.signUpError") });
+      return;
+    }
+    // Sign-up with email confirmation on returns a user but no session; the
+    // auth listener takes over from here when a session does land.
+    if (mode === "signup" && !data.session) {
+      setNote({ text: t("auth.checkInbox"), ok: true });
+    }
   };
 
   return (
@@ -64,6 +116,74 @@ export default function LoginPage() {
             />
           </svg>
           {t("auth.continueWithGoogle")}
+        </button>
+
+        <div className="my-5 flex items-center gap-3">
+          <span className="h-px flex-1 bg-hairline" />
+          <span className="text-caption text-ink-faint">{t("auth.or")}</span>
+          <span className="h-px flex-1 bg-hairline" />
+        </div>
+
+        <form onSubmit={submitEmail} className="space-y-3 text-left">
+          {mode === "signup" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="name">{t("auth.name")}</Label>
+              <Input
+                id="name"
+                name="name"
+                required
+                maxLength={60}
+                autoComplete="name"
+              />
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email">{t("auth.email")}</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="password">{t("auth.password")}</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              required
+              minLength={6}
+              autoComplete={
+                mode === "signin" ? "current-password" : "new-password"
+              }
+            />
+          </div>
+
+          {note && (
+            <p
+              className={`text-caption ${note.ok ? "text-ink-soft" : "text-accent-red"}`}
+            >
+              {note.text}
+            </p>
+          )}
+
+          <Button type="submit" className="w-full" disabled={busy}>
+            {t(mode === "signin" ? "auth.signIn" : "auth.signUp")}
+          </Button>
+        </form>
+
+        <button
+          type="button"
+          className="mt-4 text-caption text-ink-soft underline underline-offset-2"
+          onClick={() => {
+            setMode(mode === "signin" ? "signup" : "signin");
+            setNote(null);
+          }}
+        >
+          {t(mode === "signin" ? "auth.needAccount" : "auth.haveAccount")}
         </button>
       </Card>
     </div>

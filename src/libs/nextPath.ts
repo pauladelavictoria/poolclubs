@@ -23,4 +23,4 @@ export function isSafePath(path: string | null | undefined): path is string {
 
 /** The /login link that comes back to `path` afterwards. */
 export const loginLink = (path: string) =>
-  `/login?next=${encodeURIComponent(path)}`;
+  `/app/login?next=${encodeURIComponent(path)}`;

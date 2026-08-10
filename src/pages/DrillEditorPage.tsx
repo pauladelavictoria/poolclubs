@@ -36,7 +36,7 @@ export default function DrillEditorPage() {
   const { user, isAdmin, isPlayerLoading } = useAuth();
   const { createDrill, updateDrill, deleteDrill } = useManageDrills();
   const isSubmitting = createDrill.isPending || updateDrill.isPending;
-  const backLink = drillId ? `/drills/${drillId}` : "/drills";
+  const backLink = drillId ? `/app/drills/${drillId}` : "/app/drills";
 
   const handleSubmit = (values: DrillInput) => {
     const onError = () => toast.error(t("drills.saveError"));
@@ -44,12 +44,12 @@ export default function DrillEditorPage() {
     if (drillId) {
       updateDrill.mutate(
         { id: drillId, ...values },
-        { onSuccess: () => navigate(`/drills/${drillId}`), onError }
+        { onSuccess: () => navigate(`/app/drills/${drillId}`), onError }
       );
       return;
     }
     createDrill.mutate(values, {
-      onSuccess: (created) => navigate(`/drills/${created.id}`),
+      onSuccess: (created) => navigate(`/app/drills/${created.id}`),
       onError,
     });
   };
@@ -58,7 +58,7 @@ export default function DrillEditorPage() {
     if (!drillId) return;
     if (!confirm(t("drills.deleteConfirm"))) return;
     deleteDrill.mutate(drillId, {
-      onSuccess: () => navigate("/drills"),
+      onSuccess: () => navigate("/app/drills"),
       onError: () => toast.error(t("drills.deleteError")),
     });
   };
@@ -80,7 +80,7 @@ export default function DrillEditorPage() {
   if (drillId && !drill) {
     return (
       <>
-        <PageHeader title={t("drills.editTitle")} back="/drills" />
+        <PageHeader title={t("drills.editTitle")} back="/app/drills" />
         <div className="mx-auto max-w-5xl px-3 py-4">
           <Card>
             <EmptyState
@@ -96,7 +96,7 @@ export default function DrillEditorPage() {
   // Deep link to someone else's drill: send them back to the read-only page.
   // RLS would refuse the save anyway; this just avoids the dead-end form.
   if (drill && !canEditDrill(drill.created_by, user?.id, isAdmin)) {
-    return <Navigate to={`/drills/${drill.id}`} replace />;
+    return <Navigate to={`/app/drills/${drill.id}`} replace />;
   }
 
   return (

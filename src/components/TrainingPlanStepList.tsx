@@ -53,7 +53,7 @@ export default function TrainingPlanStepList({
                 isCompleted
                   ? "bg-pot text-pocket"
                   : isCurrent
-                    ? "bg-strike text-white"
+                    ? "bg-strike text-pocket"
                     : "bg-ball-cue text-ink-faint",
               ].join(" ")}
             >
@@ -93,7 +93,7 @@ export default function TrainingPlanStepList({
                   </button>
                 )}
                 <Link
-                  to={`/drills/${drill.id}?plan=${planId}&step=${step.id}&playerId=${playerId}`}
+                  to={`/app/drills/${drill.id}?plan=${planId}&step=${step.id}&playerId=${playerId}`}
                   className={buttonClasses({
                     size: "sm",
                     variant: isSkipped ? "ghost" : "primary",

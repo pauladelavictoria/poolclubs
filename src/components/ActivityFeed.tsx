@@ -42,7 +42,7 @@ function DrillRow({ log }: { log: DrillLog }) {
             {t("drills.detailTitle")}
           </p>
           <Link
-            to={`/drills/${log.drill_id}`}
+            to={`/app/drills/${log.drill_id}`}
             className="block truncate text-body font-semibold text-ink transition-colors duration-150 hover:text-strike"
           >
             {drills?.find((d) => d.id === log.drill_id)?.name ??
@@ -65,7 +65,7 @@ function DrillRow({ log }: { log: DrillLog }) {
 
       {/* Who did it. */}
       <Link
-        to={`/players/${log.player_id}`}
+        to={`/app/players/${log.player_id}`}
         className="mt-2 flex items-center gap-2 text-ink-soft transition-colors duration-150 hover:text-ink"
       >
         <Avatar name={name} url={author?.avatar_url} />

@@ -33,7 +33,7 @@ export default function ClubPage() {
 
   if (!activeClub) return null;
 
-  const link = `${window.location.origin}/join/${activeClub.join_code}`;
+  const link = `${window.location.origin}/app/join/${activeClub.join_code}`;
   const pending = (members ?? []).filter((m) => m.status === "pending");
   const active = (members ?? []).filter((m) => m.status === "active");
 

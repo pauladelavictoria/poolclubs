@@ -37,7 +37,7 @@ export default function GamesPage() {
     <>
       <PageHeader title={t("games.title")}>
         <Link
-          to="/games/new"
+          to="/app/games/new"
           className={buttonClasses({ size: "sm", className: "shrink-0" })}
         >
           <LuPlus className="h-4 w-4" aria-hidden />

@@ -30,6 +30,7 @@ import {
   type ShotPath,
 } from "@/types";
 import type { DrillInput } from "@/hooks/useManageDrills";
+import { useTablePortrait } from "@/libs/useMedia";
 import { useT } from "@/i18n";
 
 type BallEntry = (typeof BALLS)[number];
@@ -47,7 +48,7 @@ const FELT_CENTRE = { x: 50, y: 25 };
 
 const TEXTAREA_CLASSES = [
   "block w-full rounded-control border border-hairline bg-pocket px-3 py-2",
-  "text-body text-ink placeholder:text-ink-faint [color-scheme:dark]",
+  "text-body text-ink placeholder:text-ink-faint",
   "transition-colors duration-150 hover:border-hairline-strong",
 ].join(" ");
 
@@ -109,24 +110,25 @@ export default function DrillForm({
   isSubmitting = false,
 }: DrillFormProps) {
   const { t } = useT();
+  const portrait = useTablePortrait();
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [difficulty, setDifficulty] = useState<DrillDifficulty>(
-    initial?.difficulty ?? "beginner"
+    initial?.difficulty ?? "beginner",
   );
   const [skillType, setSkillType] = useState<DrillSkillType>(
-    initial?.skill_type ?? "potting"
+    initial?.skill_type ?? "potting",
   );
   const [setupInstructions, setSetupInstructions] = useState(
-    initial?.setup_instructions ?? ""
+    initial?.setup_instructions ?? "",
   );
   const [scoringMethod, setScoringMethod] = useState(
-    initial?.scoring_method ?? ""
+    initial?.scoring_method ?? "",
   );
   const [maxScore, setMaxScore] = useState(String(initial?.max_score ?? 10));
 
   const [balls, setBalls] = useState<BallPosition[]>(
-    initial?.ball_positions ?? []
+    initial?.ball_positions ?? [],
   );
   const [paths, setPaths] = useState<ShotPath[]>(initial?.shot_paths ?? []);
 
@@ -195,7 +197,7 @@ export default function DrillForm({
 
   const startSpawn = (
     e: React.PointerEvent<HTMLButtonElement>,
-    source: SpawnSource
+    source: SpawnSource,
   ) => {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -212,7 +214,7 @@ export default function DrillForm({
     const p = unitsAt(e.clientX, e.clientY);
     const travelled = Math.hypot(
       e.clientX - spawn.origin.x,
-      e.clientY - spawn.origin.y
+      e.clientY - spawn.origin.y,
     );
     setSpawn((prev) =>
       prev
@@ -221,7 +223,7 @@ export default function DrillForm({
             moved: prev.moved || travelled > DRAG_THRESHOLD,
             pos: p && isOnFelt(p) ? p : null,
           }
-        : prev
+        : prev,
     );
   };
 
@@ -263,8 +265,8 @@ export default function DrillForm({
                 color: (flight.source as BallEntry).color,
                 label: (flight.source as BallEntry).label,
               }
-            : b
-        )
+            : b,
+        ),
       );
       setSelected(hit);
       return;
@@ -317,7 +319,7 @@ export default function DrillForm({
     if (active.kind === "ball") {
       const next = clampBall({ x: snap(p.x), y: snap(p.y) });
       setBalls((prev) =>
-        prev.map((b, i) => (i === active.index ? { ...b, ...next } : b))
+        prev.map((b, i) => (i === active.index ? { ...b, ...next } : b)),
       );
       return;
     }
@@ -331,8 +333,8 @@ export default function DrillForm({
             ? active.end === 1
               ? { ...path, x1: x, y1: y }
               : { ...path, x2: x, y2: y }
-            : path
-        )
+            : path,
+        ),
       );
       return;
     }
@@ -350,8 +352,8 @@ export default function DrillForm({
               x2: path.x2 + dx,
               y2: path.y2 + dy,
             }
-          : path
-      )
+          : path,
+      ),
     );
   };
 
@@ -364,7 +366,7 @@ export default function DrillForm({
   const setBallLabel = (label: string | undefined) => {
     if (selected?.kind !== "ball") return;
     setBalls((prev) =>
-      prev.map((b, i) => (i === selected.index ? { ...b, label } : b))
+      prev.map((b, i) => (i === selected.index ? { ...b, label } : b)),
     );
   };
 
@@ -378,7 +380,7 @@ export default function DrillForm({
     if (selected?.kind !== "path") return;
     pushHistory();
     setPaths((prev) =>
-      prev.map((path, i) => (i === selected.index ? { ...path, type } : path))
+      prev.map((path, i) => (i === selected.index ? { ...path, type } : path)),
     );
   };
 
@@ -433,7 +435,11 @@ export default function DrillForm({
                   aria-pressed={active}
                   className={[
                     PALETTE_ITEM_CLASSES,
-                    active ? "bg-strike" : "hover:bg-felt-raised",
+                    // A ring, not a fill: the accent is yellow now and a solid
+                    // yellow pad would swallow the yellow ball sitting on it.
+                    active
+                      ? "bg-rail ring-2 ring-strike"
+                      : "hover:bg-felt-raised",
                   ].join(" ")}
                   onPointerDown={(e) => startSpawn(e, entry)}
                   onPointerMove={moveSpawn}
@@ -490,10 +496,13 @@ export default function DrillForm({
           </div>
         </div>
 
-        <div className="p-3">
+        <div
+          className={`mx-auto w-full p-3 ${portrait ? "max-w-[420px]" : ""}`}
+        >
           <PoolTableDiagram
             ballPositions={balls}
             shotPaths={paths}
+            portrait={portrait}
             selected={selected}
             svgRef={svgRef}
             onPointerDown={handlePointerDown}

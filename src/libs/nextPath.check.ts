@@ -19,6 +19,6 @@ assert.equal(isSafePath(""), false);
 assert.equal(isSafePath(null), false);
 assert.equal(isSafePath(undefined), false);
 
-assert.equal(loginLink("/drills/12"), "/login?next=%2Fdrills%2F12");
+assert.equal(loginLink("/drills/12"), "/app/login?next=%2Fdrills%2F12");
 
 console.log("nextPath: ok");

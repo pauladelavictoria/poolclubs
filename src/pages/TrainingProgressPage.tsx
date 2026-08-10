@@ -190,7 +190,7 @@ export default function TrainingProgressPage() {
                 hint={t("training.noResultsHint")}
                 action={
                   <Link
-                    to="/drills"
+                    to="/app/drills"
                     className={buttonClasses({ variant: "secondary" })}
                   >
                     {t("training.seeDrills")}
@@ -272,7 +272,7 @@ export default function TrainingProgressPage() {
                             always visible, pays for the space. */}
                         <div className="group relative">
                           <Link
-                            to={`/drills/${log.drill_id}`}
+                            to={`/app/drills/${log.drill_id}`}
                             className={`block rounded-control px-2 py-2.5 transition-colors duration-150 hover:bg-felt-raised ${
                               user ? "max-sm:pr-11" : ""
                             }`}

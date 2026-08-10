@@ -64,12 +64,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Only the owner can read their own auth metadata, so the OAuth picture is
       // copied onto the player rows — otherwise every other member sees an
       // initial. Written on sign-in and whenever the provider changes the URL.
-      if (avatarUrl && rows.some((m) => m.avatar_url !== avatarUrl)) {
+      //
+      // An uploaded avatar is a data: URI and a deliberate choice, so it is left
+      // alone; otherwise the next sign-in would quietly put Google's face back.
+      const stale = rows.filter(
+        (m) => m.avatar_url !== avatarUrl && !m.avatar_url?.startsWith("data:"),
+      );
+      if (avatarUrl && stale.length) {
         await supabase
           .from("players")
           .update({ avatar_url: avatarUrl })
-          .eq("user_id", userId);
-        rows.forEach((m) => (m.avatar_url = avatarUrl));
+          .in(
+            "id",
+            stale.map((m) => m.id),
+          );
+        stale.forEach((m) => (m.avatar_url = avatarUrl));
         queryClient.invalidateQueries({ queryKey: ["players"] });
       }
 

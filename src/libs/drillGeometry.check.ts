@@ -7,6 +7,7 @@ import {
   BALLS,
   BALL_RADIUS,
   FELT,
+  TABLE_H,
   TABLE_W,
   UNIT_X,
   UNIT_Y,
@@ -53,17 +54,39 @@ assert.equal(isOnFelt({ x: 50, y: 51 }), false);
 // Pointer -> units, with the svg drawn at half the artwork's pixel size. The
 // axes have different scales, so a felt-centre click must land at (50, 25).
 const scale = 0.5;
-const svg = {
-  getBoundingClientRect: () => ({ left: 10, top: 20, width: TABLE_W * scale }),
-} as unknown as SVGSVGElement;
+const fakeSvg = (w: number, h: number) =>
+  ({
+    getBoundingClientRect: () => ({ left: 10, top: 20, width: w * scale }),
+    viewBox: { baseVal: { width: w, height: h } },
+  }) as unknown as SVGSVGElement;
 
 const centre = pointToUnits(
-  svg,
+  fakeSvg(TABLE_W, TABLE_H),
   10 + (FELT.x + UNIT_X * 50) * scale,
   20 + (FELT.y + UNIT_Y * 25) * scale
 );
 assert.ok(Math.abs(centre.x - 50) < 1e-9, `x was ${centre.x}`);
 assert.ok(Math.abs(centre.y - 25) < 1e-9, `y was ${centre.y}`);
+
+// Turned a quarter turn: drill x now runs up the screen from the bottom, drill
+// y runs left to right. Same click, same answer.
+const turned = pointToUnits(
+  fakeSvg(TABLE_H, TABLE_W),
+  10 + (FELT.y + UNIT_Y * 25) * scale,
+  20 + (TABLE_W - FELT.x - UNIT_X * 50) * scale
+);
+assert.ok(Math.abs(turned.x - 50) < 1e-9, `x was ${turned.x}`);
+assert.ok(Math.abs(turned.y - 25) < 1e-9, `y was ${turned.y}`);
+
+// A corner pins the orientation: drill (0, 0) is the bottom-left of the turned
+// table, not the top-left.
+const headCorner = pointToUnits(
+  fakeSvg(TABLE_H, TABLE_W),
+  10 + FELT.y * scale,
+  20 + (TABLE_W - FELT.x) * scale
+);
+assert.ok(Math.abs(headCorner.x) < 1e-9, `x was ${headCorner.x}`);
+assert.ok(Math.abs(headCorner.y) < 1e-9, `y was ${headCorner.y}`);
 
 // Hit testing: topmost ball wins, then paths, then nothing
 const balls = [

@@ -38,7 +38,7 @@ export default function NavRail() {
         ].join(" ")}
       >
         <NavLink
-          to="/"
+          to="/app"
           className="hidden md:mb-2 md:flex md:h-10 md:w-10 md:items-center md:justify-center"
           aria-label={t("nav.home")}
         >
