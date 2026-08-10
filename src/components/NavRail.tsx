@@ -46,7 +46,7 @@ export default function NavRail() {
         </NavLink>
 
         {PRIMARY_NAV.map(({ to, labelKey, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end} className={tab}>
+          <NavLink key={to} to={to} end={end} viewTransition className={tab}>
             <Icon className="h-[22px] w-[22px]" />
             <span className="text-[11px] font-medium leading-none">
               {t(labelKey)}

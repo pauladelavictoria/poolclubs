@@ -282,6 +282,12 @@ dialog.drawer[open]::backdrop {
   );
 }
 
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+  animation-timing-function: var(--ease-out);
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -318,5 +324,13 @@ dialog.drawer[open]::backdrop {
   dialog.drawer,
   dialog.drawer[open] {
     translate: 0 0;
+  }
+
+  /* The `*` rule above cannot reach these — view-transition pseudo-elements are
+     not descendants of any element, so they need naming. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

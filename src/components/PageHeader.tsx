@@ -27,6 +27,7 @@ export default function PageHeader({ title, subtitle, back, children }: Props) {
         {back && (
           <Link
             to={back}
+            viewTransition
             aria-label={t("common.back")}
             className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-ink-soft transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
           >
