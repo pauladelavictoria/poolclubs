@@ -24,7 +24,7 @@ export default function GamesPage() {
   const { data: gamesData, isLoading: gamesLoading } = useGetGames({
     page,
     pageSize: PAGE_SIZE,
-    playerName: playerFilter,
+    playerId: playerFilter ? Number(playerFilter) : undefined,
     category: categoryFilter ? Number(categoryFilter) : undefined,
   });
   const games = gamesData?.games ?? [];
@@ -63,7 +63,7 @@ export default function GamesPage() {
             >
               <option value={FILTER_ALL}>{t("games.allPlayers")}</option>
               {players?.map((player) => (
-                <option key={player.id} value={player.name}>
+                <option key={player.id} value={player.id}>
                   {player.name}
                 </option>
               ))}

@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "@/supabaseClient";
 import { queryClient } from "@/libs/queryClient";
+import { keys } from "@/libs/queryKeys";
 import type { Club, Membership } from "@/types";
 
 const ACTIVE_CLUB_KEY = "activeClub";
@@ -79,7 +80,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             stale.map((m) => m.id),
           );
         stale.forEach((m) => (m.avatar_url = avatarUrl));
-        queryClient.invalidateQueries({ queryKey: ["players"] });
+        queryClient.invalidateQueries({ queryKey: keys.players.all });
       }
 
       setMemberships(rows);

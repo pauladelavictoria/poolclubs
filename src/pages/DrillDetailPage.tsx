@@ -1,6 +1,5 @@
 import { useParams, useSearchParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/supabaseClient";
+import { useGetDrill } from "@/hooks/useGetDrills";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,21 +8,16 @@ import PageHeader from "@/components/PageHeader";
 import PoolTableDiagram from "@/components/PoolTableDiagram";
 import DrillLogForm from "@/components/DrillLogForm";
 import SocialBar from "@/components/SocialBar";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayerLookup } from "@/hooks/useGetPlayers";
 import { scoreBand, scorePct } from "@/libs/scoreBand";
+import { fmt } from "@/libs/dayLabel";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { DifficultyTag } from "@/components/ui/DifficultyTag";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import type { Drill } from "@/types";
 import { useTablePortrait } from "@/libs/useMedia";
 import { useT } from "@/i18n";
-
-const DIFFICULTY_DOT: Record<string, string> = {
-  beginner: "bg-pot",
-  intermediate: "bg-ball-1",
-  advanced: "bg-ball-3",
-};
 
 export default function DrillDetailPage() {
   const { t, locale } = useT();
@@ -40,23 +34,10 @@ export default function DrillDetailPage() {
     : undefined;
   const planPlayerId = searchParams.get("playerId");
 
-  const { data: drill, isLoading } = useQuery({
-    queryKey: ["drill", drillId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("drills")
-        .select("*")
-        .eq("id", drillId)
-        .single()
-        .throwOnError();
-
-      return data as Drill;
-    },
-    enabled: !!drillId,
-  });
+  const { data: drill, isLoading } = useGetDrill(drillId);
 
   const { data: drillLogs } = useGetDrillLogs({ drill_id: drillId });
-  const { data: players } = useGetPlayers();
+  const { nameOf } = usePlayerLookup();
   const { completeStep } = useTrainingPlan(undefined);
   const { user, isAdmin } = useAuth();
   const canEdit = canEditDrill(drill?.created_by, user?.id, isAdmin);
@@ -157,13 +138,7 @@ export default function DrillDetailPage() {
           <div className="space-y-4">
             <Card className="p-5">
               <div className="mb-3 flex items-center gap-2 text-caption text-ink-soft">
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    aria-hidden
-                    className={`h-1.5 w-1.5 rounded-full ${DIFFICULTY_DOT[drill.difficulty]}`}
-                  />
-                  {t(`difficulty.${drill.difficulty}`)}
-                </span>
+                <DifficultyTag difficulty={drill.difficulty} />
                 <span className="text-ink-ghost">·</span>
                 <span className="text-ink-faint">
                   {t("drills.maxPoints", { n: drill.max_score })}
@@ -205,16 +180,13 @@ export default function DrillDetailPage() {
                       <li key={log.id} className="rounded-control px-2 py-2">
                         <div className="flex items-baseline gap-3">
                           <span className="min-w-0 flex-1 truncate text-body text-ink">
-                            {players?.find((p) => p.id === log.player_id)
-                              ?.name ?? "—"}
+                            {nameOf(log.player_id)}
                           </span>
                           <time
                             dateTime={log.created_at}
                             className="shrink-0 text-caption tabular-nums text-ink-faint"
                           >
-                            {new Date(log.created_at).toLocaleDateString(
-                              locale,
-                            )}
+                            {fmt(locale, {}).format(new Date(log.created_at))}
                           </time>
                           <span className="shrink-0 font-mono text-caption tabular-nums text-ink-faint">
                             {log.score}/{log.max_score}

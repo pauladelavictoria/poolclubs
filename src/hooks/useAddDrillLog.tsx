@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
+import { keys } from "@/libs/queryKeys";
 import type { DrillLog } from "@/types";
 
 type AddDrillLogInput = {
@@ -25,7 +26,7 @@ export const useAddDrillLog = () => {
       return data as DrillLog;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["drill_logs"] });
+      queryClient.invalidateQueries({ queryKey: keys.drillLogs.all });
     },
   });
 };

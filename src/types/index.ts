@@ -171,12 +171,7 @@ export type TrainingPlanStep = {
   drill?: Drill;
 };
 
-export const DIFFICULTY_TO_CATEGORY: Record<DrillDifficulty, Category> = {
-  advanced: 1,
-  intermediate: 2,
-  beginner: 3,
-};
-
+/** Which drills a division is aimed at. Used to seed a training plan. */
 export const CATEGORY_TO_DIFFICULTY: Record<Category, DrillDifficulty> = {
   1: 'advanced',
   2: 'intermediate',

@@ -7,7 +7,7 @@ import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
 import PageHeader from "@/components/PageHeader";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -29,7 +29,7 @@ export default function ChallengesPage() {
   const { respondToChallenge, cancelChallenge } = useManageChallenges();
   const [toPlayerId, setToPlayerId] = useState("");
 
-  const nameOf = (id: number) => players?.find((p) => p.id === id)?.name ?? "—";
+  const { nameOf } = usePlayerLookup();
   const onError = () => toast.error(t("common.error"));
 
   const open = (challenges ?? []).filter(

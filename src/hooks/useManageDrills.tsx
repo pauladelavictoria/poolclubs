@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
+import { keys } from "@/libs/queryKeys";
 import type { Drill } from "@/types";
 
 /** Everything on a drill except the columns the database fills in. `created_by`
@@ -10,8 +11,9 @@ export const useManageDrills = () => {
   const queryClient = useQueryClient();
 
   const onSuccess = (drill?: Drill) => {
-    queryClient.invalidateQueries({ queryKey: ["drills"] });
-    if (drill) queryClient.invalidateQueries({ queryKey: ["drill", drill.id] });
+    queryClient.invalidateQueries({ queryKey: keys.drills.all });
+    if (drill)
+      queryClient.invalidateQueries({ queryKey: keys.drill.one(drill.id) });
   };
 
   return {

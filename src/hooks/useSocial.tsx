@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import { optimisticList, tempId } from "@/libs/optimistic";
+import { keys } from "@/libs/queryKeys";
 import type { Comment, Reaction, SocialTarget } from "@/types";
 
 /** Turns a target into the column pair the tables use. Exactly one is set —
@@ -29,7 +30,7 @@ export const useComments = () => {
   const { activeClubId } = useAuth();
 
   return useQuery({
-    queryKey: ["comments", activeClubId],
+    queryKey: keys.comments.in(activeClubId),
     enabled: !!activeClubId,
     queryFn: async () => {
       const { data } = await supabase
@@ -48,7 +49,7 @@ export const useReactions = () => {
   const { activeClubId } = useAuth();
 
   return useQuery({
-    queryKey: ["reactions", activeClubId],
+    queryKey: keys.reactions.in(activeClubId),
     enabled: !!activeClubId,
     queryFn: async () => {
       const { data } = await supabase
@@ -66,8 +67,8 @@ export const useSocialActions = () => {
   const { activeClubId, player } = useAuth();
   const { data: reactions } = useReactions();
 
-  const commentsKey = ["comments", activeClubId];
-  const reactionsKey = ["reactions", activeClubId];
+  const commentsKey = keys.comments.in(activeClubId);
+  const reactionsKey = keys.reactions.in(activeClubId);
 
   const base = () => {
     if (!activeClubId || !player) throw new Error("no active club");

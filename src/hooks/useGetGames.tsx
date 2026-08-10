@@ -1,13 +1,15 @@
 import { supabase } from "@/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { keys } from "@/libs/queryKeys";
 import type { Game, GameMode } from "@/types";
 
 export type UseGetGamesFilters = {
   date?: string; // ISO date string (e.g. "2025-02-08")
   page?: number; // 1-based page number
   pageSize?: number; // items per page
-  playerName?: string; // filter games where this player is player_1_name, player_2_name, player_1b_name or player_2b_name
+  /** Games this player took part in, on either side of either team. */
+  playerId?: number;
   category?: number; // filter games where either player belongs to this category
   mode?: GameMode;
 };
@@ -20,30 +22,41 @@ const getDateRange = (date: string) => {
   };
 };
 
-const nameMatches = (name: string) => {
-  const escaped = `"${name.replace(/"/g, '\\"')}"`;
-  return `player_1_name.eq.${escaped},player_2_name.eq.${escaped},player_1b_name.eq.${escaped},player_2b_name.eq.${escaped}`;
-};
+/** The four seats in a game. A row lists two ids for singles and four for
+ *  doubles, so "was this player in it" is a question about all four columns. */
+const SEATS = [
+  "player_1_id",
+  "player_2_id",
+  "player_1b_id",
+  "player_2b_id",
+] as const;
+
+/**
+ * Matching on ids, not names.
+ *
+ * The names are copied onto the game row when it is written, so a player who is
+ * renamed loses every result they had — the old rows still carry the old string.
+ * Ids don't move. They also need no quoting, which the name version had to do by
+ * hand because a comma in a name reads as another condition.
+ */
+const playedIn = (playerId: number) =>
+  SEATS.map((seat) => `${seat}.eq.${playerId}`).join(",");
+
+const playedInAny = (playerIds: number[]) =>
+  SEATS.map((seat) => `${seat}.in.(${playerIds.join(",")})`).join(",");
 
 // Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
 // for the app, rather than one per hook instance.
 export const useGetGames = (filters?: UseGetGamesFilters) => {
-  const {
-    date,
-    page = 1,
-    pageSize,
-    playerName,
-    category,
-    mode,
-  } = filters ?? {};
+  const applied = filters ?? {};
+  const { date, page = 1, pageSize, playerId, category, mode } = applied;
   const { activeClubId } = useAuth();
 
   async function fetchGames() {
     let query = supabase
       .from("games")
       .select("*", { count: "exact" })
-      // Player names are only unique inside a club, and the filters below match
-      // on name — without this scope, two clubs sharing a "Juan" would bleed.
+      // Every list in the app is one club's, and RLS allows more than one.
       .eq("club_id", activeClubId)
       .order("created_at", { ascending: false });
 
@@ -57,28 +70,24 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
       query = query.lte("created_at", to);
     }
 
-    if (playerName) {
-      query = query.or(nameMatches(playerName));
+    if (playerId) {
+      query = query.or(playedIn(playerId));
     }
 
-    // For category filtering, we need to fetch and filter client-side
-    // since we need to join with players table
+    // Division lives on the player, not on the game, so it takes a lookup first.
     if (category) {
-      // First get the players in the category
       const { data: playersInCategory } = await supabase
         .from("players")
-        .select("name")
+        .select("id")
         .eq("club_id", activeClubId)
         .eq("category", category)
         .throwOnError();
 
+      // Nobody in this division has played, so no game can match.
       if (playersInCategory.length === 0) {
-        // No players in this category, return empty
         return { games: [], totalCount: 0 };
       }
-      query = query.or(
-        playersInCategory.map((p) => nameMatches(p.name)).join(","),
-      );
+      query = query.or(playedInAny(playersInCategory.map((p) => p.id)));
     }
 
     if (page >= 1 && pageSize && pageSize >= 1) {
@@ -96,16 +105,7 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
   }
 
   return useQuery({
-    queryKey: [
-      "games",
-      activeClubId,
-      date,
-      page,
-      pageSize,
-      playerName,
-      category,
-      mode,
-    ],
+    queryKey: keys.games.list(activeClubId, applied),
     queryFn: fetchGames,
     enabled: !!activeClubId,
   });

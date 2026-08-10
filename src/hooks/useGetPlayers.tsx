@@ -1,6 +1,8 @@
+import { useMemo } from "react";
 import { supabase } from "@/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { keys } from "@/libs/queryKeys";
 import type { Player } from "@/types";
 
 // Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
@@ -13,7 +15,7 @@ export const useGetPlayers = () => {
   const { activeClubId } = useAuth();
 
   return useQuery({
-    queryKey: ["players", activeClubId],
+    queryKey: keys.players.in(activeClubId),
     enabled: !!activeClubId,
     // `.throwOnError()` hands the failure to react-query, which logs it once in
     // libs/queryClient.ts. Same everywhere; see that file.
@@ -29,4 +31,17 @@ export const useGetPlayers = () => {
       return data as Player[];
     },
   });
+};
+
+export const usePlayerLookup = () => {
+  const { data } = useGetPlayers();
+
+  return useMemo(() => {
+    const byId = new Map((data ?? []).map((player) => [player.id, player]));
+    return {
+      byId,
+      /** The em dash is what a list shows for someone since removed. */
+      nameOf: (id: number) => byId.get(id)?.name ?? "—",
+    };
+  }, [data]);
 };

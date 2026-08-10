@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import { optimisticList, tempId } from "@/libs/optimistic";
+import { keys } from "@/libs/queryKeys";
 import type { Challenge, ChallengeStatus } from "@/types";
 
 /** Every challenge in the active club. A club is small enough that filtering
@@ -10,7 +11,7 @@ export const useGetChallenges = () => {
   const { activeClubId } = useAuth();
 
   return useQuery({
-    queryKey: ["challenges", activeClubId],
+    queryKey: keys.challenges.in(activeClubId),
     enabled: !!activeClubId,
     queryFn: async () => {
       const { data } = await supabase
@@ -39,7 +40,7 @@ export const useMyChallenges = () => {
 
 export const useManageChallenges = () => {
   const { activeClubId, player } = useAuth();
-  const key = ["challenges", activeClubId];
+  const key = keys.challenges.in(activeClubId);
 
   return {
     sendChallenge: useMutation({

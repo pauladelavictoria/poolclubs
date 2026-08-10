@@ -232,6 +232,41 @@ dialog.drawer[open]::backdrop {
   }
 }
 
+/* Sheet dialog: rises from the bottom edge on a phone, where a thumb is, and
+   fades in centred from sm up. Same discrete-transition dance as the drawer. */
+dialog.sheet {
+  translate: 0 100%;
+  transition:
+    translate 240ms var(--ease-out),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+
+dialog.sheet[open] {
+  translate: 0 0;
+}
+
+dialog.sheet::backdrop {
+  background: rgb(0 0 0 / 0);
+  transition:
+    background 240ms var(--ease-out),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+
+dialog.sheet[open]::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+@starting-style {
+  dialog.sheet[open] {
+    translate: 0 100%;
+  }
+  dialog.sheet[open]::backdrop {
+    background: rgb(0 0 0 / 0);
+  }
+}
+
 /* Skeletons: a shimmer travelling across the placeholder, not a spinner */
 @keyframes sheen {
   to {
@@ -339,7 +374,9 @@ dialog.drawer[open]::backdrop {
   }
 
   dialog.drawer,
-  dialog.drawer[open] {
+  dialog.drawer[open],
+  dialog.sheet,
+  dialog.sheet[open] {
     translate: 0 0;
   }
 

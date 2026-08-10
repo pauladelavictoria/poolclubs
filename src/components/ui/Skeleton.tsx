@@ -6,6 +6,15 @@ export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`skeleton rounded-control ${className}`} />;
 }
 
+export function PageSkeleton() {
+  return (
+    <div className="mx-auto max-w-3xl space-y-3 px-3 py-6">
+      <Skeleton className="h-14 w-full" />
+      <Skeleton className="h-40 w-full rounded-card" />
+    </div>
+  );
+}
+
 /** Stand-in for a list of rows (ranking, games, players). */
 export function SkeletonRows({
   rows = 6,

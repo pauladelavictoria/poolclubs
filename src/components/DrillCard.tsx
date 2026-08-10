@@ -1,21 +1,12 @@
 import { Link } from "react-router-dom";
 import type { Drill } from "@/types";
 import PoolTableDiagram from "./PoolTableDiagram";
+import { DifficultyTag } from "@/components/ui/DifficultyTag";
 import { useT } from "@/i18n";
 
 interface DrillCardProps {
   drill: Drill;
 }
-
-/**
- * Difficulty is the only thing here worth a colour, and it earns one because
- * it's the thing you filter on. Skill type is metadata, so it stays neutral.
- */
-const DIFFICULTY_DOT: Record<string, string> = {
-  beginner: "bg-pot",
-  intermediate: "bg-ball-1",
-  advanced: "bg-ball-3",
-};
 
 export default function DrillCard({ drill }: DrillCardProps) {
   const { t } = useT();
@@ -47,13 +38,7 @@ export default function DrillCard({ drill }: DrillCardProps) {
         {/* Pinned to the bottom so the difficulty line agrees across a row
             whatever length the names and descriptions came out. */}
         <div className="mt-auto flex items-center gap-2 pt-3 text-caption text-ink-soft">
-          <span className="inline-flex shrink-0 items-center gap-1.5">
-            <span
-              aria-hidden
-              className={`h-1.5 w-1.5 rounded-full ${DIFFICULTY_DOT[drill.difficulty]}`}
-            />
-            {t(`difficulty.${drill.difficulty}`)}
-          </span>
+          <DifficultyTag difficulty={drill.difficulty} className="shrink-0" />
           <span className="ml-auto truncate text-ink-faint">
             {t(`skill.${drill.skill_type}`)}
           </span>

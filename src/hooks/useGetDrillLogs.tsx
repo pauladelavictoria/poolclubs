@@ -1,5 +1,6 @@
 import { supabase } from "@/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
+import { keys } from "@/libs/queryKeys";
 import type { DrillLog } from "@/types";
 
 export type UseGetDrillLogsFilters = {
@@ -14,7 +15,7 @@ export const useGetDrillLogs = (filters?: UseGetDrillLogsFilters) => {
   const { player_id, drill_id, limit } = filters ?? {};
 
   return useQuery({
-    queryKey: ["drill_logs", player_id, drill_id, limit],
+    queryKey: keys.drillLogs.list({ player_id, drill_id, limit }),
     enabled: !!player_id || !!drill_id || !!limit,
     queryFn: async () => {
       let query = supabase

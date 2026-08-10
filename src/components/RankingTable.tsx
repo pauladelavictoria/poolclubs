@@ -3,9 +3,8 @@ import { Link } from "react-router-dom";
 import { BallBadge, CategoryBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
 import { useAuth } from "@/hooks/useAuth";
+import type { ViewMode } from "./Ranking";
 import { useT } from "@/i18n";
-
-type ViewMode = "combined" | "byCategory";
 
 interface RankingTableProps {
   entries: DailyRankingEntry[];

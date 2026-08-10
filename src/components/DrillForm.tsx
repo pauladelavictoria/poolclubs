@@ -6,6 +6,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 import { Label } from "@/components/ui/Label";
 import {
   BALLS,
@@ -45,12 +46,6 @@ const DRAG_THRESHOLD = 4;
 const ENDPOINT_GRAB = 2;
 /** Where a tapped item lands when there is no drop point: middle of the felt. */
 const FELT_CENTRE = { x: 50, y: 25 };
-
-const TEXTAREA_CLASSES = [
-  "block w-full rounded-control border border-hairline bg-pocket px-3 py-2",
-  "text-body text-ink placeholder:text-ink-faint",
-  "transition-colors duration-150 hover:border-hairline-strong",
-].join(" ");
 
 const PALETTE_ITEM_CLASSES = [
   "h-9 w-9 shrink-0 cursor-grab touch-none rounded-full p-0.5",
@@ -614,10 +609,8 @@ export default function DrillForm({
             <Label htmlFor="drill-description">
               {t("drillForm.description")}
             </Label>
-            <textarea
+            <Textarea
               id="drill-description"
-              rows={2}
-              className={TEXTAREA_CLASSES}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={isSubmitting}
@@ -664,10 +657,8 @@ export default function DrillForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="drill-setup">{t("drillForm.setup")}</Label>
-            <textarea
+            <Textarea
               id="drill-setup"
-              rows={2}
-              className={TEXTAREA_CLASSES}
               value={setupInstructions}
               onChange={(e) => setSetupInstructions(e.target.value)}
               disabled={isSubmitting}
@@ -676,10 +667,8 @@ export default function DrillForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="drill-scoring">{t("drillForm.scoring")}</Label>
-            <textarea
+            <Textarea
               id="drill-scoring"
-              rows={2}
-              className={TEXTAREA_CLASSES}
               value={scoringMethod}
               onChange={(e) => setScoringMethod(e.target.value)}
               disabled={isSubmitting}

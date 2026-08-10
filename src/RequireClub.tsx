@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { PageSkeleton } from "@/components/ui/Skeleton";
 import ClubOnboardingPage from "@/pages/ClubOnboardingPage";
 
 /**
@@ -14,14 +14,7 @@ import ClubOnboardingPage from "@/pages/ClubOnboardingPage";
 export const RequireClub = () => {
   const { isLoading, isPlayerLoading, isMember } = useAuth();
 
-  if (isLoading || isPlayerLoading) {
-    return (
-      <div className="mx-auto max-w-3xl space-y-3 px-3 py-6">
-        <Skeleton className="h-14 w-full" />
-        <Skeleton className="h-40 w-full rounded-card" />
-      </div>
-    );
-  }
+  if (isLoading || isPlayerLoading) return <PageSkeleton />;
 
   return isMember ? <Outlet /> : <ClubOnboardingPage />;
 };

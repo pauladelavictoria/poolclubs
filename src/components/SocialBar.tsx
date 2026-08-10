@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LuMessageSquare, LuSmilePlus, LuX } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayerLookup } from "@/hooks/useGetPlayers";
 import {
   matchesTarget,
   useComments,
@@ -9,6 +9,7 @@ import {
   useSocialActions,
 } from "@/hooks/useSocial";
 import { Input } from "@/components/ui/Input";
+import { fmt } from "@/libs/dayLabel";
 import { REACTIONS, type SocialTarget } from "@/types";
 import { useT } from "@/i18n";
 
@@ -29,7 +30,7 @@ export default function SocialBar({
 }) {
   const { t, locale } = useT();
   const { player, isClubAdmin } = useAuth();
-  const { data: players } = useGetPlayers();
+  const { nameOf } = usePlayerLookup();
   const { data: allComments } = useComments();
   const { data: allReactions } = useReactions();
   const { addComment, deleteComment, toggleReaction } = useSocialActions();
@@ -43,10 +44,7 @@ export default function SocialBar({
     matchesTarget(r, target),
   );
 
-  const nameOf = (playerId: number) =>
-    players?.find((p) => p.id === playerId)?.name ?? "—";
-
-  const timeFmt = new Intl.DateTimeFormat(locale, {
+  const timeFmt = fmt(locale, {
     day: "numeric",
     month: "short",
     hour: "2-digit",

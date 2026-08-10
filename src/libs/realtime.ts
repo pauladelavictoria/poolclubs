@@ -1,6 +1,7 @@
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { supabase } from "@/supabaseClient";
 import { queryClient } from "./queryClient";
+import { keys, type ClubScopedKeys } from "./queryKeys";
 import { removeRow, upsertRow } from "./realtimeRows";
 import type { Comment, Reaction } from "@/types";
 
@@ -15,7 +16,7 @@ import type { Comment, Reaction } from "@/types";
  * derived from the whole list, so there a refetch is the honest answer.
  */
 function applySocialRow<T extends { id: number; club_id: number }>(
-  table: "comments" | "reactions",
+  table: ClubScopedKeys,
   matchesOptimistic: (candidate: T, incoming: T) => boolean,
 ) {
   return (payload: RealtimePostgresChangesPayload<T>) => {
@@ -25,7 +26,7 @@ function applySocialRow<T extends { id: number; club_id: number }>(
       // key on. Drop the id from every club's list; it only lives in one.
       const { id } = payload.old;
       if (id === undefined) return;
-      queryClient.setQueriesData<T[]>({ queryKey: [table] }, (rows) =>
+      queryClient.setQueriesData<T[]>({ queryKey: table.all }, (rows) =>
         rows && rows.some((r) => r.id === id) ? removeRow(rows, id) : rows,
       );
       return;
@@ -35,7 +36,7 @@ function applySocialRow<T extends { id: number; club_id: number }>(
     // Returning the same reference leaves the cache untouched, which is what
     // should happen when this club's list was never fetched: a cache holding
     // one row would look complete.
-    queryClient.setQueryData<T[]>([table, row.club_id], (rows) =>
+    queryClient.setQueryData<T[]>(table.in(row.club_id), (rows) =>
       rows ? upsertRow(rows, row, matchesOptimistic) : rows,
     );
   };
@@ -49,6 +50,10 @@ const sameTargetAndAuthor = (
   a.author_player_id === b.author_player_id &&
   a.game_id === b.game_id &&
   a.drill_log_id === b.drill_log_id;
+
+/** Drop everything cached for a table and let the screens refetch. */
+const invalidate = (queryKey: readonly string[]) => () =>
+  queryClient.invalidateQueries({ queryKey });
 
 /**
  * One realtime channel for the whole app, opened once outside React.
@@ -68,47 +73,42 @@ export function startRealtime() {
   if (started) return;
   started = true;
 
+  const onTable = (table: string) =>
+    ({ event: "*", schema: "public", table }) as const;
+
   supabase
     .channel("db-changes")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "players" },
-      () => queryClient.invalidateQueries({ queryKey: ["players"] })
-    )
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "games" },
-      () => queryClient.invalidateQueries({ queryKey: ["games"] })
-    )
+    .on("postgres_changes", onTable("players"), invalidate(keys.players.all))
+    .on("postgres_changes", onTable("games"), invalidate(keys.games.all))
     // Drill logs share the home feed with games, so they refresh with them.
     .on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "drill_logs" },
-      () => queryClient.invalidateQueries({ queryKey: ["drill_logs"] })
+      onTable("drill_logs"),
+      invalidate(keys.drillLogs.all),
     )
     // Social tables: a conversation that needs a manual refresh is not one.
     // These two carry the row into the cache rather than invalidating — see
     // applySocialRow above.
     .on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "comments" },
+      onTable("comments"),
       applySocialRow<Comment>(
-        "comments",
+        keys.comments,
         (a, b) => sameTargetAndAuthor(a, b) && a.body === b.body,
       ),
     )
     .on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "reactions" },
+      onTable("reactions"),
       applySocialRow<Reaction>(
-        "reactions",
+        keys.reactions,
         (a, b) => sameTargetAndAuthor(a, b) && a.emoji === b.emoji,
       ),
     )
     .on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "challenges" },
-      () => queryClient.invalidateQueries({ queryKey: ["challenges"] })
+      onTable("challenges"),
+      invalidate(keys.challenges.all),
     )
     .subscribe();
 }

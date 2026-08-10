@@ -1,7 +1,6 @@
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { supabase } from "@/supabaseClient";
+import { useGetDrill } from "@/hooks/useGetDrills";
 import PageHeader from "@/components/PageHeader";
 import DrillForm from "@/components/DrillForm";
 import { Card } from "@/components/ui/Card";
@@ -10,7 +9,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useManageDrills, type DrillInput } from "@/hooks/useManageDrills";
 import { useAuth } from "@/hooks/useAuth";
 import { canEditDrill } from "@/libs/drillPermissions";
-import type { Drill } from "@/types";
 import { useT } from "@/i18n";
 
 export default function DrillEditorPage() {
@@ -19,20 +17,7 @@ export default function DrillEditorPage() {
   const drillId = id ? Number(id) : undefined;
   const navigate = useNavigate();
 
-  const { data: drill, isLoading } = useQuery({
-    queryKey: ["drill", drillId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("drills")
-        .select("*")
-        .eq("id", drillId)
-        .single()
-        .throwOnError();
-
-      return data as Drill;
-    },
-    enabled: !!drillId,
-  });
+  const { data: drill, isLoading } = useGetDrill(drillId);
 
   const { user, isAdmin, isPlayerLoading } = useAuth();
   const { createDrill, updateDrill, deleteDrill } = useManageDrills();

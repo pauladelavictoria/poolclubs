@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { DIFFICULTIES, type DrillDifficulty } from "@/types";
 import { scoreBand, scorePct } from "@/libs/scoreBand";
+import { fmt, startsNewDay, timeOf } from "@/libs/dayLabel";
 import { useT } from "@/i18n";
 
 export default function TrainingProgressPage() {
@@ -245,17 +246,16 @@ export default function TrainingProgressPage() {
                     const pct = scorePct(log.score, log.max_score);
                     const band = scoreBand(pct);
                     const date = new Date(log.created_at);
-                    const day = date.toLocaleDateString(locale, {
+                    const day = fmt(locale, {
                       weekday: "short",
                       day: "numeric",
                       month: "short",
-                    });
+                    }).format(date);
                     // Only the first log of each day carries the date header
-                    const prev = idx > 0 ? shown[idx - 1] : null;
-                    const newDay =
-                      !prev ||
-                      new Date(prev.created_at).toDateString() !==
-                        date.toDateString();
+                    const newDay = startsNewDay(
+                      date,
+                      idx > 0 ? new Date(shown[idx - 1].created_at) : undefined,
+                    );
                     const drill = drillsById.get(log.drill_id);
 
                     return (
@@ -310,10 +310,7 @@ export default function TrainingProgressPage() {
                                 dateTime={log.created_at}
                                 className="text-caption tabular-nums text-ink-faint"
                               >
-                                {date.toLocaleTimeString(locale, {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
+                                {timeOf(date, locale)}
                               </time>
                             </div>
                             {log.notes && (

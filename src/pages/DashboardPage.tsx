@@ -5,7 +5,7 @@ import ActivityFeed from "@/components/ActivityFeed";
 import PlayerTabs from "@/components/PlayerTabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetGames } from "@/hooks/useGetGames";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import { useMyChallenges } from "@/hooks/useChallenges";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const { player, activeClub } = useAuth();
   const myChallenges = useMyChallenges();
   const { data: players } = useGetPlayers();
-  const nameOf = (id: number) => players?.find((p) => p.id === id)?.name ?? "—";
+  const { nameOf } = usePlayerLookup();
   // Same query key as the ranking page, so this is a cache hit either direction
   const { data: allGamesData } = useGetGames({});
 

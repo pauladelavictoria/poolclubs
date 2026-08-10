@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
+import { keys } from "@/libs/queryKeys";
 import type { Player, Category } from "@/types";
 
 export type CreatePlayerInput = {
@@ -19,7 +20,7 @@ export const useManagePlayers = () => {
   const { activeClubId } = useAuth();
 
   const onSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ["players"] });
+    queryClient.invalidateQueries({ queryKey: keys.players.all });
   };
 
   return {

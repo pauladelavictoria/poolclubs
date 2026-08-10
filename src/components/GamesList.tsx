@@ -3,12 +3,14 @@ import React from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import SocialBar from "@/components/SocialBar";
 import { LuSwords } from "react-icons/lu";
-import { dayLabel } from "@/libs/dayLabel";
+import { dayLabel, startsNewDay, timeOf } from "@/libs/dayLabel";
 import { useT } from "@/i18n";
 
 interface GamesListProps {
   games: Game[];
-  playerName?: string;
+  /** Whose page this is, if anyone's — their won frames get the accent. By id,
+   *  because the names on a row are a copy from when it was written. */
+  playerId?: number;
   showDates?: boolean;
   /** Off for the TV board, which nobody is standing close enough to tap. */
   showSocial?: boolean;
@@ -22,16 +24,11 @@ interface GamesListProps {
  */
 export default function GamesList({
   games,
-  playerName,
+  playerId,
   showDates,
   showSocial = true,
 }: GamesListProps) {
   const { t, locale } = useT();
-
-  const timeFmt = new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
   if (!games || games.length === 0) {
     return (
@@ -74,21 +71,21 @@ export default function GamesList({
         // On a player's own page, mark the frames they took. Losses are simply
         // left plain — absence reads as loss without spending a second colour.
         let accent = "border-hairline";
-        if (playerName) {
+        if (playerId) {
           const inTeam1 =
-            player_1_name === playerName || player_1b_name === playerName;
+            game.player_1_id === playerId || game.player_1b_id === playerId;
           const inTeam2 =
-            player_2_name === playerName || player_2b_name === playerName;
+            game.player_2_id === playerId || game.player_2b_id === playerId;
           if ((inTeam1 && p1Won) || (inTeam2 && p2Won)) {
             accent = "border-hairline border-l-2 border-l-pot";
           }
         }
 
         const date = new Date(created_at);
-        const day = date.toDateString();
-        const newDate =
-          index === 0 ||
-          day !== new Date(games[index - 1].created_at).toDateString();
+        const newDate = startsNewDay(
+          date,
+          index > 0 ? new Date(games[index - 1].created_at) : undefined,
+        );
 
         const side = (won: boolean) =>
           won ? "font-semibold text-ink" : "text-ink-faint";
@@ -107,7 +104,7 @@ export default function GamesList({
                 dateTime={created_at}
                 className="hidden w-10 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
               >
-                {timeFmt.format(date)}
+                {timeOf(date, locale)}
               </time>
               <span className={`flex-1 truncate text-right ${side(p1Won)}`}>
                 {team1}

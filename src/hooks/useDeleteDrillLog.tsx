@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
+import { keys } from "@/libs/queryKeys";
 
 export const useDeleteDrillLog = () => {
   const queryClient = useQueryClient();
@@ -17,8 +18,8 @@ export const useDeleteDrillLog = () => {
       if (!count) throw new Error("No se pudo borrar el resultado");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["drill_logs"] });
-      queryClient.invalidateQueries({ queryKey: ["training_plan"] });
+      queryClient.invalidateQueries({ queryKey: keys.drillLogs.all });
+      queryClient.invalidateQueries({ queryKey: keys.trainingPlan.all });
     },
   });
 };

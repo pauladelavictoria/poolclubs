@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useDialog } from "@/libs/useDialog";
 import { useSignOut } from "@/hooks/useSignOut";
 import { toast } from "react-toastify";
 import { NAV_SECTIONS, type NavItem } from "@/components/navItems";
@@ -41,7 +41,7 @@ export default function NavDrawer({
   open: boolean;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
+  const ref = useDialog(open);
   const { user, player, activeClub, memberships, setActiveClub } = useAuth();
   const signOut = useSignOut();
   const { t, lang, setLang } = useT();
@@ -49,13 +49,6 @@ export default function NavDrawer({
   // Only clubs you are actually in are switchable; a pending request is not a
   // place you can go yet.
   const switchable = memberships.filter((m) => m.status === "active");
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
 
   // Without a linked player these point at /me/*, which sits behind
   // ProtectedRoute and so asks for login first.

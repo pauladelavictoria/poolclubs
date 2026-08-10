@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
+import { keys } from "@/libs/queryKeys";
 import type { Player } from "@/types";
 
 export type ClubPreview = {
@@ -18,7 +19,7 @@ export const useClubMembers = () => {
   const { activeClubId } = useAuth();
 
   return useQuery({
-    queryKey: ["club-members", activeClubId],
+    queryKey: keys.clubMembers.in(activeClubId),
     enabled: !!activeClubId,
     queryFn: async () => {
       const { data } = await supabase
@@ -40,8 +41,8 @@ export const useManageClub = () => {
   // Membership changes move a player between the roster and the pending list,
   // so both caches go.
   const onSuccess = async () => {
-    queryClient.invalidateQueries({ queryKey: ["club-members"] });
-    queryClient.invalidateQueries({ queryKey: ["players"] });
+    queryClient.invalidateQueries({ queryKey: keys.clubMembers.all });
+    queryClient.invalidateQueries({ queryKey: keys.players.all });
     await refreshMemberships();
   };
 
@@ -135,7 +136,7 @@ export const useJoinOrCreateClub = () => {
  *  players so a regular who predates accounts can pick themselves. */
 export const useClubPreview = (code: string | undefined) =>
   useQuery({
-    queryKey: ["club-preview", code],
+    queryKey: keys.clubPreview.for(code),
     enabled: !!code,
     retry: false,
     queryFn: async () => {

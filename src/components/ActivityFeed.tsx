@@ -7,10 +7,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
 import { useGetDrills } from "@/hooks/useGetDrills";
 import { scoreBand, scorePct } from "@/libs/scoreBand";
-import { dayLabel, sameDay } from "@/libs/dayLabel";
+import { dayLabel, startsNewDay, timeOf } from "@/libs/dayLabel";
 import type { DrillLog, Game } from "@/types";
 import { useT } from "@/i18n";
 
@@ -19,17 +19,13 @@ type FeedItem = { at: string; game?: Game; log?: DrillLog };
 
 function DrillRow({ log }: { log: DrillLog }) {
   const { t, locale } = useT();
-  const { data: players } = useGetPlayers();
+  const { byId } = usePlayerLookup();
   const { data: drills } = useGetDrills();
 
   const pct = scorePct(log.score, log.max_score);
   const band = scoreBand(pct);
-  const timeFmt = new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
-  const author = players?.find((p) => p.id === log.player_id);
+  const author = byId.get(log.player_id);
   const name = author?.name ?? "—";
 
   return (
@@ -74,7 +70,7 @@ function DrillRow({ log }: { log: DrillLog }) {
           dateTime={log.created_at}
           className="shrink-0 font-mono text-caption tabular-nums text-ink-ghost"
         >
-          {timeFmt.format(new Date(log.created_at))}
+          {timeOf(new Date(log.created_at), locale)}
         </time>
       </Link>
 
@@ -96,14 +92,14 @@ function Side({
   names: (string | undefined)[];
   won: boolean;
 }) {
-  const { data: players } = useGetPlayers();
+  const { byId } = usePlayerLookup();
   // Singles pass an empty second slot; a doubles row missing its partner name
   // drops the same way rather than rendering a blank face.
   const people = ids
     .map((id, i) => ({
       id,
       name: names[i],
-      url: players?.find((p) => p.id === id)?.avatar_url,
+      url: id === undefined ? undefined : byId.get(id)?.avatar_url,
     }))
     .filter((person) => !!person.name);
 
@@ -137,11 +133,6 @@ function MatchCard({ game }: { game: Game }) {
   const p1 = parseInt(game.player_1_score, 10) || 0;
   const p2 = parseInt(game.player_2_score, 10) || 0;
 
-  const timeFmt = new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
   return (
     <>
       <div className="flex items-baseline justify-between gap-3">
@@ -152,7 +143,7 @@ function MatchCard({ game }: { game: Game }) {
           dateTime={game.created_at}
           className="shrink-0 font-mono text-caption tabular-nums text-ink-ghost"
         >
-          {timeFmt.format(new Date(game.created_at))}
+          {timeOf(new Date(game.created_at), locale)}
         </time>
       </div>
 
@@ -224,8 +215,10 @@ export default function ActivityFeed({ limit = 20 }: { limit?: number }) {
     <div className="space-y-3">
       {items.map((item, index) => {
         const date = new Date(item.at);
-        const newDay =
-          index === 0 || !sameDay(date, new Date(items[index - 1].at));
+        const newDay = startsNewDay(
+          date,
+          index > 0 ? new Date(items[index - 1].at) : undefined,
+        );
 
         return (
           <div key={item.game ? `g${item.game.id}` : `d${item.log!.id}`}>

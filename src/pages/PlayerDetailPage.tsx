@@ -22,25 +22,21 @@ import { Stat } from "@/components/ui/Stat";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { SERIES, useChartTheme } from "@/libs/chartTheme";
 import { useT } from "@/i18n";
-
-/* Chart ink, matched to the theme tokens */
-const AXIS = "#8d9793";
-const GRID = "rgba(255,255,255,0.07)";
-const LINE_GAMES = "#3fbf7f"; // pot green: frames taken
-const LINE_RACKS = "#5b9dd9"; // chalk blue: the supporting series
 
 export default function PlayerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const playerId = Number(id);
   const { t, locale } = useT();
+  const chart = useChartTheme();
 
   const { user } = useAuth();
   const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
   const player = players?.find((p) => p.id === playerId);
 
   const { data: gamesData, isLoading: isLoadingGames } = useGetGames({
-    playerName: player?.name,
+    playerId,
     pageSize: 1000,
   });
 
@@ -56,12 +52,12 @@ export default function PlayerDetailPage() {
 
     const chartData = games.map((game, index) => {
       totalGames++;
+      // By id, matching the filter that fetched these rows. On names, a renamed
+      // player matched neither side and silently scored nothing.
       const isPlayer1 =
-        game.player_1_name === player.name ||
-        game.player_1b_name === player.name;
+        game.player_1_id === player.id || game.player_1b_id === player.id;
       const isPlayer2 =
-        game.player_2_name === player.name ||
-        game.player_2b_name === player.name;
+        game.player_2_id === player.id || game.player_2b_id === player.id;
 
       const p1Score = parseInt(game.player_1_score, 10) || 0;
       const p2Score = parseInt(game.player_2_score, 10) || 0;
@@ -200,32 +196,26 @@ export default function PlayerDetailPage() {
               <div className="h-64 w-full p-3 text-caption md:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={stats.chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
                     <XAxis
                       dataKey="date"
-                      stroke={AXIS}
-                      tick={{ fill: AXIS, fontSize: 12 }}
-                      axisLine={{ stroke: GRID }}
-                      tickLine={{ stroke: GRID }}
+                      stroke={chart.axis}
+                      tick={{ fill: chart.axis, fontSize: 12 }}
+                      axisLine={{ stroke: chart.grid }}
+                      tickLine={{ stroke: chart.grid }}
                       tickFormatter={(val) => val.split(",")[0]}
                     />
                     <YAxis
-                      stroke={AXIS}
-                      tick={{ fill: AXIS, fontSize: 12 }}
+                      stroke={chart.axis}
+                      tick={{ fill: chart.axis, fontSize: 12 }}
                       domain={[0, 100]}
-                      axisLine={{ stroke: GRID }}
-                      tickLine={{ stroke: GRID }}
+                      axisLine={{ stroke: chart.grid }}
+                      tickLine={{ stroke: chart.grid }}
                       tickFormatter={(val) => `${val}%`}
                     />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1f2624",
-                        border: "1px solid rgba(255,255,255,0.13)",
-                        borderRadius: "10px",
-                        color: "#f4f2ec",
-                        fontSize: 14,
-                      }}
-                      itemStyle={{ color: "#f4f2ec" }}
+                      contentStyle={chart.tooltip}
+                      itemStyle={chart.tooltipItem}
                       formatter={(value) => `${value}%`}
                       itemSorter={(i) => (i.dataKey === "gameWinRate" ? -1 : 1)}
                     />
@@ -233,7 +223,7 @@ export default function PlayerDetailPage() {
                       type="step"
                       name={t("players.racks")}
                       dataKey="rackWinRate"
-                      stroke={LINE_RACKS}
+                      stroke={SERIES.racks}
                       strokeWidth={2}
                       strokeDasharray="3 3"
                       dot={false}
@@ -242,7 +232,7 @@ export default function PlayerDetailPage() {
                       type="step"
                       name={t("players.games")}
                       dataKey="gameWinRate"
-                      stroke={LINE_GAMES}
+                      stroke={SERIES.games}
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 5 }}
@@ -257,7 +247,7 @@ export default function PlayerDetailPage() {
               <div className="p-3">
                 <GamesList
                   games={gamesData?.games ?? []}
-                  playerName={player.name}
+                  playerId={player.id}
                   showDates
                 />
               </div>

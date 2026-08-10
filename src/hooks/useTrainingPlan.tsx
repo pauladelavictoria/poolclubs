@@ -1,50 +1,25 @@
 import { supabase } from "@/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type {
-  TrainingPlan,
-  TrainingPlanStep,
-  Drill,
-  DrillLog,
-  Category,
-  DrillDifficulty,
-  DrillSkillType,
+import { keys } from "@/libs/queryKeys";
+import {
+  CATEGORY_TO_DIFFICULTY,
+  DIFFICULTIES,
+  SKILL_TYPES,
+  type TrainingPlan,
+  type TrainingPlanStep,
+  type Drill,
+  type DrillLog,
+  type Category,
+  type DrillDifficulty,
+  type DrillSkillType,
 } from "@/types";
 
-const SKILL_TYPES: DrillSkillType[] = [
-  "potting",
-  "position",
-  "safety",
-  "break",
-  "banks",
-  "kicks",
-  "patterns",
-  "specials",
-];
-
-const DIFFICULTY_ORDER: Record<DrillDifficulty, number> = {
-  beginner: 0,
-  intermediate: 1,
-  advanced: 2,
-};
-
-const DIFFICULTIES: DrillDifficulty[] = ["beginner", "intermediate", "advanced"];
-
-function getDifficultyForCategory(category: Category): DrillDifficulty {
-  const map: Record<Category, DrillDifficulty> = {
-    1: "advanced",
-    2: "intermediate",
-    3: "beginner",
-  };
-  return map[category];
-}
-
-function getAdjacentDifficulties(
-  main: DrillDifficulty
-): { warmup: DrillDifficulty | null; stretch: DrillDifficulty | null } {
-  const idx = DIFFICULTY_ORDER[main];
+/** DIFFICULTIES is ordered easiest first, so a neighbour is a step along it. */
+function getAdjacentDifficulties(main: DrillDifficulty) {
+  const idx = DIFFICULTIES.indexOf(main);
   return {
-    warmup: idx > 0 ? DIFFICULTIES[idx - 1] : null,
-    stretch: idx < 2 ? DIFFICULTIES[idx + 1] : null,
+    warmup: DIFFICULTIES[idx - 1] ?? null,
+    stretch: DIFFICULTIES[idx + 1] ?? null,
   };
 }
 
@@ -58,9 +33,9 @@ function getAdjacentDifficulties(
 function selectDrillsForPlan(
   allDrills: Drill[],
   recentLogs: DrillLog[],
-  category: Category
+  category: Category,
 ): Drill[] {
-  const mainDifficulty = getDifficultyForCategory(category);
+  const mainDifficulty = CATEGORY_TO_DIFFICULTY[category];
   const { warmup, stretch } = getAdjacentDifficulties(mainDifficulty);
 
   // Find drills recently mastered (>80% score)
@@ -88,10 +63,7 @@ function selectDrillsForPlan(
     const picked: Drill[] = [];
     const byType = new Map<DrillSkillType, Drill[]>();
     for (const type of SKILL_TYPES) {
-      byType.set(
-        type,
-        shuffleArray(pool.filter((d) => d.skill_type === type))
-      );
+      byType.set(type, shuffleArray(pool.filter((d) => d.skill_type === type)));
     }
 
     // Round-robin across skill types
@@ -143,7 +115,7 @@ export const useTrainingPlan = (playerId?: number) => {
 
   // Fetch active plan with steps + joined drill data
   const planQuery = useQuery({
-    queryKey: ["training_plan", playerId],
+    queryKey: keys.trainingPlan.of(playerId),
     queryFn: async () => {
       if (!playerId) return null;
 
@@ -210,7 +182,7 @@ export const useTrainingPlan = (playerId?: number) => {
       const selectedDrills = selectDrillsForPlan(
         allDrills as Drill[],
         recentLogs as DrillLog[],
-        category
+        category,
       );
 
       if (selectedDrills.length === 0) {
@@ -238,7 +210,7 @@ export const useTrainingPlan = (playerId?: number) => {
       return newPlan as TrainingPlan;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["training_plan", playerId] });
+      queryClient.invalidateQueries({ queryKey: keys.trainingPlan.of(playerId) });
     },
   });
 
@@ -258,7 +230,7 @@ export const useTrainingPlan = (playerId?: number) => {
         .throwOnError();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["training_plan", playerId] });
+      queryClient.invalidateQueries({ queryKey: keys.trainingPlan.of(playerId) });
     },
   });
 
@@ -272,7 +244,7 @@ export const useTrainingPlan = (playerId?: number) => {
         .throwOnError();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["training_plan", playerId] });
+      queryClient.invalidateQueries({ queryKey: keys.trainingPlan.of(playerId) });
     },
   });
 

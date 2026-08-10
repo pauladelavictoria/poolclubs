@@ -11,11 +11,9 @@ import {
 import type { DrillLog } from "@/types";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { bandGradientStops, scoreColor, scorePct } from "@/libs/scoreBand";
+import { fmt, timeOf } from "@/libs/dayLabel";
+import { useChartTheme } from "@/libs/chartTheme";
 import { useT } from "@/i18n";
-
-/* Chart ink, matched to the theme tokens */
-const AXIS = "#8d9793";
-const GRID = "rgba(255,255,255,0.07)";
 
 interface DrillProgressChartProps {
   logs: DrillLog[];
@@ -27,6 +25,7 @@ export default function DrillProgressChart({
   title,
 }: DrillProgressChartProps) {
   const { t, locale } = useT();
+  const chart = useChartTheme();
 
   const chartData = useMemo(() => {
     if (!logs || logs.length === 0) return [];
@@ -39,13 +38,7 @@ export default function DrillProgressChart({
         // date, and recharts resolves a category axis by value: every one of
         // them would hand the tooltip the first row that carries that label.
         index: idx + 1,
-        label: `${at.toLocaleDateString(locale, {
-          day: "numeric",
-          month: "short",
-        })} · ${at.toLocaleTimeString(locale, {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`,
+        label: `${fmt(locale, { day: "numeric", month: "short" }).format(at)} · ${timeOf(at, locale)}`,
         score: scorePct(log.score, log.max_score),
         raw: `${log.score}/${log.max_score}`,
       };
@@ -77,33 +70,27 @@ export default function DrillProgressChart({
                 ))}
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
             <XAxis
               dataKey="index"
-              stroke={AXIS}
-              tick={{ fill: AXIS, fontSize: 12 }}
-              axisLine={{ stroke: GRID }}
-              tickLine={{ stroke: GRID }}
+              stroke={chart.axis}
+              tick={{ fill: chart.axis, fontSize: 12 }}
+              axisLine={{ stroke: chart.grid }}
+              tickLine={{ stroke: chart.grid }}
               tickFormatter={(i) => chartData[i - 1]?.label ?? ""}
               minTickGap={24}
             />
             <YAxis
-              stroke={AXIS}
-              tick={{ fill: AXIS, fontSize: 12 }}
+              stroke={chart.axis}
+              tick={{ fill: chart.axis, fontSize: 12 }}
               domain={[0, 100]}
-              axisLine={{ stroke: GRID }}
-              tickLine={{ stroke: GRID }}
+              axisLine={{ stroke: chart.grid }}
+              tickLine={{ stroke: chart.grid }}
               tickFormatter={(val) => `${val}%`}
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: "#1f2624",
-                border: "1px solid rgba(255,255,255,0.13)",
-                borderRadius: "10px",
-                color: "#f4f2ec",
-                fontSize: 14,
-              }}
-              itemStyle={{ color: "#f4f2ec" }}
+              contentStyle={chart.tooltip}
+              itemStyle={chart.tooltipItem}
               labelFormatter={(i) => chartData[Number(i) - 1]?.label ?? ""}
               formatter={(value, _name, item) => [
                 `${value}% · ${item.payload.raw}`,

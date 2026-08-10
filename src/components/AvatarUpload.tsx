@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { supabase } from "@/supabaseClient";
 import { queryClient } from "@/libs/queryClient";
+import { keys } from "@/libs/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar } from "@/components/ui/Avatar";
 import { toAvatarDataUrl } from "@/libs/avatarImage";
@@ -37,7 +38,7 @@ export default function AvatarUpload({
         .update({ avatar_url: dataUrl })
         .eq("user_id", user.id)
         .throwOnError();
-      queryClient.invalidateQueries({ queryKey: ["players"] });
+      queryClient.invalidateQueries({ queryKey: keys.players.all });
       await refreshMemberships();
       toast.success(t("common.saved"));
     } catch {

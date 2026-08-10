@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button, IconButton } from "@/components/ui/Button";
 import { SkeletonRows } from "@/components/ui/Skeleton";
+import { useDialog } from "@/libs/useDialog";
 import type { Player, Category } from "@/types";
 import { useT } from "@/i18n";
 
@@ -30,6 +31,7 @@ export default function ClubPage() {
   const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const dialogRef = useDialog(isModalOpen);
 
   if (!activeClub) return null;
 
@@ -254,34 +256,38 @@ export default function ClubPage() {
         </Card>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4">
-          <div className="absolute inset-0" aria-hidden onClick={closeModal} />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={editingPlayer ? t("players.edit") : t("players.add")}
-            className="relative w-full max-w-md rounded-t-sheet border border-hairline bg-felt p-5 sm:rounded-sheet"
-          >
-            <h2 className="mb-4 text-h3 font-semibold text-ink">
-              {editingPlayer ? t("players.edit") : t("players.add")}
-            </h2>
-            <PlayerForm
-              initialValues={
-                editingPlayer
-                  ? {
-                      name: editingPlayer.name,
-                      category: editingPlayer.category,
-                    }
-                  : undefined
-              }
-              onSubmit={savePlayer}
-              onCancel={closeModal}
-              isSubmitting={createPlayer.isPending || updatePlayer.isPending}
-            />
-          </div>
-        </div>
-      )}
+      {/* Native <dialog>, like the nav drawer: backdrop, Esc and focus trap come
+          free. A bottom sheet on phones, a centred card from sm up. */}
+      <dialog
+        ref={dialogRef}
+        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+        aria-label={editingPlayer ? t("players.edit") : t("players.add")}
+        onClose={closeModal}
+        onClick={(e) => {
+          if (e.target === dialogRef.current) closeModal();
+        }}
+      >
+        <h2 className="mb-4 text-h3 font-semibold text-ink">
+          {editingPlayer ? t("players.edit") : t("players.add")}
+        </h2>
+        {/* Mounted only while open, so the form starts empty every time rather
+            than showing what the last edit typed. */}
+        {isModalOpen && (
+          <PlayerForm
+            initialValues={
+              editingPlayer
+                ? {
+                    name: editingPlayer.name,
+                    category: editingPlayer.category,
+                  }
+                : undefined
+            }
+            onSubmit={savePlayer}
+            onCancel={closeModal}
+            isSubmitting={createPlayer.isPending || updatePlayer.isPending}
+          />
+        )}
+      </dialog>
     </>
   );
 }

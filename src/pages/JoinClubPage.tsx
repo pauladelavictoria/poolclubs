@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { PageSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { loginLink } from "@/libs/nextPath";
 import { useT } from "@/i18n";
@@ -40,14 +40,7 @@ export default function JoinClubPage() {
   // Left empty the RPC uses the OAuth full_name, so no state to sync with auth.
   const [name, setName] = useState("");
 
-  if (isLoading) {
-    return (
-      <div className="mx-auto max-w-xl space-y-3 px-3 py-6">
-        <Skeleton className="h-14 w-full" />
-        <Skeleton className="h-40 w-full rounded-card" />
-      </div>
-    );
-  }
+  if (isLoading) return <PageSkeleton />;
 
   if (!user) {
     return <Navigate to={loginLink(`/app/join/${code}`)} replace />;

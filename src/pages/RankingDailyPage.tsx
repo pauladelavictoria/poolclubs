@@ -1,20 +1,17 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { LuPlus, LuTv } from "react-icons/lu";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useDailyRanking } from "@/hooks/useDailyRanking";
 import PageHeader from "@/components/PageHeader";
-import Ranking from "@/components/Ranking";
+import Ranking, { type ViewMode } from "@/components/Ranking";
 import GamesList from "@/components/GamesList";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Segmented } from "@/components/ui/Segmented";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { SkeletonRows } from "@/components/ui/Skeleton";
-import type { Category } from "@/types";
 import { useT } from "@/i18n";
-
-type ViewMode = "combined" | "byCategory";
 
 function getTodayYYYYMMDD() {
   return new Date().toISOString().split("T")[0];
@@ -59,13 +56,6 @@ export default function RankingDailyPage() {
 
   const { data: players, isLoading: playersLoading } = useGetPlayers();
   const ranking = useDailyRanking({ games, players });
-
-  const rankingByCategory = useMemo(() => {
-    if (!ranking) return null;
-    const byCat: Record<Category, typeof ranking> = { 1: [], 2: [], 3: [] };
-    for (const entry of ranking) byCat[entry.category].push(entry);
-    return byCat;
-  }, [ranking]);
 
   return (
     <>
@@ -124,7 +114,6 @@ export default function RankingDailyPage() {
 
           <Ranking
             ranking={ranking}
-            rankingByCategory={rankingByCategory}
             viewMode={viewMode}
             isLoading={gamesLoading || playersLoading}
             emptyMessage={t("ranking.emptyDaily")}
