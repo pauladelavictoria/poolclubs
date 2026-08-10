@@ -1,7 +1,7 @@
 /**
- * Who may change a drill. UI mirror of the RLS policies in
- * sql/supabase-migration-drills-write.sql — change both together. This only
- * decides what to show; the database is the gate.
+ * Who may change a drill. UI mirror of the `drills` RLS policies in
+ * sql/schema.sql — change both together. This only decides what to show; the
+ * database is the gate.
  */
 export function canEditDrill(
   createdBy: string | null | undefined,

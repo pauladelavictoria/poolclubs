@@ -89,7 +89,7 @@ export const useManageClub = () => {
 
 /** Creating and joining reach clubs you are not in yet, so they go through
  *  SECURITY DEFINER RPCs rather than table writes — see
- *  sql/supabase-migration-clubs.sql. */
+ *  the create_club / join_club definitions in sql/schema.sql. */
 export const useJoinOrCreateClub = () => {
   const { refreshMemberships, setActiveClub } = useAuth();
 

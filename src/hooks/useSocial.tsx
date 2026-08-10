@@ -6,7 +6,7 @@ import { keys } from "@/libs/queryKeys";
 import type { Comment, Reaction, SocialTarget } from "@/types";
 
 /** Turns a target into the column pair the tables use. Exactly one is set —
- *  enforced by a CHECK in sql/supabase-migration-social.sql. */
+ *  enforced by a CHECK on both tables in sql/schema.sql. */
 export const targetColumns = (target: SocialTarget) =>
   "gameId" in target
     ? { game_id: target.gameId, drill_log_id: null }

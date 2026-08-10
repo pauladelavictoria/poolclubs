@@ -18,7 +18,7 @@ import { useT } from "@/i18n";
 /**
  * The club's own page: settings, invites and the roster. Everyone gets the
  * invite link — anyone may invite. Only the owner sees the approve/remove
- * controls, mirroring the RLS in sql/supabase-migration-clubs.sql.
+ * controls, mirroring the `clubs` and `players` RLS in sql/schema.sql.
  */
 export default function ClubPage() {
   const { t } = useT();

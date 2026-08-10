@@ -3,7 +3,7 @@ import { AuthContext } from "@/context/AuthContext";
 
 /** Owner of the GLOBAL drill library — not a club role. Drills are shared by
  *  every club, so this stays a single hardcoded player. Mirrored by the RLS
- *  policies in sql/supabase-migration-drills-write.sql — change both together.
+ *  policies on `drills` in sql/schema.sql — change both together.
  *  Club permissions are `isClubAdmin` below and live in the clubs table. */
 export const ADMIN_PLAYER_ID = 1;
 

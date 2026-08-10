@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "db:sql": "supabase db query --linked -f",
+    "db:dump": "supabase db dump --linked -f sql/schema.sql",
     "db:types": "supabase gen types typescript --linked --schema public > src/types/database.types.gen.ts"
   },
   "dependencies": {
