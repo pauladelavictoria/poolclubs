@@ -5,21 +5,24 @@ import {
   type ButtonVariant,
 } from "./buttonStyles";
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** `primary` is the one action on the screen. Everything else is quiet. */
   variant?: ButtonVariant;
   size?: ButtonSize;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", ...props }, ref) => (
+  ({ className, variant = "primary", size = "md", onClick, ...props }, ref) => (
     <button
       ref={ref}
+      onClick={(e) => {
+        if (variant === "primary") navigator.vibrate?.(8);
+        onClick?.(e);
+      }}
       className={buttonClasses({ variant, size, className: className || "" })}
       {...props}
     />
-  )
+  ),
 );
 Button.displayName = "Button";
 

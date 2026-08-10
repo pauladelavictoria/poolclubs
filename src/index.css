@@ -143,6 +143,7 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
   }
 
   html[data-smooth] {
@@ -238,6 +239,16 @@ dialog.drawer[open]::backdrop {
   }
 }
 
+/* Held invisible for the first 300ms. A query that resolves from cache or a
+   fast network would otherwise paint one frame of shimmer and vanish, and a
+   flash of loading reads slower than no loading state at all. `backwards` is
+   what applies the 0 during the delay. */
+@keyframes skeleton-in {
+  from {
+    opacity: 0;
+  }
+}
+
 .skeleton {
   background: linear-gradient(
       90deg,
@@ -246,7 +257,9 @@ dialog.drawer[open]::backdrop {
       var(--color-felt) 60%
     )
     0 0 / 200% 100%;
-  animation: sheen 1.4s linear infinite;
+  animation:
+    sheen 1.4s linear infinite,
+    skeleton-in 200ms var(--ease-out) 300ms backwards;
 }
 
 /* Landing page only.
