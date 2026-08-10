@@ -382,5 +382,9 @@
   "landing.installDesktop": "Desktop",
   "landing.installDesktopBody": "Click the install icon in the address bar, or just use it in a tab.",
   "landing.storeSoon": "Native iOS and Android apps are on the way.",
-  "landing.footer": "Made by pool players for pool players."
+  "landing.footer": "Made by pool players for pool players.",
+  "crash.title": "Something broke",
+  "crash.body": "This screen failed to load. Reloading usually fixes it.",
+  "crash.stale": "A new version of the app is out. Reload to update.",
+  "crash.reload": "Reload"
 }

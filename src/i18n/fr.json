@@ -382,5 +382,9 @@
   "landing.installDesktop": "Ordinateur",
   "landing.installDesktopBody": "Clique sur l'icône d'installation dans la barre d'adresse, ou utilise-la dans un onglet.",
   "landing.storeSoon": "Les apps natives iOS et Android arrivent.",
-  "landing.footer": "Fait par des joueurs de billard pour des joueurs de billard."
+  "landing.footer": "Fait par des joueurs de billard pour des joueurs de billard.",
+  "crash.title": "Quelque chose a cassé",
+  "crash.body": "Cet écran n'a pas pu se charger. Recharger suffit en général.",
+  "crash.stale": "Une nouvelle version de l'app est disponible. Recharge pour mettre à jour.",
+  "crash.reload": "Recharger"
 }

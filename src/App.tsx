@@ -15,6 +15,7 @@ import {
   createRoutesFromElements,
 } from "react-router-dom";
 import Layout from "@/pages/Layout";
+import RouteError from "@/components/RouteError";
 import { ProtectedRoute } from "@/ProtectedRoute";
 import { RequireClub } from "@/RequireClub";
 import { useAuth } from "@/hooks/useAuth";
@@ -61,7 +62,7 @@ function Root() {
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route element={<Root />}>
+    <Route element={<Root />} errorElement={<RouteError />}>
       {/* The public front door. Everything a signed-in member uses lives
         under /app, which is also the PWA's start URL — so installing
         the app skips the pitch. */}

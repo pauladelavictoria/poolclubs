@@ -382,5 +382,9 @@
   "landing.installDesktop": "Ordenador",
   "landing.installDesktopBody": "Pulsa el icono de instalar en la barra de direcciones, o úsala en una pestaña.",
   "landing.storeSoon": "Las apps nativas de iOS y Android están en camino.",
-  "landing.footer": "Hecho por jugadores de billar para jugadores de billar."
+  "landing.footer": "Hecho por jugadores de billar para jugadores de billar.",
+  "crash.title": "Algo se ha roto",
+  "crash.body": "Esta pantalla no ha podido cargarse. Recargar suele arreglarlo.",
+  "crash.stale": "Hay una versión nueva de la app. Recarga para actualizar.",
+  "crash.reload": "Recargar"
 }
