@@ -26,19 +26,22 @@ const game = (
   p2: number,
   s2: number,
   at = `2026-03-0${++seq}T10:00:00.000Z`,
-): Game =>
-  ({
-    id: `g${seq}`,
-    club_id: 1,
-    player_1_id: p1,
-    player_2_id: p2,
-    player_1_name: `p${p1}`,
-    player_2_name: `p${p2}`,
-    player_1_score: String(s1),
-    player_2_score: String(s2),
-    created_at: at,
-    mode: "single",
-  }) as Game;
+): Game => ({
+  id: `g${seq}`,
+  club_id: 1,
+  player_1_id: p1,
+  player_2_id: p2,
+  player_1_name: `p${p1}`,
+  player_2_name: `p${p2}`,
+  player_1_score: s1,
+  player_2_score: s2,
+  player_1b_id: null,
+  player_1b_name: null,
+  player_2b_id: null,
+  player_2b_name: null,
+  created_at: at,
+  mode: "single",
+});
 
 const byId = (rows: ReturnType<typeof tallyDaily>, id: number) =>
   rows.find((r) => r.playerId === id)!;
@@ -101,9 +104,9 @@ const byId = (rows: ReturnType<typeof tallyDaily>, id: number) =>
 // Unknown players and unparseable scores are skipped, not counted
 assert.deepEqual(tallyDaily([game(1, 5, 99, 2)], PLAYERS), []);
 {
-  // Note an empty string is Number 0, not NaN, so it counts as a 0-rack loss —
-  // only genuinely non-numeric text is skipped.
-  const bad = { ...game(1, 5, 2, 2), player_1_score: "abc" };
+  // The columns are bigint, so a non-number can only arrive if something wrote
+  // one another way. Skipped rather than scored as a zero.
+  const bad = { ...game(1, 5, 2, 2), player_1_score: NaN };
   assert.deepEqual(tallyDaily([bad], PLAYERS), []);
 }
 

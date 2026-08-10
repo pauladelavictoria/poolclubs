@@ -1,7 +1,6 @@
 import { supabase } from "@/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { keys } from "@/libs/queryKeys";
-import type { DrillLog } from "@/types";
 
 export type UseGetDrillLogsFilters = {
   player_id?: number;
@@ -28,7 +27,7 @@ export const useGetDrillLogs = (filters?: UseGetDrillLogsFilters) => {
       if (limit) query = query.limit(limit);
 
       const { data } = await query.throwOnError();
-      return data as DrillLog[];
+      return data;
     },
   });
 };

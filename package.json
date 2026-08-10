@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "db:sql": "supabase db query --linked -f"
+    "db:sql": "supabase db query --linked -f",
+    "db:types": "supabase gen types typescript --linked --schema public > src/types/database.types.gen.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

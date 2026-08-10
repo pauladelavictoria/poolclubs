@@ -22,6 +22,8 @@ export const useClubMembers = () => {
     queryKey: keys.clubMembers.in(activeClubId),
     enabled: !!activeClubId,
     queryFn: async () => {
+      if (!activeClubId) throw new Error("no active club");
+
       const { data } = await supabase
         .from("players")
         .select("*")
@@ -72,6 +74,8 @@ export const useManageClub = () => {
 
     renameClub: useMutation({
       mutationFn: async (name: string) => {
+        if (!activeClubId) throw new Error("no active club");
+
         await supabase
           .from("clubs")
           .update({ name: name.trim() })
@@ -102,7 +106,7 @@ export const useJoinOrCreateClub = () => {
           .rpc("create_club", { club_name: name })
           .throwOnError();
 
-        return settle(data as number);
+        return settle(data);
       },
     }),
 
@@ -121,12 +125,15 @@ export const useJoinOrCreateClub = () => {
         const { data } = await supabase
           .rpc("join_club", {
             code,
-            claim_player_id: claimPlayerId ?? null,
-            display_name: displayName?.trim() || null,
+            // Both default to NULL in the function, so leaving a key out is
+            // the same as passing null — and `undefined` is what the generated
+            // argument types accept.
+            claim_player_id: claimPlayerId,
+            display_name: displayName?.trim() || undefined,
           })
           .throwOnError();
 
-        return settle(data as number);
+        return settle(data);
       },
     }),
   };
@@ -140,6 +147,8 @@ export const useClubPreview = (code: string | undefined) =>
     enabled: !!code,
     retry: false,
     queryFn: async () => {
+      if (!code) throw new Error("no join code");
+
       const { data } = await supabase
         .rpc("club_preview", { code })
         .throwOnError();

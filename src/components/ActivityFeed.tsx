@@ -88,8 +88,9 @@ function Side({
   names,
   won,
 }: {
-  ids: (number | undefined)[];
-  names: (string | undefined)[];
+  /** Null where the column is empty, undefined where singles skips the slot. */
+  ids: (number | null | undefined)[];
+  names: (string | null | undefined)[];
   won: boolean;
 }) {
   const { byId } = usePlayerLookup();
@@ -99,7 +100,7 @@ function Side({
     .map((id, i) => ({
       id,
       name: names[i],
-      url: id === undefined ? undefined : byId.get(id)?.avatar_url,
+      url: id == null ? undefined : byId.get(id)?.avatar_url,
     }))
     .filter((person) => !!person.name);
 
@@ -130,8 +131,8 @@ function MatchCard({ game }: { game: Game }) {
   const { t, locale } = useT();
 
   const isDoubles = game.mode === "doubles";
-  const p1 = parseInt(game.player_1_score, 10) || 0;
-  const p2 = parseInt(game.player_2_score, 10) || 0;
+  const p1 = game.player_1_score;
+  const p2 = game.player_2_score;
 
   return (
     <>

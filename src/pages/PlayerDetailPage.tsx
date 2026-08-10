@@ -59,8 +59,8 @@ export default function PlayerDetailPage() {
       const isPlayer2 =
         game.player_2_id === player.id || game.player_2b_id === player.id;
 
-      const p1Score = parseInt(game.player_1_score, 10) || 0;
-      const p2Score = parseInt(game.player_2_score, 10) || 0;
+      const p1Score = game.player_1_score;
+      const p2Score = game.player_2_score;
 
       let wonGame = false;
       if (isPlayer1) {

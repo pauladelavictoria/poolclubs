@@ -62,10 +62,10 @@ export const useEloRanking = ({
             } = game;
 
             const isDoubles = mode === "doubles";
-            const s1 = Number(player_1_score);
-            const s2 = Number(player_2_score);
+            const s1 = player_1_score;
+            const s2 = player_2_score;
 
-            if (Number.isNaN(s1) || Number.isNaN(s2)) continue;
+            if (!Number.isFinite(s1) || !Number.isFinite(s2)) continue;
 
             const p1aStats = playerStats.get(player_1_id);
             const p1bStats = isDoubles && player_1b_id ? playerStats.get(player_1b_id) : null;

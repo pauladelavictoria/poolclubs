@@ -14,6 +14,8 @@ export const useGetDrill = (id?: number) =>
     queryKey: keys.drill.one(id),
     enabled: !!id,
     queryFn: async () => {
+      if (!id) throw new Error("no drill id");
+
       const { data } = await supabase
         .from("drills")
         .select("*")

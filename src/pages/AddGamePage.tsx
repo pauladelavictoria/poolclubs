@@ -72,7 +72,11 @@ export default function AddGamePage() {
 
   const hasDuplicatePlayers =
     new Set(selectedPlayers).size !== selectedPlayers.length;
-  const bothScoresIn = !!player_1_score && !!player_2_score;
+  // Not a truthiness check: a legitimate 0-rack score is falsy, and testing it
+  // that way would leave the button disabled on a whitewash. An empty numeric
+  // field reads back as NaN, which is what this actually has to exclude.
+  const bothScoresIn =
+    Number.isFinite(player_1_score) && Number.isFinite(player_2_score);
   const isTie = bothScoresIn && player_1_score === player_2_score;
 
   const problem = hasDuplicatePlayers
@@ -90,8 +94,8 @@ export default function AddGamePage() {
     playersLoading || isPending || !namesComplete || !bothScoresIn || !!problem;
 
   const onSubmit = (game: Game) => {
-    const byName = (name?: string) =>
-      name ? players?.find((p) => p.name === name)?.id : undefined;
+    const byName = (name?: string | null) =>
+      (name ? players?.find((p) => p.name === name)?.id : null) ?? null;
 
     const player_1_id = byName(game.player_1_name);
     const player_2_id = byName(game.player_2_name);
@@ -188,7 +192,13 @@ export default function AddGamePage() {
                       aria-label={t("games.racksFor", { side })}
                       placeholder="0"
                       className={scoreInput}
-                      {...register(`player_${n}_score`, { required: true })}
+                      // The column is bigint, and an <input> hands back a
+                      // string — without this the form would submit "5" for a
+                      // field the types call a number.
+                      {...register(`player_${n}_score`, {
+                        required: true,
+                        valueAsNumber: true,
+                      })}
                     />
                   </fieldset>
                 );

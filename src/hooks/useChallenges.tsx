@@ -14,6 +14,8 @@ export const useGetChallenges = () => {
     queryKey: keys.challenges.in(activeClubId),
     enabled: !!activeClubId,
     queryFn: async () => {
+      if (!activeClubId) throw new Error("no active club");
+
       const { data } = await supabase
         .from("challenges")
         .select("*")

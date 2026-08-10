@@ -54,9 +54,10 @@ export function tallyDaily(
     const p2 = entryById.get(game.player_2_id);
     if (!p1 || !p2) continue;
 
-    const s1 = Number(game.player_1_score);
-    const s2 = Number(game.player_2_score);
-    if (Number.isNaN(s1) || Number.isNaN(s2)) continue;
+    const s1 = game.player_1_score;
+    const s2 = game.player_2_score;
+    // Numeric columns, so this only fires on data that got in another way.
+    if (!Number.isFinite(s1) || !Number.isFinite(s2)) continue;
 
     // A draw has no winner to award, and a match is played to a decider, so an
     // equal row is bad data rather than a result. Counting it made a single

@@ -20,6 +20,10 @@ export const useGetPlayers = () => {
     // `.throwOnError()` hands the failure to react-query, which logs it once in
     // libs/queryClient.ts. Same everywhere; see that file.
     queryFn: async () => {
+      // `enabled` already stops this running without a club, but that is a
+      // runtime guarantee and the query builder wants a compile-time one.
+      if (!activeClubId) throw new Error("no active club");
+
       const { data } = await supabase
         .from("players")
         .select("*")

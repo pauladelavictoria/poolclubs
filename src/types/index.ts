@@ -1,47 +1,53 @@
-export type Club = {
-  id: number;
-  name: string;
-  /** Secret half of the invite link. Only members can read it. */
-  join_code: string;
-  owner_id: string;
-  created_at: string;
-};
+import type { Database } from "./database.types.gen";
 
-export type GameMode = 'single' | 'doubles';
+/**
+ * The app's types, derived from the generated schema rather than written twice.
+ *
+ * Regenerate the schema with `npm run db:types`. A column renamed or dropped in
+ * a migration then becomes a build error here instead of `undefined` at runtime.
+ *
+ * Two kinds of narrowing sit on top, because a Postgres column is looser than
+ * what the app actually stores in it:
+ *
+ *   - `text` columns holding a fixed set of words (status, difficulty) generate
+ *     as `string`. The unions below are the real domain, and they are what the
+ *     CHECK constraints enforce.
+ *   - `jsonb` generates as `Json`. Only this app writes those columns, so their
+ *     shape is known.
+ *
+ * Where a narrowing is a guess rather than a fact, it says so.
+ */
+type Row<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
 
-export type Game = {
-  user_id: number
-  id: string;
-  club_id: number;
-  player_1_id: number;
-  player_2_id: number;
-  player_1_name: string;
-  player_2_name: string;
-  player_1_score: string;
-  player_2_score: string;
-  created_at: string;
-  mode: GameMode;
-  player_1b_id?: number;
-  player_1b_name?: string;
-  player_2b_id?: number;
-  player_2b_name?: string;
-}
+/**
+ * `created_at` is `timestamptz DEFAULT now()` everywhere, but only some tables
+ * declare it NOT NULL, so it generates as nullable on the rest. Nothing writes a
+ * null, and re-narrowing here beats a `?? ""` at every render.
+ *
+ * ponytail: this is papering over the schema. The real fix is one migration —
+ * `ALTER TABLE <t> ALTER COLUMN created_at SET NOT NULL` on clubs, games,
+ * challenges, comments and reactions — after which this helper can go.
+ */
+type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
+
+export type Club = Stamped<Row<"clubs">>;
+
+/** A real Postgres enum, so this one comes through already narrowed. */
+export type GameMode = Database["public"]["Enums"]["GameMode"];
+
+/** Scores are `bigint` columns: numbers, not strings. */
+export type Game = Stamped<Row<"games">>;
 
 export type Category = 1 | 2 | 3;
 
 /** 'pending' until the club owner approves the join request. */
-export type PlayerStatus = 'pending' | 'active';
+export type PlayerStatus = "pending" | "active";
 
 /** A player row is also the membership row: one per (club, user). */
-export type Player = {
-  id: number;
-  name: string;
+export type Player = Omit<Row<"players">, "category" | "status"> & {
   category: Category;
-  club_id: number;
   status: PlayerStatus;
-  user_id: string | null;
-  /** Copied from the OAuth profile on sign-in; NULL for guest players. */
-  avatar_url: string | null;
 };
 
 /** A Player joined to its club — what AuthContext lists for the switcher.
@@ -49,31 +55,16 @@ export type Player = {
  *  own player row before it lets you see the club it belongs to. */
 export type Membership = Player & { club: Club | null };
 
-export type ChallengeStatus = 'pending' | 'accepted' | 'declined' | 'played';
+export type ChallengeStatus = "pending" | "accepted" | "declined" | "played";
 
-export type Challenge = {
-  id: number;
-  club_id: number;
-  from_player_id: number;
-  to_player_id: number;
+export type Challenge = Omit<Stamped<Row<"challenges">>, "status"> & {
   status: ChallengeStatus;
-  message: string | null;
-  game_id: string | null;
-  created_at: string;
 };
 
 /** Exactly one of game_id / drill_log_id is set — enforced by a CHECK. */
 export type SocialTarget = { gameId: string } | { drillLogId: number };
 
-export type Comment = {
-  id: number;
-  club_id: number;
-  author_player_id: number;
-  game_id: string | null;
-  drill_log_id: number | null;
-  body: string;
-  created_at: string;
-};
+export type Comment = Stamped<Row<"comments">>;
 
 /** The picker's palette. The database accepts any emoji, so a row may carry
  *  one that is not on this list — render what is stored, not what is here. */
@@ -89,15 +80,7 @@ export const REACTIONS = [
 ] as const;
 export type ReactionEmoji = (typeof REACTIONS)[number];
 
-export type Reaction = {
-  id: number;
-  club_id: number;
-  author_player_id: number;
-  game_id: string | null;
-  drill_log_id: number | null;
-  emoji: string;
-  created_at: string;
-};
+export type Reaction = Stamped<Row<"reactions">>;
 
 // Training / Drills types
 export type DrillDifficulty = 'beginner' | 'intermediate' | 'advanced';
@@ -126,48 +109,27 @@ export type ShotPath = {
   type?: 'solid' | 'dashed';
 };
 
-export type Drill = {
-  id: number;
-  name: string;
-  description: string;
+/** ball_positions and shot_paths are jsonb — only the drill editor writes them,
+ *  so the arrays below are their real shape rather than a guess. */
+export type Drill = Omit<
+  Row<"drills">,
+  "difficulty" | "skill_type" | "ball_positions" | "shot_paths"
+> & {
   difficulty: DrillDifficulty;
   skill_type: DrillSkillType;
-  setup_instructions: string;
-  scoring_method: string;
-  max_score: number;
   ball_positions: BallPosition[];
   shot_paths: ShotPath[];
-  created_at: string;
-  created_by: string | null;
 };
 
-export type DrillLog = {
-  id: number;
-  drill_id: number;
-  player_id: number;
-  score: number;
-  max_score: number;
-  notes?: string;
-  created_at: string;
-};
+export type DrillLog = Row<"drill_logs">;
 
 export type TrainingPlanStepStatus = 'pending' | 'completed' | 'skipped';
 
-export type TrainingPlan = {
-  id: number;
-  player_id: number;
-  active: boolean;
-  created_at: string;
-};
+export type TrainingPlan = Row<"training_plans">;
 
-export type TrainingPlanStep = {
-  id: number;
-  plan_id: number;
-  drill_id: number;
-  step_order: number;
+export type TrainingPlanStep = Omit<Row<"training_plan_steps">, "status"> & {
   status: TrainingPlanStepStatus;
-  drill_log_id?: number;
-  created_at: string;
+  /** Joined in by useTrainingPlan's select, not a column of its own. */
   drill?: Drill;
 };
 

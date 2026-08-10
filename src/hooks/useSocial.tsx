@@ -33,6 +33,8 @@ export const useComments = () => {
     queryKey: keys.comments.in(activeClubId),
     enabled: !!activeClubId,
     queryFn: async () => {
+      if (!activeClubId) throw new Error("no active club");
+
       const { data } = await supabase
         .from("comments")
         .select("*")
@@ -52,6 +54,8 @@ export const useReactions = () => {
     queryKey: keys.reactions.in(activeClubId),
     enabled: !!activeClubId,
     queryFn: async () => {
+      if (!activeClubId) throw new Error("no active club");
+
       const { data } = await supabase
         .from("reactions")
         .select("*")

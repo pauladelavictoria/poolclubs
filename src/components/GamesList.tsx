@@ -63,8 +63,9 @@ export default function GamesList({
           ? `${player_2_name} / ${player_2b_name}`
           : player_2_name;
 
-        const p1Score = parseInt(player_1_score, 10) || 0;
-        const p2Score = parseInt(player_2_score, 10) || 0;
+        // bigint columns, so these arrive as numbers
+        const p1Score = player_1_score;
+        const p2Score = player_2_score;
         const p1Won = p1Score > p2Score;
         const p2Won = p2Score > p1Score;
 

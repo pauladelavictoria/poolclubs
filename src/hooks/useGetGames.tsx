@@ -53,6 +53,8 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
   const { activeClubId } = useAuth();
 
   async function fetchGames() {
+    if (!activeClubId) throw new Error("no active club");
+
     let query = supabase
       .from("games")
       .select("*", { count: "exact" })
