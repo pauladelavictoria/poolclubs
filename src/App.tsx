@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 import { I18nProvider } from "@/i18n";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -6,26 +7,28 @@ import { useTheme } from "@/libs/theme";
 import { ToastContainer } from "react-toastify";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Layout from "@/pages/Layout";
-import LandingPage from "@/pages/LandingPage";
-import DashboardPage from "@/pages/DashboardPage";
-import LoginPage from "@/pages/LoginPage";
-import GamesPage from "@/pages/GamesPage";
-import AddGamePage from "@/pages/AddGamePage";
-import RankingDailyPage from "@/pages/RankingDailyPage";
-import RankingAllTimePage from "@/pages/RankingAllTimePage";
-import PlayerDetailPage from "@/pages/PlayerDetailPage";
-import DrillsPage from "@/pages/DrillsPage";
-import DrillDetailPage from "@/pages/DrillDetailPage";
-import DrillEditorPage from "@/pages/DrillEditorPage";
-import TrainingProgressPage from "@/pages/TrainingProgressPage";
-import TrainingPlanPage from "@/pages/TrainingPlanPage";
-import ChallengesPage from "@/pages/ChallengesPage";
-import ClubPage from "@/pages/ClubPage";
-import ClubOnboardingPage from "@/pages/ClubOnboardingPage";
-import JoinClubPage from "@/pages/JoinClubPage";
 import { ProtectedRoute } from "@/ProtectedRoute";
 import { RequireClub } from "@/RequireClub";
 import { useAuth } from "@/hooks/useAuth";
+
+import LandingPage from "@/pages/LandingPage";
+import LoginPage from "@/pages/LoginPage";
+import DashboardPage from "@/pages/DashboardPage";
+import RankingAllTimePage from "@/pages/RankingAllTimePage";
+import GamesPage from "@/pages/GamesPage";
+import DrillsPage from "@/pages/DrillsPage";
+import ClubOnboardingPage from "@/pages/ClubOnboardingPage";
+
+const AddGamePage = lazy(() => import("@/pages/AddGamePage"));
+const RankingDailyPage = lazy(() => import("@/pages/RankingDailyPage"));
+const PlayerDetailPage = lazy(() => import("@/pages/PlayerDetailPage"));
+const DrillDetailPage = lazy(() => import("@/pages/DrillDetailPage"));
+const DrillEditorPage = lazy(() => import("@/pages/DrillEditorPage"));
+const TrainingProgressPage = lazy(() => import("@/pages/TrainingProgressPage"));
+const TrainingPlanPage = lazy(() => import("@/pages/TrainingPlanPage"));
+const ChallengesPage = lazy(() => import("@/pages/ChallengesPage"));
+const ClubPage = lazy(() => import("@/pages/ClubPage"));
+const JoinClubPage = lazy(() => import("@/pages/JoinClubPage"));
 
 /** "/me/..." resolves to the signed-in player's own URL. Lets links exist before
  *  we know their id. */
