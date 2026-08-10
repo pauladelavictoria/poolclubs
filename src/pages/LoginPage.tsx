@@ -95,7 +95,10 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={signIn}
-          className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-control bg-ink font-medium text-pocket transition-[background-color,transform] duration-150 ease-[var(--ease-out)] hover:bg-white active:scale-[0.97]"
+          // Filled with ink, not with the accent: signing in with Google is the
+          // way in, but the accent is spent on actions inside the app. The hover
+          // is a token, since `white` is invisible under light mode's pale text.
+          className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-control bg-ink font-medium text-pocket transition-[background-color,transform] duration-150 ease-[var(--ease-out)] hover:bg-ink-strong active:scale-[0.97]"
         >
           <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" aria-hidden>
             <path

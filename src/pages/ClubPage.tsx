@@ -234,10 +234,10 @@ export default function ClubPage() {
                   {/* Removing takes their games and drill logs with them, so it
                       asks first. */}
                   {isClubAdmin && m.id !== player?.id && (
-                    <button
-                      type="button"
-                      aria-label={t("club.removeNamed", { name: m.name })}
-                      className="shrink-0 rounded-control p-2 text-ink-ghost hover:bg-felt-raised hover:text-strike"
+                    <IconButton
+                      label={t("club.removeNamed", { name: m.name })}
+                      size="sm"
+                      tone="danger"
                       onClick={() => {
                         if (!confirm(t("club.removeConfirm", { name: m.name })))
                           return;
@@ -247,7 +247,7 @@ export default function ClubPage() {
                       }}
                     >
                       <LuUserMinus className="h-4 w-4" aria-hidden />
-                    </button>
+                    </IconButton>
                   )}
                 </li>
               ))}

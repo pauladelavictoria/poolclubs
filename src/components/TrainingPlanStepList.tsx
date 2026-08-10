@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { TrainingPlanStep } from "@/types";
 import { LuCheck, LuSkipForward, LuPlay } from "react-icons/lu";
+import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useT } from "@/i18n";
 
@@ -83,14 +84,15 @@ export default function TrainingPlanStepList({
             {(isCurrent || isSkipped) && drill ? (
               <div className="flex shrink-0 items-center gap-1">
                 {isCurrent && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => onSkip(step.id)}
                     disabled={isSkipping}
-                    className="h-8 rounded-control px-2.5 text-caption text-ink-faint transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
                   >
                     {t("training.skip")}
-                  </button>
+                  </Button>
                 )}
                 <Link
                   to={`/app/drills/${drill.id}?plan=${planId}&step=${step.id}&playerId=${playerId}`}

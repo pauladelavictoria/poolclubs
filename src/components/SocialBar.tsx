@@ -8,6 +8,7 @@ import {
   useReactions,
   useSocialActions,
 } from "@/hooks/useSocial";
+import { Button, IconButton } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { fmt } from "@/libs/dayLabel";
 import { REACTIONS, type SocialTarget } from "@/types";
@@ -104,27 +105,30 @@ export default function SocialBar({
         {picking ? (
           <span className="inline-flex flex-wrap items-center gap-0.5 rounded-full border border-hairline px-1 py-0.5">
             {REACTIONS.map((emoji) => (
-              <button
+              <IconButton
                 key={emoji}
                 type="button"
-                aria-label={emoji}
-                className="h-9 w-9 rounded-full text-h4 hover:bg-felt-raised"
+                label={emoji}
+                size="sm"
+                shape="circle"
+                className="text-h4"
                 onClick={() => {
                   toggleReaction.mutate({ target, emoji });
                   setPicking(false);
                 }}
               >
                 {emoji}
-              </button>
+              </IconButton>
             ))}
-            <button
+            <IconButton
               type="button"
-              aria-label={t("common.cancel")}
-              className="h-9 w-9 rounded-full text-ink-faint hover:bg-felt-raised"
+              label={t("common.cancel")}
+              size="sm"
+              shape="circle"
               onClick={() => setPicking(false)}
             >
-              <LuX className="mx-auto h-4 w-4" />
-            </button>
+              <LuX className="h-4 w-4" />
+            </IconButton>
           </span>
         ) : (
           <button
@@ -189,14 +193,15 @@ export default function SocialBar({
                 </p>
               </div>
               {(c.author_player_id === player?.id || isClubAdmin) && (
-                <button
+                <IconButton
                   type="button"
-                  aria-label={t("common.delete")}
+                  label={t("common.delete")}
+                  size="sm"
+                  tone="danger"
                   onClick={() => deleteComment.mutate(c.id)}
-                  className="shrink-0 p-1 text-ink-ghost hover:text-strike"
                 >
                   <LuX className="h-4 w-4" />
-                </button>
+                </IconButton>
               )}
             </div>
           ))}
@@ -209,13 +214,16 @@ export default function SocialBar({
               placeholder={t("social.write")}
               className="h-9"
             />
-            <button
+            <Button
               type="submit"
+              variant="accent"
+              size="sm"
               disabled={!draft.trim()}
-              className="h-9 shrink-0 rounded-control px-3 text-body font-medium text-strike disabled:text-ink-ghost"
+              // The input beside it is w-full and would otherwise squash it
+              className="shrink-0"
             >
               {t("social.send")}
-            </button>
+            </Button>
           </form>
         </div>
       )}

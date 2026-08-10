@@ -1,4 +1,4 @@
-export type ButtonVariant = "primary" | "secondary" | "ghost";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "accent";
 export type ButtonSize = "sm" | "md";
 
 const VARIANTS: Record<ButtonVariant, string> = {
@@ -8,6 +8,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
     "bg-felt-raised text-ink border border-hairline hover:border-hairline-strong hover:bg-rail disabled:text-ink-ghost",
   ghost:
     "text-ink-soft hover:text-ink hover:bg-felt-raised disabled:text-ink-ghost",
+  accent:
+    "text-strike hover:text-strike-light disabled:text-ink-ghost",
 };
 
 const SIZES: Record<ButtonSize, string> = {

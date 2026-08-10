@@ -11,6 +11,7 @@ import { useGetDrills } from "@/hooks/useGetDrills";
 import { useDeleteDrillLog } from "@/hooks/useDeleteDrillLog";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { Button, IconButton } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Stat } from "@/components/ui/Stat";
 import { SkeletonRows } from "@/components/ui/Skeleton";
@@ -173,16 +174,16 @@ export default function TrainingProgressPage() {
                 title={t("training.noResultsFiltered")}
                 hint={t("training.noResultsFilteredHint")}
                 action={
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={() => {
                       setDifficulty("");
                       setDrillId("");
                     }}
-                    className={buttonClasses({ variant: "secondary" })}
                   >
                     {t("common.clearFilters")}
-                  </button>
+                  </Button>
                 }
               />
             ) : (
@@ -321,19 +322,23 @@ export default function TrainingProgressPage() {
                           </Link>
 
                           {user && (
-                            <button
-                              type="button"
+                            <IconButton
+                              size="sm"
+                              tone="danger"
                               onClick={() => handleDelete(log.id)}
                               disabled={deleteLog.isPending}
                               title={t("training.deleteResult")}
-                              aria-label={t("training.deleteResultNamed", {
+                              label={t("training.deleteResultNamed", {
                                 drill: drill?.name ?? t("training.thisDrill"),
                                 day,
                               })}
-                              className="absolute right-1 top-1/2 -translate-y-1/2 rounded-control bg-felt p-2 text-ink-faint opacity-0 transition-colors duration-150 hover:bg-felt-raised hover:text-strike focus-visible:opacity-100 disabled:cursor-not-allowed group-hover:opacity-100 max-sm:opacity-100"
+                              // bg-felt so it sits over the row rather than
+                              // through it; hidden until hover, except on touch
+                              // where there is no hover to wait for.
+                              className="absolute right-1 top-1/2 -translate-y-1/2 bg-felt opacity-0 focus-visible:opacity-100 group-hover:opacity-100 max-sm:opacity-100"
                             >
                               <LuTrash2 aria-hidden />
-                            </button>
+                            </IconButton>
                           )}
                         </div>
                         <div className="px-2 pb-1">

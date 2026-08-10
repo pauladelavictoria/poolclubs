@@ -5,6 +5,7 @@ import { queryClient } from "@/libs/queryClient";
 import { keys } from "@/libs/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 import { toAvatarDataUrl } from "@/libs/avatarImage";
 import { useT } from "@/i18n";
 
@@ -60,14 +61,15 @@ export default function AvatarUpload({
         className="hidden"
         onChange={(e) => pick(e.target.files?.[0])}
       />
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         disabled={busy}
         onClick={() => input.current?.click()}
-        className="text-caption text-ink-soft underline underline-offset-2 disabled:text-ink-ghost"
       >
         {busy ? t("common.saving") : t("players.changePhoto")}
-      </button>
+      </Button>
     </div>
   );
 }

@@ -176,7 +176,7 @@ export default function NavDrawer({
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex h-10 w-full items-center gap-3 rounded-control px-3 text-body text-ink-soft transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
+              className={`${item({ isActive: false })} w-full`}
             >
               <LuLogOut className="h-[18px] w-[18px]" /> {t("auth.signOut")}
             </button>
