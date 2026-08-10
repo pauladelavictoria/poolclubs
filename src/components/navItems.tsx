@@ -7,6 +7,7 @@ import {
   LuCalendarDays,
   LuPlus,
   LuSettings,
+  LuUsers,
 } from "react-icons/lu";
 import type { Key } from "@/i18n";
 
@@ -31,12 +32,13 @@ export const PRIMARY_NAV: NavItem[] = [
  * Full map, used by the drawer, in the order the club is thought about: where
  * you are, what you played, what you practise, where that puts you.
  * The club identity and switcher sit above these — they're not a destination.
- * The roster is part of club settings, so it isn't a nav entry.
+ * Administering the roster is part of club settings; reading it is its own page.
  */
 export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
   {
     headingKey: "nav.club",
     items: [
+      { to: "/app/players", labelKey: "nav.players", icon: LuUsers, end: true },
       {
         to: "/app/club",
         labelKey: "nav.clubSettings",

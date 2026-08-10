@@ -37,6 +37,7 @@ const TrainingProgressPage = lazy(() => import("@/pages/TrainingProgressPage"));
 const TrainingPlanPage = lazy(() => import("@/pages/TrainingPlanPage"));
 const ChallengesPage = lazy(() => import("@/pages/ChallengesPage"));
 const ClubPage = lazy(() => import("@/pages/ClubPage"));
+const PlayersPage = lazy(() => import("@/pages/PlayersPage"));
 const JoinClubPage = lazy(() => import("@/pages/JoinClubPage"));
 
 /** "/me/..." resolves to the signed-in player's own URL. Lets links exist before
@@ -90,11 +91,10 @@ const router = createBrowserRouter(
             <Route path="games/new" element={<AddGamePage />} />
             <Route path="challenges" element={<ChallengesPage />} />
 
-            {/* The roster moved into club settings; old links still resolve. */}
-            <Route
-              path="players"
-              element={<Navigate to="/app/club" replace />}
-            />
+            {/* Reading the roster and administering it are different jobs:
+                this is the read-only card list, club settings keeps add/approve
+                /remove. */}
+            <Route path="players" element={<PlayersPage />} />
             <Route path="players/:id" element={<PlayerDetailPage />} />
             <Route path="club" element={<ClubPage />} />
 

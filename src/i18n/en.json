@@ -33,6 +33,7 @@
   "nav.addGame": "Add result",
   "nav.challenges": "Challenges",
   "nav.clubSettings": "Club settings",
+  "nav.players": "Players",
   "nav.myPlan": "My plan",
   "nav.myProgress": "My progress",
   "nav.myProfile": "My profile",
@@ -113,6 +114,10 @@
   "ranking.tvMode": "TV mode",
 
   "players.title": "Players",
+  "players.sort": "Sort players",
+  "players.alphabetical": "A-Z",
+  "players.winRate": "Win rate",
+  "players.noGamesShort": "No matches yet",
   "players.add": "Add player",
   "players.edit": "Edit player",
   "players.editNamed": "Edit {name}",

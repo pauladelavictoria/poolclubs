@@ -110,7 +110,7 @@ export default function PlayerDetailPage() {
   if (isLoadingPlayers || isLoadingGames) {
     return (
       <>
-        <PageHeader title={t("players.detailTitle")} back="/app/club" />
+        <PageHeader title={t("players.detailTitle")} back="/app/players" />
         <div className="mx-auto max-w-5xl px-3 py-4">
           <Card className="p-3">
             <SkeletonRows rows={6} />
@@ -123,7 +123,7 @@ export default function PlayerDetailPage() {
   if (!player) {
     return (
       <>
-        <PageHeader title={t("players.detailTitle")} back="/app/club" />
+        <PageHeader title={t("players.detailTitle")} back="/app/players" />
         <div className="mx-auto max-w-5xl px-3 py-4">
           <Card>
             <EmptyState
@@ -131,10 +131,10 @@ export default function PlayerDetailPage() {
               hint={t("players.notFoundHint")}
               action={
                 <Link
-                  to="/app/club"
+                  to="/app/players"
                   className={buttonClasses({ variant: "secondary" })}
                 >
-                  {t("club.membersTitle")}
+                  {t("players.title")}
                 </Link>
               }
             />
@@ -149,7 +149,7 @@ export default function PlayerDetailPage() {
       <PageHeader
         title={player.name}
         subtitle={t(`category.${player.category}`)}
-        back="/app/club"
+        back="/app/players"
       />
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">

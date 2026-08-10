@@ -33,6 +33,7 @@
   "nav.addGame": "Ajouter un résultat",
   "nav.challenges": "Défis",
   "nav.clubSettings": "Réglages du club",
+  "nav.players": "Joueurs",
   "nav.myPlan": "Mon plan",
   "nav.myProgress": "Ma progression",
   "nav.myProfile": "Mon profil",
@@ -113,6 +114,10 @@
   "ranking.tvMode": "Mode TV",
 
   "players.title": "Joueurs",
+  "players.sort": "Trier les joueurs",
+  "players.alphabetical": "A-Z",
+  "players.winRate": "Victoires",
+  "players.noGamesShort": "Aucun match",
   "players.add": "Ajouter un joueur",
   "players.edit": "Modifier le joueur",
   "players.editNamed": "Modifier {name}",
