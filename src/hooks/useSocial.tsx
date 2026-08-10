@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
+import { optimisticList, tempId } from "@/libs/optimistic";
 import type { Comment, Reaction, SocialTarget } from "@/types";
 
 /** Turns a target into the column pair the tables use. Exactly one is set —
@@ -62,12 +63,11 @@ export const useReactions = () => {
 };
 
 export const useSocialActions = () => {
-  const queryClient = useQueryClient();
   const { activeClubId, player } = useAuth();
   const { data: reactions } = useReactions();
 
-  const invalidate = (key: string) => () =>
-    queryClient.invalidateQueries({ queryKey: [key] });
+  const commentsKey = ["comments", activeClubId];
+  const reactionsKey = ["reactions", activeClubId];
 
   const base = () => {
     if (!activeClubId || !player) throw new Error("no active club");
@@ -88,7 +88,21 @@ export const useSocialActions = () => {
           .insert([{ ...base(), ...targetColumns(target), body: body.trim() }]);
         if (error) throw error;
       },
-      onSuccess: invalidate("comments"),
+      // Appended at the end because useComments orders by created_at ascending.
+      ...optimisticList<{ target: SocialTarget; body: string }, Comment>(
+        commentsKey,
+        (rows, { target, body }) => [
+          ...rows,
+          {
+            id: tempId(),
+            club_id: activeClubId!,
+            author_player_id: player!.id,
+            ...targetColumns(target),
+            body: body.trim(),
+            created_at: new Date().toISOString(),
+          },
+        ],
+      ),
     }),
 
     deleteComment: useMutation({
@@ -96,7 +110,9 @@ export const useSocialActions = () => {
         const { error } = await supabase.from("comments").delete().eq("id", id);
         if (error) throw error;
       },
-      onSuccess: invalidate("comments"),
+      ...optimisticList<number, Comment>(commentsKey, (rows, id) =>
+        rows.filter((c) => c.id !== id),
+      ),
     }),
 
     // Tapping your own reaction again removes it. The unique indexes make the
@@ -119,7 +135,10 @@ export const useSocialActions = () => {
         );
 
         if (mine) {
-          const { error } = await supabase.from("reactions").delete().eq("id", mine.id);
+          const { error } = await supabase
+            .from("reactions")
+            .delete()
+            .eq("id", mine.id);
           if (error) throw error;
           return;
         }
@@ -131,7 +150,30 @@ export const useSocialActions = () => {
           ]);
         if (error) throw error;
       },
-      onSuccess: invalidate("reactions"),
+      ...optimisticList<{ target: SocialTarget; emoji: string }, Reaction>(
+        reactionsKey,
+        (rows, { target, emoji }) => {
+          const mine = rows.find(
+            (r) =>
+              r.author_player_id === player?.id &&
+              r.emoji === emoji &&
+              matchesTarget(r, target),
+          );
+          return mine
+            ? rows.filter((r) => r.id !== mine.id)
+            : [
+                ...rows,
+                {
+                  id: tempId(),
+                  club_id: activeClubId!,
+                  author_player_id: player!.id,
+                  ...targetColumns(target),
+                  emoji,
+                  created_at: new Date().toISOString(),
+                },
+              ];
+        },
+      ),
     }),
   };
 };

@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
+import { optimisticList, tempId } from "@/libs/optimistic";
 import type { Challenge, ChallengeStatus } from "@/types";
 
 /** Every challenge in the active club. A club is small enough that filtering
@@ -37,11 +38,8 @@ export const useMyChallenges = () => {
 };
 
 export const useManageChallenges = () => {
-  const queryClient = useQueryClient();
   const { activeClubId, player } = useAuth();
-
-  const onSuccess = () =>
-    queryClient.invalidateQueries({ queryKey: ["challenges"] });
+  const key = ["challenges", activeClubId];
 
   return {
     sendChallenge: useMutation({
@@ -64,7 +62,23 @@ export const useManageChallenges = () => {
         ]);
         if (error) throw error;
       },
-      onSuccess,
+      // Prepended: useGetChallenges orders by created_at descending.
+      ...optimisticList<{ toPlayerId: number; message?: string }, Challenge>(
+        key,
+        (rows, { toPlayerId, message }) => [
+          {
+            id: tempId(),
+            club_id: activeClubId!,
+            from_player_id: player!.id,
+            to_player_id: toPlayerId,
+            status: "pending",
+            message: message?.trim() || null,
+            game_id: null,
+            created_at: new Date().toISOString(),
+          },
+          ...rows,
+        ],
+      ),
     }),
 
     respondToChallenge: useMutation({
@@ -83,15 +97,27 @@ export const useManageChallenges = () => {
           .eq("id", id);
         if (error) throw error;
       },
-      onSuccess,
+      ...optimisticList<
+        { id: number; status: ChallengeStatus; gameId?: string },
+        Challenge
+      >(key, (rows, { id, status, gameId }) =>
+        rows.map((c) =>
+          c.id === id ? { ...c, status, game_id: gameId ?? c.game_id } : c,
+        ),
+      ),
     }),
 
     cancelChallenge: useMutation({
       mutationFn: async (id: number) => {
-        const { error } = await supabase.from("challenges").delete().eq("id", id);
+        const { error } = await supabase
+          .from("challenges")
+          .delete()
+          .eq("id", id);
         if (error) throw error;
       },
-      onSuccess,
+      ...optimisticList<number, Challenge>(key, (rows, id) =>
+        rows.filter((c) => c.id !== id),
+      ),
     }),
   };
 };

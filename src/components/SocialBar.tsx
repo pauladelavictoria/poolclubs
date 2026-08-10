@@ -39,7 +39,9 @@ export default function SocialBar({
   const [draft, setDraft] = useState("");
 
   const comments = (allComments ?? []).filter((c) => matchesTarget(c, target));
-  const reactions = (allReactions ?? []).filter((r) => matchesTarget(r, target));
+  const reactions = (allReactions ?? []).filter((r) =>
+    matchesTarget(r, target),
+  );
 
   const nameOf = (playerId: number) =>
     players?.find((p) => p.id === playerId)?.name ?? "—";
@@ -63,10 +65,10 @@ export default function SocialBar({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!draft.trim()) return;
-    addComment.mutate(
-      { target, body: draft },
-      { onSuccess: () => setDraft("") },
-    );
+    // The comment lands in the cache before the request does, so the input
+    // clears now. A rollback removes the comment; retyping is the recovery.
+    addComment.mutate({ target, body: draft });
+    setDraft("");
   };
 
   const pill =
@@ -211,7 +213,7 @@ export default function SocialBar({
             />
             <button
               type="submit"
-              disabled={!draft.trim() || addComment.isPending}
+              disabled={!draft.trim()}
               className="h-9 shrink-0 rounded-control px-3 text-body font-medium text-strike disabled:text-ink-ghost"
             >
               {t("social.send")}
