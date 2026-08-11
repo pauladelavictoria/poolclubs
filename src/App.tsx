@@ -39,6 +39,8 @@ const ChallengesPage = lazy(() => import("@/pages/ChallengesPage"));
 const ClubPage = lazy(() => import("@/pages/ClubPage"));
 const PlayersPage = lazy(() => import("@/pages/PlayersPage"));
 const JoinClubPage = lazy(() => import("@/pages/JoinClubPage"));
+const TournamentsPage = lazy(() => import("@/pages/TournamentsPage"));
+const TournamentPage = lazy(() => import("@/pages/TournamentPage"));
 
 /** "/me/..." resolves to the signed-in player's own URL. Lets links exist before
  *  we know their id. */
@@ -90,6 +92,8 @@ const router = createBrowserRouter(
             <Route path="games" element={<GamesPage />} />
             <Route path="games/new" element={<AddGamePage />} />
             <Route path="challenges" element={<ChallengesPage />} />
+            <Route path="tournaments" element={<TournamentsPage />} />
+            <Route path="tournaments/:id" element={<TournamentPage />} />
 
             {/* Reading the roster and administering it are different jobs:
                 this is the read-only card list, club settings keeps add/approve

@@ -70,6 +70,21 @@ export const keys = {
     in: (clubId?: number | null) => ["challenges", clubId] as const,
   },
 
+  tournaments: {
+    all: ["tournaments"] as const,
+    in: (clubId?: number | null) => ["tournaments", clubId] as const,
+    /** Which tournament a batch of games belongs to — under the same root, so a
+     *  filed result invalidates it with everything else. */
+    forGames: (gameIds: string[]) => ["tournaments", "games", gameIds] as const,
+  },
+
+  /** One tournament carries its entrants and every fixture, so it gets its own
+   *  root — filing a result refreshes the page without refetching the index. */
+  tournament: {
+    all: ["tournament"] as const,
+    one: (id?: number) => ["tournament", id] as const,
+  },
+
   comments: {
     all: ["comments"] as const,
     in: (clubId?: number | null) => ["comments", clubId] as const,

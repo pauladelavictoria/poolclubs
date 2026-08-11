@@ -41,6 +41,7 @@ const game = (
   player_2b_name: null,
   created_at: at,
   mode: "single",
+  discipline: "9ball",
 });
 
 const byId = (rows: ReturnType<typeof tallyDaily>, id: number) =>

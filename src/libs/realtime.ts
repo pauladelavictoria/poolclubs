@@ -55,6 +55,13 @@ const sameTargetAndAuthor = (
 const invalidate = (queryKey: readonly string[]) => () =>
   queryClient.invalidateQueries({ queryKey });
 
+/** Three tables, one screen: the index and the tournament page both go stale
+ *  whenever any of them changes. */
+const invalidateTournaments = () => {
+  queryClient.invalidateQueries({ queryKey: keys.tournaments.all });
+  queryClient.invalidateQueries({ queryKey: keys.tournament.all });
+};
+
 /**
  * One realtime channel for the whole app, opened once outside React.
  *
@@ -110,5 +117,11 @@ export function startRealtime() {
       onTable("challenges"),
       invalidate(keys.challenges.all),
     )
+    // A tournament page is derived from its whole fixture list — one result
+    // moves the bracket and the tables — so these refetch rather than patch.
+    // Both roots: the index shows status, the page shows everything.
+    .on("postgres_changes", onTable("tournaments"), invalidateTournaments)
+    .on("postgres_changes", onTable("tournament_players"), invalidateTournaments)
+    .on("postgres_changes", onTable("tournament_matches"), invalidateTournaments)
     .subscribe();
 }

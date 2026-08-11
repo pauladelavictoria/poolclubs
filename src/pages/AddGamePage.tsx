@@ -3,19 +3,17 @@ import { useForm, useWatch } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
-import { useGetGames } from "@/hooks/useGetGames";
 import { useAddGame } from "@/hooks/useAddGame";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import PageHeader from "@/components/PageHeader";
-import GamesList from "@/components/GamesList";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { Segmented } from "@/components/ui/Segmented";
-import { SkeletonRows } from "@/components/ui/Skeleton";
-import type { Game } from "@/types";
+import { DisciplineBall } from "@/components/ui/Ball";
+import { DISCIPLINES, type Discipline, type Game } from "@/types";
 import { useT } from "@/i18n";
 
 const SIDES = [1, 2] as const;
@@ -23,14 +21,11 @@ const SIDES = [1, 2] as const;
 export default function AddGamePage() {
   const { t } = useT();
   const { register, handleSubmit, reset, control, setValue } = useForm<Game>({
-    defaultValues: { mode: "single" },
+    // 9-ball is what the club plays, and what every game recorded
+    // before the column existed was backfilled to.
+    defaultValues: { mode: "single", discipline: "9ball" },
   });
 
-  const {
-    data: gamesData,
-    isLoading: gamesLoading,
-    refetch: refetchGames,
-  } = useGetGames({ pageSize: 10 });
   const { data: players, isLoading: playersLoading } = useGetPlayers();
   const { mutate: handleAddGame, isPending } = useAddGame();
 
@@ -61,6 +56,7 @@ export default function AddGamePage() {
     player_1_score,
     player_2_score,
     mode,
+    discipline,
   } = useWatch({ control });
 
   const isDoubles = mode === "doubles";
@@ -123,8 +119,7 @@ export default function AddGamePage() {
               gameId: saved.id,
             });
           }
-          reset();
-          refetchGames();
+          reset({ discipline, mode: game.mode });
         },
         onError: () => toast.error(t("common.error")),
       },
@@ -143,15 +138,27 @@ export default function AddGamePage() {
     <>
       <PageHeader title={t("games.add")} back="/app/games" />
 
-      <div className="mx-auto max-w-xl space-y-4 px-3 py-4">
+      <div className="mx-auto max-w-2xl space-y-4 px-3 py-4">
         <Card className="p-5">
-          <div className="mb-5 flex justify-center">
+          {/* One wrapping row: pushed to the card edges when both fit, centred
+              once they wrap onto their own lines on narrow phones. */}
+          <div className="mb-5 flex flex-wrap justify-center gap-3 sm:justify-between">
+            <Segmented<Discipline>
+              label={t("games.discipline")}
+              value={discipline ?? "9ball"}
+              onChange={(next) => setValue("discipline", next)}
+              options={DISCIPLINES.map((d) => ({
+                value: d,
+                label: t(`discipline.${d}`),
+                icon: <DisciplineBall discipline={d} />,
+              }))}
+            />
+
             <Segmented
               label={t("games.mode")}
               value={isDoubles ? "doubles" : "single"}
               onChange={(next) => {
-                reset();
-                setValue("mode", next);
+                reset({ discipline, mode: next });
               }}
               options={[
                 { value: "single", label: t("games.single") },
@@ -215,17 +222,6 @@ export default function AddGamePage() {
               {isPending ? t("common.saving") : t("games.add")}
             </Button>
           </form>
-        </Card>
-
-        <Card className="overflow-hidden">
-          <CardHeader title={t("games.recent")} />
-          <div className="p-3">
-            {gamesLoading ? (
-              <SkeletonRows rows={4} />
-            ) : (
-              <GamesList games={gamesData?.games ?? []} />
-            )}
-          </div>
         </Card>
       </div>
     </>
