@@ -1,23 +1,22 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { LuActivity, LuTrophy } from "react-icons/lu";
+import { LuActivity, LuChevronRight, LuTrophy } from "react-icons/lu";
 import PoolTableDiagram from "@/components/PoolTableDiagram";
 import SocialBar from "@/components/SocialBar";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Segmented } from "@/components/ui/Segmented";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
 import { useGetDrills } from "@/hooks/useGetDrills";
 import { useGetTournaments, useGameTournaments } from "@/hooks/useTournaments";
-import {
-  TournamentOpenCard,
-  TournamentResultCard,
-} from "@/components/TournamentFeedCard";
+import { TournamentResultCard } from "@/components/TournamentFeedCard";
 import { scoreBand, scorePct } from "@/libs/scoreBand";
 import { dayLabel, startsNewDay, timeOf } from "@/libs/dayLabel";
+import { groupTournamentRuns } from "@/libs/feedGroups";
 import type { Drill, DrillLog, Game, Tournament } from "@/types";
 import { useT } from "@/i18n";
 
@@ -25,11 +24,36 @@ import { useT } from "@/i18n";
  *  things that get created rather than played — a drill or a tournament. */
 type FeedItem = {
   at: string;
-  game?: Game;
+  /** One match, or the run of fixtures one tournament night produced. */
+  games?: Game[];
   log?: DrillLog;
   drill?: Drill;
   tournament?: Tournament;
 };
+
+/** What the filter above the feed sorts rows into — one kind per row shape, so
+ *  every row in the feed answers to exactly one tab. */
+type FeedKind =
+  "all" | "matches" | "newDrills" | "drillResults" | "tournaments";
+
+/** Two rows can share an instant, and one pair always does: a finished
+ *  tournament is dated by its last fixture, which is a row of its own. Sorting
+ *  by time alone leaves that tie to the order the lists were merged in, which
+ *  put the fixture above the result it produced. The conclusion goes first. */
+const rank = (item: FeedItem) => (item.tournament ? 0 : 1);
+
+/** How many fixtures a grouped tournament card lists before handing over to the
+ *  tournament's own page. */
+const GROUP_ROWS = 5;
+
+const kindOf = (item: FeedItem): Exclude<FeedKind, "all"> =>
+  item.games
+    ? "matches"
+    : item.drill
+      ? "newDrills"
+      : item.log
+        ? "drillResults"
+        : "tournaments";
 
 function DrillRow({ log }: { log: DrillLog }) {
   const { t, locale } = useT();
@@ -307,6 +331,108 @@ function MatchCard({
 }
 
 /**
+ * A tournament night: the fixtures it produced under one heading, in the same
+ * running-order shape the tournament's own list view uses — names either side of
+ * the score, one line each. Faces and a big score per fixture would turn an
+ * evening of eight matches into eight screens of feed.
+ *
+ * Each fixture still carries its own reactions and comments: the conversation
+ * belongs to the match somebody played, not to the night.
+ */
+function TournamentGamesCard({
+  games,
+  tournament,
+}: {
+  games: Game[];
+  tournament: Pick<Tournament, "id" | "name">;
+}) {
+  const { t, locale } = useT();
+
+  // Past five fixtures the card stops being a feed row and starts being the
+  // tournament page done worse — so the rest is a link to the real thing.
+  const shown = games.slice(0, GROUP_ROWS);
+  const rest = games.length - shown.length;
+
+  return (
+    <>
+      <Link
+        to={`/app/tournaments/${tournament.id}`}
+        className="mb-2 flex items-baseline gap-1.5 border-b border-hairline pb-2 text-caption font-medium text-ink-soft transition-colors duration-150 hover:text-strike"
+      >
+        <LuTrophy className="h-3.5 w-3.5 shrink-0 self-center" />
+        <span className="min-w-0 flex-1 truncate">{tournament.name}</span>
+        <span className="shrink-0 font-mono tabular-nums text-ink-ghost">
+          {t("games.count", { n: games.length })}
+        </span>
+      </Link>
+
+      <ul className="divide-y divide-hairline">
+        {shown.map((game) => {
+          const isDoubles = game.mode === "doubles";
+          const p1 = game.player_1_score;
+          const p2 = game.player_2_score;
+          const side = (won: boolean) =>
+            won ? "font-semibold text-ink" : "text-ink-faint";
+
+          return (
+            <li key={game.id} className="py-2 first:pt-0 last:pb-0">
+              {/* Names share the leftover width evenly, so a long one cannot
+                  push the score off centre. */}
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <span
+                  className={`min-w-0 truncate text-right text-body ${side(p1 > p2)}`}
+                >
+                  {isDoubles
+                    ? `${game.player_1_name} / ${game.player_1b_name}`
+                    : game.player_1_name}
+                </span>
+                <span className="shrink-0 font-mono text-body font-semibold tabular-nums">
+                  <span className={p1 > p2 ? "text-ink" : "text-ink-faint"}>
+                    {p1}
+                  </span>
+                  <span className="px-1 text-ink-ghost">-</span>
+                  <span className={p2 > p1 ? "text-ink" : "text-ink-faint"}>
+                    {p2}
+                  </span>
+                </span>
+                <span className={`min-w-0 truncate text-body ${side(p2 > p1)}`}>
+                  {isDoubles
+                    ? `${game.player_2_name} / ${game.player_2b_name}`
+                    : game.player_2_name}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center gap-2">
+                <time
+                  dateTime={game.created_at}
+                  className="shrink-0 pl-1 font-mono text-caption tabular-nums text-ink-ghost"
+                >
+                  {timeOf(new Date(game.created_at), locale)}
+                </time>
+                <div className="min-w-0 flex-1">
+                  <SocialBar target={{ gameId: game.id }} preview />
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      {rest > 0 && (
+        <Link
+          to={`/app/tournaments/${tournament.id}`}
+          className="mt-2 flex items-center justify-between gap-2 border-t border-hairline pt-2 text-caption font-medium text-ink-soft transition-colors duration-150 hover:text-strike"
+        >
+          <span className="min-w-0 truncate">
+            {t("feed.moreGames", { n: rest })}
+          </span>
+          <LuChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+        </Link>
+      )}
+    </>
+  );
+}
+
+/**
  * The club's home timeline: matches and drill results in one stream, newest
  * first, each carrying its own reactions and comments.
  */
@@ -316,6 +442,7 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
   // stitching pages together: the sources are three lists merged by time, and
   // page 2 of one of them is not page 2 of the feed.
   const [limit, setLimit] = useState(pageSize);
+  const [kind, setKind] = useState<FeedKind>("all");
   const sentinel = useRef<HTMLDivElement>(null);
   const {
     data: gamesData,
@@ -336,10 +463,6 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
   const games = gamesData?.games ?? [];
   const { data: gameTournaments } = useGameTournaments(games.map((g) => g.id));
 
-  // Entries are open: an invitation, not something that happened, so it sits
-  // above the timeline instead of sinking down it.
-  const open = (tournaments ?? []).filter((x) => x.status === "open");
-
   /** A finished tournament belongs to the day its last game was played, not to
    *  the day somebody created it — a month-long league would otherwise announce
    *  its result at the bottom of the feed. Only the games in view are known
@@ -352,8 +475,8 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
         "",
       ) || tournament.created_at;
 
-  const items: FeedItem[] = [
-    ...games.map((game) => ({ at: game.created_at, game })),
+  const merged: FeedItem[] = [
+    ...games.map((game) => ({ at: game.created_at, games: [game] })),
     ...(logs ?? [])
       .filter((log) => roster.has(log.player_id))
       .map((log) => ({ at: log.created_at, log })),
@@ -370,12 +493,23 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
         tournament,
       })),
   ]
-    .sort((a, b) => b.at.localeCompare(a.at))
+    .sort((a, b) => b.at.localeCompare(a.at) || rank(a) - rank(b))
     .slice(0, limit);
 
+  const filtered = merged.filter(
+    (item) => kind === "all" || kindOf(item) === kind,
+  );
+
+  const items = groupTournamentRuns(
+    filtered,
+    (game) => gameTournaments?.get(game.id)?.id,
+  );
+
   // A full window means there may be more behind it; a short one is the end of
-  // the club's history.
-  const hasMore = items.length >= limit;
+  // the club's history. Measured before the filter: a filtered feed of three
+  // rows still has the rest of the history behind it, and scrolling has to keep
+  // widening the window to reach it.
+  const hasMore = merged.length >= limit;
 
   useEffect(() => {
     const node = sentinel.current;
@@ -390,23 +524,37 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
     return () => observer.disconnect();
   }, [hasMore, isFetching, pageSize]);
 
-  if (isLoading) return <SkeletonRows rows={6} />;
-
   return (
     <div className="space-y-3">
-      {/* The one card in the feed asking for something back, so it is the one
-          carrying the accent — everything else here is a record of what already
-          happened. Raised surface too: it is not part of the timeline below. */}
-      {open.map((tournament) => (
-        <Card
-          key={`o${tournament.id}`}
-          className="border-l-2 border-l-strike bg-felt-raised px-4 py-3"
-        >
-          <TournamentOpenCard tournament={tournament} />
-        </Card>
-      ))}
+      {/* Title and filter on one line, drawn before the rows load: the heading
+          is the section, and a section that appears late shifts the page under
+          whoever is already reading it. Wrapping rather than shrinking — five
+          tabs and a heading do not both fit on a phone, and a squeezed tab strip
+          reads worse than a second line. The strip scrolls inside its own box
+          past that, so the page itself never scrolls sideways. */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-1">
+        <h2 className="text-h4 font-semibold text-ink">
+          {t("dashboard.activity")}
+        </h2>
+        <div className="-mx-1 max-w-full overflow-x-auto px-1 py-0.5">
+          <Segmented<FeedKind>
+            value={kind}
+            onChange={setKind}
+            label={t("feed.filter")}
+            options={[
+              { value: "all", label: t("feed.all") },
+              { value: "matches", label: t("feed.matchResults") },
+              { value: "newDrills", label: t("feed.newDrills") },
+              { value: "drillResults", label: t("feed.drillResults") },
+              { value: "tournaments", label: t("feed.tournamentResults") },
+            ]}
+          />
+        </div>
+      </div>
 
-      {items.length === 0 && (
+      {isLoading && <SkeletonRows rows={6} />}
+
+      {!isLoading && items.length === 0 && (
         <EmptyState
           icon={<LuActivity className="h-5 w-5" />}
           title={t("dashboard.noActivity")}
@@ -421,8 +569,8 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
           index > 0 ? new Date(items[index - 1].at) : undefined,
         );
 
-        const key = item.game
-          ? `g${item.game.id}`
+        const key = item.games
+          ? `g${item.games[0].id}`
           : item.log
             ? `l${item.log.id}`
             : item.drill
@@ -444,7 +592,14 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
                 identical boxes: a result gets a card, because the conversation
                 under it belongs to that result; a finished tournament gets the
                 lamp on it; an announcement gets neither. */}
-            {item.drill ? (
+            {item.games && item.games.length > 1 ? (
+              <Card className="overflow-hidden px-4 py-3">
+                <TournamentGamesCard
+                  games={item.games}
+                  tournament={gameTournaments!.get(item.games[0].id)!}
+                />
+              </Card>
+            ) : item.drill ? (
               <DrillCreatedRow drill={item.drill} at={item.at} />
             ) : item.tournament && item.tournament.status !== "done" ? (
               <CreatedRow
@@ -462,10 +617,10 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
                     : "px-4 py-3"
                 }
               >
-                {item.game ? (
+                {item.games ? (
                   <MatchCard
-                    game={item.game}
-                    tournament={gameTournaments?.get(item.game.id)}
+                    game={item.games[0]}
+                    tournament={gameTournaments?.get(item.games[0].id)}
                   />
                 ) : item.log ? (
                   <DrillRow log={item.log} />

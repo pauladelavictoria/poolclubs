@@ -49,6 +49,17 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
     ],
   },
   {
+    headingKey: "nav.tournaments",
+    items: [
+      {
+        to: "/app/tournaments",
+        labelKey: "nav.allTournaments",
+        icon: LuNetwork,
+        end: true,
+      },
+    ],
+  },
+  {
     headingKey: "nav.games",
     items: [
       {
@@ -61,12 +72,6 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         to: "/app/challenges",
         labelKey: "nav.challenges",
         icon: LuSwords,
-        end: true,
-      },
-      {
-        to: "/app/tournaments",
-        labelKey: "nav.tournaments",
-        icon: LuNetwork,
         end: true,
       },
       { to: "/app/games/new", labelKey: "nav.addGame", icon: LuPlus },

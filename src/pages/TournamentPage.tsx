@@ -29,11 +29,7 @@ import {
   resolveBracket,
   type BracketIndex,
 } from "@/libs/bracket";
-import {
-  groupStandings,
-  leaguePodium,
-  standings,
-} from "@/libs/leagueTable";
+import { groupStandings, standings, type Standing } from "@/libs/leagueTable";
 import PageHeader from "@/components/PageHeader";
 import BracketView from "@/components/BracketView";
 import LeagueTable from "@/components/LeagueTable";
@@ -186,7 +182,8 @@ export default function TournamentPage() {
   const entrantPlayers = (players ?? []).filter((p) => entrants.includes(p.id));
 
   /** The race this fixture runs to, from how deep in the draw it sits. */
-  const raceOf = (match: TournamentMatch) => raceFor(match, tournament, matches);
+  const raceOf = (match: TournamentMatch) =>
+    raceFor(match, tournament, matches);
 
   const run = async (work: Promise<unknown>, ok: Parameters<typeof t>[0]) => {
     try {
@@ -240,7 +237,9 @@ export default function TournamentPage() {
                   <Button
                     size="sm"
                     variant={entered ? "secondary" : "primary"}
-                    disabled={joinTournament.isPending || leaveTournament.isPending}
+                    disabled={
+                      joinTournament.isPending || leaveTournament.isPending
+                    }
                     onClick={() =>
                       run(
                         entered
@@ -340,7 +339,10 @@ export default function TournamentPage() {
                         const playerId = Number(adding);
                         setAdding("");
                         run(
-                          joinTournament.mutateAsync({ tournamentId, playerId }),
+                          joinTournament.mutateAsync({
+                            tournamentId,
+                            playerId,
+                          }),
                           "tournaments.added",
                         );
                       }}
@@ -391,7 +393,13 @@ export default function TournamentPage() {
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    if (!confirm(t("tournaments.deleteConfirm", { name: tournament.name })))
+                    if (
+                      !confirm(
+                        t("tournaments.deleteConfirm", {
+                          name: tournament.name,
+                        }),
+                      )
+                    )
                       return;
                     run(
                       deleteTournament.mutateAsync(tournamentId),
@@ -442,7 +450,9 @@ export default function TournamentPage() {
                 disabled={!groupsDone || generateKnockout.isPending}
                 onClick={() =>
                   run(
-                    generateKnockout.mutateAsync(tournament as TournamentDetail),
+                    generateKnockout.mutateAsync(
+                      tournament as TournamentDetail,
+                    ),
                     "tournaments.knockoutReady",
                   )
                 }
@@ -457,11 +467,36 @@ export default function TournamentPage() {
           <>
             <Card className="overflow-hidden">
               <CardHeader title={t("tournaments.standings")} />
-              <LeagueTable rows={standings(entrants, matches)} nameOf={nameOf} />
+              <LeagueTable
+                rows={standings(entrants, matches)}
+                nameOf={nameOf}
+              />
             </Card>
+            {/* What is left to arrange comes first: the played ones are a log,
+                the pending ones are the thing anyone can act on. Once the
+                tournament is closed nobody can, so they stop being news. */}
+            {pendingMatches.length > 0 && tournament.status !== "done" && (
+              <Card className="overflow-hidden">
+                <CardHeader
+                  title={t("tournaments.stillToPlay", {
+                    n: pendingMatches.length,
+                  })}
+                />
+                <div className="p-3">
+                  <Fixtures
+                    matches={pendingMatches}
+                    nameOf={nameOf}
+                    index={index}
+                    recorder={recorder}
+                  />
+                </div>
+              </Card>
+            )}
             <Card className="overflow-hidden">
               <CardHeader
-                title={t("tournaments.gamesPlayed", { n: playedMatches.length })}
+                title={t("tournaments.gamesPlayed", {
+                  n: playedMatches.length,
+                })}
               />
               {playedMatches.length === 0 ? (
                 <EmptyState
@@ -479,27 +514,12 @@ export default function TournamentPage() {
                 </div>
               )}
             </Card>
-            {pendingMatches.length > 0 && (
-              <Card className="overflow-hidden">
-                <CardHeader
-                  title={t("tournaments.stillToPlay", {
-                    n: pendingMatches.length,
-                  })}
-                />
-                <div className="p-3">
-                  <Fixtures
-                    matches={pendingMatches}
-                    nameOf={nameOf}
-                    index={index}
-                    recorder={recorder}
-                  />
-                </div>
-              </Card>
-            )}
           </>
         )}
 
-        {matches.some((m) => m.bracket !== "group" && m.bracket !== "league") && (
+        {matches.some(
+          (m) => m.bracket !== "group" && m.bracket !== "league",
+        ) && (
           <Card className="overflow-hidden">
             <CardHeader
               title={t("tournaments.bracketTitle")}
@@ -635,6 +655,14 @@ export default function TournamentPage() {
     </>
   );
 }
+
+/** A league has no final to read a podium off, so the table is the podium.
+ *  Only the places the table can actually fill. */
+const leaguePodium = (table: Standing[]) => ({
+  first: table[0]?.playerId ?? null,
+  second: table[1]?.playerId ?? null,
+  third: table[2] ? [table[2].playerId] : [],
+});
 
 /** Fixtures as cards. No matchday headings: a club league is played whenever
  *  two people are free, so the round a fixture was generated in means nothing

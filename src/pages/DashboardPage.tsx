@@ -8,6 +8,8 @@ import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import { useMyChallenges } from "@/hooks/useChallenges";
+import { useGetTournaments } from "@/hooks/useTournaments";
+import { TournamentOpenCard } from "@/components/TournamentFeedCard";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { BallBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
@@ -22,6 +24,9 @@ export default function DashboardPage() {
   const { nameOf } = usePlayerLookup();
   // Same query key as the ranking page, so this is a cache hit either direction
   const { data: allGamesData } = useGetGames({});
+  // Same key the feed below reads, so listing the open ones costs no request.
+  const { data: tournaments } = useGetTournaments();
+  const open = (tournaments ?? []).filter((x) => x.status === "open");
 
   const ranking = useEloRanking({
     games: allGamesData?.games ?? [],
@@ -44,6 +49,46 @@ export default function DashboardPage() {
       </PageHeader>
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        {/* You first, then what is waiting on you, then what you can enter, then
+            what everyone else has been doing. */}
+        {player && (
+          <Card className="p-5">
+            <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
+              {t("dashboard.yourStanding")}
+            </p>
+            <div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+              <div className="flex min-w-0 items-center gap-4">
+                {me && <BallBadge rank={myIndex + 1} size="lg" />}
+                <div className="min-w-0">
+                  <p className="truncate text-h3 font-semibold text-ink">
+                    {player.name}
+                  </p>
+                  <p className="mt-0.5 font-mono text-caption tabular-nums text-ink-faint">
+                    {me
+                      ? t("common.pts", { n: me.points })
+                      : t("dashboard.noGamesYet")}
+                  </p>
+                </div>
+              </div>
+              {me && (
+                <div className="shrink-0 text-right">
+                  <ScoreString results={me.last10Games ?? []} />
+                  <p className="mt-2 font-mono text-caption tabular-nums text-ink-faint">
+                    {t("dashboard.wonOf", {
+                      won: me.gamesWon,
+                      played: me.gamesPlayed,
+                    })}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-5">
+              <PlayerTabs playerId={player.id} as="buttons" />
+            </div>
+          </Card>
+        )}
+
         {/* Your open challenges. Above the fold or they may as well not
             exist — the ones waiting on an answer sit first and tinted. */}
         {myChallenges.length > 0 && (
@@ -99,52 +144,29 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {player && (
-          <Card className="p-5">
-            <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
-              {t("dashboard.yourStanding")}
-            </p>
-            <div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-              <div className="flex min-w-0 items-center gap-4">
-                {me && <BallBadge rank={myIndex + 1} size="lg" />}
-                <div className="min-w-0">
-                  <p className="truncate text-h3 font-semibold text-ink">
-                    {player.name}
-                  </p>
-                  <p className="mt-0.5 font-mono text-caption tabular-nums text-ink-faint">
-                    {me
-                      ? t("common.pts", { n: me.points })
-                      : t("dashboard.noGamesYet")}
-                  </p>
-                </div>
-              </div>
-              {me && (
-                <div className="shrink-0 text-right">
-                  <ScoreString results={me.last10Games ?? []} />
-                  <p className="mt-2 font-mono text-caption tabular-nums text-ink-faint">
-                    {t("dashboard.wonOf", {
-                      won: me.gamesWon,
-                      played: me.gamesPlayed,
-                    })}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-5">
-              <PlayerTabs playerId={player.id} as="buttons" />
-            </div>
-          </Card>
+        {/* An invitation, not a record: the accent is here because this is the
+            one block on the page asking for something back. */}
+        {open.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="px-1 text-h4 font-semibold text-ink">
+              {t("tournaments.openTitle")}
+            </h2>
+            {open.map((tournament) => (
+              <Card
+                key={tournament.id}
+                className="border-l-2 border-l-strike bg-felt-raised px-4 py-3"
+              >
+                <TournamentOpenCard tournament={tournament} />
+              </Card>
+            ))}
+          </section>
         )}
 
-        {/* Matches and drills in one stream — what the club did, in the order
-            it happened, each row open to reactions and comments. */}
-        <section>
-          <h2 className="px-1 pb-2 text-h4 font-semibold text-ink">
-            {t("dashboard.activity")}
-          </h2>
-          <ActivityFeed />
-        </section>
+        {/* Matches, drills and finished tournaments in one stream — what the
+            club did, in the order it happened, each row open to reactions and
+            comments. Carries its own heading, because the filter sits on that
+            line. */}
+        <ActivityFeed />
       </div>
     </>
   );
