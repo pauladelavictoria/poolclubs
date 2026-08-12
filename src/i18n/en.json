@@ -522,5 +522,6 @@
   "notifications.challengeAccepted": "{name} accepted your challenge",
   "notifications.challengeDeclined": "{name} declined your challenge",
   "notifications.tournamentOpen": "Entries open for {name}",
-  "notifications.tournamentAction": "You have a pending match in {name}"
+  "notifications.tournamentAction": "You have a pending match in {name}",
+  "notifications.drillAdded": "New drill: {name}. Give it a try!"
 }
