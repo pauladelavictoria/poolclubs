@@ -6,7 +6,17 @@ const TABS: { suffix: string; labelKey: Key }[] = [
   { suffix: "", labelKey: "players.tabGames" },
   { suffix: "/training/plan", labelKey: "players.tabPlan" },
   { suffix: "/training", labelKey: "players.tabProgress" },
+  { suffix: "/settings", labelKey: "players.tabSettings" },
 ];
+
+// Tailwind needs the literal class name in source to generate it, so this
+// can't be built from a template string.
+const BUTTON_GRID_COLS: Record<number, string> = {
+  1: "sm:grid-cols-1",
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-3",
+  4: "sm:grid-cols-4",
+};
 
 export default function PlayerTabs({
   playerId,
@@ -29,9 +39,9 @@ export default function PlayerTabs({
       className={
         isTabs
           ? "flex gap-0.5 rounded-control border border-hairline bg-pocket p-0.5"
-          : // One per row on phones: three long labels side by side wrap into
+          : // One per row on phones: long labels side by side wrap into
             // ragged two-line buttons at that width
-            "grid gap-2 sm:grid-cols-3"
+            `grid gap-2 ${BUTTON_GRID_COLS[tabs.length] ?? "sm:grid-cols-3"}`
       }
     >
       {tabs.map(({ suffix, labelKey }) => (
