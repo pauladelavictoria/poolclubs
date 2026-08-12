@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubPreview, useJoinOrCreateClub } from "@/hooks/useClub";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
@@ -83,9 +83,8 @@ export default function JoinClubPage() {
 
   return (
     <>
-      <PageHeader title={t("club.joinTitle")} />
-
-      <div className="mx-auto max-w-xl px-3 py-6">
+      <div className="mx-auto max-w-xl space-y-4 px-3 py-6">
+        <PageTitle title={t("club.joinTitle")} />
         {previewLoading ? (
           <Skeleton className="h-52 w-full rounded-card" />
         ) : isError || !preview ? (

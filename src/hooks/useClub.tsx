@@ -182,7 +182,10 @@ export const useClubPreview = (code: string | undefined) =>
         clubName: rows[0].club_name,
         unclaimed: players
           .filter((r) => r.claimable)
-          .map((r) => ({ id: r.player_id as number, name: r.player_name as string })),
+          .map((r) => ({
+            id: r.player_id as number,
+            name: r.player_name as string,
+          })),
         /** Lowercased and trimmed, to match the name check in join_club(). */
         takenNames: new Set(
           players.map((r) => (r.player_name as string).trim().toLowerCase()),

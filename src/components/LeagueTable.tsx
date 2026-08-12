@@ -56,7 +56,7 @@ export default function LeagueTable({
               // the line lands is a fact about the draw, not something anyone
               // can act on.
               qualify > 0 && index === qualify - 1
-                ? "border-b-2 border-mark-tournaments"
+                ? "border-b-2 border-strike"
                 : "",
             ].join(" ")}
           >

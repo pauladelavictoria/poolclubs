@@ -63,7 +63,9 @@ export default function TournamentPodium({
                 {rank}
               </span>
             </div>
-            <span className="sr-only">{t("tournaments.place", { n: rank })}</span>
+            <span className="sr-only">
+              {t("tournaments.place", { n: rank })}
+            </span>
           </div>
         );
       })}

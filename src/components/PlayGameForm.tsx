@@ -66,8 +66,7 @@ export default function PlayGameForm({
   // the larger number. Anything else is a scoreline this tournament cannot have
   // produced, and it would go on to skew the club ranking as a real result.
   const race = match ? raceFor(match) : null;
-  const short =
-    scored && !tie && race !== null && Math.max(a, b) !== race;
+  const short = scored && !tie && race !== null && Math.max(a, b) !== race;
   const valid = !!match && scored && !tie && !short;
 
   const picker = (
@@ -121,7 +120,9 @@ export default function PlayGameForm({
       </div>
 
       {samePlayer && (
-        <p className="text-caption text-strike">{t("tournaments.samePlayer")}</p>
+        <p className="text-caption text-strike">
+          {t("tournaments.samePlayer")}
+        </p>
       )}
       {noFixture && (
         <p className="text-caption text-strike">{t("tournaments.noFixture")}</p>

@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { LuUsers } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useJoinOrCreateClub } from "@/hooks/useClub";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -41,13 +41,15 @@ export default function ClubOnboardingPage() {
 
   return (
     <>
-      <PageHeader title={t("club.welcome")} />
-
       <div className="mx-auto max-w-xl space-y-4 px-3 py-6">
+        <PageTitle title={t("club.welcome")} />
         {pending.length > 0 && (
           <Card className="p-5">
             <div className="flex items-start gap-3">
-              <LuUsers className="mt-0.5 h-5 w-5 shrink-0 text-ink-faint" aria-hidden />
+              <LuUsers
+                className="mt-0.5 h-5 w-5 shrink-0 text-ink-faint"
+                aria-hidden
+              />
               <div>
                 <p className="text-body font-medium text-ink">
                   {t("club.awaitingTitle", {
@@ -75,7 +77,9 @@ export default function ClubOnboardingPage() {
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <p className="text-caption text-ink-faint">{t("club.createHint")}</p>
+            <p className="text-caption text-ink-faint">
+              {t("club.createHint")}
+            </p>
             <Button
               type="submit"
               className="w-full"
@@ -108,7 +112,12 @@ export default function ClubOnboardingPage() {
                 onChange={(e) => setCode(e.target.value)}
               />
             </div>
-            <Button type="submit" variant="secondary" className="w-full" disabled={!code.trim()}>
+            <Button
+              type="submit"
+              variant="secondary"
+              className="w-full"
+              disabled={!code.trim()}
+            >
               {t("club.join")}
             </Button>
           </form>

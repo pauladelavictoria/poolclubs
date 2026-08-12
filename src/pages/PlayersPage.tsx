@@ -4,7 +4,7 @@ import { LuUsers, LuSearch, LuX } from "react-icons/lu";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useEloRanking } from "@/hooks/useEloRanking";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import { Card } from "@/components/ui/Card";
 import { cardClasses } from "@/components/ui/cardStyles";
 import { Avatar } from "@/components/ui/Avatar";
@@ -126,19 +126,16 @@ export default function PlayersPage() {
 
   return (
     <>
-      <PageHeader
-        title={t("players.title")}
-        subtitle={
-          players?.length
-            ? t("ranking.playersCount", { n: players.length })
-            : undefined
-        }
-      />
-
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PageTitle title={t("players.title")} />
         <Card className="flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
-          <h2 className="pl-1 text-h4 font-semibold text-ink">
+          <h2 className="flex items-baseline gap-2 pl-1 text-h4 font-semibold text-ink">
             {t("club.membersTitle")}
+            {players?.length ? (
+              <span className="text-caption font-normal tabular-nums text-ink-faint">
+                {players.length}
+              </span>
+            ) : null}
           </h2>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 md:flex-grow md:justify-end">
             <div className="relative w-full sm:max-w-xs">

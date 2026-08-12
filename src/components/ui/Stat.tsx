@@ -22,14 +22,18 @@ export function Stat({
       </div>
       <div className="mt-1 flex items-baseline gap-2">
         <span
+          // The figure worth singling out wears the club's colour; pot green is
+          // reserved for a frame that was actually won.
           className={`font-mono text-h1 font-semibold tabular-nums ${
-            tone === "good" ? "text-pot" : "text-ink"
+            tone === "good" ? "text-strike" : "text-ink"
           }`}
         >
           {value}
         </span>
         {delta && (
-          <span className="text-caption font-medium text-ink-faint">{delta}</span>
+          <span className="text-caption font-medium text-ink-faint">
+            {delta}
+          </span>
         )}
       </div>
     </div>

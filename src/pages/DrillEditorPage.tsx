@@ -1,7 +1,7 @@
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useGetDrill } from "@/hooks/useGetDrills";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import DrillForm from "@/components/DrillForm";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -22,7 +22,6 @@ export default function DrillEditorPage() {
   const { user, isAdmin, isPlayerLoading } = useAuth();
   const { createDrill, updateDrill, deleteDrill } = useManageDrills();
   const isSubmitting = createDrill.isPending || updateDrill.isPending;
-  const backLink = drillId ? `/app/drills/${drillId}` : "/app/drills";
 
   const handleSubmit = (values: DrillInput) => {
     const onError = () => toast.error(t("drills.saveError"));
@@ -54,12 +53,8 @@ export default function DrillEditorPage() {
   if (drillId && (isLoading || isPlayerLoading)) {
     return (
       <>
-        <PageHeader
-          section="drills"
-          title={t("drills.editTitle")}
-          back={backLink}
-        />
         <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+          <PageTitle title={t("drills.editTitle")} />
           <Skeleton className="aspect-[2/1] w-full rounded-card" />
           <Skeleton className="h-64 w-full rounded-card" />
         </div>
@@ -70,12 +65,8 @@ export default function DrillEditorPage() {
   if (drillId && !drill) {
     return (
       <>
-        <PageHeader
-          section="drills"
-          title={t("drills.editTitle")}
-          back="/app/drills"
-        />
-        <div className="mx-auto max-w-5xl px-3 py-4">
+        <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+          <PageTitle title={t("drills.editTitle")} />
           <Card>
             <EmptyState
               title={t("drills.notFound")}
@@ -95,12 +86,10 @@ export default function DrillEditorPage() {
 
   return (
     <>
-      <PageHeader
-        section="drills"
-        title={drill ? t("drills.editTitle") : t("drills.newTitle")}
-        back={backLink}
-      />
-      <div className="mx-auto max-w-5xl px-3 py-4">
+      <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PageTitle
+          title={drill ? t("drills.editTitle") : t("drills.newTitle")}
+        />
         <DrillForm
           // Remount once the drill arrives, so the form seeds from real data
           key={drill?.id ?? "new"}

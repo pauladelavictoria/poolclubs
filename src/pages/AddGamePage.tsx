@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { useAddGame } from "@/hooks/useAddGame";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -136,9 +136,8 @@ export default function AddGamePage() {
 
   return (
     <>
-      <PageHeader section="games" title={t("games.add")} back="/app/games" />
-
       <div className="mx-auto max-w-2xl space-y-4 px-3 py-4">
+        <PageTitle title={t("games.add")} />
         <Card className="p-5">
           {/* One wrapping row: pushed to the card edges when both fit, centred
               once they wrap onto their own lines on narrow phones. */}

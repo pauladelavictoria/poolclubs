@@ -9,10 +9,11 @@ import type { BallColor, Club } from "@/types";
  * class repaints with no per-component change — strike stays the only accent,
  * it just stops being hardcoded to yellow.
  *
- * Five of the eight hues are not invented here: they are the same tuned pairs
- * already spent elsewhere in index.css (tournaments/ranking/games/drills marks,
- * the error red), reused so a club's colour always matches a hue already in the
- * room. Maroon and black have no such token to borrow, so they are new; black
+ * Five of the eight hues were tuned for index.css first — the four section
+ * marks the app used to carry, plus the error red — and outlived them: the
+ * marks are gone and the club's colour is now the only hue in the room, but
+ * these were already held to its contrast bar. Maroon and black have no such
+ * token to borrow, so they are new; black
  * in particular has no real hue of its own, so it is rendered as a cool
  * graphite instead of vanishing into the near-black canvas or the near-white
  * one.

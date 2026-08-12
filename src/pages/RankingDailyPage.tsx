@@ -4,7 +4,7 @@ import { LuPlus, LuTv } from "react-icons/lu";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useDailyRanking } from "@/hooks/useDailyRanking";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import Ranking, { type ViewMode } from "@/components/Ranking";
 import GamesList from "@/components/GamesList";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -59,7 +59,13 @@ export default function RankingDailyPage() {
 
   return (
     <>
-      <PageHeader section="ranking" title={t("ranking.dailyTitle")}>
+      {/* Its own wrapper rather than the grid below: the grid is what goes
+          fullscreen for the wall TV, and the title bar's controls are the ones
+          you use to get there. */}
+      <PageTitle
+        className="mx-auto max-w-5xl px-3 pt-4"
+        title={t("ranking.dailyTitle")}
+      >
         <input
           type="date"
           value={selectedDate}
@@ -87,7 +93,7 @@ export default function RankingDailyPage() {
           <LuPlus className="h-4 w-4" aria-hidden />
           {t("games.add")}
         </Link>
-      </PageHeader>
+      </PageTitle>
 
       <div
         ref={tvRef}

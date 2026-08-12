@@ -22,7 +22,9 @@ export function EmptyState({
         </div>
       )}
       <p className="text-h4 font-medium text-ink">{title}</p>
-      {hint && <p className="mt-1 max-w-[38ch] text-body text-ink-faint">{hint}</p>}
+      {hint && (
+        <p className="mt-1 max-w-[38ch] text-body text-ink-faint">{hint}</p>
+      )}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );

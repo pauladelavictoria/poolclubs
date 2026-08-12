@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import Ranking, { type ViewMode } from "@/components/Ranking";
 import { Segmented } from "@/components/ui/Segmented";
 import { useT } from "@/i18n";
@@ -20,21 +20,20 @@ export default function RankingAllTimePage() {
 
   return (
     <>
-      <PageHeader
-        section="ranking"
-        title={t("ranking.globalTitle")}
-        subtitle={
-          games.length > 0 ? t("games.count", { n: games.length }) : undefined
-        }
-      />
-
       {/* The ladder is not in a box. A ranking is the club's chalkboard — the
           list itself is the object, so it hangs on the canvas between two rules
           with the controls above it rather than inside a card header. */}
       <div className="mx-auto max-w-5xl px-3 py-4">
+        <PageTitle className="mb-4" title={t("ranking.globalTitle")} />
+
         <div className="flex items-center justify-between gap-3 px-1 pb-3">
-          <h2 className="text-h4 font-semibold text-ink">
+          <h2 className="flex items-baseline gap-2 text-h4 font-semibold text-ink">
             {t("ranking.standings")}
+            {games.length > 0 && (
+              <span className="text-caption font-normal text-ink-faint">
+                {t("games.count", { n: games.length })}
+              </span>
+            )}
           </h2>
           <Segmented
             label={t("ranking.view")}

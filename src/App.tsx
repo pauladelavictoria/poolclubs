@@ -19,6 +19,7 @@ import RouteError from "@/components/RouteError";
 import { ProtectedRoute } from "@/ProtectedRoute";
 import { RequireClub } from "@/RequireClub";
 import { useAuth } from "@/hooks/useAuth";
+import type { Crumb, RouteMeta } from "@/libs/routeMeta";
 
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
@@ -55,6 +56,17 @@ function MeRedirect({ suffix = "" }: { suffix?: string }) {
   );
 }
 
+/**
+ * Everything under a player is two levels deep. The middle crumb is named by
+ * the player, so those pages hand PageTitle the real name — this is the trail
+ * the app bar's back chevron uses and the fallback label if data is still on
+ * its way.
+ */
+const PLAYER_CRUMBS: Crumb[] = [
+  { labelKey: "players.title", to: "/app/players" },
+  { labelKey: "players.detailTitle", to: "/app/players/:playerId" },
+];
+
 function Root() {
   return (
     <>
@@ -84,26 +96,100 @@ const router = createBrowserRouter(
                     the one club-scoped thing members already in one can do. */}
           <Route path="clubs/new" element={<ClubOnboardingPage />} />
 
+          {/* `handle` is where a page says which section it belongs to and what
+              it hangs off. The app bar reads the last crumb for its back
+              chevron, the page's own title block reads the trail — so a route's
+              place in the app is declared once, here, next to the route. */}
           <Route element={<RequireClub />}>
-            <Route index element={<DashboardPage />} />
+            <Route
+              index
+              element={<DashboardPage />}
+              handle={{ section: "home" } satisfies RouteMeta}
+            />
 
-            <Route path="ranking" element={<RankingAllTimePage />} />
-            <Route path="ranking/daily" element={<RankingDailyPage />} />
+            <Route
+              path="ranking"
+              element={<RankingAllTimePage />}
+              handle={{ section: "ranking" } satisfies RouteMeta}
+            />
+            <Route
+              path="ranking/daily"
+              element={<RankingDailyPage />}
+              handle={
+                {
+                  section: "ranking",
+                  crumbs: [{ labelKey: "nav.ranking", to: "/app/ranking" }],
+                } satisfies RouteMeta
+              }
+            />
 
-            <Route path="games" element={<GamesPage />} />
-            <Route path="games/new" element={<AddGamePage />} />
-            <Route path="challenges" element={<ChallengesPage />} />
-            <Route path="tournaments" element={<TournamentsPage />} />
-            <Route path="tournaments/:id" element={<TournamentPage />} />
+            <Route
+              path="games"
+              element={<GamesPage />}
+              handle={{ section: "games" } satisfies RouteMeta}
+            />
+            <Route
+              path="games/new"
+              element={<AddGamePage />}
+              handle={
+                {
+                  section: "games",
+                  crumbs: [{ labelKey: "nav.games", to: "/app/games" }],
+                } satisfies RouteMeta
+              }
+            />
+            <Route
+              path="challenges"
+              element={<ChallengesPage />}
+              handle={{ section: "games" } satisfies RouteMeta}
+            />
+            <Route
+              path="tournaments"
+              element={<TournamentsPage />}
+              handle={{ section: "tournaments" } satisfies RouteMeta}
+            />
+            <Route
+              path="tournaments/:id"
+              element={<TournamentPage />}
+              handle={
+                {
+                  section: "tournaments",
+                  crumbs: [
+                    { labelKey: "nav.tournaments", to: "/app/tournaments" },
+                  ],
+                } satisfies RouteMeta
+              }
+            />
 
             {/* Reading the roster and administering it are different jobs:
                 this is the read-only card list, club settings keeps add/approve
                 /remove. */}
             <Route path="players" element={<PlayersPage />} />
-            <Route path="players/:id" element={<PlayerDetailPage />} />
+            <Route
+              path="players/:id"
+              element={<PlayerDetailPage />}
+              handle={
+                {
+                  crumbs: [{ labelKey: "players.title", to: "/app/players" }],
+                } satisfies RouteMeta
+              }
+            />
             <Route path="club" element={<ClubPage />} />
-            <Route path="drills" element={<DrillsPage />} />
-            <Route path="drills/:id" element={<DrillDetailPage />} />
+            <Route
+              path="drills"
+              element={<DrillsPage />}
+              handle={{ section: "drills" } satisfies RouteMeta}
+            />
+            <Route
+              path="drills/:id"
+              element={<DrillDetailPage />}
+              handle={
+                {
+                  section: "drills",
+                  crumbs: [{ labelKey: "drills.title", to: "/app/drills" }],
+                } satisfies RouteMeta
+              }
+            />
 
             <Route path="me" element={<MeRedirect />} />
             <Route
@@ -117,10 +203,22 @@ const router = createBrowserRouter(
             <Route
               path="players/:playerId/training"
               element={<TrainingProgressPage />}
+              handle={
+                {
+                  section: "drills",
+                  crumbs: PLAYER_CRUMBS,
+                } satisfies RouteMeta
+              }
             />
             <Route
               path="players/:playerId/training/plan"
               element={<TrainingPlanPage />}
+              handle={
+                {
+                  section: "drills",
+                  crumbs: PLAYER_CRUMBS,
+                } satisfies RouteMeta
+              }
             />
             <Route
               path="me/settings"
@@ -129,11 +227,33 @@ const router = createBrowserRouter(
             <Route
               path="players/:playerId/settings"
               element={<PlayerSettingsPage />}
+              handle={{ crumbs: PLAYER_CRUMBS } satisfies RouteMeta}
             />
             {/* Drills are one global library shared by every club;
                       DrillEditorPage turns away non-owners on /edit. */}
-            <Route path="drills/new" element={<DrillEditorPage />} />
-            <Route path="drills/:id/edit" element={<DrillEditorPage />} />
+            <Route
+              path="drills/new"
+              element={<DrillEditorPage />}
+              handle={
+                {
+                  section: "drills",
+                  crumbs: [{ labelKey: "drills.title", to: "/app/drills" }],
+                } satisfies RouteMeta
+              }
+            />
+            <Route
+              path="drills/:id/edit"
+              element={<DrillEditorPage />}
+              handle={
+                {
+                  section: "drills",
+                  crumbs: [
+                    { labelKey: "drills.title", to: "/app/drills" },
+                    { labelKey: "drills.detailTitle", to: "/app/drills/:id" },
+                  ],
+                } satisfies RouteMeta
+              }
+            />
           </Route>
         </Route>
 

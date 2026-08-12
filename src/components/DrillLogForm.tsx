@@ -58,7 +58,7 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
         onError: () => {
           toast.error(t("common.error"));
         },
-      }
+      },
     );
   };
 

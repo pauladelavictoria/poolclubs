@@ -28,15 +28,16 @@ export default function MatchCard({
   const game = match.game;
   const racksFor = (playerId: number | null) => {
     if (!game || playerId === null) return null;
-    return game.player_1_id === playerId ? game.player_1_score : game.player_2_score;
+    return game.player_1_id === playerId
+      ? game.player_1_score
+      : game.player_2_score;
   };
 
   const played = match.winner_id !== null;
   // Settled with an empty seat: nobody was ever going to turn up, so the card
   // shows the one player who went through rather than pairing them with a
   // "to be decided" that is never going to be decided.
-  const walkover =
-    played && (match.p1_id === null || match.p2_id === null);
+  const walkover = played && (match.p1_id === null || match.p2_id === null);
 
   const number = index?.number(match.id);
 
@@ -71,7 +72,7 @@ export default function MatchCard({
             <Link
               to={`/app/players/${playerId}`}
               onClick={(e) => e.stopPropagation()}
-              className="hover:text-strike hover:underline"
+              className="transition-colors duration-150 hover:text-strike"
             >
               {nameOf(playerId)}
             </Link>

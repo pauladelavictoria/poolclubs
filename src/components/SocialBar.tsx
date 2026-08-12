@@ -171,7 +171,7 @@ export default function SocialBar({
             <Link
               to={`/app/players/${comments[0].author_player_id}`}
               onClick={(e) => e.stopPropagation()}
-              className="font-medium text-ink-soft hover:text-strike hover:underline"
+              className="font-medium text-ink-soft hover:text-strike"
             >
               {nameOf(comments[0].author_player_id)}
             </Link>{" "}
@@ -192,7 +192,7 @@ export default function SocialBar({
                 <p className="text-caption text-ink-faint">
                   <Link
                     to={`/app/players/${c.author_player_id}`}
-                    className="font-medium text-ink-soft hover:text-strike hover:underline"
+                    className="font-medium text-ink-soft hover:text-strike"
                   >
                     {nameOf(c.author_player_id)}
                   </Link>{" "}

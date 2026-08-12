@@ -40,7 +40,9 @@ interface PoolTableDiagramProps {
 // A number or single letter fits on the ball; "blanca a mano" does not
 const SHORT_LABEL = /^([0-9]{1,2}|[A-Za-z])$/;
 
-const SELECTED_STROKE = "#f4c53c"; // --color-strike; SVG attrs can't read the token
+// Presentation attributes are CSS properties, so the token reaches them and the
+// selection ring wears whatever colour the club picked.
+const SELECTED_STROKE = "var(--color-strike)";
 
 // A thumbnail carries no numbers, so a dark ball has only its shadow to
 // separate it from the felt, and on a dark felt that is not enough. A hairline
