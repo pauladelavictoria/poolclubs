@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { LuCheck, LuCopy, LuUserMinus, LuPencil, LuPlus } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,9 +17,9 @@ import type { Player, Category } from "@/types";
 import { useT } from "@/i18n";
 
 /**
- * The club's own page: settings, invites and the roster. Everyone gets the
- * invite link — anyone may invite. Only the owner sees the approve/remove
- * controls, mirroring the `clubs` and `players` RLS in sql/schema.sql.
+ * The club's own page: settings, invites and the roster. Owner-only — other
+ * members get a "send invite" button in the nav drawer instead, since the
+ * roster and settings here are theirs to manage, not to browse.
  */
 export default function ClubPage() {
   const { t } = useT();
@@ -34,6 +35,7 @@ export default function ClubPage() {
   const dialogRef = useDialog(isModalOpen);
 
   if (!activeClub) return null;
+  if (!isClubAdmin) return <Navigate to="/app" replace />;
 
   const link = `${window.location.origin}/app/join/${activeClub.join_code}`;
   const pending = (members ?? []).filter((m) => m.status === "pending");
@@ -82,43 +84,41 @@ export default function ClubPage() {
         })}
       />
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        {isClubAdmin && (
-          <Card className="overflow-hidden">
-            <CardHeader title={t("club.settings")} />
-            <form
-              className="space-y-3 p-5"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!name.trim()) return;
-                renameClub.mutate(name, {
-                  onSuccess: () => {
-                    setName("");
-                    toast.success(t("common.saved"));
-                  },
-                  onError: () => toast.error(t("common.error")),
-                });
-              }}
+        <Card className="overflow-hidden">
+          <CardHeader title={t("club.settings")} />
+          <form
+            className="space-y-3 p-5"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!name.trim()) return;
+              renameClub.mutate(name, {
+                onSuccess: () => {
+                  setName("");
+                  toast.success(t("common.saved"));
+                },
+                onError: () => toast.error(t("common.error")),
+              });
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="rename">{t("club.rename")}</Label>
+              <Input
+                id="rename"
+                value={name}
+                maxLength={60}
+                placeholder={activeClub.name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <Button
+              type="submit"
+              variant="secondary"
+              disabled={!name.trim() || renameClub.isPending}
             >
-              <div className="space-y-1.5">
-                <Label htmlFor="rename">{t("club.rename")}</Label>
-                <Input
-                  id="rename"
-                  value={name}
-                  maxLength={60}
-                  placeholder={activeClub.name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <Button
-                type="submit"
-                variant="secondary"
-                disabled={!name.trim() || renameClub.isPending}
-              >
-                {t("common.save")}
-              </Button>
-            </form>
-          </Card>
-        )}
+              {t("common.save")}
+            </Button>
+          </form>
+        </Card>
         <Card className="overflow-hidden">
           <CardHeader title={t("club.inviteTitle")} />
           <div className="space-y-2 p-5">
@@ -143,7 +143,7 @@ export default function ClubPage() {
           </div>
         </Card>
 
-        {isClubAdmin && pending.length > 0 && (
+        {pending.length > 0 && (
           <Card className="overflow-hidden">
             <CardHeader title={t("club.pendingTitle")} />
             <ul className="divide-y divide-hairline">
@@ -233,7 +233,7 @@ export default function ClubPage() {
                   )}
                   {/* Removing takes their games and drill logs with them, so it
                       asks first. */}
-                  {isClubAdmin && m.id !== player?.id && (
+                  {m.id !== player?.id && (
                     <IconButton
                       label={t("club.removeNamed", { name: m.name })}
                       size="sm"
