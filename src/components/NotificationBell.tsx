@@ -9,6 +9,7 @@ const ICONS: Record<
   AppNotification["kind"],
   React.ComponentType<{ className?: string }>
 > = {
+  challengeReceived: LuSwords,
   challengeAccepted: LuSwords,
   challengeDeclined: LuSwords,
   tournamentOpen: LuTrophy,

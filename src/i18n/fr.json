@@ -514,6 +514,7 @@
   "notifications.aria": "Ouvrir les notifications",
   "notifications.unread": "Tu as des notifications non lues",
   "notifications.empty": "Aucune nouvelle notification",
+  "notifications.challengeReceived": "{name} t'a défié",
   "notifications.challengeAccepted": "{name} a accepté ton défi",
   "notifications.challengeDeclined": "{name} a refusé ton défi",
   "notifications.tournamentOpen": "Inscriptions ouvertes pour {name}",

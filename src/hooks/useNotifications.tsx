@@ -10,6 +10,7 @@ import { usePlayerLookup } from "@/hooks/useGetPlayers";
 import { useT } from "@/i18n";
 
 export type NotificationKind =
+  | "challengeReceived"
   | "challengeAccepted"
   | "challengeDeclined"
   | "tournamentOpen"
@@ -83,6 +84,19 @@ export const useNotifications = () => {
     }
 
     for (const c of challenges ?? []) {
+      if (c.to_player_id === player.id && c.status === "pending") {
+        list.push({
+          id: `challenge:${c.id}:${c.status}`,
+          kind: "challengeReceived",
+          needsAction: true,
+          message: t("notifications.challengeReceived", {
+            name: nameOf(c.from_player_id),
+          }),
+          to: "/app/challenges",
+        });
+        continue;
+      }
+
       if (c.from_player_id !== player.id) continue;
       if (c.status !== "accepted" && c.status !== "declined") continue;
 

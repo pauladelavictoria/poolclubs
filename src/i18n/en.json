@@ -514,6 +514,7 @@
   "notifications.aria": "Open notifications",
   "notifications.unread": "You have unread notifications",
   "notifications.empty": "No new notifications",
+  "notifications.challengeReceived": "{name} challenged you",
   "notifications.challengeAccepted": "{name} accepted your challenge",
   "notifications.challengeDeclined": "{name} declined your challenge",
   "notifications.tournamentOpen": "Entries open for {name}",
