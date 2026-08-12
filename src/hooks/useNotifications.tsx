@@ -29,18 +29,19 @@ export type AppNotification = {
 };
 
 const STORAGE_PREFIX = "notifications-seen:";
+const DISMISSED_PREFIX = "notifications-dismissed:";
 
-function loadSeen(playerId: number): Set<string> {
+function loadIds(prefix: string, playerId: number): Set<string> {
   try {
-    const raw = localStorage.getItem(STORAGE_PREFIX + playerId);
+    const raw = localStorage.getItem(prefix + playerId);
     return new Set(raw ? (JSON.parse(raw) as string[]) : []);
   } catch {
     return new Set();
   }
 }
 
-function saveSeen(playerId: number, seen: Set<string>) {
-  localStorage.setItem(STORAGE_PREFIX + playerId, JSON.stringify([...seen]));
+function saveIds(prefix: string, playerId: number, ids: Set<string>) {
+  localStorage.setItem(prefix + playerId, JSON.stringify([...ids]));
 }
 
 /**
@@ -60,13 +61,15 @@ export const useNotifications = () => {
   const { data: pendingMatches } = useMyPendingMatches();
 
   const [seen, setSeen] = useState<Set<string>>(() => new Set());
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
 
   // A different player (switching club, signing in) reads its own history.
   useEffect(() => {
-    setSeen(player ? loadSeen(player.id) : new Set());
+    setSeen(player ? loadIds(STORAGE_PREFIX, player.id) : new Set());
+    setDismissed(player ? loadIds(DISMISSED_PREFIX, player.id) : new Set());
   }, [player?.id]);
 
-  const items = useMemo<AppNotification[]>(() => {
+  const allItems = useMemo<AppNotification[]>(() => {
     if (!player) return [];
 
     const list: AppNotification[] = [];
@@ -132,6 +135,13 @@ export const useNotifications = () => {
     return list.sort((a, b) => Number(b.needsAction) - Number(a.needsAction));
   }, [player, pendingMatches, challenges, tournaments, myTournamentIds, t, nameOf]);
 
+  // Cleared items stay hidden until the thing they describe changes again —
+  // its id changes with it (see AppNotification.id), so it comes back as new.
+  const items = useMemo(
+    () => allItems.filter((i) => !dismissed.has(i.id)),
+    [allItems, dismissed],
+  );
+
   const unreadCount = items.filter((i) => !seen.has(i.id)).length;
 
   const markAllSeen = useCallback(() => {
@@ -139,10 +149,20 @@ export const useNotifications = () => {
     setSeen((prev) => {
       const next = new Set(prev);
       for (const i of items) next.add(i.id);
-      saveSeen(player.id, next);
+      saveIds(STORAGE_PREFIX, player.id, next);
       return next;
     });
   }, [player, items]);
 
-  return { items, unreadCount, seen, markAllSeen };
+  const clearAll = useCallback(() => {
+    if (!player || items.length === 0) return;
+    setDismissed((prev) => {
+      const next = new Set(prev);
+      for (const i of items) next.add(i.id);
+      saveIds(DISMISSED_PREFIX, player.id, next);
+      return next;
+    });
+  }, [player, items]);
+
+  return { items, unreadCount, seen, markAllSeen, clearAll };
 };

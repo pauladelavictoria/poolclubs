@@ -522,5 +522,6 @@
   "notifications.challengeAccepted": "{name} a accepté ton défi",
   "notifications.challengeDeclined": "{name} a refusé ton défi",
   "notifications.tournamentOpen": "Inscriptions ouvertes pour {name}",
-  "notifications.tournamentAction": "Tu as un match en attente dans {name}"
+  "notifications.tournamentAction": "Tu as un match en attente dans {name}",
+  "notifications.clearAll": "Tout effacer"
 }

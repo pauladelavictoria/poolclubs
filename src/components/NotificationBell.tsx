@@ -26,7 +26,7 @@ const ICONS: Record<
 export default function NotificationBell() {
   const { player } = useAuth();
   const { t } = useT();
-  const { items, unreadCount, markAllSeen } = useNotifications();
+  const { items, unreadCount, markAllSeen, clearAll } = useNotifications();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -85,9 +85,20 @@ export default function NotificationBell() {
           role="menu"
           className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-card border border-hairline bg-felt-raised"
         >
-          <p className="border-b border-hairline px-4 py-3 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
-            {t("notifications.title")}
-          </p>
+          <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
+            <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
+              {t("notifications.title")}
+            </p>
+            {items.length > 0 && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-ink"
+              >
+                {t("notifications.clearAll")}
+              </button>
+            )}
+          </div>
 
           {items.length === 0 ? (
             <p className="px-4 py-6 text-center text-caption text-ink-faint">

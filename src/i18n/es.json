@@ -522,5 +522,6 @@
   "notifications.challengeAccepted": "{name} ha aceptado tu reto",
   "notifications.challengeDeclined": "{name} ha rechazado tu reto",
   "notifications.tournamentOpen": "Inscripción abierta en {name}",
-  "notifications.tournamentAction": "Tienes un partido pendiente en {name}"
+  "notifications.tournamentAction": "Tienes un partido pendiente en {name}",
+  "notifications.clearAll": "Borrar todas"
 }
