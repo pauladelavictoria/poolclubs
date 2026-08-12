@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PageHeader from "@/components/PageHeader";
 import TrainingPlanStepList from "@/components/TrainingPlanStepList";
 import PlayerTabs from "@/components/PlayerTabs";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
+import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -17,6 +18,7 @@ export default function TrainingPlanPage() {
   const { playerId } = useParams<{ playerId: string }>();
   const playerIdNum = Number(playerId);
 
+  const { player: authPlayer, isLoading: isAuthLoading } = useAuth();
   const { data: players } = useGetPlayers();
   const player = players?.find((p) => p.id === playerIdNum);
 
@@ -60,6 +62,11 @@ export default function TrainingPlanPage() {
       back={`/app/players/${playerIdNum}`}
     />
   );
+
+  // Training plans are private — only their owner can see them.
+  if (!isAuthLoading && authPlayer?.id !== playerIdNum) {
+    return <Navigate to={`/app/players/${playerIdNum}`} replace />;
+  }
 
   if (isLoading) {
     return (

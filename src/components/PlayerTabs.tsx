@@ -11,12 +11,17 @@ const TABS: { suffix: string; labelKey: Key }[] = [
 export default function PlayerTabs({
   playerId,
   as = "tabs",
+  isOwnProfile = true,
 }: {
   playerId: number;
   as?: "tabs" | "buttons";
+  /** Training plan and progress are private — only the games tab shows on a
+   *  profile that isn't yours. */
+  isOwnProfile?: boolean;
 }) {
   const isTabs = as === "tabs";
   const { t } = useT();
+  const tabs = isOwnProfile ? TABS : TABS.filter(({ suffix }) => suffix === "");
 
   return (
     <nav
@@ -29,7 +34,7 @@ export default function PlayerTabs({
             "grid gap-2 sm:grid-cols-3"
       }
     >
-      {TABS.map(({ suffix, labelKey }) => (
+      {tabs.map(({ suffix, labelKey }) => (
         <NavLink
           key={suffix}
           to={`/app/players/${playerId}${suffix}`}

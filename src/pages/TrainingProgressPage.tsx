@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { LuTrash2 } from "react-icons/lu";
 import PageHeader from "@/components/PageHeader";
 import DrillProgressChart from "@/components/DrillProgressChart";
@@ -32,7 +32,7 @@ export default function TrainingProgressPage() {
   const [difficulty, setDifficulty] = useState<DrillDifficulty | "">("");
   const [drillId, setDrillId] = useState<number | "">("");
 
-  const { user } = useAuth();
+  const { user, player: authPlayer, isLoading: isAuthLoading } = useAuth();
   const { data: players } = useGetPlayers();
   const { data: drills } = useGetDrills();
   const deleteLog = useDeleteDrillLog();
@@ -111,6 +111,11 @@ export default function TrainingProgressPage() {
     deleteLog.mutate(id, {
       onError: (e) => window.alert(e.message),
     });
+  }
+
+  // Training progress is private — only their owner can see it.
+  if (!isAuthLoading && selectedPlayerId && authPlayer?.id !== selectedPlayerId) {
+    return <Navigate to={`/app/players/${selectedPlayerId}`} replace />;
   }
 
   return (

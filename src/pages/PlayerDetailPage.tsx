@@ -34,6 +34,7 @@ export default function PlayerDetailPage() {
   const { user } = useAuth();
   const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
   const player = players?.find((p) => p.id === playerId);
+  const isOwnProfile = !!user && player?.user_id === user.id;
 
   const { data: gamesData, isLoading: isLoadingGames } = useGetGames({
     playerId,
@@ -163,7 +164,7 @@ export default function PlayerDetailPage() {
         {user && (
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0 flex-1">
-              <PlayerTabs playerId={player.id} />
+              <PlayerTabs playerId={player.id} isOwnProfile={isOwnProfile} />
             </div>
             <ChallengeButton toPlayerId={player.id} />
           </div>
