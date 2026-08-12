@@ -168,9 +168,7 @@
   "drills.new": "New drill",
   "drills.autoPlan": "Automatic plan",
   "drills.autoPlanHint": "Ten drills picked for your division, in order.",
-  "drills.planPlayer": "Player for the plan",
-  "drills.selectPlayer": "Select a player",
-  "drills.selectPlayerError": "Select a player",
+  "drills.selectPlayerError": "Sign in to generate your plan",
   "drills.generating": "Generating...",
   "drills.generatePlan": "Generate plan",
   "drills.viewCurrentPlan": "View the current plan",
@@ -523,5 +521,6 @@
   "notifications.challengeDeclined": "{name} declined your challenge",
   "notifications.tournamentOpen": "Entries open for {name}",
   "notifications.tournamentAction": "You have a pending match in {name}",
+  "notifications.drillAdded": "New drill: {name}. Give it a try!"
   "notifications.clearAll": "Clear all"
 }

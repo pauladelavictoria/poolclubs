@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { LuBell, LuSwords, LuTrophy, LuNetwork } from "react-icons/lu";
+import { LuBell, LuSwords, LuTrophy, LuNetwork, LuTarget } from "react-icons/lu";
 import { useNotifications, type AppNotification } from "@/hooks/useNotifications";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/i18n";
@@ -14,6 +14,7 @@ const ICONS: Record<
   challengeDeclined: LuSwords,
   tournamentOpen: LuTrophy,
   tournamentAction: LuNetwork,
+  drillAdded: LuTarget,
 };
 
 /**

@@ -6,6 +6,8 @@ import {
   useMyPendingMatches,
   useMyTournamentIds,
 } from "@/hooks/useTournaments";
+import { useGetDrills } from "@/hooks/useGetDrills";
+import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { usePlayerLookup } from "@/hooks/useGetPlayers";
 import { useT } from "@/i18n";
 
@@ -14,7 +16,8 @@ export type NotificationKind =
   | "challengeAccepted"
   | "challengeDeclined"
   | "tournamentOpen"
-  | "tournamentAction";
+  | "tournamentAction"
+  | "drillAdded";
 
 export type AppNotification = {
   /** Stable and unique per underlying event *and* its current state, so an
@@ -59,6 +62,8 @@ export const useNotifications = () => {
   const { data: tournaments } = useGetTournaments();
   const { data: myTournamentIds } = useMyTournamentIds();
   const { data: pendingMatches } = useMyPendingMatches();
+  const { data: drills } = useGetDrills();
+  const { data: myDrillLogs } = useGetDrillLogs({ player_id: player?.id });
 
   const [seen, setSeen] = useState<Set<string>>(() => new Set());
   const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
@@ -131,9 +136,32 @@ export const useNotifications = () => {
       });
     }
 
+    const triedDrillIds = new Set((myDrillLogs ?? []).map((log) => log.drill_id));
+    for (const drill of drills ?? []) {
+      if (triedDrillIds.has(drill.id)) continue;
+
+      list.push({
+        id: `drill-added:${drill.id}`,
+        kind: "drillAdded",
+        needsAction: false,
+        message: t("notifications.drillAdded", { name: drill.name }),
+        to: `/app/drills/${drill.id}`,
+      });
+    }
+
     // Things waiting on you float to the top; everything else keeps arrival order.
     return list.sort((a, b) => Number(b.needsAction) - Number(a.needsAction));
-  }, [player, pendingMatches, challenges, tournaments, myTournamentIds, t, nameOf]);
+  }, [
+    player,
+    pendingMatches,
+    challenges,
+    tournaments,
+    myTournamentIds,
+    drills,
+    myDrillLogs,
+    t,
+    nameOf,
+  ]);
 
   // Cleared items stay hidden until the thing they describe changes again —
   // its id changes with it (see AppNotification.id), so it comes back as new.

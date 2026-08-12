@@ -5,7 +5,6 @@ import { LuTarget } from "react-icons/lu";
 import PageHeader from "@/components/PageHeader";
 import DrillCard from "@/components/DrillCard";
 import { useGetDrills } from "@/hooks/useGetDrills";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useAuth } from "@/hooks/useAuth";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
@@ -22,19 +21,17 @@ export default function DrillsPage() {
   const { t } = useT();
   const [difficulty, setDifficulty] = useState<DrillDifficulty | "">("");
   const [skillType, setSkillType] = useState<DrillSkillType | "">("");
-  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
 
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, player } = useAuth();
   const { data: drills, isLoading } = useGetDrills({
     difficulty: difficulty || undefined,
     skill_type: skillType || undefined,
   });
-  const { data: players } = useGetPlayers();
-  const { generatePlan } = useTrainingPlan(selectedPlayerId ?? undefined);
+  // A training plan is self-service only — never generated for someone else.
+  const { generatePlan } = useTrainingPlan(player?.id);
 
   const handleGeneratePlan = () => {
-    const player = players?.find((p) => p.id === selectedPlayerId);
     if (!player) {
       toast.error(t("drills.selectPlayerError"));
       return;
@@ -73,27 +70,9 @@ export default function DrillsPage() {
           </p>
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <Select
-              className="flex-1"
-              aria-label={t("drills.planPlayer")}
-              value={selectedPlayerId ?? ""}
-              onChange={(e) =>
-                setSelectedPlayerId(
-                  e.target.value ? Number(e.target.value) : null,
-                )
-              }
-            >
-              <option value="">{t("drills.selectPlayer")}</option>
-              {players?.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {player.name} ({t("category.short", { n: player.category })})
-                </option>
-              ))}
-            </Select>
-
             <Button
               onClick={handleGeneratePlan}
-              disabled={!selectedPlayerId || generatePlan.isPending}
+              disabled={!player || generatePlan.isPending}
               className="shrink-0"
             >
               {generatePlan.isPending
@@ -102,9 +81,9 @@ export default function DrillsPage() {
             </Button>
           </div>
 
-          {selectedPlayerId && (
+          {player && (
             <Link
-              to={`/app/players/${selectedPlayerId}/training/plan`}
+              to={`/app/players/${player.id}/training/plan`}
               className="mt-3 inline-block text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-ink"
             >
               {t("drills.viewCurrentPlan")}

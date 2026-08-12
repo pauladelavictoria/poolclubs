@@ -168,9 +168,7 @@
   "drills.new": "Nuevo ejercicio",
   "drills.autoPlan": "Plan automático",
   "drills.autoPlanHint": "Diez ejercicios elegidos para tu categoría, en orden.",
-  "drills.planPlayer": "Jugador para el plan",
-  "drills.selectPlayer": "Seleccionar jugador",
-  "drills.selectPlayerError": "Selecciona un jugador",
+  "drills.selectPlayerError": "Inicia sesión para generar tu plan",
   "drills.generating": "Generando...",
   "drills.generatePlan": "Generar plan",
   "drills.viewCurrentPlan": "Ver el plan actual",
@@ -523,5 +521,6 @@
   "notifications.challengeDeclined": "{name} ha rechazado tu reto",
   "notifications.tournamentOpen": "Inscripción abierta en {name}",
   "notifications.tournamentAction": "Tienes un partido pendiente en {name}",
+  "notifications.drillAdded": "Nuevo drill: {name}. ¡Pruébalo!"
   "notifications.clearAll": "Borrar todas"
 }

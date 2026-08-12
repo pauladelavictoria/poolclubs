@@ -93,6 +93,9 @@ export function startRealtime() {
       onTable("drill_logs"),
       invalidate(keys.drillLogs.all),
     )
+    // A new drill goes on the home feed and the notification bell for
+    // everyone, so it needs to show up without a manual refresh too.
+    .on("postgres_changes", onTable("drills"), invalidate(keys.drills.all))
     // Social tables: a conversation that needs a manual refresh is not one.
     // These two carry the row into the cache rather than invalidating — see
     // applySocialRow above.
