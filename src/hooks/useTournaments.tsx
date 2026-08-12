@@ -26,6 +26,15 @@ export type TournamentDetail = Tournament & {
   tournament_matches: TournamentMatch[];
 };
 
+/** A row on the index: the tournament plus how many have entered it. */
+export type TournamentListItem = Tournament & {
+  tournament_players: { count: number }[];
+};
+
+/** PostgREST returns the aggregate as a one-row array, or none at all. */
+export const entrantCount = (t: TournamentListItem) =>
+  t.tournament_players[0]?.count ?? 0;
+
 /** Both roots go stale together: a result changes the page and the index badge. */
 const refresh = () => {
   queryClient.invalidateQueries({ queryKey: keys.tournaments.all });
@@ -41,14 +50,18 @@ export const useGetTournaments = () => {
     queryFn: async () => {
       if (!activeClubId) throw new Error("no active club");
 
+      // The count comes back as an aggregate row rather than the entrant list:
+      // the index only ever prints the number, and pulling every player_id for
+      // every tournament to call .length on it is a bigger payload for the
+      // same digit.
       const { data } = await supabase
         .from("tournaments")
-        .select("*")
+        .select("*, tournament_players(count)")
         .eq("club_id", activeClubId)
         .order("created_at", { ascending: false })
         .throwOnError();
 
-      return data as Tournament[];
+      return data as TournamentListItem[];
     },
   });
 };
@@ -152,8 +165,15 @@ export const useManageTournaments = () => {
       mutationFn: async ({
         id,
         ...values
-      }: Partial<NewTournament> & { id: number; status?: Tournament["status"] }) => {
-        await supabase.from("tournaments").update(values).eq("id", id).throwOnError();
+      }: Partial<NewTournament> & {
+        id: number;
+        status?: Tournament["status"];
+      }) => {
+        await supabase
+          .from("tournaments")
+          .update(values)
+          .eq("id", id)
+          .throwOnError();
       },
       onSuccess: refresh,
     }),
@@ -242,7 +262,8 @@ export const useManageTournaments = () => {
         await supabase
           .from("tournaments")
           .update({
-            status: tournament.format === "group_knockout" ? "groups" : "running",
+            status:
+              tournament.format === "group_knockout" ? "groups" : "running",
           })
           .eq("id", tournament.id)
           .throwOnError();
@@ -309,7 +330,8 @@ export const useManageTournaments = () => {
         discipline: Discipline;
       }) => {
         if (!activeClubId) throw new Error("no active club");
-        if (p1Score === p2Score) throw new Error("a tournament match needs a winner");
+        if (p1Score === p2Score)
+          throw new Error("a tournament match needs a winner");
 
         const { data: game } = await supabase
           .from("games")

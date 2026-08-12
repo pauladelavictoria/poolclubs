@@ -200,14 +200,14 @@ export default function PlayerDetailPage() {
                     <XAxis
                       dataKey="date"
                       stroke={chart.axis}
-                      tick={{ fill: chart.axis, fontSize: 12 }}
+                      tick={{ fill: chart.axis, fontSize: 14 }}
                       axisLine={{ stroke: chart.grid }}
                       tickLine={{ stroke: chart.grid }}
                       tickFormatter={(val) => val.split(",")[0]}
                     />
                     <YAxis
                       stroke={chart.axis}
-                      tick={{ fill: chart.axis, fontSize: 12 }}
+                      tick={{ fill: chart.axis, fontSize: 14 }}
                       domain={[0, 100]}
                       axisLine={{ stroke: chart.grid }}
                       tickLine={{ stroke: chart.grid }}

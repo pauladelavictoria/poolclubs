@@ -11,22 +11,49 @@ import {
   LuUsers,
 } from "react-icons/lu";
 import type { Key } from "@/i18n";
+import type { SectionId } from "@/libs/sections";
 
 export type NavItem = {
   to: string;
   /** Translated at render time, so the rail relabels itself with the language. */
   labelKey: Key;
   icon: React.ComponentType<{ className?: string }>;
+  /** Which of the four places this leads to — carries the mark. See libs/sections. */
+  section: SectionId;
   /** `end` so a parent route doesn't stay highlighted on its children. */
   end?: boolean;
 };
 
-/** The five thumb-reachable destinations. Everything else lives in the drawer. */
+/** The four thumb-reachable destinations. Everything else lives in the drawer. */
 export const PRIMARY_NAV: NavItem[] = [
-  { to: "/app", labelKey: "nav.home", icon: LuHouse, end: true },
-  { to: "/app/ranking", labelKey: "nav.ranking", icon: LuTrophy, end: true },
-  { to: "/app/games", labelKey: "nav.games", icon: LuCircleDot, end: true },
-  { to: "/app/drills", labelKey: "nav.drills", icon: LuTarget, end: true },
+  {
+    to: "/app",
+    labelKey: "nav.home",
+    icon: LuHouse,
+    section: "home",
+    end: true,
+  },
+  {
+    to: "/app/ranking",
+    labelKey: "nav.ranking",
+    icon: LuTrophy,
+    section: "ranking",
+    end: true,
+  },
+  {
+    to: "/app/games",
+    labelKey: "nav.games",
+    icon: LuCircleDot,
+    section: "games",
+    end: true,
+  },
+  {
+    to: "/app/drills",
+    labelKey: "nav.drills",
+    icon: LuTarget,
+    section: "drills",
+    end: true,
+  },
 ];
 
 /**
@@ -39,11 +66,18 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
   {
     headingKey: "nav.club",
     items: [
-      { to: "/app/players", labelKey: "nav.players", icon: LuUsers, end: true },
+      {
+        to: "/app/players",
+        labelKey: "nav.players",
+        icon: LuUsers,
+        section: "home",
+        end: true,
+      },
       {
         to: "/app/club",
         labelKey: "nav.clubSettings",
         icon: LuSettings,
+        section: "home",
         end: true,
       },
     ],
@@ -55,6 +89,7 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         to: "/app/tournaments",
         labelKey: "nav.allTournaments",
         icon: LuNetwork,
+        section: "tournaments",
         end: true,
       },
     ],
@@ -66,21 +101,34 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         to: "/app/games",
         labelKey: "nav.allGames",
         icon: LuCircleDot,
+        section: "games",
         end: true,
       },
       {
         to: "/app/challenges",
         labelKey: "nav.challenges",
         icon: LuSwords,
+        section: "games",
         end: true,
       },
-      { to: "/app/games/new", labelKey: "nav.addGame", icon: LuPlus },
+      {
+        to: "/app/games/new",
+        labelKey: "nav.addGame",
+        icon: LuPlus,
+        section: "games",
+      },
     ],
   },
   {
     headingKey: "nav.training",
     items: [
-      { to: "/app/drills", labelKey: "nav.drills", icon: LuTarget, end: true },
+      {
+        to: "/app/drills",
+        labelKey: "nav.drills",
+        icon: LuTarget,
+        section: "drills",
+        end: true,
+      },
     ],
   },
   {
@@ -90,12 +138,14 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         to: "/app/ranking",
         labelKey: "nav.rankingGlobal",
         icon: LuTrophy,
+        section: "ranking",
         end: true,
       },
       {
         to: "/app/ranking/daily",
         labelKey: "nav.rankingDaily",
         icon: LuCalendarDays,
+        section: "ranking",
       },
     ],
   },

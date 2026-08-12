@@ -16,8 +16,12 @@
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
 
   /* Scale: 16px base, ~1.2 ratio, rounded to whole px and to the 4px grid at
-     the top end.*/
-  --text-caption: 0.75rem; /* 12 */
+     the top end.
+     Caption is the floor and it is 14, not 12: this gets read in a dim room at
+     arm's length, and metadata that can't be read is not metadata. It separates
+     from body on weight, colour and tracking rather than on two points of size —
+     which is the stronger separation anyway. */
+  --text-caption: 0.875rem; /* 14 — nothing in the app is smaller */
   --text-body: 1rem; /* 16 */
   --text-h4: 1.125rem; /* 18 */
   --text-h3: 1.25rem; /* 20 */
@@ -68,6 +72,19 @@
   --color-ball-3: #d2342f;
   --color-ball-cue: #2a303a;
 
+  /*
+    Section marks. Which part of the app you are standing in — tournaments,
+    rankings, games, drills. Identity only: a glyph, a 2px rail, an eyebrow,
+    the nav indicator. Never a fill and never a button, so strike keeps "act"
+    to itself.
+    Each hue is off the rack, so it was already in the room. Ratios are as text
+    against --color-felt, the worst case, and every one clears AA at 12px.
+  */
+  --color-mark-tournaments: #6f95f5; /* 2 ball — the draw, in ink. 5.8:1 */
+  --color-mark-ranking: #a97bd8; /* 4 ball — the ladder. 5.2:1 */
+  --color-mark-games: var(--color-pot); /* a game is a frame won. 7.1:1 */
+  --color-mark-drills: #f2843c; /* 5 ball — practice. 6.5:1 */
+
   /* Radius — locked scale. control < card < sheet. */
   --radius-control: 10px;
   --radius-card: 14px;
@@ -77,17 +94,9 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
 
-  /* Legacy aliases: files not yet migrated still land on the new palette */
-  --color-dark-bg: var(--color-pocket);
-  --color-dark-card: var(--color-felt);
-  --color-dark-card-hover: var(--color-felt-raised);
-  --color-dark-border: var(--color-hairline);
-  /* Red stopped being the accent when yellow took over, so these hold real
-     reds: they are what error text is written in. */
+  /* Red stopped being the accent when yellow took over, so this holds a real
+     red: it is what error text is written in, and nothing else. */
   --color-accent-red: #e23744;
-  --color-accent-red-light: #ef5c66;
-  --color-accent-red-dark: #b3212d;
-  --color-accent-red-darker: #7a1a22;
 }
 
 /*
@@ -130,9 +139,13 @@
   --color-pot: #12794a;
   --color-ball-cue: #dbe1ea;
 
+  /* Marks darken where dark mode lifts. mark-games is an alias of --color-pot
+     and turns over with it, so it is not repeated here. */
+  --color-mark-tournaments: #2f52c8; /* 6.7:1 on the card, 6.1:1 on the canvas */
+  --color-mark-ranking: #6b30a8; /* 8.0:1 / 7.2:1 */
+  --color-mark-drills: #b4530a; /* 5.1:1 / 4.7:1 */
+
   --color-accent-red: #c1121f;
-  --color-accent-red-light: #d93a45;
-  --color-accent-red-dark: #96101a;
 
   color-scheme: light;
 }

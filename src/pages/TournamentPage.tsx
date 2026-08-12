@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
+  LuChevronDown,
   LuGitFork,
   LuList,
   LuPencil,
   LuPlus,
+  LuSettings,
   LuTrash2,
   LuUserMinus,
   LuUserPlus,
@@ -117,7 +119,11 @@ export default function TournamentPage() {
   if (!tournament || tournament.club_id !== activeClubId) {
     return (
       <>
-        <PageHeader title={t("nav.tournaments")} back="/app/tournaments" />
+        <PageHeader
+          section="tournaments"
+          title={t("nav.tournaments")}
+          back="/app/tournaments"
+        />
         <Card className="mx-auto mt-4 max-w-5xl">
           <EmptyState
             title={t("tournaments.missing")}
@@ -195,9 +201,97 @@ export default function TournamentPage() {
     }
   };
 
+  /**
+   * Running the tournament, folded away. These were three more cards in a stack
+   * of eight that all looked alike, and they are the only ones most of the club
+   * can't use at all — so they go last, behind a dashed disclosure, which is the
+   * same "not the content" edge the feed already uses.
+   */
+  const adminBlock = !isClubAdmin ? null : tournament.status === "open" ? (
+    <ManagePanel title={t("tournaments.manage")}>
+      <p className="text-body text-ink-soft">
+        {entrants.length < minimum
+          ? t("tournaments.needMore", {
+              n: minimum - entrants.length,
+              min: minimum,
+            })
+          : t("tournaments.readyToStart", { n: entrants.length })}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          disabled={entrants.length < minimum || startTournament.isPending}
+          onClick={() =>
+            run(
+              startTournament.mutateAsync({ tournament, seededIds: seeded }),
+              "tournaments.started",
+            )
+          }
+        >
+          {t("tournaments.start")}
+        </Button>
+        <Button variant="secondary" onClick={() => setIsEditOpen(true)}>
+          <LuPencil className="h-4 w-4" aria-hidden />
+          {t("common.edit")}
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            if (
+              !confirm(
+                t("tournaments.deleteConfirm", { name: tournament.name }),
+              )
+            )
+              return;
+            run(
+              deleteTournament.mutateAsync(tournamentId),
+              "tournaments.deleted",
+            );
+          }}
+        >
+          <LuTrash2 className="h-4 w-4" aria-hidden />
+          {t("common.delete")}
+        </Button>
+      </div>
+    </ManagePanel>
+  ) : tournament.status === "groups" ? (
+    <ManagePanel title={t("tournaments.manage")}>
+      <p className="text-body text-ink-soft">
+        {groupsDone
+          ? t("tournaments.groupsDone", { n: tournament.advance ?? 0 })
+          : t("tournaments.groupsPending")}
+      </p>
+      <Button
+        disabled={!groupsDone || generateKnockout.isPending}
+        onClick={() =>
+          run(
+            generateKnockout.mutateAsync(tournament as TournamentDetail),
+            "tournaments.knockoutReady",
+          )
+        }
+      >
+        {t("tournaments.generateKnockout")}
+      </Button>
+    </ManagePanel>
+  ) : tournament.status === "running" ? (
+    <ManagePanel title={t("tournaments.manage")}>
+      <Button
+        variant="secondary"
+        onClick={() =>
+          run(
+            updateTournament.mutateAsync({ id: tournamentId, status: "done" }),
+            "tournaments.closed",
+          )
+        }
+      >
+        {t("tournaments.close")}
+      </Button>
+    </ManagePanel>
+  ) : null;
+
   return (
     <>
       <PageHeader
+        section="tournaments"
         title={tournament.name}
         back="/app/tournaments"
         subtitle={`${t(`discipline.${tournament.discipline}`)} · ${t(
@@ -224,6 +318,57 @@ export default function TournamentPage() {
           <Card className="overflow-hidden">
             <CardHeader title={t("tournaments.results")} />
             <TournamentPodium places={podium} byId={byId} />
+          </Card>
+        )}
+
+        {/* The draw leads. It is the one thing everybody opens the page for
+            once the tournament is under way, so it comes before the tables
+            that explain it and long before the tools that run it. */}
+        {matches.some(
+          (m) => m.bracket !== "group" && m.bracket !== "league",
+        ) && (
+          <Card className="overflow-hidden">
+            <CardHeader
+              title={t("tournaments.bracketTitle")}
+              action={
+                <Segmented<"bracket" | "list">
+                  value={view}
+                  onChange={setView}
+                  label={t("tournaments.view")}
+                  options={[
+                    {
+                      value: "bracket",
+                      label: t("tournaments.viewBracket"),
+                      icon: <LuGitFork className="h-4 w-4" aria-hidden />,
+                    },
+                    {
+                      value: "list",
+                      label: t("tournaments.viewList"),
+                      icon: <LuList className="h-4 w-4" aria-hidden />,
+                    },
+                  ]}
+                />
+              }
+            />
+            <div className="p-3">
+              {view === "bracket" ? (
+                <BracketView
+                  matches={matches}
+                  nameOf={nameOf}
+                  index={index}
+                  raceFor={raceOf}
+                  onRecord={recorder}
+                />
+              ) : (
+                <MatchList
+                  matches={matches}
+                  nameOf={nameOf}
+                  index={index}
+                  raceFor={raceOf}
+                  onRecord={recorder}
+                />
+              )}
+            </div>
           </Card>
         )}
 
@@ -357,64 +502,6 @@ export default function TournamentPage() {
           </Card>
         )}
 
-        {isClubAdmin && tournament.status === "open" && (
-          <Card className="overflow-hidden">
-            <CardHeader title={t("tournaments.manage")} />
-            <div className="space-y-3 p-5">
-              <p className="text-body text-ink-soft">
-                {entrants.length < minimum
-                  ? t("tournaments.needMore", {
-                      n: minimum - entrants.length,
-                      min: minimum,
-                    })
-                  : t("tournaments.readyToStart", { n: entrants.length })}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  disabled={
-                    entrants.length < minimum || startTournament.isPending
-                  }
-                  onClick={() =>
-                    run(
-                      startTournament.mutateAsync({
-                        tournament,
-                        seededIds: seeded,
-                      }),
-                      "tournaments.started",
-                    )
-                  }
-                >
-                  {t("tournaments.start")}
-                </Button>
-                <Button variant="secondary" onClick={() => setIsEditOpen(true)}>
-                  <LuPencil className="h-4 w-4" aria-hidden />
-                  {t("common.edit")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (
-                      !confirm(
-                        t("tournaments.deleteConfirm", {
-                          name: tournament.name,
-                        }),
-                      )
-                    )
-                      return;
-                    run(
-                      deleteTournament.mutateAsync(tournamentId),
-                      "tournaments.deleted",
-                    );
-                  }}
-                >
-                  <LuTrash2 className="h-4 w-4" aria-hidden />
-                  {t("common.delete")}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        )}
-
         {/* Group tables stay up once the bracket is running: the bracket says
             who is left, the tables say how they got there. */}
         {groupMatches.length > 0 &&
@@ -436,32 +523,6 @@ export default function TournamentPage() {
               </div>
             </Card>
           ))}
-
-        {isClubAdmin && tournament.status === "groups" && (
-          <Card className="overflow-hidden">
-            <CardHeader title={t("tournaments.manage")} />
-            <div className="space-y-3 p-5">
-              <p className="text-body text-ink-soft">
-                {groupsDone
-                  ? t("tournaments.groupsDone", { n: tournament.advance ?? 0 })
-                  : t("tournaments.groupsPending")}
-              </p>
-              <Button
-                disabled={!groupsDone || generateKnockout.isPending}
-                onClick={() =>
-                  run(
-                    generateKnockout.mutateAsync(
-                      tournament as TournamentDetail,
-                    ),
-                    "tournaments.knockoutReady",
-                  )
-                }
-              >
-                {t("tournaments.generateKnockout")}
-              </Button>
-            </div>
-          </Card>
-        )}
 
         {tournament.format === "league" && matches.length > 0 && (
           <>
@@ -517,69 +578,11 @@ export default function TournamentPage() {
           </>
         )}
 
-        {matches.some(
-          (m) => m.bracket !== "group" && m.bracket !== "league",
-        ) && (
-          <Card className="overflow-hidden">
-            <CardHeader
-              title={t("tournaments.bracketTitle")}
-              action={
-                <Segmented<"bracket" | "list">
-                  value={view}
-                  onChange={setView}
-                  label={t("tournaments.view")}
-                  options={[
-                    {
-                      value: "bracket",
-                      label: t("tournaments.viewBracket"),
-                      icon: <LuGitFork className="h-4 w-4" aria-hidden />,
-                    },
-                    {
-                      value: "list",
-                      label: t("tournaments.viewList"),
-                      icon: <LuList className="h-4 w-4" aria-hidden />,
-                    },
-                  ]}
-                />
-              }
-            />
-            <div className="p-3">
-              {view === "bracket" ? (
-                <BracketView
-                  matches={matches}
-                  nameOf={nameOf}
-                  index={index}
-                  raceFor={raceOf}
-                  onRecord={recorder}
-                />
-              ) : (
-                <MatchList
-                  matches={matches}
-                  nameOf={nameOf}
-                  index={index}
-                  raceFor={raceOf}
-                  onRecord={recorder}
-                />
-              )}
-            </div>
-          </Card>
-        )}
-
-        {isClubAdmin && tournament.status === "running" && (
-          <Button
-            variant="secondary"
-            onClick={() =>
-              run(
-                updateTournament.mutateAsync({
-                  id: tournamentId,
-                  status: "done",
-                }),
-                "tournaments.closed",
-              )
-            }
-          >
-            {t("tournaments.close")}
-          </Button>
+        {adminBlock && (
+          // The seam between the tournament and the running of it. Everything
+          // above is what a tournament is; everything below is a job, and only
+          // one person on the page has it.
+          <div className="border-t border-hairline pt-4">{adminBlock}</div>
         )}
       </div>
 
@@ -653,6 +656,35 @@ export default function TournamentPage() {
         )}
       </dialog>
     </>
+  );
+}
+
+/**
+ * The organiser's controls. A native <details> — click to open, Esc, no state
+ * and no outside-click listener — with a dashed edge, so it reads as scaffolding
+ * around the tournament rather than another part of it.
+ */
+function ManagePanel({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group rounded-card border border-dashed border-hairline">
+      <summary className="flex h-11 cursor-pointer list-none items-center gap-2 px-4 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint transition-colors duration-150 hover:text-ink-soft [&::-webkit-details-marker]:hidden">
+        <LuSettings className="h-4 w-4" aria-hidden />
+        {title}
+        <LuChevronDown
+          className="ml-auto h-4 w-4 transition-transform duration-150 group-open:rotate-180"
+          aria-hidden
+        />
+      </summary>
+      <div className="space-y-3 border-t border-dashed border-hairline p-4">
+        {children}
+      </div>
+    </details>
   );
 }
 

@@ -31,7 +31,7 @@ export default function TrainingPlanPage() {
     if (!planData?.steps) return null;
     const total = planData.steps.length;
     const completed = planData.steps.filter(
-      (s) => s.status === "completed"
+      (s) => s.status === "completed",
     ).length;
     const skipped = planData.steps.filter((s) => s.status === "skipped").length;
     const pending = total - completed - skipped;
@@ -45,12 +45,13 @@ export default function TrainingPlanPage() {
       {
         onSuccess: () => toast.success(t("training.newPlanCreated")),
         onError: () => toast.error(t("drills.planError")),
-      }
+      },
     );
   };
 
   const header = (
     <PageHeader
+      section="drills"
       title={t("training.planTitle")}
       subtitle={
         player &&
@@ -122,7 +123,8 @@ export default function TrainingPlanPage() {
                   style={{
                     width: `${
                       stats.total > 0
-                        ? ((stats.completed + stats.skipped) / stats.total) * 100
+                        ? ((stats.completed + stats.skipped) / stats.total) *
+                          100
                         : 0
                     }%`,
                   }}

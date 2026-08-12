@@ -52,9 +52,11 @@ export default function LeagueTable({
             className={[
               "transition-colors duration-150 hover:bg-felt-raised",
               // The cut, drawn where it actually falls rather than as a badge
-              // on each qualifying row.
+              // on each qualifying row. In the tournament's own colour: where
+              // the line lands is a fact about the draw, not something anyone
+              // can act on.
               qualify > 0 && index === qualify - 1
-                ? "border-b-2 border-strike"
+                ? "border-b-2 border-mark-tournaments"
                 : "",
             ].join(" ")}
           >

@@ -71,7 +71,7 @@ export default function ChallengesPage() {
 
   return (
     <>
-      <PageHeader title={t("challenge.title")} />
+      <PageHeader section="games" title={t("challenge.title")} />
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         {/* Pick an opponent, then the same button used on their profile — it

@@ -107,8 +107,7 @@ export default function TrainingProgressPage() {
 
   // Deleting a result is not undoable and it moves the averages, so it asks
   function handleDelete(id: number) {
-    if (!window.confirm(t("training.deleteConfirm")))
-      return;
+    if (!window.confirm(t("training.deleteConfirm"))) return;
     deleteLog.mutate(id, {
       onError: (e) => window.alert(e.message),
     });
@@ -117,6 +116,7 @@ export default function TrainingProgressPage() {
   return (
     <>
       <PageHeader
+        section="drills"
         title={t("training.progressTitle")}
         subtitle={player?.name}
         back={`/app/players/${selectedPlayerId}`}
@@ -220,10 +220,7 @@ export default function TrainingProgressPage() {
                       })
                 }
               />
-              <Stat
-                label={t("training.drills")}
-                value={stats.uniqueDrills}
-              />
+              <Stat label={t("training.drills")} value={stats.uniqueDrills} />
               <Stat label={t("training.best")} value={`${stats.bestScore}%`} />
             </Card>
 

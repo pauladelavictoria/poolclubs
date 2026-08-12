@@ -51,7 +51,7 @@ export default function DrillsPage() {
 
   return (
     <>
-      <PageHeader title={t("drills.title")}>
+      <PageHeader section="drills" title={t("drills.title")}>
         {user && (
           <Link
             to="/app/drills/new"
@@ -114,8 +114,9 @@ export default function DrillsPage() {
 
         {/* The filters are their own control strip. The drills below are cards
             in their own right, so wrapping the grid in another card would put
-            a border around a field of borders. */}
-        <Card className="p-3">
+            a border around a field of borders — and a second card up here made
+            the top of the page look like every other page in the app. */}
+        <div className="rounded-control border border-hairline bg-felt p-2">
           <div className="flex flex-col gap-2 sm:flex-row">
             <Select
               className="flex-1"
@@ -149,7 +150,7 @@ export default function DrillsPage() {
               ))}
             </Select>
           </div>
-        </Card>
+        </div>
 
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">

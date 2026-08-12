@@ -1,6 +1,6 @@
 import type { DailyRankingEntry } from "@/types";
 import { Link } from "react-router-dom";
-import { BallBadge, CategoryBadge } from "@/components/ui/Ball";
+import { CategoryBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
 import { useAuth } from "@/hooks/useAuth";
 import type { ViewMode } from "./Ranking";
@@ -13,9 +13,15 @@ interface RankingTableProps {
 }
 
 /**
- * The rating is the focal element: mono, tabular, heaviest thing in the row.
- * Name sits one tier below it, form and division are metadata. Rows are
- * separated by space and hover, not by a hairline under every one.
+ * The ladder. Where a tournament is a few big cards and a game is a small inset
+ * pill, a ranking is a dense typographic table with no chrome at all: ruled
+ * rows, a spine down the rank column, and the rating as the largest object on
+ * the page.
+ *
+ * The rank is set in mono digits rather than a coloured ball — that is what
+ * keeps this from reading as the same component as a tournament's LeagueTable,
+ * which keeps the balls because inside a draw the top three *are* a podium.
+ * Here the number is a position on a long list, so it is written, not awarded.
  */
 export default function RankingTable({
   entries,
@@ -30,19 +36,25 @@ export default function RankingTable({
       <caption className="sr-only">{t("ranking.standings")}</caption>
       <thead>
         <tr className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
-          {/* 16 padding + 28 ball + 12 gap. At w-11 the cell was exactly the
-              ball, so the name sat flush against it. */}
-          <th scope="col" className="w-14 py-2 pl-4 pr-3 text-left font-medium">
+          {/* The spine. A rule down the rank column is what makes a list of
+              names read as an ordered ladder rather than as a grid of facts. */}
+          <th
+            scope="col"
+            className="w-12 border-r border-hairline py-2 pl-4 pr-3 text-right font-medium"
+          >
             #
           </th>
           {/* Its own column, not a tail on the name: a left-anchored strip of
               divisions can be scanned down, an inline badge can't. */}
           {viewMode === "combined" && (
-            <th scope="col" className="w-14 py-2 pr-3 text-left font-medium">
+            <th
+              scope="col"
+              className="w-14 py-2 pl-3 pr-3 text-left font-medium"
+            >
               {t("ranking.categoryShort")}
             </th>
           )}
-          <th scope="col" className="py-2 text-left font-medium">
+          <th scope="col" className="py-2 pl-3 text-left font-medium">
             {t("ranking.player")}
           </th>
           <th
@@ -66,24 +78,36 @@ export default function RankingTable({
         {entries.map((entry, index) => (
           <tr
             key={entry.playerId}
-            className={`transition-colors duration-150 hover:bg-felt-raised ${
-              entry.playerId === player?.id ? "bg-strike-tint" : ""
+            className={`border-b border-hairline transition-colors duration-150 last:border-0 hover:bg-felt-raised ${
+              // Your own row is lifted, not tinted: being yours is not
+              // something to act on, and yellow is what "act" means here.
+              entry.playerId === player?.id ? "bg-felt-raised" : ""
             }`}
           >
-            <td className="py-2.5 pl-4 pr-3">
-              <BallBadge rank={index + 1} />
+            <td className="w-12 border-r border-hairline py-2 pl-4 pr-3 text-right">
+              <span
+                className={`font-mono text-body tabular-nums ${
+                  index < 3 ? "font-semibold text-ink" : "text-ink-faint"
+                }`}
+              >
+                {index + 1}
+              </span>
             </td>
 
             {viewMode === "combined" && (
-              <td className="py-2.5 pr-3">
+              <td className="py-2 pl-3 pr-3">
                 <CategoryBadge category={entry.category} />
               </td>
             )}
 
-            <td className="py-2.5 pr-3">
+            <td className="py-2 pl-3 pr-3">
               <Link
                 to={`/app/players/${entry.playerId}`}
-                className="block truncate font-medium text-ink transition-colors duration-150 hover:text-strike"
+                className={`block truncate text-ink transition-colors duration-150 hover:text-strike ${
+                  entry.playerId === player?.id
+                    ? "font-semibold"
+                    : "font-medium"
+                }`}
               >
                 {entry.playerName}
               </Link>
@@ -93,19 +117,21 @@ export default function RankingTable({
               </div>
             </td>
 
-            <td className="hidden py-2.5 pr-6 text-right md:table-cell">
+            <td className="hidden py-2 pr-6 text-right md:table-cell">
               <span className="font-mono text-caption tabular-nums text-ink-faint">
                 {entry.gamesWon}
                 <span className="text-ink-ghost">/{entry.gamesPlayed}</span>
               </span>
             </td>
 
-            <td className="hidden py-2.5 text-right sm:table-cell">
+            <td className="hidden py-2 text-right sm:table-cell">
               <ScoreString results={entry.last10Games ?? []} />
             </td>
 
-            <td className="py-2.5 pr-4 text-right">
-              <span className="font-mono text-h4 font-semibold tabular-nums text-ink">
+            {/* The one figure the whole page exists to show, so it is the
+                largest thing on it. */}
+            <td className="py-2 pr-4 text-right">
+              <span className="font-mono text-h3 font-semibold tabular-nums text-ink">
                 {entry.points}
               </span>
             </td>

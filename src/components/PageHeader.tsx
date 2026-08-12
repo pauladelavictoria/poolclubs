@@ -1,7 +1,14 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { LuChevronLeft } from "react-icons/lu";
+import {
+  LuChevronLeft,
+  LuNetwork,
+  LuTrophy,
+  LuCircleDot,
+  LuTarget,
+} from "react-icons/lu";
 import ProfileMenu from "@/components/ProfileMenu";
+import { SECTIONS, type SectionId } from "@/libs/sections";
 import { useT } from "@/i18n";
 
 type Props = {
@@ -9,16 +16,42 @@ type Props = {
   subtitle?: ReactNode;
   /** Back chevron target. Omit on tab-level pages — the rail already gets you out. */
   back?: string;
+  /** Which of the four places this page belongs to. Draws the mark glyph. */
+  section?: SectionId;
   /** Page-specific actions, right-aligned before the avatar. */
   children?: ReactNode;
+};
+
+/**
+ * The glyph each section is already known by in the rail and the drawer.
+ * Home is absent on purpose — the dashboard is the lobby, not a fifth place.
+ */
+const ICONS: Partial<
+  Record<SectionId, React.ComponentType<{ className?: string }>>
+> = {
+  tournaments: LuNetwork,
+  ranking: LuTrophy,
+  games: LuCircleDot,
+  drills: LuTarget,
 };
 
 /**
  * 56px app bar on the same surface as the cards below it, separated by a
  * hairline rather than a colour change — a red gradient bar on every screen
  * spends the accent on decoration, and then nothing is left to mean "act".
+ *
+ * The section mark is an 18px glyph beside the title, not that bar: it says
+ * which of the four places you are standing in, costs one small object, and
+ * leaves the bar's surface alone.
  */
-export default function PageHeader({ title, subtitle, back, children }: Props) {
+export default function PageHeader({
+  title,
+  subtitle,
+  back,
+  section,
+  children,
+}: Props) {
+  const Icon = section && section !== "home" ? ICONS[section] : undefined;
   const { t } = useT();
 
   return (
@@ -35,6 +68,12 @@ export default function PageHeader({ title, subtitle, back, children }: Props) {
           >
             <LuChevronLeft className="h-5 w-5" aria-hidden />
           </Link>
+        )}
+
+        {Icon && section && (
+          <Icon
+            className={`h-[18px] w-[18px] shrink-0 ${SECTIONS[section].mark}`}
+          />
         )}
 
         <div className="min-w-0 flex-1">

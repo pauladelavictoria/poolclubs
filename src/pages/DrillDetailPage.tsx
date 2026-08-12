@@ -54,7 +54,11 @@ export default function DrillDetailPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title={t("drills.detailTitle")} back={backLink} />
+        <PageHeader
+          section="drills"
+          title={t("drills.detailTitle")}
+          back={backLink}
+        />
         <div className="mx-auto grid max-w-5xl gap-4 px-3 py-4 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
           <Skeleton
             className={`mx-auto w-full rounded-card ${portrait ? "aspect-[922/1734] max-w-[420px]" : "aspect-[1734/922]"}`}
@@ -68,7 +72,11 @@ export default function DrillDetailPage() {
   if (!drill) {
     return (
       <>
-        <PageHeader title={t("drills.detailTitle")} back={backLink} />
+        <PageHeader
+          section="drills"
+          title={t("drills.detailTitle")}
+          back={backLink}
+        />
         <div className="mx-auto max-w-5xl px-3 py-4">
           <Card>
             <EmptyState
@@ -92,6 +100,7 @@ export default function DrillDetailPage() {
   return (
     <>
       <PageHeader
+        section="drills"
         title={drill.name}
         subtitle={t(`skill.${drill.skill_type}`)}
         back={backLink}

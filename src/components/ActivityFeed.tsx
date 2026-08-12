@@ -72,7 +72,7 @@ function DrillRow({ log }: { log: DrillLog }) {
           one figure worth reading from across the room. */}
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-ghost">
+          <p className="text-caption font-medium uppercase tracking-[0.08em] text-mark-drills">
             {t("drills.detailTitle")}
           </p>
           <Link
@@ -148,7 +148,7 @@ function DrillCreatedRow({ drill, at }: { drill: Drill; at: string }) {
       {/* The same three sizes a result card uses — eyebrow, title, body — so a
           new drill is not written smaller than a drill somebody scored. */}
       <div className="min-w-0 flex-1">
-        <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-ghost">
+        <p className="text-caption font-medium uppercase tracking-[0.08em] text-mark-drills">
           {t("drills.new")}
         </p>
         <p className="truncate text-body font-semibold text-ink">
@@ -194,7 +194,7 @@ function CreatedRow({
       to={to}
       className="flex items-center gap-2.5 rounded-card border border-dashed border-hairline px-3 py-2 text-caption transition-colors duration-150 hover:border-hairline-strong hover:bg-felt"
     >
-      <span className="shrink-0 text-ink-faint">{icon}</span>
+      <span className="shrink-0">{icon}</span>
       <span className="min-w-0 flex-1 truncate">
         <span className="text-ink-faint">{label} · </span>
         <span className="font-medium text-ink">{name}</span>
@@ -278,13 +278,13 @@ function MatchCard({
           to={`/app/tournaments/${tournament.id}`}
           className="mb-2 flex items-center gap-1.5 border-b border-hairline pb-2 text-caption font-medium text-ink-soft transition-colors duration-150 hover:text-strike"
         >
-          <LuTrophy className="h-3.5 w-3.5 shrink-0" />
+          <LuTrophy className="h-3.5 w-3.5 shrink-0 text-mark-tournaments" />
           <span className="truncate">{tournament.name}</span>
         </Link>
       )}
 
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-ghost">
+        <p className="text-caption font-medium uppercase tracking-[0.08em] text-mark-games">
           {isDoubles ? t("games.doubles") : t("games.single")}
         </p>
         <time
@@ -359,7 +359,7 @@ function TournamentGamesCard({
         to={`/app/tournaments/${tournament.id}`}
         className="mb-2 flex items-baseline gap-1.5 border-b border-hairline pb-2 text-caption font-medium text-ink-soft transition-colors duration-150 hover:text-strike"
       >
-        <LuTrophy className="h-3.5 w-3.5 shrink-0 self-center" />
+        <LuTrophy className="h-3.5 w-3.5 shrink-0 self-center text-mark-tournaments" />
         <span className="min-w-0 flex-1 truncate">{tournament.name}</span>
         <span className="shrink-0 font-mono tabular-nums text-ink-ghost">
           {t("games.count", { n: games.length })}
@@ -603,7 +603,12 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
               <DrillCreatedRow drill={item.drill} at={item.at} />
             ) : item.tournament && item.tournament.status !== "done" ? (
               <CreatedRow
-                icon={<LuTrophy className="h-3.5 w-3.5" aria-hidden />}
+                icon={
+                  <LuTrophy
+                    className="h-3.5 w-3.5 text-mark-tournaments"
+                    aria-hidden
+                  />
+                }
                 label={t("tournaments.new")}
                 name={item.tournament.name}
                 to={`/app/tournaments/${item.tournament.id}`}

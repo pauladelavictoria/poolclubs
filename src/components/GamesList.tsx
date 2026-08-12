@@ -14,9 +14,20 @@ interface GamesListProps {
   showDates?: boolean;
   /** Off for the TV board, which nobody is standing close enough to tap. */
   showSocial?: boolean;
+  /**
+   * Pin the day headings under the app bar while their frames scroll past.
+   * Only on a page where this list is the page — sticky does nothing inside an
+   * `overflow-hidden` card, so it stays off by default.
+   */
+  stickyDates?: boolean;
 }
 
 /**
+ * The tape: what the club played, newest first, at the tightest rhythm in the
+ * app. There are thousands of these and each one is a single fact, so the row
+ * is a small inset pill rather than a card — the surface goes *down* from the
+ * page, which is what stops a result reading like a tournament or a drill.
+ *
  * A result is a score. The figure is the focal element — mono, tabular, large
  * enough to read at arm's length in a dim room. The winning side gets the
  * weight; the losing side is demoted rather than marked in red, because red
@@ -27,6 +38,7 @@ export default function GamesList({
   playerId,
   showDates,
   showSocial = true,
+  stickyDates = false,
 }: GamesListProps) {
   const { t, locale } = useT();
 
@@ -41,7 +53,7 @@ export default function GamesList({
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       {games.map((game, index) => {
         const {
           id,
@@ -94,16 +106,25 @@ export default function GamesList({
         return (
           <React.Fragment key={id}>
             {showDates && newDate && (
-              <h3 className="px-1 pb-1 pt-5 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint first:pt-0">
+              // A day is a rule across the tape, not a card header. 3.5rem is
+              // the app bar; the env() term is the notch the bar itself clears.
+              <h3
+                className={[
+                  "px-2 pb-1.5 pt-5 text-caption font-medium uppercase tracking-[0.08em] text-mark-games first:pt-0",
+                  stickyDates
+                    ? "sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-10 -mx-1 border-b border-hairline bg-pocket/90 backdrop-blur-sm"
+                    : "",
+                ].join(" ")}
+              >
                 {dayLabel(date, t, locale)}
               </h3>
             )}
             <div
-              className={`flex items-center gap-3 rounded-control border bg-pocket px-3 py-2.5 transition-colors duration-150 hover:bg-felt-raised ${accent}`}
+              className={`flex items-center gap-3 rounded-control border bg-pocket px-3 py-2 transition-colors duration-150 hover:bg-felt-raised ${accent}`}
             >
               <time
                 dateTime={created_at}
-                className="hidden w-10 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
+                className="hidden w-12 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
               >
                 {timeOf(date, locale)}
               </time>
@@ -120,7 +141,7 @@ export default function GamesList({
                 </span>
               </span>
               <span className={`flex-1 truncate ${side(p2Won)}`}>{team2}</span>
-              <span className="hidden w-10 shrink-0 text-right text-caption font-medium text-ink-ghost sm:block">
+              <span className="hidden w-12 shrink-0 text-right text-caption font-medium text-ink-ghost sm:block">
                 {isDoubles ? "2v2" : ""}
               </span>
             </div>

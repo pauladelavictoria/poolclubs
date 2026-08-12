@@ -20,7 +20,7 @@ function Head({ tournament, label }: { tournament: Tournament; label: Key }) {
 
   return (
     <div className="min-w-0">
-      <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-ghost">
+      <p className="text-caption font-medium uppercase tracking-[0.08em] text-mark-tournaments">
         {t(label)}
       </p>
       <Link

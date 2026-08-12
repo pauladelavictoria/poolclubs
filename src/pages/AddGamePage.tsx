@@ -136,7 +136,7 @@ export default function AddGamePage() {
 
   return (
     <>
-      <PageHeader title={t("games.add")} back="/app/games" />
+      <PageHeader section="games" title={t("games.add")} back="/app/games" />
 
       <div className="mx-auto max-w-2xl space-y-4 px-3 py-4">
         <Card className="p-5">
