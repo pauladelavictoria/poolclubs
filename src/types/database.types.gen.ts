@@ -81,22 +81,28 @@ export type Database = {
           created_at: string | null
           id: number
           join_code: string
+          logo_url: string | null
           name: string
           owner_id: string
+          theme_color: Database["public"]["Enums"]["BallColor"]
         }
         Insert: {
           created_at?: string | null
           id?: number
           join_code?: string
+          logo_url?: string | null
           name: string
           owner_id: string
+          theme_color?: Database["public"]["Enums"]["BallColor"]
         }
         Update: {
           created_at?: string | null
           id?: number
           join_code?: string
+          logo_url?: string | null
           name?: string
           owner_id?: string
+          theme_color?: Database["public"]["Enums"]["BallColor"]
         }
         Relationships: []
       }
@@ -764,6 +770,15 @@ export type Database = {
       tournament_club: { Args: { tid: number }; Returns: number }
     }
     Enums: {
+      BallColor:
+        | "yellow"
+        | "blue"
+        | "red"
+        | "purple"
+        | "orange"
+        | "green"
+        | "maroon"
+        | "black"
       Discipline: "8ball" | "9ball" | "10ball"
       GameMode: "single" | "doubles"
     }
@@ -893,6 +908,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      BallColor: [
+        "yellow",
+        "blue",
+        "red",
+        "purple",
+        "orange",
+        "green",
+        "maroon",
+        "black",
+      ],
       Discipline: ["8ball", "9ball", "10ball"],
       GameMode: ["single", "doubles"],
     },

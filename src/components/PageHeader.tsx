@@ -9,6 +9,7 @@ import {
 } from "react-icons/lu";
 import NotificationBell from "@/components/NotificationBell";
 import ProfileMenu from "@/components/ProfileMenu";
+import { useAuth } from "@/hooks/useAuth";
 import { SECTIONS, type SectionId } from "@/libs/sections";
 import { useT } from "@/i18n";
 
@@ -54,6 +55,7 @@ export default function PageHeader({
 }: Props) {
   const Icon = section && section !== "home" ? ICONS[section] : undefined;
   const { t } = useT();
+  const { activeClub } = useAuth();
 
   return (
     // pt clears the status bar: viewport-fit=cover puts the page under it, and
@@ -74,6 +76,14 @@ export default function PageHeader({
         {Icon && section && (
           <Icon
             className={`h-[18px] w-[18px] shrink-0 ${SECTIONS[section].mark}`}
+          />
+        )}
+
+        {activeClub?.logo_url && (
+          <img
+            src={activeClub.logo_url}
+            alt=""
+            className="h-8 w-8 shrink-0 rounded-card border border-hairline object-cover"
           />
         )}
 

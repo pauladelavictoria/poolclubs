@@ -102,7 +102,6 @@ const router = createBrowserRouter(
             <Route path="players" element={<PlayersPage />} />
             <Route path="players/:id" element={<PlayerDetailPage />} />
             <Route path="club" element={<ClubPage />} />
-
             <Route path="drills" element={<DrillsPage />} />
             <Route path="drills/:id" element={<DrillDetailPage />} />
 
