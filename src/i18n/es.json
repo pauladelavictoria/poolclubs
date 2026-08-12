@@ -508,5 +508,15 @@
   "tournaments.recorded": "Resultado anotado",
   "tournaments.played": "PJ",
   "tournaments.racks": "Juegos",
-  "tournaments.wins": "PG"
+  "tournaments.wins": "PG",
+
+  "notifications.title": "Notificaciones",
+  "notifications.aria": "Abrir notificaciones",
+  "notifications.unread": "Tienes notificaciones sin leer",
+  "notifications.empty": "No hay notificaciones nuevas",
+  "notifications.challengeReceived": "{name} te ha retado",
+  "notifications.challengeAccepted": "{name} ha aceptado tu reto",
+  "notifications.challengeDeclined": "{name} ha rechazado tu reto",
+  "notifications.tournamentOpen": "Inscripción abierta en {name}",
+  "notifications.tournamentAction": "Tienes un partido pendiente en {name}"
 }

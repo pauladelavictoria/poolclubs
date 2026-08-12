@@ -7,6 +7,7 @@ import {
   LuCircleDot,
   LuTarget,
 } from "react-icons/lu";
+import NotificationBell from "@/components/NotificationBell";
 import ProfileMenu from "@/components/ProfileMenu";
 import { SECTIONS, type SectionId } from "@/libs/sections";
 import { useT } from "@/i18n";
@@ -84,6 +85,7 @@ export default function PageHeader({
         </div>
 
         {children}
+        <NotificationBell />
         <ProfileMenu />
       </div>
     </header>
