@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LuChevronRight, LuPlus, LuSwords } from "react-icons/lu";
 import PageHeader from "@/components/PageHeader";
 import ActivityFeed from "@/components/ActivityFeed";
@@ -16,8 +16,29 @@ import { ScoreString } from "@/components/ui/ScoreString";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useT } from "@/i18n";
 
+/** Turns "You vs {name}" into the same sentence with just the name linked to
+ *  that player's page. */
+function withPlayerLink(text: string, name: string, playerId: number) {
+  const idx = text.indexOf(name);
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <Link
+        to={`/app/players/${playerId}`}
+        onClick={(e) => e.stopPropagation()}
+        className="text-ink hover:text-strike hover:underline"
+      >
+        {name}
+      </Link>
+      {text.slice(idx + name.length)}
+    </>
+  );
+}
+
 export default function DashboardPage() {
   const { t } = useT();
+  const navigate = useNavigate();
   const { player, activeClub } = useAuth();
   const myChallenges = useMyChallenges();
   const { data: players } = useGetPlayers();
@@ -60,9 +81,12 @@ export default function DashboardPage() {
               <div className="flex min-w-0 items-center gap-4">
                 {me && <BallBadge rank={myIndex + 1} size="lg" />}
                 <div className="min-w-0">
-                  <p className="truncate text-h3 font-semibold text-ink">
+                  <Link
+                    to={`/app/players/${player.id}`}
+                    className="block truncate text-h3 font-semibold text-ink hover:text-strike"
+                  >
                     {player.name}
-                  </p>
+                  </Link>
                   <p className="mt-0.5 font-mono text-caption tabular-nums text-ink-faint">
                     {me
                       ? t("common.pts", { n: me.points })
@@ -106,11 +130,30 @@ export default function DashboardPage() {
               {myChallenges.map((c) => {
                 const waitingOnMe =
                   c.status === "pending" && c.to_player_id === player?.id;
+                const opponentId =
+                  c.from_player_id === player?.id
+                    ? c.to_player_id
+                    : c.from_player_id;
+                const opponentName = nameOf(opponentId);
+                const text =
+                  c.from_player_id === player?.id
+                    ? t("challenge.youVs", { name: opponentName })
+                    : t("challenge.vsYou", { name: opponentName });
                 return (
                   <li key={c.id}>
-                    <Link
-                      to="/app/challenges"
-                      className={`flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-pocket ${
+                    {/* Not a native <Link> because the opponent's name inside
+                        is itself a link to their page, and <a> cannot nest. */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => navigate("/app/challenges")}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          navigate("/app/challenges");
+                        }
+                      }}
+                      className={`flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-pocket ${
                         waitingOnMe ? "bg-strike-tint" : ""
                       }`}
                     >
@@ -119,13 +162,7 @@ export default function DashboardPage() {
                         aria-hidden
                       />
                       <span className="min-w-0 flex-1 truncate text-body text-ink">
-                        {c.from_player_id === player?.id
-                          ? t("challenge.youVs", {
-                              name: nameOf(c.to_player_id),
-                            })
-                          : t("challenge.vsYou", {
-                              name: nameOf(c.from_player_id),
-                            })}
+                        {withPlayerLink(text, opponentName, opponentId)}
                       </span>
                       <span className="shrink-0 text-caption text-ink-faint">
                         {t(
@@ -136,7 +173,7 @@ export default function DashboardPage() {
                               : "challenge.waiting",
                         )}
                       </span>
-                    </Link>
+                    </div>
                   </li>
                 );
               })}

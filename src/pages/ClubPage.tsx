@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { LuCheck, LuCopy, LuUserMinus, LuPencil, LuPlus } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
@@ -208,7 +208,12 @@ export default function ClubPage() {
               {active.map((m) => (
                 <li key={m.id} className="flex items-center gap-3 px-4 py-3">
                   <span className="min-w-0 flex-1 truncate text-body text-ink">
-                    {m.name}
+                    <Link
+                      to={`/app/players/${m.id}`}
+                      className="hover:text-strike hover:underline"
+                    >
+                      {m.name}
+                    </Link>
                     {m.id === player?.id && (
                       <span className="ml-2 text-caption text-ink-faint">
                         {t("club.you")}

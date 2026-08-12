@@ -1,10 +1,43 @@
 import type { Game } from "@/types";
 import React from "react";
+import { Link } from "react-router-dom";
 import { EmptyState } from "@/components/ui/EmptyState";
 import SocialBar from "@/components/SocialBar";
 import { LuSwords } from "react-icons/lu";
 import { dayLabel, startsNewDay, timeOf } from "@/libs/dayLabel";
 import { useT } from "@/i18n";
+
+/** A team's name(s) on the tape, each one a tap to that player's page. */
+function Team({
+  id1,
+  name1,
+  id2,
+  name2,
+}: {
+  id1: number;
+  name1: string | null;
+  id2?: number | null;
+  name2?: string | null;
+}) {
+  return (
+    <>
+      <Link to={`/app/players/${id1}`} className="hover:text-strike hover:underline">
+        {name1}
+      </Link>
+      {id2 != null && (
+        <>
+          {" / "}
+          <Link
+            to={`/app/players/${id2}`}
+            className="hover:text-strike hover:underline"
+          >
+            {name2}
+          </Link>
+        </>
+      )}
+    </>
+  );
+}
 
 interface GamesListProps {
   games: Game[];
@@ -57,23 +90,21 @@ export default function GamesList({
       {games.map((game, index) => {
         const {
           id,
+          player_1_id,
           player_1_name,
           player_1_score,
+          player_2_id,
           player_2_score,
           player_2_name,
+          player_1b_id,
           player_1b_name,
+          player_2b_id,
           player_2b_name,
           mode,
           created_at,
         } = game;
 
         const isDoubles = mode === "doubles";
-        const team1 = isDoubles
-          ? `${player_1_name} / ${player_1b_name}`
-          : player_1_name;
-        const team2 = isDoubles
-          ? `${player_2_name} / ${player_2b_name}`
-          : player_2_name;
 
         // bigint columns, so these arrive as numbers
         const p1Score = player_1_score;
@@ -129,7 +160,12 @@ export default function GamesList({
                 {timeOf(date, locale)}
               </time>
               <span className={`flex-1 truncate text-right ${side(p1Won)}`}>
-                {team1}
+                <Team
+                  id1={player_1_id}
+                  name1={player_1_name}
+                  id2={isDoubles ? player_1b_id : undefined}
+                  name2={player_1b_name}
+                />
               </span>
               <span className="shrink-0 font-mono text-h4 font-semibold tabular-nums">
                 <span className={p1Won ? "text-ink" : "text-ink-faint"}>
@@ -140,7 +176,14 @@ export default function GamesList({
                   {p2Score}
                 </span>
               </span>
-              <span className={`flex-1 truncate ${side(p2Won)}`}>{team2}</span>
+              <span className={`flex-1 truncate ${side(p2Won)}`}>
+                <Team
+                  id1={player_2_id}
+                  name1={player_2_name}
+                  id2={isDoubles ? player_2b_id : undefined}
+                  name2={player_2b_name}
+                />
+              </span>
               <span className="hidden w-12 shrink-0 text-right text-caption font-medium text-ink-ghost sm:block">
                 {isDoubles ? "2v2" : ""}
               </span>

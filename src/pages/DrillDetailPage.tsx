@@ -188,9 +188,12 @@ export default function DrillDetailPage() {
                     return (
                       <li key={log.id} className="rounded-control px-2 py-2">
                         <div className="flex items-baseline gap-3">
-                          <span className="min-w-0 flex-1 truncate text-body text-ink">
+                          <Link
+                            to={`/app/players/${log.player_id}`}
+                            className="min-w-0 flex-1 truncate text-body text-ink hover:text-strike hover:underline"
+                          >
                             {nameOf(log.player_id)}
-                          </span>
+                          </Link>
                           <time
                             dateTime={log.created_at}
                             className="shrink-0 text-caption tabular-nums text-ink-faint"

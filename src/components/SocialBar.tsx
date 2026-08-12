@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { LuMessageSquare, LuSmilePlus, LuX } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayerLookup } from "@/hooks/useGetPlayers";
@@ -157,18 +158,26 @@ export default function SocialBar({
       </div>
 
       {preview && !open && comments.length > 0 && (
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setOpen(true)}
-          className="mt-1.5 block w-full text-left"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") setOpen(true);
+          }}
+          className="mt-1.5 block w-full cursor-pointer text-left"
         >
           <span className="line-clamp-2 text-body text-ink-faint">
-            <span className="font-medium text-ink-soft">
+            <Link
+              to={`/app/players/${comments[0].author_player_id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="font-medium text-ink-soft hover:text-strike hover:underline"
+            >
               {nameOf(comments[0].author_player_id)}
-            </span>{" "}
+            </Link>{" "}
             {comments[0].body}
           </span>
-        </button>
+        </div>
       )}
 
       {open && (
@@ -181,9 +190,12 @@ export default function SocialBar({
             <div key={c.id} className="group flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-caption text-ink-faint">
-                  <span className="font-medium text-ink-soft">
+                  <Link
+                    to={`/app/players/${c.author_player_id}`}
+                    className="font-medium text-ink-soft hover:text-strike hover:underline"
+                  >
                     {nameOf(c.author_player_id)}
-                  </span>{" "}
+                  </Link>{" "}
                   <time dateTime={c.created_at}>
                     {timeFmt.format(new Date(c.created_at))}
                   </time>

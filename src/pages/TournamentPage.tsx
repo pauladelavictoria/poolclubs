@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   LuChevronDown,
@@ -419,7 +419,12 @@ export default function TournamentPage() {
                       {index + 1}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-body text-ink">
-                      {nameOf(playerId)}
+                      <Link
+                        to={`/app/players/${playerId}`}
+                        className="hover:text-strike hover:underline"
+                      >
+                        {nameOf(playerId)}
+                      </Link>
                       {playerId === player?.id && (
                         <span className="ml-2 text-caption text-ink-faint">
                           {t("club.you")}

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { BracketIndex } from "@/libs/bracket";
 import type { TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
@@ -64,7 +65,17 @@ export default function MatchCard({
                   : "text-ink",
           ].join(" ")}
         >
-          {playerId === null ? empty(slot) : nameOf(playerId)}
+          {playerId === null ? (
+            empty(slot)
+          ) : (
+            <Link
+              to={`/app/players/${playerId}`}
+              onClick={(e) => e.stopPropagation()}
+              className="hover:text-strike hover:underline"
+            >
+              {nameOf(playerId)}
+            </Link>
+          )}
         </span>
         <span className="shrink-0 font-mono text-body tabular-nums text-ink-soft">
           {racksFor(playerId) ?? (won ? t("tournaments.walkoverMark") : "")}
@@ -106,17 +117,26 @@ export default function MatchCard({
 
   if (!onRecord) return <div className={surface}>{body}</div>;
 
+  // Not a native <button> because a player's name inside it is a link to
+  // their page, and interactive content cannot nest inside a <button>.
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onRecord}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onRecord();
+        }
+      }}
       aria-label={t("tournaments.recordFor", {
         p1: nameOf(match.p1_id!),
         p2: nameOf(match.p2_id!),
       })}
-      className={`${surface} text-left transition-colors duration-150 hover:border-hairline-strong hover:bg-rail`}
+      className={`${surface} cursor-pointer text-left transition-colors duration-150 hover:border-hairline-strong hover:bg-rail`}
     >
       {body}
-    </button>
+    </div>
   );
 }

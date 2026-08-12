@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { BracketIndex } from "@/libs/bracket";
 import type { BracketSide, TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
@@ -131,6 +132,19 @@ function Row({
     );
   };
 
+  const nameNode = (playerId: number | null, slot: 1 | 2) => {
+    if (playerId === null) return name(playerId, slot);
+    return (
+      <Link
+        to={`/app/players/${playerId}`}
+        onClick={(e) => e.stopPropagation()}
+        className="hover:text-strike hover:underline"
+      >
+        {name(playerId, slot)}
+      </Link>
+    );
+  };
+
   const tone = (playerId: number | null) =>
     playerId === null
       ? "text-ink-ghost"
@@ -157,7 +171,7 @@ function Row({
         {index.number(match.id)}
       </span>
       <span className={`min-w-0 truncate text-right text-body ${tone(match.p1_id)}`}>
-        {name(match.p1_id, 1)}
+        {nameNode(match.p1_id, 1)}
       </span>
       <span
         className={`w-5 text-center font-mono text-body tabular-nums ${tone(match.p1_id)}`}
@@ -170,7 +184,7 @@ function Row({
         {score(match.p2_id)}
       </span>
       <span className={`min-w-0 truncate text-body ${tone(match.p2_id)}`}>
-        {name(match.p2_id, 2)}
+        {nameNode(match.p2_id, 2)}
       </span>
     </div>
   );
@@ -181,17 +195,26 @@ function Row({
 
   if (!onRecord) return <div className={surface}>{content}</div>;
 
+  // Not a native <button> because a player's name inside it is a link to
+  // their page, and interactive content cannot nest inside a <button>.
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onRecord}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onRecord();
+        }
+      }}
       aria-label={t("tournaments.recordFor", {
         p1: name(match.p1_id, 1),
         p2: name(match.p2_id, 2),
       })}
-      className={`flex w-full text-left transition-colors duration-150 hover:bg-rail ${surface}`}
+      className={`flex w-full cursor-pointer text-left transition-colors duration-150 hover:bg-rail ${surface}`}
     >
       {content}
-    </button>
+    </div>
   );
 }
