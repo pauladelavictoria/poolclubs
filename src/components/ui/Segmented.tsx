@@ -10,7 +10,7 @@ export function Segmented<T extends string>({
 }: {
   value: T;
   onChange: (value: T) => void;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; icon?: React.ReactNode }[];
   label: string;
 }) {
   return (
@@ -29,13 +29,14 @@ export function Segmented<T extends string>({
             aria-selected={selected}
             onClick={() => onChange(option.value)}
             className={[
-              "h-8 rounded-[7px] px-3 text-caption font-medium",
+              "inline-flex h-8 items-center gap-1.5 rounded-[7px] px-3 text-caption font-medium",
               "transition-[background-color,color] duration-150 ease-[var(--ease-out)]",
               selected
                 ? "bg-rail text-ink"
                 : "text-ink-faint hover:text-ink-soft",
             ].join(" ")}
           >
+            {option.icon}
             {option.label}
           </button>
         );

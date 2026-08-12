@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { LuMenu } from "react-icons/lu";
 import { PRIMARY_NAV } from "@/components/navItems";
+import { SECTIONS, type SectionId } from "@/libs/sections";
 import NavDrawer from "@/components/NavDrawer";
 import { useT } from "@/i18n";
 
@@ -9,13 +10,32 @@ import { useT } from "@/i18n";
  * Primary navigation. A bottom tab bar on phones (this app gets used one-handed
  * at the table, cue in the other hand) and a 72px left rail from md up — narrow
  * on purpose: navigation serves the content, it isn't a peer to it.
+ *
+ * The active tab wears its section's mark rather than the accent: where you are
+ * is not something you can act on, and yellow is needed elsewhere. Colour alone
+ * was also the whole affordance before, which left Home — the one tab with no
+ * hue of its own — reading as barely selected. Hence the 2px bar.
+ *
+ * The tab labels are the one place in the app under the 14px floor. Five tabs
+ * across a 360px phone is 72px each, and "Ejercicios" is 10 characters — at 14
+ * it overflows its own cell. A label under an icon it repeats is also the one
+ * kind of text nobody has to read, which is why every platform sets tab bars
+ * this size. They truncate rather than wrap if a translation runs long.
  */
-const tab = ({ isActive }: { isActive: boolean }) =>
+const tab = ({
+  isActive,
+  section,
+}: {
+  isActive: boolean;
+  section?: SectionId;
+}) =>
   [
-    "group flex flex-1 flex-col items-center justify-center gap-1 py-2",
+    "group relative flex flex-1 flex-col items-center justify-center gap-1 py-2",
     "md:h-16 md:flex-none md:w-full",
     "transition-[color,transform] duration-150 ease-[var(--ease-out)] active:scale-[0.97]",
-    isActive ? "text-strike" : "text-ink-faint hover:text-ink",
+    isActive && section
+      ? `${SECTIONS[section].mark} font-medium`
+      : "text-ink-faint hover:text-ink",
   ].join(" ");
 
 export default function NavRail() {
@@ -45,12 +65,33 @@ export default function NavRail() {
           <img src="/ball.png" alt="" className="h-8 w-8 rounded-full" />
         </NavLink>
 
-        {PRIMARY_NAV.map(({ to, labelKey, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end} viewTransition className={tab}>
-            <Icon className="h-[22px] w-[22px]" />
-            <span className="text-[11px] font-medium leading-none">
-              {t(labelKey)}
-            </span>
+        {PRIMARY_NAV.map(({ to, labelKey, icon: Icon, end, section }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            viewTransition
+            className={({ isActive }) => tab({ isActive, section })}
+          >
+            {({ isActive }) => (
+              <>
+                {/* The indicator sits on the edge the bar is attached to:
+                    across the top on a phone, down the left on the rail. */}
+                <span
+                  aria-hidden
+                  className={[
+                    "absolute inset-x-3 top-0 h-[2px] rounded-full",
+                    "md:inset-x-auto md:inset-y-2 md:left-0 md:h-auto md:w-[2px]",
+                    "transition-colors duration-150 ease-[var(--ease-out)]",
+                    isActive ? SECTIONS[section].markBg : "bg-transparent",
+                  ].join(" ")}
+                />
+                <Icon className="h-[22px] w-[22px]" />
+                <span className="max-w-full truncate px-0.5 text-[12px] font-medium leading-none">
+                  {t(labelKey)}
+                </span>
+              </>
+            )}
           </NavLink>
         ))}
 
@@ -61,7 +102,7 @@ export default function NavRail() {
           aria-label={t("nav.moreOptions")}
         >
           <LuMenu className="h-[22px] w-[22px]" />
-          <span className="text-[11px] font-medium leading-none">
+          <span className="max-w-full truncate px-0.5 text-[12px] font-medium leading-none">
             {t("nav.more")}
           </span>
         </button>

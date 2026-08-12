@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LuChevronRight, LuPlus, LuSwords } from "react-icons/lu";
 import PageHeader from "@/components/PageHeader";
 import ActivityFeed from "@/components/ActivityFeed";
@@ -8,20 +8,46 @@ import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import { useMyChallenges } from "@/hooks/useChallenges";
+import { useGetTournaments } from "@/hooks/useTournaments";
+import { TournamentOpenCard } from "@/components/TournamentFeedCard";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { BallBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useT } from "@/i18n";
 
+/** Turns "You vs {name}" into the same sentence with just the name linked to
+ *  that player's page. */
+function withPlayerLink(text: string, name: string, playerId: number) {
+  const idx = text.indexOf(name);
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <Link
+        to={`/app/players/${playerId}`}
+        onClick={(e) => e.stopPropagation()}
+        className="text-ink hover:text-strike hover:underline"
+      >
+        {name}
+      </Link>
+      {text.slice(idx + name.length)}
+    </>
+  );
+}
+
 export default function DashboardPage() {
   const { t } = useT();
+  const navigate = useNavigate();
   const { player, activeClub } = useAuth();
   const myChallenges = useMyChallenges();
   const { data: players } = useGetPlayers();
   const { nameOf } = usePlayerLookup();
   // Same query key as the ranking page, so this is a cache hit either direction
   const { data: allGamesData } = useGetGames({});
+  // Same key the feed below reads, so listing the open ones costs no request.
+  const { data: tournaments } = useGetTournaments();
+  const open = (tournaments ?? []).filter((x) => x.status === "open");
 
   const ranking = useEloRanking({
     games: allGamesData?.games ?? [],
@@ -44,61 +70,8 @@ export default function DashboardPage() {
       </PageHeader>
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        {/* Your open challenges. Above the fold or they may as well not
-            exist — the ones waiting on an answer sit first and tinted. */}
-        {myChallenges.length > 0 && (
-          <Card className="overflow-hidden">
-            <CardHeader
-              title={t("challenge.title")}
-              action={
-                <LuChevronRight
-                  className="h-4 w-4 shrink-0 text-ink-faint"
-                  aria-hidden
-                />
-              }
-            />
-            <ul className="divide-y divide-hairline">
-              {myChallenges.map((c) => {
-                const waitingOnMe =
-                  c.status === "pending" && c.to_player_id === player?.id;
-                return (
-                  <li key={c.id}>
-                    <Link
-                      to="/app/challenges"
-                      className={`flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-pocket ${
-                        waitingOnMe ? "bg-strike-tint" : ""
-                      }`}
-                    >
-                      <LuSwords
-                        className={`h-4 w-4 shrink-0 ${waitingOnMe ? "text-strike" : "text-ink-faint"}`}
-                        aria-hidden
-                      />
-                      <span className="min-w-0 flex-1 truncate text-body text-ink">
-                        {c.from_player_id === player?.id
-                          ? t("challenge.youVs", {
-                              name: nameOf(c.to_player_id),
-                            })
-                          : t("challenge.vsYou", {
-                              name: nameOf(c.from_player_id),
-                            })}
-                      </span>
-                      <span className="shrink-0 text-caption text-ink-faint">
-                        {t(
-                          c.status === "accepted"
-                            ? "challenge.on"
-                            : waitingOnMe
-                              ? "challenge.incoming"
-                              : "challenge.waiting",
-                        )}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </Card>
-        )}
-
+        {/* You first, then what is waiting on you, then what you can enter, then
+            what everyone else has been doing. */}
         {player && (
           <Card className="p-5">
             <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
@@ -108,9 +81,12 @@ export default function DashboardPage() {
               <div className="flex min-w-0 items-center gap-4">
                 {me && <BallBadge rank={myIndex + 1} size="lg" />}
                 <div className="min-w-0">
-                  <p className="truncate text-h3 font-semibold text-ink">
+                  <Link
+                    to={`/app/players/${player.id}`}
+                    className="block truncate text-h3 font-semibold text-ink hover:text-strike"
+                  >
                     {player.name}
-                  </p>
+                  </Link>
                   <p className="mt-0.5 font-mono text-caption tabular-nums text-ink-faint">
                     {me
                       ? t("common.pts", { n: me.points })
@@ -137,14 +113,97 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Matches and drills in one stream — what the club did, in the order
-            it happened, each row open to reactions and comments. */}
-        <section>
-          <h2 className="px-1 pb-2 text-h4 font-semibold text-ink">
-            {t("dashboard.activity")}
-          </h2>
-          <ActivityFeed />
-        </section>
+        {/* Your open challenges. Above the fold or they may as well not
+            exist — the ones waiting on an answer sit first and tinted. */}
+        {myChallenges.length > 0 && (
+          <Card className="overflow-hidden">
+            <CardHeader
+              title={t("challenge.title")}
+              action={
+                <LuChevronRight
+                  className="h-4 w-4 shrink-0 text-ink-faint"
+                  aria-hidden
+                />
+              }
+            />
+            <ul className="divide-y divide-hairline">
+              {myChallenges.map((c) => {
+                const waitingOnMe =
+                  c.status === "pending" && c.to_player_id === player?.id;
+                const opponentId =
+                  c.from_player_id === player?.id
+                    ? c.to_player_id
+                    : c.from_player_id;
+                const opponentName = nameOf(opponentId);
+                const text =
+                  c.from_player_id === player?.id
+                    ? t("challenge.youVs", { name: opponentName })
+                    : t("challenge.vsYou", { name: opponentName });
+                return (
+                  <li key={c.id}>
+                    {/* Not a native <Link> because the opponent's name inside
+                        is itself a link to their page, and <a> cannot nest. */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => navigate("/app/challenges")}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          navigate("/app/challenges");
+                        }
+                      }}
+                      className={`flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-pocket ${
+                        waitingOnMe ? "bg-strike-tint" : ""
+                      }`}
+                    >
+                      <LuSwords
+                        className={`h-4 w-4 shrink-0 ${waitingOnMe ? "text-strike" : "text-ink-faint"}`}
+                        aria-hidden
+                      />
+                      <span className="min-w-0 flex-1 truncate text-body text-ink">
+                        {withPlayerLink(text, opponentName, opponentId)}
+                      </span>
+                      <span className="shrink-0 text-caption text-ink-faint">
+                        {t(
+                          c.status === "accepted"
+                            ? "challenge.on"
+                            : waitingOnMe
+                              ? "challenge.incoming"
+                              : "challenge.waiting",
+                        )}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+        )}
+
+        {/* An invitation, not a record: the accent is here because this is the
+            one block on the page asking for something back. */}
+        {open.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="px-1 text-h4 font-semibold text-ink">
+              {t("tournaments.openTitle")}
+            </h2>
+            {open.map((tournament) => (
+              <Card
+                key={tournament.id}
+                className="border-l-2 border-l-strike bg-felt-raised px-4 py-3"
+              >
+                <TournamentOpenCard tournament={tournament} />
+              </Card>
+            ))}
+          </section>
+        )}
+
+        {/* Matches, drills and finished tournaments in one stream — what the
+            club did, in the order it happened, each row open to reactions and
+            comments. Carries its own heading, because the filter sits on that
+            line. */}
+        <ActivityFeed />
       </div>
     </>
   );

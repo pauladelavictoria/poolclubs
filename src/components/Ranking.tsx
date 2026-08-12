@@ -33,7 +33,11 @@ export default function Ranking({
   // caller's: both ranking pages were computing the identical grouping.
   const byCategory = useMemo(() => {
     if (!ranking) return null;
-    const groups: Record<Category, DailyRankingEntry[]> = { 1: [], 2: [], 3: [] };
+    const groups: Record<Category, DailyRankingEntry[]> = {
+      1: [],
+      2: [],
+      3: [],
+    };
     for (const entry of ranking) groups[entry.category].push(entry);
     return groups;
   }, [ranking]);
@@ -67,10 +71,12 @@ export default function Ranking({
       {populated.map((cat) => (
         <section key={cat}>
           {/* The division is the only thing separating one table from the next,
-              so it gets a banded header at heading size — a tracked 11px caption
-              was carrying more structural weight than it could show. */}
-          <div className="flex items-center justify-between gap-3 border-b border-hairline bg-felt-raised px-4 py-3">
-            <h3 className="text-h3 font-semibold text-ink">
+              so it gets a header at heading size — a tracked 11px caption was
+              carrying more structural weight than it could show. Ruled rather
+              than filled: with no card around the ladder any more, a grey band
+              would be a bar floating on the canvas. */}
+          <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 pb-2 pt-4">
+            <h3 className="text-h3 font-semibold text-mark-ranking">
               {t(`category.${cat}`)}
             </h3>
             <span className="font-mono text-caption tabular-nums text-ink-faint">

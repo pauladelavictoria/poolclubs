@@ -5,7 +5,6 @@ import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import PageHeader from "@/components/PageHeader";
 import GamesList from "@/components/GamesList";
-import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
@@ -35,7 +34,7 @@ export default function GamesPage() {
 
   return (
     <>
-      <PageHeader title={t("games.title")}>
+      <PageHeader section="games" title={t("games.title")}>
         <Link
           to="/app/games/new"
           className={buttonClasses({ size: "sm", className: "shrink-0" })}
@@ -48,9 +47,12 @@ export default function GamesPage() {
       <div className="mx-auto max-w-5xl px-3 py-4">
         {/* Filters are a toolbar, not the content: compact, left-aligned, and
             sized to their labels. Two half-width 40px selects made choosing a
-            filter look like the main task on the page. */}
-        <Card className="overflow-hidden">
-          <div className="flex flex-wrap items-center gap-2 border-b border-hairline px-3 py-2.5">
+            filter look like the main task on the page.
+            It is a bar on the canvas rather than a card header, because the
+            tape below is not inside anything — a card around it would also
+            kill the sticky day rules, which need no clipping ancestor. */}
+        <div className="rounded-control border border-hairline bg-felt">
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
             <Select
               size="sm"
               value={playerFilter}
@@ -88,41 +90,41 @@ export default function GamesPage() {
               {t("games.count", { n: totalCount })}
             </span>
           </div>
+        </div>
 
-          <div className="p-3">
-            {gamesLoading ? (
-              <SkeletonRows rows={8} />
-            ) : (
-              <>
-                <GamesList games={games} showDates />
+        <div className="mt-4">
+          {gamesLoading ? (
+            <SkeletonRows rows={8} />
+          ) : (
+            <>
+              <GamesList games={games} showDates stickyDates />
 
-                {totalCount > PAGE_SIZE && (
-                  <div className="mt-5 flex items-center justify-center gap-4 border-t border-hairline pt-4">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page <= 1}
-                    >
-                      {t("common.previous")}
-                    </Button>
-                    <span className="font-mono text-caption tabular-nums text-ink-faint">
-                      {page} / {totalPages}
-                    </span>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setPage((p) => p + 1)}
-                      disabled={page * PAGE_SIZE >= totalCount}
-                    >
-                      {t("common.next")}
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </Card>
+              {totalCount > PAGE_SIZE && (
+                <div className="mt-6 flex items-center justify-center gap-4">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  >
+                    {t("common.previous")}
+                  </Button>
+                  <span className="font-mono text-caption tabular-nums text-ink-faint">
+                    {page} / {totalPages}
+                  </span>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={page * PAGE_SIZE >= totalCount}
+                  >
+                    {t("common.next")}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </>
   );

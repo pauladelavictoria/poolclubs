@@ -74,7 +74,7 @@ export default function DrillProgressChart({
             <XAxis
               dataKey="index"
               stroke={chart.axis}
-              tick={{ fill: chart.axis, fontSize: 12 }}
+              tick={{ fill: chart.axis, fontSize: 14 }}
               axisLine={{ stroke: chart.grid }}
               tickLine={{ stroke: chart.grid }}
               tickFormatter={(i) => chartData[i - 1]?.label ?? ""}
@@ -82,7 +82,7 @@ export default function DrillProgressChart({
             />
             <YAxis
               stroke={chart.axis}
-              tick={{ fill: chart.axis, fontSize: 12 }}
+              tick={{ fill: chart.axis, fontSize: 14 }}
               domain={[0, 100]}
               axisLine={{ stroke: chart.grid }}
               tickLine={{ stroke: chart.grid }}

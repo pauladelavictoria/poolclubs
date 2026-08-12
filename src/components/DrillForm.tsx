@@ -4,6 +4,7 @@ import { LuMoveRight, LuTrash2, LuUndo2 } from "react-icons/lu";
 import PoolTableDiagram from "@/components/PoolTableDiagram";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { BallGlyph } from "@/components/ui/Ball";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
@@ -16,7 +17,6 @@ import {
   clampBall,
   hitTest,
   isOnFelt,
-  isStriped,
   pointToUnits,
   snap,
   type Selection,
@@ -51,45 +51,6 @@ const PALETTE_ITEM_CLASSES = [
   "h-9 w-9 shrink-0 cursor-grab touch-none rounded-full p-0.5",
   "transition-colors duration-150 active:cursor-grabbing",
 ].join(" ");
-
-/** The ball as it looks on the table, small enough to sit in a toolbar. */
-function BallGlyph({ color, label }: { color: string; label?: string }) {
-  const fill = BALL_COLORS[color] ?? color;
-  const striped = isStriped(label);
-  return (
-    <svg viewBox="-2 -2 4 4" className="h-full w-full">
-      <circle r={BALL_RADIUS} fill={striped ? "#FFFFFF" : fill} />
-      {striped && (
-        <>
-          <clipPath id={`swatch-clip-${label}`}>
-            <circle r={BALL_RADIUS} />
-          </clipPath>
-          <rect
-            x={-BALL_RADIUS}
-            y={-BALL_RADIUS * 0.55}
-            width={BALL_RADIUS * 2}
-            height={BALL_RADIUS * 1.1}
-            fill={fill}
-            clipPath={`url(#swatch-clip-${label})`}
-          />
-        </>
-      )}
-      {label && (
-        <>
-          <circle r={0.8} fill="#FFFFFF" />
-          <text
-            textAnchor="middle"
-            dominantBaseline="central"
-            fill="#111111"
-            fontSize={label.length > 1 ? 1.05 : 1.35}
-          >
-            {label}
-          </text>
-        </>
-      )}
-    </svg>
-  );
-}
 
 type DrillFormProps = {
   initial?: Drill;

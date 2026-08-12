@@ -35,10 +35,13 @@ const DrillDetailPage = lazy(() => import("@/pages/DrillDetailPage"));
 const DrillEditorPage = lazy(() => import("@/pages/DrillEditorPage"));
 const TrainingProgressPage = lazy(() => import("@/pages/TrainingProgressPage"));
 const TrainingPlanPage = lazy(() => import("@/pages/TrainingPlanPage"));
+const PlayerSettingsPage = lazy(() => import("@/pages/PlayerSettingsPage"));
 const ChallengesPage = lazy(() => import("@/pages/ChallengesPage"));
 const ClubPage = lazy(() => import("@/pages/ClubPage"));
 const PlayersPage = lazy(() => import("@/pages/PlayersPage"));
 const JoinClubPage = lazy(() => import("@/pages/JoinClubPage"));
+const TournamentsPage = lazy(() => import("@/pages/TournamentsPage"));
+const TournamentPage = lazy(() => import("@/pages/TournamentPage"));
 
 /** "/me/..." resolves to the signed-in player's own URL. Lets links exist before
  *  we know their id. */
@@ -90,6 +93,8 @@ const router = createBrowserRouter(
             <Route path="games" element={<GamesPage />} />
             <Route path="games/new" element={<AddGamePage />} />
             <Route path="challenges" element={<ChallengesPage />} />
+            <Route path="tournaments" element={<TournamentsPage />} />
+            <Route path="tournaments/:id" element={<TournamentPage />} />
 
             {/* Reading the roster and administering it are different jobs:
                 this is the read-only card list, club settings keeps add/approve
@@ -97,7 +102,6 @@ const router = createBrowserRouter(
             <Route path="players" element={<PlayersPage />} />
             <Route path="players/:id" element={<PlayerDetailPage />} />
             <Route path="club" element={<ClubPage />} />
-
             <Route path="drills" element={<DrillsPage />} />
             <Route path="drills/:id" element={<DrillDetailPage />} />
 
@@ -117,6 +121,14 @@ const router = createBrowserRouter(
             <Route
               path="players/:playerId/training/plan"
               element={<TrainingPlanPage />}
+            />
+            <Route
+              path="me/settings"
+              element={<MeRedirect suffix="/settings" />}
+            />
+            <Route
+              path="players/:playerId/settings"
+              element={<PlayerSettingsPage />}
             />
             {/* Drills are one global library shared by every club;
                       DrillEditorPage turns away non-owners on /edit. */}

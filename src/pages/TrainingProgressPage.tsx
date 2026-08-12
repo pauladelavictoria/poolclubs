@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { LuTrash2 } from "react-icons/lu";
 import PageHeader from "@/components/PageHeader";
 import DrillProgressChart from "@/components/DrillProgressChart";
@@ -32,7 +32,7 @@ export default function TrainingProgressPage() {
   const [difficulty, setDifficulty] = useState<DrillDifficulty | "">("");
   const [drillId, setDrillId] = useState<number | "">("");
 
-  const { user } = useAuth();
+  const { user, player: authPlayer, isLoading: isAuthLoading } = useAuth();
   const { data: players } = useGetPlayers();
   const { data: drills } = useGetDrills();
   const deleteLog = useDeleteDrillLog();
@@ -107,16 +107,21 @@ export default function TrainingProgressPage() {
 
   // Deleting a result is not undoable and it moves the averages, so it asks
   function handleDelete(id: number) {
-    if (!window.confirm(t("training.deleteConfirm")))
-      return;
+    if (!window.confirm(t("training.deleteConfirm"))) return;
     deleteLog.mutate(id, {
       onError: (e) => window.alert(e.message),
     });
   }
 
+  // Training progress is private — only their owner can see it.
+  if (!isAuthLoading && selectedPlayerId && authPlayer?.id !== selectedPlayerId) {
+    return <Navigate to={`/app/players/${selectedPlayerId}`} replace />;
+  }
+
   return (
     <>
       <PageHeader
+        section="drills"
         title={t("training.progressTitle")}
         subtitle={player?.name}
         back={`/app/players/${selectedPlayerId}`}
@@ -220,10 +225,7 @@ export default function TrainingProgressPage() {
                       })
                 }
               />
-              <Stat
-                label={t("training.drills")}
-                value={stats.uniqueDrills}
-              />
+              <Stat label={t("training.drills")} value={stats.uniqueDrills} />
               <Stat label={t("training.best")} value={`${stats.bestScore}%`} />
             </Card>
 

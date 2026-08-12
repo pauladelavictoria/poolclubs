@@ -54,7 +54,11 @@ export default function DrillDetailPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title={t("drills.detailTitle")} back={backLink} />
+        <PageHeader
+          section="drills"
+          title={t("drills.detailTitle")}
+          back={backLink}
+        />
         <div className="mx-auto grid max-w-5xl gap-4 px-3 py-4 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
           <Skeleton
             className={`mx-auto w-full rounded-card ${portrait ? "aspect-[922/1734] max-w-[420px]" : "aspect-[1734/922]"}`}
@@ -68,7 +72,11 @@ export default function DrillDetailPage() {
   if (!drill) {
     return (
       <>
-        <PageHeader title={t("drills.detailTitle")} back={backLink} />
+        <PageHeader
+          section="drills"
+          title={t("drills.detailTitle")}
+          back={backLink}
+        />
         <div className="mx-auto max-w-5xl px-3 py-4">
           <Card>
             <EmptyState
@@ -92,6 +100,7 @@ export default function DrillDetailPage() {
   return (
     <>
       <PageHeader
+        section="drills"
         title={drill.name}
         subtitle={t(`skill.${drill.skill_type}`)}
         back={backLink}
@@ -179,9 +188,12 @@ export default function DrillDetailPage() {
                     return (
                       <li key={log.id} className="rounded-control px-2 py-2">
                         <div className="flex items-baseline gap-3">
-                          <span className="min-w-0 flex-1 truncate text-body text-ink">
+                          <Link
+                            to={`/app/players/${log.player_id}`}
+                            className="min-w-0 flex-1 truncate text-body text-ink hover:text-strike hover:underline"
+                          >
                             {nameOf(log.player_id)}
-                          </span>
+                          </Link>
                           <time
                             dateTime={log.created_at}
                             className="shrink-0 text-caption tabular-nums text-ink-faint"

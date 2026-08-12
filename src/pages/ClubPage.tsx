@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { LuCheck, LuCopy, LuUserMinus, LuPencil, LuPlus } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,34 +7,43 @@ import { useClubMembers, useManageClub } from "@/hooks/useClub";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
 import PageHeader from "@/components/PageHeader";
 import PlayerForm from "@/components/PlayerForm";
+import ClubLogoUpload from "@/components/ClubLogoUpload";
+import ClubThemePicker from "@/components/ClubThemePicker";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button, IconButton } from "@/components/ui/Button";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/libs/useDialog";
-import type { Player, Category } from "@/types";
+import type { Player, Category, BallColor } from "@/types";
 import { useT } from "@/i18n";
 
 /**
- * The club's own page: settings, invites and the roster. Everyone gets the
- * invite link — anyone may invite. Only the owner sees the approve/remove
- * controls, mirroring the `clubs` and `players` RLS in sql/schema.sql.
+ * The club's own page: settings, invites and the roster. Owner-only — other
+ * members get a "send invite" button in the nav drawer instead, since the
+ * roster and settings here are theirs to manage, not to browse.
  */
 export default function ClubPage() {
   const { t } = useT();
   const { activeClub, isClubAdmin, player, user } = useAuth();
   const { data: members, isLoading } = useClubMembers();
-  const { approveMember, removeMember, renameClub } = useManageClub();
+  const { approveMember, removeMember, updateClub } = useManageClub();
   const { createPlayer, updatePlayer } = useManagePlayers();
 
   const [name, setName] = useState("");
+  // undefined means "unchanged" for both — the settings form only sends what
+  // the admin actually touched, in one Guardar rather than three saves.
+  const [logoUrl, setLogoUrl] = useState<string | null | undefined>(
+    undefined,
+  );
+  const [color, setColor] = useState<BallColor | undefined>(undefined);
   const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const dialogRef = useDialog(isModalOpen);
 
   if (!activeClub) return null;
+  if (!isClubAdmin) return <Navigate to="/app" replace />;
 
   const link = `${window.location.origin}/app/join/${activeClub.join_code}`;
   const pending = (members ?? []).filter((m) => m.status === "pending");
@@ -53,6 +63,28 @@ export default function ClubPage() {
   const closeModal = () => {
     setEditingPlayer(null);
     setIsModalOpen(false);
+  };
+
+  const hasChanges =
+    name.trim().length > 0 || logoUrl !== undefined || color !== undefined;
+
+  const saveSettings = () => {
+    updateClub.mutate(
+      {
+        ...(name.trim() && { name: name.trim() }),
+        ...(logoUrl !== undefined && { logoUrl }),
+        ...(color !== undefined && { themeColor: color }),
+      },
+      {
+        onSuccess: () => {
+          setName("");
+          setLogoUrl(undefined);
+          setColor(undefined);
+          toast.success(t("common.saved"));
+        },
+        onError: () => toast.error(t("common.error")),
+      },
+    );
   };
 
   const savePlayer = async (values: { name: string; category: Category }) => {
@@ -82,43 +114,60 @@ export default function ClubPage() {
         })}
       />
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        {isClubAdmin && (
-          <Card className="overflow-hidden">
-            <CardHeader title={t("club.settings")} />
-            <form
-              className="space-y-3 p-5"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!name.trim()) return;
-                renameClub.mutate(name, {
-                  onSuccess: () => {
-                    setName("");
-                    toast.success(t("common.saved"));
-                  },
-                  onError: () => toast.error(t("common.error")),
-                });
-              }}
+        <Card className="overflow-hidden">
+          <CardHeader title={t("club.settings")} />
+          <form
+            className="p-5"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!hasChanges) return;
+              saveSettings();
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="rename">{t("club.rename")}</Label>
+              <Input
+                id="rename"
+                value={name}
+                maxLength={60}
+                placeholder={activeClub.name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+
+            <div className="mt-5 space-y-1.5 border-t border-hairline pt-4">
+              <Label>{t("club.branding.logoTitle")}</Label>
+              <ClubLogoUpload
+                name={activeClub.name}
+                url={logoUrl !== undefined ? logoUrl : activeClub.logo_url}
+                onChange={setLogoUrl}
+                disabled={updateClub.isPending}
+              />
+            </div>
+
+            <div className="mt-5 space-y-3 border-t border-hairline pt-4">
+              <Label>{t("club.branding.colorTitle")}</Label>
+              <p className="text-body text-ink-soft">
+                {t("club.branding.colorHint")}
+              </p>
+              <ClubThemePicker
+                value={color ?? activeClub.theme_color}
+                onChange={setColor}
+                disabled={updateClub.isPending}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              variant="secondary"
+              className="mt-5"
+              disabled={!hasChanges || updateClub.isPending}
             >
-              <div className="space-y-1.5">
-                <Label htmlFor="rename">{t("club.rename")}</Label>
-                <Input
-                  id="rename"
-                  value={name}
-                  maxLength={60}
-                  placeholder={activeClub.name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <Button
-                type="submit"
-                variant="secondary"
-                disabled={!name.trim() || renameClub.isPending}
-              >
-                {t("common.save")}
-              </Button>
-            </form>
-          </Card>
-        )}
+              {t("common.save")}
+            </Button>
+          </form>
+        </Card >
+
         <Card className="overflow-hidden">
           <CardHeader title={t("club.inviteTitle")} />
           <div className="space-y-2 p-5">
@@ -143,41 +192,43 @@ export default function ClubPage() {
           </div>
         </Card>
 
-        {isClubAdmin && pending.length > 0 && (
-          <Card className="overflow-hidden">
-            <CardHeader title={t("club.pendingTitle")} />
-            <ul className="divide-y divide-hairline">
-              {pending.map((m) => (
-                <li key={m.id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="min-w-0 flex-1 truncate text-body text-ink">
-                    {m.name}
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      approveMember.mutate(m.id, {
-                        onError: () => toast.error(t("common.error")),
-                      })
-                    }
-                  >
-                    {t("club.approve")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      removeMember.mutate(m.id, {
-                        onError: () => toast.error(t("common.error")),
-                      })
-                    }
-                  >
-                    {t("club.reject")}
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
+        {
+          pending.length > 0 && (
+            <Card className="overflow-hidden">
+              <CardHeader title={t("club.pendingTitle")} />
+              <ul className="divide-y divide-hairline">
+                {pending.map((m) => (
+                  <li key={m.id} className="flex items-center gap-3 px-4 py-3">
+                    <span className="min-w-0 flex-1 truncate text-body text-ink">
+                      {m.name}
+                    </span>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        approveMember.mutate(m.id, {
+                          onError: () => toast.error(t("common.error")),
+                        })
+                      }
+                    >
+                      {t("club.approve")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        removeMember.mutate(m.id, {
+                          onError: () => toast.error(t("common.error")),
+                        })
+                      }
+                    >
+                      {t("club.reject")}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )
+        }
 
         {/* The roster lives here rather than on its own page: adding a guest
             player and approving a member are the same job. */}
@@ -208,7 +259,12 @@ export default function ClubPage() {
               {active.map((m) => (
                 <li key={m.id} className="flex items-center gap-3 px-4 py-3">
                   <span className="min-w-0 flex-1 truncate text-body text-ink">
-                    {m.name}
+                    <Link
+                      to={`/app/players/${m.id}`}
+                      className="hover:text-strike hover:underline"
+                    >
+                      {m.name}
+                    </Link>
                     {m.id === player?.id && (
                       <span className="ml-2 text-caption text-ink-faint">
                         {t("club.you")}
@@ -233,7 +289,7 @@ export default function ClubPage() {
                   )}
                   {/* Removing takes their games and drill logs with them, so it
                       asks first. */}
-                  {isClubAdmin && m.id !== player?.id && (
+                  {m.id !== player?.id && (
                     <IconButton
                       label={t("club.removeNamed", { name: m.name })}
                       size="sm"
@@ -254,7 +310,7 @@ export default function ClubPage() {
             </ul>
           )}
         </Card>
-      </div>
+      </div >
 
       {/* Native <dialog>, like the nav drawer: backdrop, Esc and focus trap come
           free. A bottom sheet on phones, a centred card from sm up. */}
@@ -272,22 +328,24 @@ export default function ClubPage() {
         </h2>
         {/* Mounted only while open, so the form starts empty every time rather
             than showing what the last edit typed. */}
-        {isModalOpen && (
-          <PlayerForm
-            initialValues={
-              editingPlayer
-                ? {
+        {
+          isModalOpen && (
+            <PlayerForm
+              initialValues={
+                editingPlayer
+                  ? {
                     name: editingPlayer.name,
                     category: editingPlayer.category,
                   }
-                : undefined
-            }
-            onSubmit={savePlayer}
-            onCancel={closeModal}
-            isSubmitting={createPlayer.isPending || updatePlayer.isPending}
-          />
-        )}
-      </dialog>
+                  : undefined
+              }
+              onSubmit={savePlayer}
+              onCancel={closeModal}
+              isSubmitting={createPlayer.isPending || updatePlayer.isPending}
+            />
+          )
+        }
+      </dialog >
     </>
   );
 }

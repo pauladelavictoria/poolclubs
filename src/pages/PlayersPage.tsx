@@ -6,6 +6,7 @@ import { useGetGames } from "@/hooks/useGetGames";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import PageHeader from "@/components/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { cardClasses } from "@/components/ui/cardStyles";
 import { Avatar } from "@/components/ui/Avatar";
 import { Segmented } from "@/components/ui/Segmented";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -23,19 +24,16 @@ const CATEGORIES = [1, 2, 3] as const;
  *  rather than zero, so the card can say "no matches" instead of "0%". */
 type Record_ = { played: number; won: number };
 
-function PlayerCard({
-  player,
-  record,
-}: {
-  player: Player;
-  record?: Record_;
-}) {
+function PlayerCard({ player, record }: { player: Player; record?: Record_ }) {
   const { t } = useT();
 
   return (
     <Link
       to={`/app/players/${player.id}`}
-      className="flex flex-col gap-3 rounded-card border border-hairline bg-felt p-4 transition-[background-color,border-color] duration-150 hover:border-hairline-strong hover:bg-felt-raised"
+      className={cardClasses({
+        interactive: true,
+        className: "group flex flex-col gap-3 p-4",
+      })}
     >
       <div className="flex items-center gap-3">
         <Avatar
@@ -44,7 +42,7 @@ function PlayerCard({
           className="h-10 w-10"
         />
         <div className="min-w-0">
-          <h3 className="truncate text-body font-medium text-ink">
+          <h3 className="truncate text-body font-medium text-ink transition-colors duration-150 group-hover:text-strike">
             {player.name}
           </h3>
           <p className="truncate text-caption text-ink-faint">
@@ -115,7 +113,8 @@ export default function PlayersPage() {
   // arrives; grouping is what the other mode adds.
   const sections = useMemo(() => {
     const roster = filteredPlayers;
-    if (sort === "name") return [{ key: "all", heading: null, players: roster }];
+    if (sort === "name")
+      return [{ key: "all", heading: null, players: roster }];
     return CATEGORIES.map((cat: Category) => ({
       key: String(cat),
       heading: t(`category.${cat}`),
@@ -191,8 +190,16 @@ export default function PlayersPage() {
           <Card>
             <EmptyState
               icon={<LuUsers className="h-5 w-5" />}
-              title={searchQuery ? t("players.noResultsFiltered") : t("players.emptyTitle")}
-              hint={searchQuery ? t("players.noResultsFilteredHint") : t("players.emptyHint")}
+              title={
+                searchQuery
+                  ? t("players.noResultsFiltered")
+                  : t("players.emptyTitle")
+              }
+              hint={
+                searchQuery
+                  ? t("players.noResultsFilteredHint")
+                  : t("players.emptyHint")
+              }
               action={
                 searchQuery ? (
                   <Button

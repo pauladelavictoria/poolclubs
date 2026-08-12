@@ -1,5 +1,5 @@
 import { supabase } from "@/supabaseClient";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
 import type { Game, GameMode } from "@/types";
@@ -110,5 +110,8 @@ export const useGetGames = (filters?: UseGetGamesFilters) => {
     queryKey: keys.games.list(activeClubId, applied),
     queryFn: fetchGames,
     enabled: !!activeClubId,
+    // Page or window changed: hold the rows already on screen rather than
+    // blanking the list back to a skeleton while the next set arrives.
+    placeholderData: keepPreviousData,
   });
 };

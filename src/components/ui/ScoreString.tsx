@@ -42,7 +42,10 @@ export function ScoreString({
           className={
             wonFrame
               ? "relative h-[7px] w-[7px] rounded-full bg-pot"
-              : "relative h-[7px] w-[7px] rounded-full border border-hairline-strong bg-felt"
+              : // Unfilled, not filled-with-the-card: the string now hangs on
+                // the canvas as well as inside a card, and a hardcoded surface
+                // would read as a slightly wrong bead on one of them.
+                "relative h-[7px] w-[7px] rounded-full border border-hairline-strong"
           }
         />
       ))}

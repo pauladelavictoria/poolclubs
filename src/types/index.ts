@@ -33,8 +33,29 @@ type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
 
 export type Club = Stamped<Row<"clubs">>;
 
-/** A real Postgres enum, so this one comes through already narrowed. */
+/** The club's accent colour, keyed to a real Postgres enum so it stays in
+ *  lockstep with the palette in libs/clubTheme.ts. Ordered 1-8, the solids'
+ *  own rack order — the picker and any legend read in that order too. */
+export type BallColor = Database["public"]["Enums"]["BallColor"];
+
+export const CLUB_BALL_COLORS: BallColor[] = [
+  "yellow",
+  "blue",
+  "red",
+  "purple",
+  "orange",
+  "green",
+  "maroon",
+  "black",
+];
+
+/** Real Postgres enums, so these come through already narrowed. */
 export type GameMode = Database["public"]["Enums"]["GameMode"];
+
+/** Which game is on the table. Labels live in src/i18n as `discipline.${key}`. */
+export type Discipline = Database["public"]["Enums"]["Discipline"];
+
+export const DISCIPLINES: Discipline[] = ["8ball", "9ball", "10ball"];
 
 /** Scores are `bigint` columns: numbers, not strings. */
 export type Game = Stamped<Row<"games">>;
@@ -158,6 +179,56 @@ export const SKILL_TYPES: DrillSkillType[] = [
   'patterns',
   'specials',
 ];
+
+// Tournaments — see sql/tournaments.sql and libs/bracket.ts.
+
+export type TournamentFormat = "double_elim" | "league" | "group_knockout";
+
+/** 'groups' is a group_knockout waiting for its bracket to be cut: the group
+ *  phase is generated, the knockout half is not, because the qualifiers aren't
+ *  known until the last group match is played. */
+export type TournamentStatus = "open" | "groups" | "running" | "done";
+
+export type BracketSide = "group" | "winners" | "losers" | "final" | "league";
+
+/** The column is snake_case, the i18n keys are camelCase. Labels live in
+ *  src/i18n as `tournaments.${key}` and `tournaments.hint.${format}`. */
+export const FORMAT_KEY: Record<
+  TournamentFormat,
+  "doubleElim" | "league" | "groupKnockout"
+> = {
+  double_elim: "doubleElim",
+  league: "league",
+  group_knockout: "groupKnockout",
+};
+
+export type Tournament = Omit<
+  Row<"tournaments">,
+  "format" | "status" | "category" | "legs"
+> & {
+  /* discipline, race_to, race_semi and race_final come through as they are —
+     the enum is narrowed by Postgres and the races are plain numbers. */
+  format: TournamentFormat;
+  status: TournamentStatus;
+  /** null = combined, every division. */
+  category: Category | null;
+  /** Times each pair meets in a league or inside a group. */
+  legs: 1 | 2;
+};
+
+export type TournamentPlayer = Row<"tournament_players">;
+
+export type TournamentMatch = Omit<Row<"tournament_matches">, "bracket"> & {
+  bracket: BracketSide;
+  /** Joined by useGetTournament's select, not a column — the racks a league
+   *  table needs live on the game, not the match, and so does when it was
+   *  played: a match row has no time of its own because a fixture is not an
+   *  event until somebody turns up. */
+  game?: Pick<
+    Game,
+    "player_1_id" | "player_1_score" | "player_2_score" | "created_at"
+  > | null;
+};
 
 export type DailyRankingEntry = {
   playerId: number;

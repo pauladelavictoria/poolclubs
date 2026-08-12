@@ -59,7 +59,7 @@ export default function RankingDailyPage() {
 
   return (
     <>
-      <PageHeader title={t("ranking.dailyTitle")}>
+      <PageHeader section="ranking" title={t("ranking.dailyTitle")}>
         <input
           type="date"
           value={selectedDate}
@@ -96,9 +96,10 @@ export default function RankingDailyPage() {
           isTv ? "max-w-none overflow-auto bg-pocket" : ""
         }`}
       >
-        <Card className="overflow-hidden">
-          <div className="flex items-center justify-between gap-3 border-b border-hairline px-3 py-2.5">
-            <h2 className="pl-1 text-h4 font-semibold text-ink">
+        {/* Same chalkboard as the all-time ladder: rules, no box. */}
+        <div>
+          <div className="flex items-center justify-between gap-3 px-1 pb-3">
+            <h2 className="text-h4 font-semibold text-ink">
               {t("ranking.standings")}
             </h2>
             <Segmented
@@ -112,14 +113,18 @@ export default function RankingDailyPage() {
             />
           </div>
 
-          <Ranking
-            ranking={ranking}
-            viewMode={viewMode}
-            isLoading={gamesLoading || playersLoading}
-            emptyMessage={t("ranking.emptyDaily")}
-          />
-        </Card>
+          <div className="overflow-hidden rounded-card border-y border-hairline sm:rounded-none">
+            <Ranking
+              ranking={ranking}
+              viewMode={viewMode}
+              isLoading={gamesLoading || playersLoading}
+              emptyMessage={t("ranking.emptyDaily")}
+            />
+          </div>
+        </div>
 
+        {/* The day's frames are a Games element sitting on a Rankings page, so
+            they keep the tape's own idiom and its card. */}
         <Card className="overflow-hidden">
           <CardHeader
             title={t("games.title")}

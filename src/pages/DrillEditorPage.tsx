@@ -30,7 +30,7 @@ export default function DrillEditorPage() {
     if (drillId) {
       updateDrill.mutate(
         { id: drillId, ...values },
-        { onSuccess: () => navigate(`/app/drills/${drillId}`), onError }
+        { onSuccess: () => navigate(`/app/drills/${drillId}`), onError },
       );
       return;
     }
@@ -54,7 +54,11 @@ export default function DrillEditorPage() {
   if (drillId && (isLoading || isPlayerLoading)) {
     return (
       <>
-        <PageHeader title={t("drills.editTitle")} back={backLink} />
+        <PageHeader
+          section="drills"
+          title={t("drills.editTitle")}
+          back={backLink}
+        />
         <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
           <Skeleton className="aspect-[2/1] w-full rounded-card" />
           <Skeleton className="h-64 w-full rounded-card" />
@@ -66,7 +70,11 @@ export default function DrillEditorPage() {
   if (drillId && !drill) {
     return (
       <>
-        <PageHeader title={t("drills.editTitle")} back="/app/drills" />
+        <PageHeader
+          section="drills"
+          title={t("drills.editTitle")}
+          back="/app/drills"
+        />
         <div className="mx-auto max-w-5xl px-3 py-4">
           <Card>
             <EmptyState
@@ -88,6 +96,7 @@ export default function DrillEditorPage() {
   return (
     <>
       <PageHeader
+        section="drills"
         title={drill ? t("drills.editTitle") : t("drills.newTitle")}
         back={backLink}
       />
