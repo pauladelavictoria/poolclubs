@@ -508,5 +508,14 @@
   "tournaments.recorded": "Result recorded",
   "tournaments.played": "P",
   "tournaments.racks": "Racks",
-  "tournaments.wins": "W"
+  "tournaments.wins": "W",
+
+  "notifications.title": "Notifications",
+  "notifications.aria": "Open notifications",
+  "notifications.unread": "You have unread notifications",
+  "notifications.empty": "No new notifications",
+  "notifications.challengeAccepted": "{name} accepted your challenge",
+  "notifications.challengeDeclined": "{name} declined your challenge",
+  "notifications.tournamentOpen": "Entries open for {name}",
+  "notifications.tournamentAction": "You have a pending match in {name}"
 }

@@ -124,6 +124,58 @@ export const useGameTournaments = (gameIds: string[]) =>
     },
   });
 
+/** Tournaments you're entered in, just the ids — enough to tell an open
+ *  tournament you could join from one you're already part of. */
+export const useMyTournamentIds = () => {
+  const { player, activeClubId } = useAuth();
+
+  return useQuery({
+    queryKey: keys.tournament.myEntries(player?.id, activeClubId),
+    enabled: !!player && !!activeClubId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tournament_players")
+        .select("tournament_id")
+        .eq("player_id", player!.id)
+        .throwOnError();
+
+      return new Set((data ?? []).map((r) => r.tournament_id));
+    },
+  });
+};
+
+export type PendingMatch = Pick<TournamentMatch, "id" | "tournament_id"> & {
+  tournament: Pick<Tournament, "id" | "name">;
+};
+
+/**
+ * Your own fixtures still waiting to be played, across every tournament in
+ * the active club — the "needs your action" half of the notification bell.
+ * A match only counts once both slots are filled: an empty "winner of #3"
+ * slot isn't yours to play yet.
+ */
+export const useMyPendingMatches = () => {
+  const { player, activeClubId } = useAuth();
+
+  return useQuery({
+    queryKey: keys.tournament.pendingMatches(player?.id, activeClubId),
+    enabled: !!player && !!activeClubId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tournament_matches")
+        .select("id, tournament_id, tournament:tournaments!inner(id, name)")
+        .eq("tournament.club_id", activeClubId!)
+        .or(`p1_id.eq.${player!.id},p2_id.eq.${player!.id}`)
+        .is("winner_id", null)
+        .not("p1_id", "is", null)
+        .not("p2_id", "is", null)
+        .throwOnError();
+
+      return data as unknown as PendingMatch[];
+    },
+  });
+};
+
 export type NewTournament = {
   name: string;
   format: TournamentFormat;

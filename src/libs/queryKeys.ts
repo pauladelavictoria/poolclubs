@@ -83,6 +83,12 @@ export const keys = {
   tournament: {
     all: ["tournament"] as const,
     one: (id?: number) => ["tournament", id] as const,
+    /** Under the same "tournament" root, so a result or a join/leave — both
+     *  already invalidate every tournament query — refreshes these too. */
+    pendingMatches: (playerId?: number, clubId?: number | null) =>
+      ["tournament", "pending-matches", playerId, clubId] as const,
+    myEntries: (playerId?: number, clubId?: number | null) =>
+      ["tournament", "my-entries", playerId, clubId] as const,
   },
 
   comments: {
