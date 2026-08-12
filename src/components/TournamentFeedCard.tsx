@@ -108,14 +108,14 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
               <li key={id} className="flex min-w-0 items-center gap-1.5">
                 <Link
                   to={`/app/players/${id}`}
-                  className="flex min-w-0 items-center gap-1.5 hover:text-strike"
+                  className="group flex min-w-0 items-center gap-1.5"
                 >
                   <Avatar
                     name={byId.get(id)?.name ?? "—"}
                     url={byId.get(id)?.avatar_url}
                     className="h-6 w-6"
                   />
-                  <span className="truncate text-caption text-ink-soft">
+                  <span className="truncate text-caption text-ink-soft transition-colors duration-150 group-hover:text-strike group-hover:underline">
                     {byId.get(id)?.name ?? "—"}
                   </span>
                 </Link>

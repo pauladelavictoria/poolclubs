@@ -32,7 +32,7 @@ function PlayerCard({ player, record }: { player: Player; record?: Record_ }) {
       to={`/app/players/${player.id}`}
       className={cardClasses({
         interactive: true,
-        className: "flex flex-col gap-3 p-4",
+        className: "group flex flex-col gap-3 p-4",
       })}
     >
       <div className="flex items-center gap-3">
@@ -42,7 +42,7 @@ function PlayerCard({ player, record }: { player: Player; record?: Record_ }) {
           className="h-10 w-10"
         />
         <div className="min-w-0">
-          <h3 className="truncate text-body font-medium text-ink">
+          <h3 className="truncate text-body font-medium text-ink transition-colors duration-150 group-hover:text-strike">
             {player.name}
           </h3>
           <p className="truncate text-caption text-ink-faint">

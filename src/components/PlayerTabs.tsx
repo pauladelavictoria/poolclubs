@@ -38,7 +38,10 @@ export default function PlayerTabs({
       aria-label={t("players.tabsLabel")}
       className={
         isTabs
-          ? "flex gap-0.5 rounded-control border border-hairline bg-pocket p-0.5"
+          ? // Labels like "Progreso de entrenamiento" don't fit four across on a
+            // phone; scroll the strip horizontally instead of squeezing each
+            // pill into a wrapped, ragged two-line label.
+            "flex gap-0.5 overflow-x-auto rounded-control border border-hairline bg-pocket p-0.5"
           : // One per row on phones: long labels side by side wrap into
             // ragged two-line buttons at that width
             `grid gap-2 ${BUTTON_GRID_COLS[tabs.length] ?? "sm:grid-cols-3"}`
@@ -53,7 +56,7 @@ export default function PlayerTabs({
           className={({ isActive }) =>
             isTabs
               ? [
-                  "flex-1 rounded-[7px] px-3 py-2 text-center text-caption font-medium",
+                  "shrink-0 whitespace-nowrap rounded-[7px] px-3 py-2 text-center text-caption font-medium",
                   "transition-[background-color,color] duration-150 ease-[var(--ease-out)]",
                   isActive
                     ? "bg-rail text-ink"
