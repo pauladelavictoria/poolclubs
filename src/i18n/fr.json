@@ -522,4 +522,5 @@
   "notifications.tournamentOpen": "Inscriptions ouvertes pour {name}",
   "notifications.tournamentAction": "Tu as un match en attente dans {name}",
   "notifications.drillAdded": "Nouveau drill : {name}. À essayer !"
+  "notifications.clearAll": "Tout effacer"
 }
