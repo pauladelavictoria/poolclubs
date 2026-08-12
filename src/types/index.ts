@@ -33,6 +33,22 @@ type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
 
 export type Club = Stamped<Row<"clubs">>;
 
+/** The club's accent colour, keyed to a real Postgres enum so it stays in
+ *  lockstep with the palette in libs/clubTheme.ts. Ordered 1-8, the solids'
+ *  own rack order — the picker and any legend read in that order too. */
+export type BallColor = Database["public"]["Enums"]["BallColor"];
+
+export const CLUB_BALL_COLORS: BallColor[] = [
+  "yellow",
+  "blue",
+  "red",
+  "purple",
+  "orange",
+  "green",
+  "maroon",
+  "black",
+];
+
 /** Real Postgres enums, so these come through already narrowed. */
 export type GameMode = Database["public"]["Enums"]["GameMode"];
 

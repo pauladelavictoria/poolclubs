@@ -4,10 +4,15 @@ import NavRail from "@/components/NavRail";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { NEXT_KEY, isSafePath } from "@/libs/nextPath";
+import { useClubTheme } from "@/libs/clubTheme";
 
 export default function Layout() {
-  const { user } = useAuth();
+  const { user, activeClub } = useAuth();
   const navigate = useNavigate();
+
+  // Every page under /app shares one active club, so its accent is set here
+  // rather than in each page that happens to render something coloured.
+  useClubTheme(activeClub);
 
   // Google drops everyone back on the site root. If they were on their way
   // somewhere before signing in, finish the trip.
