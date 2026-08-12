@@ -249,7 +249,21 @@ function Side({
           won ? "font-semibold text-ink" : "text-ink-faint"
         }`}
       >
-        {people.map((p) => p.name).join(" / ")}
+        {people.map((p, i) => (
+          <span key={p.id ?? i}>
+            {i > 0 && " / "}
+            {p.id != null ? (
+              <Link
+                to={`/app/players/${p.id}`}
+                className="hover:text-strike hover:underline"
+              >
+                {p.name}
+              </Link>
+            ) : (
+              p.name
+            )}
+          </span>
+        ))}
       </span>
     </div>
   );
@@ -382,9 +396,23 @@ function TournamentGamesCard({
                 <span
                   className={`min-w-0 truncate text-right text-body ${side(p1 > p2)}`}
                 >
-                  {isDoubles
-                    ? `${game.player_1_name} / ${game.player_1b_name}`
-                    : game.player_1_name}
+                  <Link
+                    to={`/app/players/${game.player_1_id}`}
+                    className="hover:text-strike hover:underline"
+                  >
+                    {game.player_1_name}
+                  </Link>
+                  {isDoubles && game.player_1b_id != null && (
+                    <>
+                      {" / "}
+                      <Link
+                        to={`/app/players/${game.player_1b_id}`}
+                        className="hover:text-strike hover:underline"
+                      >
+                        {game.player_1b_name}
+                      </Link>
+                    </>
+                  )}
                 </span>
                 <span className="shrink-0 font-mono text-body font-semibold tabular-nums">
                   <span className={p1 > p2 ? "text-ink" : "text-ink-faint"}>
@@ -396,9 +424,23 @@ function TournamentGamesCard({
                   </span>
                 </span>
                 <span className={`min-w-0 truncate text-body ${side(p2 > p1)}`}>
-                  {isDoubles
-                    ? `${game.player_2_name} / ${game.player_2b_name}`
-                    : game.player_2_name}
+                  <Link
+                    to={`/app/players/${game.player_2_id}`}
+                    className="hover:text-strike hover:underline"
+                  >
+                    {game.player_2_name}
+                  </Link>
+                  {isDoubles && game.player_2b_id != null && (
+                    <>
+                      {" / "}
+                      <Link
+                        to={`/app/players/${game.player_2b_id}`}
+                        className="hover:text-strike hover:underline"
+                      >
+                        {game.player_2b_name}
+                      </Link>
+                    </>
+                  )}
                 </span>
               </div>
               <div className="mt-1 flex items-center gap-2">

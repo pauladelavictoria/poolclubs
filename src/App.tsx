@@ -35,6 +35,7 @@ const DrillDetailPage = lazy(() => import("@/pages/DrillDetailPage"));
 const DrillEditorPage = lazy(() => import("@/pages/DrillEditorPage"));
 const TrainingProgressPage = lazy(() => import("@/pages/TrainingProgressPage"));
 const TrainingPlanPage = lazy(() => import("@/pages/TrainingPlanPage"));
+const PlayerSettingsPage = lazy(() => import("@/pages/PlayerSettingsPage"));
 const ChallengesPage = lazy(() => import("@/pages/ChallengesPage"));
 const ClubPage = lazy(() => import("@/pages/ClubPage"));
 const PlayersPage = lazy(() => import("@/pages/PlayersPage"));
@@ -121,6 +122,14 @@ const router = createBrowserRouter(
             <Route
               path="players/:playerId/training/plan"
               element={<TrainingPlanPage />}
+            />
+            <Route
+              path="me/settings"
+              element={<MeRedirect suffix="/settings" />}
+            />
+            <Route
+              path="players/:playerId/settings"
+              element={<PlayerSettingsPage />}
             />
             {/* Drills are one global library shared by every club;
                       DrillEditorPage turns away non-owners on /edit. */}

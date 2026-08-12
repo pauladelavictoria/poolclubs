@@ -16,7 +16,6 @@ import PageHeader from "@/components/PageHeader";
 import ChallengeButton from "@/components/ChallengeButton";
 import GamesList from "@/components/GamesList";
 import PlayerTabs from "@/components/PlayerTabs";
-import AvatarUpload from "@/components/AvatarUpload";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Stat } from "@/components/ui/Stat";
 import { SkeletonRows } from "@/components/ui/Skeleton";
@@ -34,6 +33,7 @@ export default function PlayerDetailPage() {
   const { user } = useAuth();
   const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
   const player = players?.find((p) => p.id === playerId);
+  const isOwnProfile = !!user && player?.user_id === user.id;
 
   const { data: gamesData, isLoading: isLoadingGames } = useGetGames({
     playerId,
@@ -153,17 +153,10 @@ export default function PlayerDetailPage() {
       />
 
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        {/* Only on your own row — a picture is yours to change, nobody else's. */}
-        {user && player.user_id === user.id && (
-          <Card className="p-4">
-            <AvatarUpload name={player.name} url={player.avatar_url} />
-          </Card>
-        )}
-
         {user && (
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0 flex-1">
-              <PlayerTabs playerId={player.id} />
+              <PlayerTabs playerId={player.id} isOwnProfile={isOwnProfile} />
             </div>
             <ChallengeButton toPlayerId={player.id} />
           </div>

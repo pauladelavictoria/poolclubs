@@ -16,6 +16,7 @@ import {
   LuChevronDown,
   LuCheck,
   LuPlus,
+  LuSend,
 } from "react-icons/lu";
 
 /**
@@ -54,7 +55,8 @@ export default function NavDrawer({
   onClose: () => void;
 }) {
   const ref = useDialog(open);
-  const { user, player, activeClub, memberships, setActiveClub } = useAuth();
+  const { user, player, activeClub, isClubAdmin, memberships, setActiveClub } =
+    useAuth();
   const signOut = useSignOut();
   const { t, lang, setLang } = useT();
 
@@ -65,28 +67,58 @@ export default function NavDrawer({
   // Without a linked player these point at /me/*, which sits behind
   // ProtectedRoute and so asks for login first.
   const me = player ? `/app/players/${player.id}` : "/app/me";
-  const sections = NAV_SECTIONS.map((section) =>
-    section.headingKey === "nav.training"
-      ? {
-          ...section,
-          items: [
-            ...section.items,
-            {
-              to: `${me}/training/plan`,
-              labelKey: "nav.myPlan",
-              icon: LuClipboardList,
-              section: "drills",
-            },
-            {
-              to: `${me}/training`,
-              labelKey: "nav.myProgress",
-              icon: LuChartColumn,
-              section: "drills",
-            },
-          ] as NavItem[],
-        }
-      : section,
-  );
+  const sections = NAV_SECTIONS.map((section) => {
+    if (section.headingKey === "nav.training") {
+      return {
+        ...section,
+        items: [
+          ...section.items,
+          {
+            to: `${me}/training/plan`,
+            labelKey: "nav.myPlan",
+            icon: LuClipboardList,
+            section: "drills",
+          },
+          {
+            to: `${me}/training`,
+            labelKey: "nav.myProgress",
+            icon: LuChartColumn,
+            section: "drills",
+          },
+        ] as NavItem[],
+      };
+    }
+    // Club settings are the owner's to manage; everyone else gets the invite
+    // button below instead of a page they can't do anything on.
+    if (section.headingKey === "nav.club" && !isClubAdmin) {
+      return {
+        ...section,
+        items: section.items.filter((i) => i.to !== "/app/club"),
+      };
+    }
+    return section;
+  });
+
+  // "Send" over "copy": the share sheet is the natural way to hand a link to
+  // a specific person on a phone. Falls back to the clipboard on desktop.
+  const sendInvite = async () => {
+    if (!activeClub) return;
+    const link = `${window.location.origin}/app/join/${activeClub.join_code}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: activeClub.name, url: link });
+      } catch {
+        // Share sheet dismissed — nothing to recover.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success(t("club.copied"));
+    } catch {
+      toast.error(t("club.copyError"));
+    }
+  };
 
   const handleSignOut = async () => {
     onClose();
@@ -189,6 +221,18 @@ export default function NavDrawer({
                 </NavLink>
               ),
             )}
+            {section.headingKey === "nav.club" &&
+              !isClubAdmin &&
+              activeClub && (
+                <button
+                  type="button"
+                  onClick={sendInvite}
+                  className={`${item({ isActive: false })} w-full`}
+                >
+                  <LuSend className="h-[18px] w-[18px] text-ink-soft" />{" "}
+                  {t("nav.sendInvite")}
+                </button>
+              )}
           </div>
         ))}
 

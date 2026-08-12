@@ -106,14 +106,19 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
           <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-2">
             {entrants.map((id) => (
               <li key={id} className="flex min-w-0 items-center gap-1.5">
-                <Avatar
-                  name={byId.get(id)?.name ?? "—"}
-                  url={byId.get(id)?.avatar_url}
-                  className="h-6 w-6"
-                />
-                <span className="truncate text-caption text-ink-soft">
-                  {byId.get(id)?.name ?? "—"}
-                </span>
+                <Link
+                  to={`/app/players/${id}`}
+                  className="group flex min-w-0 items-center gap-1.5"
+                >
+                  <Avatar
+                    name={byId.get(id)?.name ?? "—"}
+                    url={byId.get(id)?.avatar_url}
+                    className="h-6 w-6"
+                  />
+                  <span className="truncate text-caption text-ink-soft transition-colors duration-150 group-hover:text-strike group-hover:underline">
+                    {byId.get(id)?.name ?? "—"}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>

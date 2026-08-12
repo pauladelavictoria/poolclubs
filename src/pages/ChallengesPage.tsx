@@ -17,6 +17,25 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import type { Challenge } from "@/types";
 import { useT } from "@/i18n";
 
+/** Turns "You vs {name}" into the same sentence with just the name linked to
+ *  that player's page. */
+function withPlayerLink(text: string, name: string, playerId: number) {
+  const idx = text.indexOf(name);
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <Link
+        to={`/app/players/${playerId}`}
+        className="text-ink hover:text-strike hover:underline"
+      >
+        {name}
+      </Link>
+      {text.slice(idx + name.length)}
+    </>
+  );
+}
+
 /**
  * Open challenges only. Declined ones disappear and played ones become a row in
  * the games list — a challenge is a message, not a record.
@@ -53,21 +72,30 @@ export default function ChallengesPage() {
   }: {
     c: Challenge;
     children: React.ReactNode;
-  }) => (
-    <li className="flex flex-wrap items-center gap-3 px-4 py-3">
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-body text-ink">
-          {c.from_player_id === player?.id
-            ? t("challenge.youVs", { name: nameOf(c.to_player_id) })
-            : t("challenge.vsYou", { name: nameOf(c.from_player_id) })}
-        </p>
-        {c.message && (
-          <p className="truncate text-caption text-ink-faint">{c.message}</p>
-        )}
-      </div>
-      {children}
-    </li>
-  );
+  }) => {
+    const opponentId =
+      c.from_player_id === player?.id ? c.to_player_id : c.from_player_id;
+    const opponentName = nameOf(opponentId);
+    const text =
+      c.from_player_id === player?.id
+        ? t("challenge.youVs", { name: opponentName })
+        : t("challenge.vsYou", { name: opponentName });
+    return (
+      <li className="flex flex-wrap items-center gap-3 px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-body text-ink">
+            {withPlayerLink(text, opponentName, opponentId)}
+          </p>
+          {c.message && (
+            <p className="truncate text-caption text-ink-faint">
+              {c.message}
+            </p>
+          )}
+        </div>
+        {children}
+      </li>
+    );
+  };
 
   return (
     <>

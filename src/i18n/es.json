@@ -33,6 +33,7 @@
   "nav.addGame": "Añadir resultado",
   "nav.challenges": "Retos",
   "nav.clubSettings": "Ajustes del club",
+  "nav.sendInvite": "Enviar invitación",
   "nav.players": "Jugadores",
   "nav.tournaments": "Torneos",
   "nav.allTournaments": "Todos los torneos",
@@ -159,6 +160,9 @@
   "players.tabGames": "Partidos",
   "players.tabPlan": "Plan de entrenamiento",
   "players.tabProgress": "Progreso de entrenamiento",
+  "players.tabSettings": "Ajustes",
+  "players.accountSettings": "Ajustes de cuenta",
+  "players.nameTaken": "Ese nombre ya está en uso en este club",
 
   "drills.title": "Ejercicios",
   "drills.new": "Nuevo ejercicio",
