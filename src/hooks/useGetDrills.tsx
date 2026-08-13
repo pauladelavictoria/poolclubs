@@ -1,6 +1,7 @@
 import { supabase } from "@/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { keys } from "@/libs/queryKeys";
+import { useAuth } from "@/hooks/useAuth";
 import type { Drill, DrillDifficulty, DrillSkillType } from "@/types";
 
 export type UseGetDrillsFilters = {
@@ -29,13 +30,17 @@ export const useGetDrill = (id?: number) =>
 
 export const useGetDrills = (filters?: UseGetDrillsFilters) => {
   const { difficulty, skill_type } = filters ?? {};
+  const { activeClubId } = useAuth();
 
   return useQuery({
-    queryKey: keys.drills.list({ difficulty, skill_type }),
+    queryKey: keys.drills.list({ difficulty, skill_type }, activeClubId),
+    enabled: !!activeClubId,
     queryFn: async () => {
+      // The shared catalog (club_id null) plus whatever this club made itself.
       let query = supabase
         .from("drills")
         .select("*")
+        .or(`club_id.is.null,club_id.eq.${activeClubId}`)
         .order("difficulty")
         .order("name");
 

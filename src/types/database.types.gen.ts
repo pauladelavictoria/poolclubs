@@ -213,6 +213,7 @@ export type Database = {
       drills: {
         Row: {
           ball_positions: Json
+          club_id: number | null
           created_at: string
           created_by: string | null
           description: string
@@ -227,6 +228,7 @@ export type Database = {
         }
         Insert: {
           ball_positions?: Json
+          club_id?: number | null
           created_at?: string
           created_by?: string | null
           description: string
@@ -241,6 +243,7 @@ export type Database = {
         }
         Update: {
           ball_positions?: Json
+          club_id?: number | null
           created_at?: string
           created_by?: string | null
           description?: string
@@ -253,7 +256,15 @@ export type Database = {
           shot_paths?: Json
           skill_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "drills_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       games: {
         Row: {
