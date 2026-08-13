@@ -56,7 +56,15 @@ export const useManageDrills = () => {
 
     deleteDrill: useMutation({
       mutationFn: async (id: number) => {
-        await supabase.from("drills").delete().eq("id", id).throwOnError();
+        // `count` is the only way to notice RLS refusing the row: a blocked
+        // delete is not an error, just nothing deleted.
+        const { count } = await supabase
+          .from("drills")
+          .delete({ count: "exact" })
+          .eq("id", id)
+          .throwOnError();
+
+        if (!count) throw new Error("No se pudo borrar el ejercicio");
       },
       onSuccess: () => onSuccess(),
     }),
