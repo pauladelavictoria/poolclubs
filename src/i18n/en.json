@@ -15,7 +15,6 @@
   "common.seeAll": "See all",
   "common.seeAllPlural": "See all",
   "common.pts": "{n} pts",
-
   "nav.home": "Home",
   "nav.ranking": "Ranking",
   "nav.games": "Matches",
@@ -24,6 +23,7 @@
   "nav.moreOptions": "More options",
   "nav.primary": "Primary",
   "nav.navigation": "Navigation",
+  "nav.breadcrumb": "Breadcrumb",
   "nav.training": "Training",
   "nav.rankings": "Rankings",
   "nav.club": "Club",
@@ -44,7 +44,6 @@
   "nav.theme": "Theme",
   "theme.light": "Light",
   "theme.dark": "Dark",
-
   "auth.signIn": "Sign in",
   "auth.signInShort": "Sign in",
   "auth.signOut": "Sign out",
@@ -63,7 +62,6 @@
   "auth.signedOut": "Signed out",
   "auth.signOutError": "Could not sign out",
   "auth.yourProfile": "Your profile",
-
   "dashboard.yourStanding": "Your standing",
   "dashboard.noGamesYet": "No matches yet",
   "dashboard.wonOf": "{won}/{played} won",
@@ -78,7 +76,6 @@
   "feed.tournamentResults": "Tournament results",
   "feed.moreGames": "See {n} more matches",
   "dashboard.noGamesRecorded": "No match has been recorded yet.",
-
   "games.title": "Matches",
   "games.add": "Add result",
   "games.mode": "Format",
@@ -103,7 +100,6 @@
   "games.today": "Today",
   "games.yesterday": "Yesterday",
   "games.history": "Match history",
-
   "ranking.globalTitle": "Overall ranking",
   "ranking.dailyTitle": "Daily ranking",
   "ranking.standings": "Standings",
@@ -122,7 +118,6 @@
   "ranking.playersCount": "{n} players",
   "ranking.selectDate": "Select date",
   "ranking.tvMode": "TV mode",
-
   "players.title": "Players",
   "players.sort": "Sort players",
   "players.alphabetical": "A-Z",
@@ -163,7 +158,6 @@
   "players.tabSettings": "Settings",
   "players.accountSettings": "Account settings",
   "players.nameTaken": "That name is already taken in this club",
-
   "drills.title": "Drills",
   "drills.new": "New drill",
   "drills.autoPlan": "Automatic plan",
@@ -196,7 +190,6 @@
   "drills.saveError": "Could not save the drill",
   "drills.deleteConfirm": "Delete this drill?",
   "drills.deleteError": "Could not delete the drill",
-
   "drillForm.details": "Details",
   "drillForm.name": "Name",
   "drillForm.description": "Description",
@@ -220,7 +213,6 @@
   "drillForm.nameRequired": "The drill needs a name",
   "drillForm.maxScoreMin": "The maximum score must be at least 1",
   "drillForm.needBall": "Place at least one ball on the table",
-
   "drillLog.signInPrompt": "Sign in to record your results.",
   "drillLog.loadingPlayer": "Loading your player...",
   "drillLog.linkPrompt": "Link your account to a player to record results.",
@@ -233,7 +225,6 @@
   "drillLog.saving": "Recording...",
   "drillLog.submit": "Record result",
   "drillLog.saved": "Result recorded",
-
   "training.planTitle": "Training plan",
   "training.progressTitle": "Progress",
   "training.newPlanCreated": "New plan generated",
@@ -270,16 +261,13 @@
   "training.thisDrill": "this drill",
   "training.deleteConfirm": "Delete this result? This cannot be undone.",
   "training.shownOf": "{shown} of {total}",
-
   "category.1": "First",
   "category.2": "Second",
   "category.3": "Third",
   "category.short": "{n}",
-
   "difficulty.beginner": "Beginner",
   "difficulty.intermediate": "Intermediate",
   "difficulty.advanced": "Advanced",
-
   "skill.potting": "Potting",
   "skill.position": "Position",
   "skill.safety": "Safety",
@@ -288,16 +276,13 @@
   "skill.kicks": "Kicks",
   "skill.patterns": "Patterns",
   "skill.specials": "Trick shots",
-
   "score.high": "Excellent",
   "score.midhigh": "Good",
   "score.mid": "Fair",
   "score.midlow": "Weak",
   "score.low": "Poor",
-
   "scoreString.title": "{won} of {total} won",
   "scoreString.aria": "Last {total} matches: {won} won",
-
   "club.noClub": "No club",
   "club.welcome": "Welcome",
   "club.switch": "Club",
@@ -342,7 +327,21 @@
   "club.removeConfirm": "Remove {name} from the club? Their matches and drill results go too.",
   "club.settings": "Club settings",
   "club.rename": "Rename club",
-
+  "club.branding.logoTitle": "Club logo",
+  "club.branding.logoError": "Couldn't upload the logo",
+  "club.branding.changeLogo": "Change logo",
+  "club.branding.removeLogo": "Remove logo",
+  "club.branding.colorTitle": "Club colour",
+  "club.branding.colorHint": "The accent colour used across the whole app for this club's members. Pick one of the pool balls.",
+  "club.branding.colorLabel": "Club colour",
+  "club.branding.ball.yellow": "Ball 1 — yellow",
+  "club.branding.ball.blue": "Ball 2 — blue",
+  "club.branding.ball.red": "Ball 3 — red",
+  "club.branding.ball.purple": "Ball 4 — purple",
+  "club.branding.ball.orange": "Ball 5 — orange",
+  "club.branding.ball.green": "Ball 6 — green",
+  "club.branding.ball.maroon": "Ball 7 — maroon",
+  "club.branding.ball.black": "Ball 8 — black",
   "challenge.title": "Challenges",
   "challenge.new": "New challenge",
   "challenge.newHint": "Pick someone from your club and send them a match.",
@@ -363,12 +362,10 @@
   "challenge.vsYou": "{name} vs you",
   "challenge.emptyTitle": "No open challenges",
   "challenge.emptyHint": "Pick a player above to challenge them.",
-
   "social.react": "React",
   "social.write": "Write a comment",
   "social.send": "Send",
   "social.empty": "No comments yet.",
-
   "landing.rankingShotTitle": "The table everyone checks",
   "landing.rankingShotBody": "One ranking, updated the moment a result goes in. Pull it up on the club TV and let it settle the argument.",
   "landing.finalTitle": "Rack them up.",
@@ -407,7 +404,6 @@
   "crash.body": "This screen failed to load. Reloading usually fixes it.",
   "crash.stale": "A new version of the app is out. Reload to update.",
   "crash.reload": "Reload",
-
   "tournaments.new": "New tournament",
   "tournaments.edit": "Edit tournament",
   "tournaments.name": "Name",
@@ -495,7 +491,6 @@
   "tournaments.raceLabel": "Race to {n}",
   "tournaments.raceNeeded": "The winner has to reach {n}.",
   "tournaments.standings": "Table",
-  "tournaments.bracketTitle": "Bracket",
   "tournaments.round": "Round {n}",
   "tournaments.bracket.winners": "Winners bracket",
   "tournaments.bracket.losers": "Losers bracket",
@@ -511,7 +506,6 @@
   "tournaments.played": "P",
   "tournaments.racks": "Racks",
   "tournaments.wins": "W",
-
   "notifications.title": "Notifications",
   "notifications.aria": "Open notifications",
   "notifications.unread": "You have unread notifications",
@@ -521,6 +515,6 @@
   "notifications.challengeDeclined": "{name} declined your challenge",
   "notifications.tournamentOpen": "Entries open for {name}",
   "notifications.tournamentAction": "You have a pending match in {name}",
-  "notifications.drillAdded": "New drill: {name}. Give it a try!"
+  "notifications.drillAdded": "New drill: {name}. Give it a try!",
   "notifications.clearAll": "Clear all"
 }

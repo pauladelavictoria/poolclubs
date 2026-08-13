@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetChallenges } from "@/hooks/useChallenges";
 import {
@@ -47,6 +47,17 @@ function saveIds(prefix: string, playerId: number, ids: Set<string>) {
   localStorage.setItem(prefix + playerId, JSON.stringify([...ids]));
 }
 
+/** Both sets plus the player they belong to, so a switch is one comparison. */
+function loadHistory(playerId: number | undefined) {
+  return {
+    playerId,
+    seen: playerId ? loadIds(STORAGE_PREFIX, playerId) : new Set<string>(),
+    dismissed: playerId
+      ? loadIds(DISMISSED_PREFIX, playerId)
+      : new Set<string>(),
+  };
+}
+
 /**
  * A notification feed derived entirely from data the app already fetches —
  * there is no notifications table. "Unread" is tracked client-side, keyed by
@@ -65,14 +76,9 @@ export const useNotifications = () => {
   const { data: drills } = useGetDrills();
   const { data: myDrillLogs } = useGetDrillLogs({ player_id: player?.id });
 
-  const [seen, setSeen] = useState<Set<string>>(() => new Set());
-  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
-
-  // A different player (switching club, signing in) reads its own history.
-  useEffect(() => {
-    setSeen(player ? loadIds(STORAGE_PREFIX, player.id) : new Set());
-    setDismissed(player ? loadIds(DISMISSED_PREFIX, player.id) : new Set());
-  }, [player?.id]);
+  const [history, setHistory] = useState(() => loadHistory(player?.id));
+  if (history.playerId !== player?.id) setHistory(loadHistory(player?.id));
+  const { seen, dismissed } = history;
 
   const allItems = useMemo<AppNotification[]>(() => {
     if (!player) return [];
@@ -110,7 +116,8 @@ export const useNotifications = () => {
 
       list.push({
         id: `challenge:${c.id}:${c.status}`,
-        kind: c.status === "accepted" ? "challengeAccepted" : "challengeDeclined",
+        kind:
+          c.status === "accepted" ? "challengeAccepted" : "challengeDeclined",
         needsAction: false,
         message: t(
           c.status === "accepted"
@@ -136,7 +143,9 @@ export const useNotifications = () => {
       });
     }
 
-    const triedDrillIds = new Set((myDrillLogs ?? []).map((log) => log.drill_id));
+    const triedDrillIds = new Set(
+      (myDrillLogs ?? []).map((log) => log.drill_id),
+    );
     for (const drill of drills ?? []) {
       if (triedDrillIds.has(drill.id)) continue;
 
@@ -174,21 +183,21 @@ export const useNotifications = () => {
 
   const markAllSeen = useCallback(() => {
     if (!player || items.length === 0) return;
-    setSeen((prev) => {
-      const next = new Set(prev);
+    setHistory((prev) => {
+      const next = new Set(prev.seen);
       for (const i of items) next.add(i.id);
       saveIds(STORAGE_PREFIX, player.id, next);
-      return next;
+      return { ...prev, seen: next };
     });
   }, [player, items]);
 
   const clearAll = useCallback(() => {
     if (!player || items.length === 0) return;
-    setDismissed((prev) => {
-      const next = new Set(prev);
+    setHistory((prev) => {
+      const next = new Set(prev.dismissed);
       for (const i of items) next.add(i.id);
       saveIds(DISMISSED_PREFIX, player.id, next);
-      return next;
+      return { ...prev, dismissed: next };
     });
   }, [player, items]);
 

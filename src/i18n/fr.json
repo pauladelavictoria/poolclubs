@@ -15,7 +15,6 @@
   "common.seeAll": "Tout voir",
   "common.seeAllPlural": "Tout voir",
   "common.pts": "{n} pts",
-
   "nav.home": "Accueil",
   "nav.ranking": "Classement",
   "nav.games": "Matchs",
@@ -24,6 +23,7 @@
   "nav.moreOptions": "Plus d'options",
   "nav.primary": "Principal",
   "nav.navigation": "Navigation",
+  "nav.breadcrumb": "Fil d'Ariane",
   "nav.training": "Entraînement",
   "nav.rankings": "Classements",
   "nav.club": "Club",
@@ -44,7 +44,6 @@
   "nav.theme": "Thème",
   "theme.light": "Clair",
   "theme.dark": "Sombre",
-
   "auth.signIn": "Se connecter",
   "auth.signInShort": "Connexion",
   "auth.signOut": "Se déconnecter",
@@ -63,7 +62,6 @@
   "auth.signedOut": "Déconnexion réussie",
   "auth.signOutError": "Échec de la déconnexion",
   "auth.yourProfile": "Ton profil",
-
   "dashboard.yourStanding": "Ta position",
   "dashboard.noGamesYet": "Aucun match pour l'instant",
   "dashboard.wonOf": "{won}/{played} gagnés",
@@ -78,7 +76,6 @@
   "feed.tournamentResults": "Tournois",
   "feed.moreGames": "Voir {n} matchs de plus",
   "dashboard.noGamesRecorded": "Aucun match n'a encore été enregistré.",
-
   "games.title": "Matchs",
   "games.add": "Ajouter un résultat",
   "games.mode": "Format",
@@ -103,7 +100,6 @@
   "games.today": "Aujourd'hui",
   "games.yesterday": "Hier",
   "games.history": "Historique des matchs",
-
   "ranking.globalTitle": "Classement général",
   "ranking.dailyTitle": "Classement du jour",
   "ranking.standings": "Classement",
@@ -122,7 +118,6 @@
   "ranking.playersCount": "{n} joueurs",
   "ranking.selectDate": "Choisir une date",
   "ranking.tvMode": "Mode TV",
-
   "players.title": "Joueurs",
   "players.sort": "Trier les joueurs",
   "players.alphabetical": "A-Z",
@@ -163,7 +158,6 @@
   "players.tabSettings": "Paramètres",
   "players.accountSettings": "Paramètres du compte",
   "players.nameTaken": "Ce nom est déjà pris dans ce club",
-
   "drills.title": "Exercices",
   "drills.new": "Nouvel exercice",
   "drills.autoPlan": "Plan automatique",
@@ -196,7 +190,6 @@
   "drills.saveError": "Échec de l'enregistrement de l'exercice",
   "drills.deleteConfirm": "Supprimer cet exercice ?",
   "drills.deleteError": "Échec de la suppression de l'exercice",
-
   "drillForm.details": "Détails",
   "drillForm.name": "Nom",
   "drillForm.description": "Description",
@@ -220,7 +213,6 @@
   "drillForm.nameRequired": "L'exercice a besoin d'un nom",
   "drillForm.maxScoreMin": "Le score maximum doit être d'au moins 1",
   "drillForm.needBall": "Place au moins une bille sur le tapis",
-
   "drillLog.signInPrompt": "Connecte-toi pour enregistrer tes résultats.",
   "drillLog.loadingPlayer": "Chargement de ton joueur...",
   "drillLog.linkPrompt": "Associe ton compte à un joueur pour enregistrer des résultats.",
@@ -233,7 +225,6 @@
   "drillLog.saving": "Enregistrement...",
   "drillLog.submit": "Enregistrer le résultat",
   "drillLog.saved": "Résultat enregistré",
-
   "training.planTitle": "Plan d'entraînement",
   "training.progressTitle": "Progression",
   "training.newPlanCreated": "Nouveau plan généré",
@@ -270,16 +261,13 @@
   "training.thisDrill": "cet exercice",
   "training.deleteConfirm": "Supprimer ce résultat ? C'est irréversible.",
   "training.shownOf": "{shown} sur {total}",
-
   "category.1": "Première",
   "category.2": "Deuxième",
   "category.3": "Troisième",
   "category.short": "{n}",
-
   "difficulty.beginner": "Débutant",
   "difficulty.intermediate": "Intermédiaire",
   "difficulty.advanced": "Avancé",
-
   "skill.potting": "Empochage",
   "skill.position": "Position",
   "skill.safety": "Défense",
@@ -288,16 +276,13 @@
   "skill.kicks": "Bande avant",
   "skill.patterns": "Enchaînements",
   "skill.specials": "Coups spéciaux",
-
   "score.high": "Excellent",
   "score.midhigh": "Bien",
   "score.mid": "Correct",
   "score.midlow": "Faible",
   "score.low": "Bas",
-
   "scoreString.title": "{won} sur {total} gagnés",
   "scoreString.aria": "{total} derniers matchs : {won} gagnés",
-
   "club.noClub": "Aucun club",
   "club.welcome": "Bienvenue",
   "club.switch": "Club",
@@ -342,7 +327,21 @@
   "club.removeConfirm": "Exclure {name} du club ? Ses matchs et ses résultats d'exercices partent aussi.",
   "club.settings": "Réglages du club",
   "club.rename": "Renommer le club",
-
+  "club.branding.logoTitle": "Logo du club",
+  "club.branding.logoError": "Impossible d'importer le logo",
+  "club.branding.changeLogo": "Changer le logo",
+  "club.branding.removeLogo": "Retirer le logo",
+  "club.branding.colorTitle": "Couleur du club",
+  "club.branding.colorHint": "La couleur d'accent utilisée dans toute l'application pour les membres de ce club. Choisissez l'une des boules de billard.",
+  "club.branding.colorLabel": "Couleur du club",
+  "club.branding.ball.yellow": "Boule 1 — jaune",
+  "club.branding.ball.blue": "Boule 2 — bleue",
+  "club.branding.ball.red": "Boule 3 — rouge",
+  "club.branding.ball.purple": "Boule 4 — violette",
+  "club.branding.ball.orange": "Boule 5 — orange",
+  "club.branding.ball.green": "Boule 6 — verte",
+  "club.branding.ball.maroon": "Boule 7 — marron",
+  "club.branding.ball.black": "Boule 8 — noire",
   "challenge.title": "Défis",
   "challenge.new": "Nouveau défi",
   "challenge.newHint": "Choisis quelqu'un de ton club et propose-lui un match.",
@@ -363,12 +362,10 @@
   "challenge.vsYou": "{name} contre toi",
   "challenge.emptyTitle": "Aucun défi en cours",
   "challenge.emptyHint": "Choisis un joueur ci-dessus pour le défier.",
-
   "social.react": "Réagir",
   "social.write": "Écrire un commentaire",
   "social.send": "Envoyer",
   "social.empty": "Pas encore de commentaires.",
-
   "landing.rankingShotTitle": "Le tableau que tout le monde regarde",
   "landing.rankingShotBody": "Un classement, mis à jour dès qu'un résultat est enregistré. Affiche-le sur la télé du club et le débat est clos.",
   "landing.finalTitle": "On replace les billes.",
@@ -407,7 +404,6 @@
   "crash.body": "Cet écran n'a pas pu se charger. Recharger suffit en général.",
   "crash.stale": "Une nouvelle version de l'app est disponible. Recharge pour mettre à jour.",
   "crash.reload": "Recharger",
-
   "tournaments.new": "Nouveau tournoi",
   "tournaments.edit": "Modifier le tournoi",
   "tournaments.name": "Nom",
@@ -495,7 +491,6 @@
   "tournaments.raceLabel": "Course à {n}",
   "tournaments.raceNeeded": "Le vainqueur doit atteindre {n}.",
   "tournaments.standings": "Classement",
-  "tournaments.bracketTitle": "Tableau",
   "tournaments.round": "Tour {n}",
   "tournaments.bracket.winners": "Tableau principal",
   "tournaments.bracket.losers": "Repêchage",
@@ -511,7 +506,6 @@
   "tournaments.played": "J",
   "tournaments.racks": "Manches",
   "tournaments.wins": "G",
-
   "notifications.title": "Notifications",
   "notifications.aria": "Ouvrir les notifications",
   "notifications.unread": "Tu as des notifications non lues",
@@ -521,6 +515,6 @@
   "notifications.challengeDeclined": "{name} a refusé ton défi",
   "notifications.tournamentOpen": "Inscriptions ouvertes pour {name}",
   "notifications.tournamentAction": "Tu as un match en attente dans {name}",
-  "notifications.drillAdded": "Nouveau drill : {name}. À essayer !"
+  "notifications.drillAdded": "Nouveau drill : {name}. À essayer !",
   "notifications.clearAll": "Tout effacer"
 }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { LuTrash2 } from "react-icons/lu";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import DrillProgressChart from "@/components/DrillProgressChart";
 import PlayerTabs from "@/components/PlayerTabs";
 import SocialBar from "@/components/SocialBar";
@@ -114,20 +114,31 @@ export default function TrainingProgressPage() {
   }
 
   // Training progress is private — only their owner can see it.
-  if (!isAuthLoading && selectedPlayerId && authPlayer?.id !== selectedPlayerId) {
+  if (
+    !isAuthLoading &&
+    selectedPlayerId &&
+    authPlayer?.id !== selectedPlayerId
+  ) {
     return <Navigate to={`/app/players/${selectedPlayerId}`} replace />;
   }
 
   return (
     <>
-      <PageHeader
-        section="drills"
-        title={t("training.progressTitle")}
-        subtitle={player?.name}
-        back={`/app/players/${selectedPlayerId}`}
-      />
-
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PageTitle
+          title={t("training.progressTitle")}
+          crumbs={
+            player
+              ? [
+                  { label: t("players.title"), to: "/app/players" },
+                  {
+                    label: player.name,
+                    to: `/app/players/${selectedPlayerId}`,
+                  },
+                ]
+              : undefined
+          }
+        />
         {selectedPlayerId && <PlayerTabs playerId={selectedPlayerId} />}
 
         {allLogs && allLogs.length > 0 && (

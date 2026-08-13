@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
-import type { Player } from "@/types";
+import type { BallColor, Player } from "@/types";
 
 export type ClubPreview = {
   club_id: number;
@@ -72,13 +72,31 @@ export const useManageClub = () => {
       onSuccess,
     }),
 
-    renameClub: useMutation({
-      mutationFn: async (name: string) => {
+    // Name, logo and accent colour are one settings form with one Guardar
+    // button, so they land in a single update rather than three round trips.
+    // logoUrl is already a data URI by the time it gets here — see
+    // libs/logoImage.ts, the same shrink-in-the-browser approach avatars use.
+    updateClub: useMutation({
+      mutationFn: async (updates: {
+        name?: string;
+        logoUrl?: string | null;
+        themeColor?: BallColor;
+      }) => {
         if (!activeClubId) throw new Error("no active club");
+
+        const patch: {
+          name?: string;
+          logo_url?: string | null;
+          theme_color?: BallColor;
+        } = {};
+        if (updates.name !== undefined) patch.name = updates.name.trim();
+        if (updates.logoUrl !== undefined) patch.logo_url = updates.logoUrl;
+        if (updates.themeColor !== undefined)
+          patch.theme_color = updates.themeColor;
 
         await supabase
           .from("clubs")
-          .update({ name: name.trim() })
+          .update(patch)
           .eq("id", activeClubId)
           .throwOnError();
       },
@@ -164,7 +182,10 @@ export const useClubPreview = (code: string | undefined) =>
         clubName: rows[0].club_name,
         unclaimed: players
           .filter((r) => r.claimable)
-          .map((r) => ({ id: r.player_id as number, name: r.player_name as string })),
+          .map((r) => ({
+            id: r.player_id as number,
+            name: r.player_name as string,
+          })),
         /** Lowercased and trimmed, to match the name check in join_club(). */
         takenNames: new Set(
           players.map((r) => (r.player_name as string).trim().toLowerCase()),

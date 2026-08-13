@@ -1,8 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { LuBell, LuSwords, LuTrophy, LuNetwork, LuTarget } from "react-icons/lu";
-import { useNotifications, type AppNotification } from "@/hooks/useNotifications";
+import {
+  LuBell,
+  LuSwords,
+  LuTrophy,
+  LuNetwork,
+  LuTarget,
+} from "react-icons/lu";
+import {
+  useNotifications,
+  type AppNotification,
+} from "@/hooks/useNotifications";
 import { useAuth } from "@/hooks/useAuth";
+import { useOutsideClose } from "@/libs/useOutsideClose";
 import { useT } from "@/i18n";
 
 const ICONS: Record<
@@ -31,25 +41,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-
-    const onPointerDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
+  useOutsideClose(open, ref, () => setOpen(false));
 
   if (!player) return null;
 
@@ -75,7 +67,10 @@ export default function NotificationBell() {
         <LuBell className="h-5 w-5" aria-hidden />
         {unreadCount > 0 && (
           <>
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-strike" aria-hidden />
+            <span
+              className="absolute right-2 top-2 h-2 w-2 rounded-full bg-strike"
+              aria-hidden
+            />
             <span className="sr-only">{t("notifications.unread")}</span>
           </>
         )}

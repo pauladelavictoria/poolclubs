@@ -72,7 +72,7 @@ function DrillRow({ log }: { log: DrillLog }) {
           one figure worth reading from across the room. */}
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-caption font-medium uppercase tracking-[0.08em] text-mark-drills">
+          <p className="text-caption font-medium uppercase tracking-[0.08em] text-strike">
             {t("drills.detailTitle")}
           </p>
           <Link
@@ -100,7 +100,7 @@ function DrillRow({ log }: { log: DrillLog }) {
       {/* Who did it. */}
       <Link
         to={`/app/players/${log.player_id}`}
-        className="mt-2 flex items-center gap-2 text-ink-soft transition-colors duration-150 hover:text-ink"
+        className="mt-2 flex items-center gap-2 text-ink-soft transition-colors duration-150 hover:text-strike"
       >
         <Avatar name={name} url={author?.avatar_url} />
         <span className="min-w-0 flex-1 truncate text-body">{name}</span>
@@ -148,7 +148,7 @@ function DrillCreatedRow({ drill, at }: { drill: Drill; at: string }) {
       {/* The same three sizes a result card uses — eyebrow, title, body — so a
           new drill is not written smaller than a drill somebody scored. */}
       <div className="min-w-0 flex-1">
-        <p className="text-caption font-medium uppercase tracking-[0.08em] text-mark-drills">
+        <p className="text-caption font-medium uppercase tracking-[0.08em] text-strike">
           {t("drills.new")}
         </p>
         <p className="truncate text-body font-semibold text-ink">
@@ -255,7 +255,7 @@ function Side({
             {p.id != null ? (
               <Link
                 to={`/app/players/${p.id}`}
-                className="hover:text-strike hover:underline"
+                className="transition-colors duration-150 hover:text-strike"
               >
                 {p.name}
               </Link>
@@ -292,13 +292,13 @@ function MatchCard({
           to={`/app/tournaments/${tournament.id}`}
           className="mb-2 flex items-center gap-1.5 border-b border-hairline pb-2 text-caption font-medium text-ink-soft transition-colors duration-150 hover:text-strike"
         >
-          <LuTrophy className="h-3.5 w-3.5 shrink-0 text-mark-tournaments" />
+          <LuTrophy className="h-3.5 w-3.5 shrink-0 text-strike" />
           <span className="truncate">{tournament.name}</span>
         </Link>
       )}
 
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-caption font-medium uppercase tracking-[0.08em] text-mark-games">
+        <p className="text-caption font-medium uppercase tracking-[0.08em] text-strike">
           {isDoubles ? t("games.doubles") : t("games.single")}
         </p>
         <time
@@ -373,7 +373,7 @@ function TournamentGamesCard({
         to={`/app/tournaments/${tournament.id}`}
         className="mb-2 flex items-baseline gap-1.5 border-b border-hairline pb-2 text-caption font-medium text-ink-soft transition-colors duration-150 hover:text-strike"
       >
-        <LuTrophy className="h-3.5 w-3.5 shrink-0 self-center text-mark-tournaments" />
+        <LuTrophy className="h-3.5 w-3.5 shrink-0 self-center text-strike" />
         <span className="min-w-0 flex-1 truncate">{tournament.name}</span>
         <span className="shrink-0 font-mono tabular-nums text-ink-ghost">
           {t("games.count", { n: games.length })}
@@ -398,7 +398,7 @@ function TournamentGamesCard({
                 >
                   <Link
                     to={`/app/players/${game.player_1_id}`}
-                    className="hover:text-strike hover:underline"
+                    className="transition-colors duration-150 hover:text-strike"
                   >
                     {game.player_1_name}
                   </Link>
@@ -407,7 +407,7 @@ function TournamentGamesCard({
                       {" / "}
                       <Link
                         to={`/app/players/${game.player_1b_id}`}
-                        className="hover:text-strike hover:underline"
+                        className="transition-colors duration-150 hover:text-strike"
                       >
                         {game.player_1b_name}
                       </Link>
@@ -426,7 +426,7 @@ function TournamentGamesCard({
                 <span className={`min-w-0 truncate text-body ${side(p2 > p1)}`}>
                   <Link
                     to={`/app/players/${game.player_2_id}`}
-                    className="hover:text-strike hover:underline"
+                    className="transition-colors duration-150 hover:text-strike"
                   >
                     {game.player_2_name}
                   </Link>
@@ -435,7 +435,7 @@ function TournamentGamesCard({
                       {" / "}
                       <Link
                         to={`/app/players/${game.player_2b_id}`}
-                        className="hover:text-strike hover:underline"
+                        className="transition-colors duration-150 hover:text-strike"
                       >
                         {game.player_2b_name}
                       </Link>
@@ -646,10 +646,7 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
             ) : item.tournament && item.tournament.status !== "done" ? (
               <CreatedRow
                 icon={
-                  <LuTrophy
-                    className="h-3.5 w-3.5 text-mark-tournaments"
-                    aria-hidden
-                  />
+                  <LuTrophy className="h-3.5 w-3.5 text-strike" aria-hidden />
                 }
                 label={t("tournaments.new")}
                 name={item.tournament.name}

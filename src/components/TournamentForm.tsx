@@ -6,7 +6,12 @@ import { Button } from "./ui/Button";
 import { Segmented } from "./ui/Segmented";
 import { DisciplineBall } from "./ui/Ball";
 import { groupCount, minimumEntrants } from "@/libs/bracket";
-import { DISCIPLINES, type Category, type Discipline, type TournamentFormat } from "@/types";
+import {
+  DISCIPLINES,
+  type Category,
+  type Discipline,
+  type TournamentFormat,
+} from "@/types";
 import { useT } from "@/i18n";
 
 export type TournamentValues = {
@@ -122,7 +127,9 @@ export default function TournamentForm({
           id="tournament-category"
           value={category ?? ""}
           onChange={(e) =>
-            setCategory(e.target.value ? (Number(e.target.value) as Category) : null)
+            setCategory(
+              e.target.value ? (Number(e.target.value) as Category) : null,
+            )
           }
           disabled={isSubmitting}
         >
@@ -236,9 +243,7 @@ export default function TournamentForm({
           )}
         </div>
         <p className="text-caption text-ink-faint">
-          {hasFinal
-            ? t("tournaments.raceHint")
-            : t("tournaments.raceHintFlat")}
+          {hasFinal ? t("tournaments.raceHint") : t("tournaments.raceHintFlat")}
         </p>
       </fieldset>
 

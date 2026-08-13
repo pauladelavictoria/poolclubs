@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { LuPlus } from "react-icons/lu";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import GamesList from "@/components/GamesList";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -34,17 +34,17 @@ export default function GamesPage() {
 
   return (
     <>
-      <PageHeader section="games" title={t("games.title")}>
-        <Link
-          to="/app/games/new"
-          className={buttonClasses({ size: "sm", className: "shrink-0" })}
-        >
-          <LuPlus className="h-4 w-4" aria-hidden />
-          {t("games.add")}
-        </Link>
-      </PageHeader>
-
       <div className="mx-auto max-w-5xl px-3 py-4">
+        <PageTitle title={t("games.title")} className="mb-4">
+          <Link
+            to="/app/games/new"
+            className={buttonClasses({ size: "sm", className: "shrink-0" })}
+          >
+            <LuPlus className="h-4 w-4" aria-hidden />
+            {t("games.add")}
+          </Link>
+        </PageTitle>
+
         {/* Filters are a toolbar, not the content: compact, left-aligned, and
             sized to their labels. Two half-width 40px selects made choosing a
             filter look like the main task on the page.

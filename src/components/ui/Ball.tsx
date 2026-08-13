@@ -1,5 +1,10 @@
 import { useId } from "react";
-import { BALLS, BALL_COLORS, BALL_RADIUS, isStriped } from "@/libs/drillGeometry";
+import {
+  BALLS,
+  BALL_COLORS,
+  BALL_RADIUS,
+  isStriped,
+} from "@/libs/drillGeometry";
 import type { Category, Discipline } from "@/types";
 import { useT } from "@/i18n";
 
@@ -44,6 +49,14 @@ export function BallGlyph({
           />
         </>
       )}
+      {/* Drawn over the stripe so it rings the whole ball. Without it a yellow
+          or a striped ball has no edge at all on a pale surface. */}
+      <circle
+        r={BALL_RADIUS}
+        fill="none"
+        stroke="var(--color-hairline-strong)"
+        strokeWidth={0.1}
+      />
       {label && (
         <>
           <circle r={0.8} fill="#FFFFFF" />

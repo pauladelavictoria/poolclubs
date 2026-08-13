@@ -67,7 +67,9 @@ export default function LoginPage() {
     if (error) {
       // Supabase messages are English-only; ours are translated, and vaguer on
       // purpose — "wrong password" tells a stranger the account exists.
-      setNote({ text: t(mode === "signin" ? "auth.badCredentials" : "auth.signUpError") });
+      setNote({
+        text: t(mode === "signin" ? "auth.badCredentials" : "auth.signUpError"),
+      });
       return;
     }
     // Sign-up with email confirmation on returns a user but no session; the
@@ -87,7 +89,9 @@ export default function LoginPage() {
         />
         {/* The product name, not a club's — the login screen runs before we
             know which club you belong to. */}
-        <h1 className="text-h2 font-semibold text-ink">{t("common.appName")}</h1>
+        <h1 className="text-h2 font-semibold text-ink">
+          {t("common.appName")}
+        </h1>
         <p className="mx-auto mt-1 max-w-[30ch] text-body text-ink-soft">
           {t("auth.tagline")}
         </p>

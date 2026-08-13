@@ -25,20 +25,29 @@ const LIGHT = {
   ink: "#12161c",
 };
 
-/** The two series a player's history draws. Semantic, so they don't flip. */
-export const SERIES = {
-  /** pot green: frames taken */
-  games: "#3fbf7f",
-  /** chalk blue: the supporting series */
-  racks: "#5b9dd9",
-};
+/** Custom properties can't reach recharts, so they are read off the root. The
+ *  accent is whatever the club set (see libs/clubTheme), which is why this is
+ *  read at render rather than written down here. */
+const cssVar = (name: string, fallback: string) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim() ||
+  fallback;
 
 export function useChartTheme() {
-  const palette = useTheme() === "light" ? LIGHT : DARK;
+  const mode = useTheme();
+  const palette = mode === "light" ? LIGHT : DARK;
 
   return {
     axis: palette.axis,
     grid: palette.grid,
+    /**
+     * The two series a player's history draws. The club's colour carries the
+     * headline; the supporting line stays neutral, because two tints of one
+     * hue at 2px is no distinction at all.
+     */
+    series: {
+      games: cssVar("--color-strike", mode === "light" ? "#966c00" : "#f4c53c"),
+      racks: palette.axis,
+    },
     /** Spread onto <Tooltip contentStyle> */
     tooltip: {
       backgroundColor: palette.surface,

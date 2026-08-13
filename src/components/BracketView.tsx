@@ -3,11 +3,12 @@ import type { BracketIndex } from "@/libs/bracket";
 import type { BracketSide, TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
 
-const SIDES: { side: BracketSide; heading: "winners" | "losers" | "final" }[] = [
-  { side: "winners", heading: "winners" },
-  { side: "losers", heading: "losers" },
-  { side: "final", heading: "final" },
-];
+const SIDES: { side: BracketSide; heading: "winners" | "losers" | "final" }[] =
+  [
+    { side: "winners", heading: "winners" },
+    { side: "losers", heading: "losers" },
+    { side: "final", heading: "final" },
+  ];
 
 /**
  * A bracket is a grid of rounds, and on a phone it is wider than the screen —
@@ -53,7 +54,9 @@ export default function BracketView({
           (a, b) => a - b,
         );
         const inRound = (round: number) =>
-          inSide.filter((m) => m.round === round).sort((a, b) => a.slot - b.slot);
+          inSide
+            .filter((m) => m.round === round)
+            .sort((a, b) => a.slot - b.slot);
 
         return (
           <section key={side} className="space-y-2">

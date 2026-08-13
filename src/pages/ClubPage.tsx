@@ -5,15 +5,17 @@ import { LuCheck, LuCopy, LuUserMinus, LuPencil, LuPlus } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubMembers, useManageClub } from "@/hooks/useClub";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import PlayerForm from "@/components/PlayerForm";
+import ClubLogoUpload from "@/components/ClubLogoUpload";
+import ClubThemePicker from "@/components/ClubThemePicker";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button, IconButton } from "@/components/ui/Button";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/libs/useDialog";
-import type { Player, Category } from "@/types";
+import type { Player, Category, BallColor } from "@/types";
 import { useT } from "@/i18n";
 
 /**
@@ -25,10 +27,14 @@ export default function ClubPage() {
   const { t } = useT();
   const { activeClub, isClubAdmin, player, user } = useAuth();
   const { data: members, isLoading } = useClubMembers();
-  const { approveMember, removeMember, renameClub } = useManageClub();
+  const { approveMember, removeMember, updateClub } = useManageClub();
   const { createPlayer, updatePlayer } = useManagePlayers();
 
   const [name, setName] = useState("");
+  // undefined means "unchanged" for both — the settings form only sends what
+  // the admin actually touched, in one Guardar rather than three saves.
+  const [logoUrl, setLogoUrl] = useState<string | null | undefined>(undefined);
+  const [color, setColor] = useState<BallColor | undefined>(undefined);
   const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -57,6 +63,28 @@ export default function ClubPage() {
     setIsModalOpen(false);
   };
 
+  const hasChanges =
+    name.trim().length > 0 || logoUrl !== undefined || color !== undefined;
+
+  const saveSettings = () => {
+    updateClub.mutate(
+      {
+        ...(name.trim() && { name: name.trim() }),
+        ...(logoUrl !== undefined && { logoUrl }),
+        ...(color !== undefined && { themeColor: color }),
+      },
+      {
+        onSuccess: () => {
+          setName("");
+          setLogoUrl(undefined);
+          setColor(undefined);
+          toast.success(t("common.saved"));
+        },
+        onError: () => toast.error(t("common.error")),
+      },
+    );
+  };
+
   const savePlayer = async (values: { name: string; category: Category }) => {
     try {
       if (editingPlayer) {
@@ -77,27 +105,16 @@ export default function ClubPage() {
 
   return (
     <>
-      <PageHeader
-        title={activeClub.name}
-        subtitle={t("club.membersCount", {
-          n: active.length,
-        })}
-      />
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PageTitle title={activeClub.name} />
         <Card className="overflow-hidden">
           <CardHeader title={t("club.settings")} />
           <form
-            className="space-y-3 p-5"
+            className="p-5"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!name.trim()) return;
-              renameClub.mutate(name, {
-                onSuccess: () => {
-                  setName("");
-                  toast.success(t("common.saved"));
-                },
-                onError: () => toast.error(t("common.error")),
-              });
+              if (!hasChanges) return;
+              saveSettings();
             }}
           >
             <div className="space-y-1.5">
@@ -110,15 +127,40 @@ export default function ClubPage() {
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
+
+            <div className="mt-5 space-y-1.5 border-t border-hairline pt-4">
+              <Label>{t("club.branding.logoTitle")}</Label>
+              <ClubLogoUpload
+                name={activeClub.name}
+                url={logoUrl !== undefined ? logoUrl : activeClub.logo_url}
+                onChange={setLogoUrl}
+                disabled={updateClub.isPending}
+              />
+            </div>
+
+            <div className="mt-5 space-y-3 border-t border-hairline pt-4">
+              <Label>{t("club.branding.colorTitle")}</Label>
+              <p className="text-body text-ink-soft">
+                {t("club.branding.colorHint")}
+              </p>
+              <ClubThemePicker
+                value={color ?? activeClub.theme_color}
+                onChange={setColor}
+                disabled={updateClub.isPending}
+              />
+            </div>
+
             <Button
               type="submit"
               variant="secondary"
-              disabled={!name.trim() || renameClub.isPending}
+              className="mt-5"
+              disabled={!hasChanges || updateClub.isPending}
             >
               {t("common.save")}
             </Button>
           </form>
         </Card>
+
         <Card className="overflow-hidden">
           <CardHeader title={t("club.inviteTitle")} />
           <div className="space-y-2 p-5">
@@ -183,7 +225,14 @@ export default function ClubPage() {
             player and approving a member are the same job. */}
         <Card className="overflow-hidden">
           <CardHeader
-            title={t("club.membersTitle")}
+            title={
+              <span className="flex items-baseline gap-2">
+                {t("club.membersTitle")}
+                <span className="text-caption font-normal tabular-nums text-ink-faint">
+                  {active.length}
+                </span>
+              </span>
+            }
             action={
               user && (
                 <Button
@@ -210,7 +259,7 @@ export default function ClubPage() {
                   <span className="min-w-0 flex-1 truncate text-body text-ink">
                     <Link
                       to={`/app/players/${m.id}`}
-                      className="hover:text-strike hover:underline"
+                      className="transition-colors duration-150 hover:text-strike"
                     >
                       {m.name}
                     </Link>
@@ -265,7 +314,7 @@ export default function ClubPage() {
           free. A bottom sheet on phones, a centred card from sm up. */}
       <dialog
         ref={dialogRef}
-        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-none sm:max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
         aria-label={editingPlayer ? t("players.edit") : t("players.add")}
         onClose={closeModal}
         onClick={(e) => {

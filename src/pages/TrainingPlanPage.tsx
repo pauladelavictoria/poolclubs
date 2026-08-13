@@ -1,13 +1,14 @@
 import { useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import TrainingPlanStepList from "@/components/TrainingPlanStepList";
 import PlayerTabs from "@/components/PlayerTabs";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/Card";
+import { CategoryBadge } from "@/components/ui/Ball";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -51,16 +52,20 @@ export default function TrainingPlanPage() {
     );
   };
 
-  const header = (
-    <PageHeader
-      section="drills"
+  const title = (
+    <PageTitle
       title={t("training.planTitle")}
-      subtitle={
-        player &&
-        `${player.name} · ${t("category.short", { n: player.category })}`
+      crumbs={
+        player
+          ? [
+              { label: t("players.title"), to: "/app/players" },
+              { label: player.name, to: `/app/players/${playerIdNum}` },
+            ]
+          : undefined
       }
-      back={`/app/players/${playerIdNum}`}
-    />
+    >
+      {player && <CategoryBadge category={player.category} full />}
+    </PageTitle>
   );
 
   // Training plans are private — only their owner can see them.
@@ -70,22 +75,19 @@ export default function TrainingPlanPage() {
 
   if (isLoading) {
     return (
-      <>
-        {header}
-        <div className="mx-auto max-w-5xl space-y-2 px-3 py-4">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-[54px]" />
-          ))}
-        </div>
-      </>
+      <div className="mx-auto max-w-5xl space-y-2 px-3 py-4">
+        {title}
+        {Array.from({ length: 6 }, (_, i) => (
+          <Skeleton key={i} className="h-[54px]" />
+        ))}
+      </div>
     );
   }
 
   return (
     <>
-      {header}
-
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        {title}
         <PlayerTabs playerId={playerIdNum} />
 
         {!planData || !stats ? (

@@ -1,5 +1,4 @@
 import {
-  LuHouse,
   LuTrophy,
   LuSwords,
   LuCircleDot,
@@ -24,20 +23,22 @@ export type NavItem = {
   end?: boolean;
 };
 
-/** The four thumb-reachable destinations. Everything else lives in the drawer. */
+/**
+ * The four thumb-reachable destinations: the four places the app is made of,
+ * in the order libs/sections declares them.
+ *
+ * The lobby is not among them. It is not a fifth place, it is where the four
+ * show up, and it is one tap away on the club name in the bar (the same job
+ * the ball does on the desktop rail). That is what buys tournaments — a
+ * section with its own hue, its own glyph and its own page — a slot here
+ * instead of a line in the drawer.
+ */
 export const PRIMARY_NAV: NavItem[] = [
   {
-    to: "/app",
-    labelKey: "nav.home",
-    icon: LuHouse,
-    section: "home",
-    end: true,
-  },
-  {
-    to: "/app/ranking",
-    labelKey: "nav.ranking",
-    icon: LuTrophy,
-    section: "ranking",
+    to: "/app/tournaments",
+    labelKey: "nav.tournaments",
+    icon: LuNetwork,
+    section: "tournaments",
     end: true,
   },
   {
@@ -45,6 +46,13 @@ export const PRIMARY_NAV: NavItem[] = [
     labelKey: "nav.games",
     icon: LuCircleDot,
     section: "games",
+    end: true,
+  },
+  {
+    to: "/app/ranking",
+    labelKey: "nav.ranking",
+    icon: LuTrophy,
+    section: "ranking",
     end: true,
   },
   {

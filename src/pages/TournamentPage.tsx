@@ -32,7 +32,7 @@ import {
   type BracketIndex,
 } from "@/libs/bracket";
 import { groupStandings, standings, type Standing } from "@/libs/leagueTable";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import BracketView from "@/components/BracketView";
 import LeagueTable from "@/components/LeagueTable";
 import MatchCard from "@/components/MatchCard";
@@ -82,7 +82,7 @@ export default function TournamentPage() {
   const [playing, setPlaying] = useState<TournamentMatch | "new" | null>(null);
   const recordRef = useDialog(!!playing);
   const [adding, setAdding] = useState("");
-  const [view, setView] = useState<"bracket" | "list">("bracket");
+  const [view, setView] = useState<"bracket" | "list">("list");
 
   const entrants = useMemo(
     () => (tournament?.tournament_players ?? []).map((e) => e.player_id),
@@ -118,19 +118,15 @@ export default function TournamentPage() {
   // enter the wrong player: `player` is the one for the club being viewed.
   if (!tournament || tournament.club_id !== activeClubId) {
     return (
-      <>
-        <PageHeader
-          section="tournaments"
-          title={t("nav.tournaments")}
-          back="/app/tournaments"
-        />
-        <Card className="mx-auto mt-4 max-w-5xl">
+      <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PageTitle title={t("nav.tournaments")} />
+        <Card>
           <EmptyState
             title={t("tournaments.missing")}
             hint={tournament ? t("tournaments.otherClub") : undefined}
           />
         </Card>
-      </>
+      </div>
     );
   }
 
@@ -290,28 +286,30 @@ export default function TournamentPage() {
 
   return (
     <>
-      <PageHeader
-        section="tournaments"
-        title={tournament.name}
-        back="/app/tournaments"
-        subtitle={`${t(`discipline.${tournament.discipline}`)} · ${t(
-          `tournaments.${FORMAT_KEY[tournament.format]}`,
-        )} · ${t(`tournaments.status.${tournament.status}`)}`}
-      >
-        {tournament.category !== null && (
-          <CategoryBadge category={tournament.category} />
-        )}
-        {/* Two people meet at a table and want it recorded there and then, so
-            this is on the bar rather than buried next to a fixture. */}
-        {canPlay && pendingMatches.some(playable) && (
-          <Button size="sm" onClick={() => setPlaying("new")}>
-            <LuPlus className="h-4 w-4" aria-hidden />
-            {t("tournaments.addGame")}
-          </Button>
-        )}
-      </PageHeader>
-
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PageTitle title={tournament.name}>
+          {tournament.category !== null && (
+            <CategoryBadge category={tournament.category} />
+          )}
+          {/* Two people meet at a table and want it recorded there and then, so
+              this is next to the tournament's name rather than buried beside a
+              fixture. */}
+          {canPlay && pendingMatches.some(playable) && (
+            <Button size="sm" onClick={() => setPlaying("new")}>
+              <LuPlus className="h-4 w-4" aria-hidden />
+              {t("tournaments.addGame")}
+            </Button>
+          )}
+        </PageTitle>
+
+        {/* Discipline, format and state, on their own line: in the title's row
+            they competed with the name for the same width and the name lost. */}
+        <p className="-mt-2 text-caption text-ink-faint">
+          {`${t(`discipline.${tournament.discipline}`)} · ${t(
+            `tournaments.${FORMAT_KEY[tournament.format]}`,
+          )} · ${t(`tournaments.status.${tournament.status}`)}`}
+        </p>
+
         {/* A finished tournament leads with its result: the bracket below is
             then the story of how it got there, not the headline. */}
         {tournament.status === "done" && podium && (
@@ -329,7 +327,7 @@ export default function TournamentPage() {
         ) && (
           <Card className="overflow-hidden">
             <CardHeader
-              title={t("tournaments.bracketTitle")}
+              title={t("games.title")}
               action={
                 <Segmented<"bracket" | "list">
                   value={view}
@@ -337,14 +335,14 @@ export default function TournamentPage() {
                   label={t("tournaments.view")}
                   options={[
                     {
-                      value: "bracket",
-                      label: t("tournaments.viewBracket"),
-                      icon: <LuGitFork className="h-4 w-4" aria-hidden />,
-                    },
-                    {
                       value: "list",
                       label: t("tournaments.viewList"),
                       icon: <LuList className="h-4 w-4" aria-hidden />,
+                    },
+                    {
+                      value: "bracket",
+                      label: t("tournaments.viewBracket"),
+                      icon: <LuGitFork className="h-4 w-4" aria-hidden />,
                     },
                   ]}
                 />
@@ -421,7 +419,7 @@ export default function TournamentPage() {
                     <span className="min-w-0 flex-1 truncate text-body text-ink">
                       <Link
                         to={`/app/players/${playerId}`}
-                        className="hover:text-strike hover:underline"
+                        className="transition-colors duration-150 hover:text-strike"
                       >
                         {nameOf(playerId)}
                       </Link>
@@ -593,7 +591,7 @@ export default function TournamentPage() {
 
       <dialog
         ref={editRef}
-        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-none sm:max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
         aria-label={t("tournaments.edit")}
         onClose={() => setIsEditOpen(false)}
         onClick={(e) => {
@@ -631,7 +629,7 @@ export default function TournamentPage() {
 
       <dialog
         ref={recordRef}
-        className="sheet m-0 mt-auto w-full max-w-md rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+        className="sheet m-0 mt-auto w-full max-w-none sm:max-w-md rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
         aria-label={t("tournaments.record")}
         onClose={() => setPlaying(null)}
         onClick={(e) => {

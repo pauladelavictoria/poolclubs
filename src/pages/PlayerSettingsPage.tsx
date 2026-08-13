@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import PlayerTabs from "@/components/PlayerTabs";
 import AvatarUpload from "@/components/AvatarUpload";
 import { useAuth } from "@/hooks/useAuth";
@@ -68,23 +68,29 @@ export default function PlayerSettingsPage() {
     );
   };
 
-  const header = (
-    <PageHeader
+  // The middle crumb is the player, so it is named by the player once they
+  // have loaded rather than by the route's generic label.
+  const title = (
+    <PageTitle
       title={t("players.accountSettings")}
-      subtitle={player?.name}
-      back={`/app/players/${playerIdNum}`}
+      crumbs={
+        player
+          ? [
+              { label: t("players.title"), to: "/app/players" },
+              { label: player.name, to: `/app/players/${playerIdNum}` },
+            ]
+          : undefined
+      }
     />
   );
 
   if (isLoadingPlayers) {
     return (
-      <>
-        {header}
-        <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-          <Skeleton className="h-11 w-full" />
-          <Skeleton className="h-40 w-full rounded-card" />
-        </div>
-      </>
+      <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        {title}
+        <Skeleton className="h-11 w-full" />
+        <Skeleton className="h-40 w-full rounded-card" />
+      </div>
     );
   }
 
@@ -92,9 +98,9 @@ export default function PlayerSettingsPage() {
 
   return (
     <>
-      {header}
-
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        {title}
+
         <PlayerTabs playerId={player.id} isOwnProfile />
 
         <Card className="p-4">

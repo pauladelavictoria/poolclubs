@@ -39,7 +39,9 @@ export default function ChallengeButton({
   if (existing) {
     return (
       <span className="shrink-0 text-caption text-ink-faint">
-        {t(existing.status === "accepted" ? "challenge.on" : "challenge.waiting")}
+        {t(
+          existing.status === "accepted" ? "challenge.on" : "challenge.waiting",
+        )}
       </span>
     );
   }

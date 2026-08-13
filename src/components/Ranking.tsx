@@ -76,7 +76,7 @@ export default function Ranking({
               than filled: with no card around the ladder any more, a grey band
               would be a bar floating on the canvas. */}
           <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 pb-2 pt-4">
-            <h3 className="text-h3 font-semibold text-mark-ranking">
+            <h3 className="text-h3 font-semibold text-strike">
               {t(`category.${cat}`)}
             </h3>
             <span className="font-mono text-caption tabular-nums text-ink-faint">

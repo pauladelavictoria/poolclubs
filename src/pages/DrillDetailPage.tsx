@@ -4,7 +4,7 @@ import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { useAuth } from "@/hooks/useAuth";
 import { canEditDrill } from "@/libs/drillPermissions";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import PoolTableDiagram from "@/components/PoolTableDiagram";
 import DrillLogForm from "@/components/DrillLogForm";
 import SocialBar from "@/components/SocialBar";
@@ -54,10 +54,9 @@ export default function DrillDetailPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader
-          section="drills"
+        <PageTitle
+          className="mx-auto max-w-5xl px-3 pt-4"
           title={t("drills.detailTitle")}
-          back={backLink}
         />
         <div className="mx-auto grid max-w-5xl gap-4 px-3 py-4 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
           <Skeleton
@@ -72,12 +71,8 @@ export default function DrillDetailPage() {
   if (!drill) {
     return (
       <>
-        <PageHeader
-          section="drills"
-          title={t("drills.detailTitle")}
-          back={backLink}
-        />
-        <div className="mx-auto max-w-5xl px-3 py-4">
+        <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+          <PageTitle title={t("drills.detailTitle")} />
           <Card>
             <EmptyState
               title={t("drills.notFound")}
@@ -99,23 +94,18 @@ export default function DrillDetailPage() {
 
   return (
     <>
-      <PageHeader
-        section="drills"
-        title={drill.name}
-        subtitle={t(`skill.${drill.skill_type}`)}
-        back={backLink}
-      >
-        {canEdit && (
-          <Link
-            to={`/app/drills/${drill.id}/edit`}
-            className={buttonClasses({ variant: "secondary", size: "sm" })}
-          >
-            {t("common.edit")}
-          </Link>
-        )}
-      </PageHeader>
-
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PageTitle title={drill.name}>
+          {canEdit && (
+            <Link
+              to={`/app/drills/${drill.id}/edit`}
+              className={buttonClasses({ variant: "secondary", size: "sm" })}
+            >
+              {t("common.edit")}
+            </Link>
+          )}
+        </PageTitle>
+
         {planId && planPlayerId && (
           <Link
             to={backLink}
@@ -133,7 +123,7 @@ export default function DrillDetailPage() {
               upright table from becoming two metres of scrolling on a desktop;
               turned on its side it wants the whole width instead. */}
           <div
-            className={`mx-auto w-full lg:sticky lg:top-[4.5rem] ${
+            className={`mx-auto w-full lg:sticky lg:top-4 ${
               portrait ? "max-w-[420px]" : ""
             }`}
           >
@@ -148,6 +138,10 @@ export default function DrillDetailPage() {
             <Card className="p-5">
               <div className="mb-3 flex items-center gap-2 text-caption text-ink-soft">
                 <DifficultyTag difficulty={drill.difficulty} />
+                <span className="text-ink-ghost">·</span>
+                <span className="text-ink-faint">
+                  {t(`skill.${drill.skill_type}`)}
+                </span>
                 <span className="text-ink-ghost">·</span>
                 <span className="text-ink-faint">
                   {t("drills.maxPoints", { n: drill.max_score })}
@@ -190,7 +184,7 @@ export default function DrillDetailPage() {
                         <div className="flex items-baseline gap-3">
                           <Link
                             to={`/app/players/${log.player_id}`}
-                            className="min-w-0 flex-1 truncate text-body text-ink hover:text-strike hover:underline"
+                            className="min-w-0 flex-1 truncate text-body text-ink hover:text-strike"
                           >
                             {nameOf(log.player_id)}
                           </Link>

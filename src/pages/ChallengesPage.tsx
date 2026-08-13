@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/Label";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -27,7 +27,7 @@ function withPlayerLink(text: string, name: string, playerId: number) {
       {text.slice(0, idx)}
       <Link
         to={`/app/players/${playerId}`}
-        className="text-ink hover:text-strike hover:underline"
+        className="text-ink hover:text-strike"
       >
         {name}
       </Link>
@@ -87,9 +87,7 @@ export default function ChallengesPage() {
             {withPlayerLink(text, opponentName, opponentId)}
           </p>
           {c.message && (
-            <p className="truncate text-caption text-ink-faint">
-              {c.message}
-            </p>
+            <p className="truncate text-caption text-ink-faint">{c.message}</p>
           )}
         </div>
         {children}
@@ -99,9 +97,8 @@ export default function ChallengesPage() {
 
   return (
     <>
-      <PageHeader section="games" title={t("challenge.title")} />
-
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PageTitle title={t("challenge.title")} />
         {/* Pick an opponent, then the same button used on their profile — it
             already refuses a duplicate open challenge. */}
         <Card className="p-4">
