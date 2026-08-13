@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { LuTarget } from "react-icons/lu";
-import PageHeader from "@/components/PageHeader";
+import { Link } from "react-router-dom";
+import { LuPlus, LuTarget } from "react-icons/lu";
+import PageTitle from "@/components/PageTitle";
 import DrillCard from "@/components/DrillCard";
 import { useGetDrills } from "@/hooks/useGetDrills";
 import { useAuth } from "@/hooks/useAuth";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -22,74 +20,26 @@ export default function DrillsPage() {
   const [difficulty, setDifficulty] = useState<DrillDifficulty | "">("");
   const [skillType, setSkillType] = useState<DrillSkillType | "">("");
 
-  const navigate = useNavigate();
-  const { user, player } = useAuth();
+  const { user } = useAuth();
   const { data: drills, isLoading } = useGetDrills({
     difficulty: difficulty || undefined,
     skill_type: skillType || undefined,
   });
-  // A training plan is self-service only — never generated for someone else.
-  const { generatePlan } = useTrainingPlan(player?.id);
-
-  const handleGeneratePlan = () => {
-    if (!player) {
-      toast.error(t("drills.selectPlayerError"));
-      return;
-    }
-
-    generatePlan.mutate(
-      { playerId: player.id, category: player.category },
-      {
-        onSuccess: () => navigate(`/app/players/${player.id}/training/plan`),
-        onError: () => toast.error(t("drills.planError")),
-      },
-    );
-  };
 
   return (
     <>
-      <PageHeader section="drills" title={t("drills.title")}>
-        {user && (
-          <Link
-            to="/app/drills/new"
-            className={buttonClasses({ variant: "secondary", size: "sm" })}
-          >
-            {t("drills.new")}
-          </Link>
-        )}
-      </PageHeader>
-
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        {/* The primary action on this screen: get a plan. It leads. */}
-        <Card className="p-5">
-          <h2 className="text-h4 font-semibold text-ink">
-            {t("drills.autoPlan")}
-          </h2>
-          <p className="mt-1 max-w-[52ch] text-body text-ink-soft">
-            {t("drills.autoPlanHint")}
-          </p>
-
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <Button
-              onClick={handleGeneratePlan}
-              disabled={!player || generatePlan.isPending}
-              className="shrink-0"
-            >
-              {generatePlan.isPending
-                ? t("drills.generating")
-                : t("drills.generatePlan")}
-            </Button>
-          </div>
-
-          {player && (
+        <PageTitle title={t("drills.title")}>
+          {user && (
             <Link
-              to={`/app/players/${player.id}/training/plan`}
-              className="mt-3 inline-block text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-ink"
+              to="/app/drills/new"
+              className={buttonClasses({ size: "sm", className: "shrink-0" })}
             >
-              {t("drills.viewCurrentPlan")}
+              <LuPlus className="h-4 w-4" aria-hidden />
+              {t("drills.new")}
             </Link>
           )}
-        </Card>
+        </PageTitle>
 
         {/* The filters are their own control strip. The drills below are cards
             in their own right, so wrapping the grid in another card would put

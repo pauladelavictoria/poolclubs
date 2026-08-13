@@ -5,7 +5,7 @@ import { LuCheck, LuCopy, LuUserMinus, LuPencil, LuPlus } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubMembers, useManageClub } from "@/hooks/useClub";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import PlayerForm from "@/components/PlayerForm";
 import ClubLogoUpload from "@/components/ClubLogoUpload";
 import ClubThemePicker from "@/components/ClubThemePicker";
@@ -33,9 +33,7 @@ export default function ClubPage() {
   const [name, setName] = useState("");
   // undefined means "unchanged" for both — the settings form only sends what
   // the admin actually touched, in one Guardar rather than three saves.
-  const [logoUrl, setLogoUrl] = useState<string | null | undefined>(
-    undefined,
-  );
+  const [logoUrl, setLogoUrl] = useState<string | null | undefined>(undefined);
   const [color, setColor] = useState<BallColor | undefined>(undefined);
   const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -107,13 +105,8 @@ export default function ClubPage() {
 
   return (
     <>
-      <PageHeader
-        title={activeClub.name}
-        subtitle={t("club.membersCount", {
-          n: active.length,
-        })}
-      />
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PageTitle title={activeClub.name} />
         <Card className="overflow-hidden">
           <CardHeader title={t("club.settings")} />
           <form
@@ -166,7 +159,7 @@ export default function ClubPage() {
               {t("common.save")}
             </Button>
           </form>
-        </Card >
+        </Card>
 
         <Card className="overflow-hidden">
           <CardHeader title={t("club.inviteTitle")} />
@@ -192,49 +185,54 @@ export default function ClubPage() {
           </div>
         </Card>
 
-        {
-          pending.length > 0 && (
-            <Card className="overflow-hidden">
-              <CardHeader title={t("club.pendingTitle")} />
-              <ul className="divide-y divide-hairline">
-                {pending.map((m) => (
-                  <li key={m.id} className="flex items-center gap-3 px-4 py-3">
-                    <span className="min-w-0 flex-1 truncate text-body text-ink">
-                      {m.name}
-                    </span>
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        approveMember.mutate(m.id, {
-                          onError: () => toast.error(t("common.error")),
-                        })
-                      }
-                    >
-                      {t("club.approve")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        removeMember.mutate(m.id, {
-                          onError: () => toast.error(t("common.error")),
-                        })
-                      }
-                    >
-                      {t("club.reject")}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )
-        }
+        {pending.length > 0 && (
+          <Card className="overflow-hidden">
+            <CardHeader title={t("club.pendingTitle")} />
+            <ul className="divide-y divide-hairline">
+              {pending.map((m) => (
+                <li key={m.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="min-w-0 flex-1 truncate text-body text-ink">
+                    {m.name}
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      approveMember.mutate(m.id, {
+                        onError: () => toast.error(t("common.error")),
+                      })
+                    }
+                  >
+                    {t("club.approve")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() =>
+                      removeMember.mutate(m.id, {
+                        onError: () => toast.error(t("common.error")),
+                      })
+                    }
+                  >
+                    {t("club.reject")}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
 
         {/* The roster lives here rather than on its own page: adding a guest
             player and approving a member are the same job. */}
         <Card className="overflow-hidden">
           <CardHeader
-            title={t("club.membersTitle")}
+            title={
+              <span className="flex items-baseline gap-2">
+                {t("club.membersTitle")}
+                <span className="text-caption font-normal tabular-nums text-ink-faint">
+                  {active.length}
+                </span>
+              </span>
+            }
             action={
               user && (
                 <Button
@@ -261,7 +259,7 @@ export default function ClubPage() {
                   <span className="min-w-0 flex-1 truncate text-body text-ink">
                     <Link
                       to={`/app/players/${m.id}`}
-                      className="hover:text-strike hover:underline"
+                      className="transition-colors duration-150 hover:text-strike"
                     >
                       {m.name}
                     </Link>
@@ -310,13 +308,13 @@ export default function ClubPage() {
             </ul>
           )}
         </Card>
-      </div >
+      </div>
 
       {/* Native <dialog>, like the nav drawer: backdrop, Esc and focus trap come
           free. A bottom sheet on phones, a centred card from sm up. */}
       <dialog
         ref={dialogRef}
-        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-none sm:max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
         aria-label={editingPlayer ? t("players.edit") : t("players.add")}
         onClose={closeModal}
         onClick={(e) => {
@@ -328,24 +326,22 @@ export default function ClubPage() {
         </h2>
         {/* Mounted only while open, so the form starts empty every time rather
             than showing what the last edit typed. */}
-        {
-          isModalOpen && (
-            <PlayerForm
-              initialValues={
-                editingPlayer
-                  ? {
+        {isModalOpen && (
+          <PlayerForm
+            initialValues={
+              editingPlayer
+                ? {
                     name: editingPlayer.name,
                     category: editingPlayer.category,
                   }
-                  : undefined
-              }
-              onSubmit={savePlayer}
-              onCancel={closeModal}
-              isSubmitting={createPlayer.isPending || updatePlayer.isPending}
-            />
-          )
-        }
-      </dialog >
+                : undefined
+            }
+            onSubmit={savePlayer}
+            onCancel={closeModal}
+            isSubmitting={createPlayer.isPending || updatePlayer.isPending}
+          />
+        )}
+      </dialog>
     </>
   );
 }

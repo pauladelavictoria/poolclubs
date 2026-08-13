@@ -44,7 +44,11 @@ export default function ClubThemePicker({
             "disabled:cursor-not-allowed disabled:opacity-50",
           ].join(" ")}
         >
-          <BallGlyph color={color} label={String(i + 1)} className="h-8 w-8" />
+          <BallGlyph
+            color={color}
+            label={String(i + 1)}
+            className="h-14 w-14"
+          />
         </button>
       ))}
     </div>

@@ -49,7 +49,7 @@ export default function DrillCard({ drill }: DrillCardProps) {
           />
           {/* What the drill is *for*, in the drills mark: on a wall of tiles it
               is the one word you scan the grid by. */}
-          <span className="ml-auto truncate font-medium uppercase tracking-[0.08em] text-mark-drills">
+          <span className="ml-auto truncate font-medium uppercase tracking-[0.08em] text-strike">
             {t(`skill.${drill.skill_type}`)}
           </span>
         </div>

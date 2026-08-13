@@ -1,8 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
-import { LuChevronRight, LuPlus, LuSwords } from "react-icons/lu";
-import PageHeader from "@/components/PageHeader";
+import { LuChevronRight, LuSwords } from "react-icons/lu";
 import ActivityFeed from "@/components/ActivityFeed";
-import PlayerTabs from "@/components/PlayerTabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
@@ -13,7 +11,6 @@ import { TournamentOpenCard } from "@/components/TournamentFeedCard";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { BallBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
-import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useT } from "@/i18n";
 
 /** Turns "You vs {name}" into the same sentence with just the name linked to
@@ -27,7 +24,7 @@ function withPlayerLink(text: string, name: string, playerId: number) {
       <Link
         to={`/app/players/${playerId}`}
         onClick={(e) => e.stopPropagation()}
-        className="text-ink hover:text-strike hover:underline"
+        className="text-ink hover:text-strike"
       >
         {name}
       </Link>
@@ -39,7 +36,7 @@ function withPlayerLink(text: string, name: string, playerId: number) {
 export default function DashboardPage() {
   const { t } = useT();
   const navigate = useNavigate();
-  const { player, activeClub } = useAuth();
+  const { player } = useAuth();
   const myChallenges = useMyChallenges();
   const { data: players } = useGetPlayers();
   const { nameOf } = usePlayerLookup();
@@ -59,25 +56,12 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageHeader title={activeClub?.name ?? t("nav.home")}>
-        <Link
-          to="/app/games/new"
-          className={buttonClasses({ size: "sm", className: "shrink-0" })}
-        >
-          <LuPlus className="h-4 w-4" aria-hidden />
-          {t("games.add")}
-        </Link>
-      </PageHeader>
-
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         {/* You first, then what is waiting on you, then what you can enter, then
             what everyone else has been doing. */}
         {player && (
           <Card className="p-5">
-            <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
-              {t("dashboard.yourStanding")}
-            </p>
-            <div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
               <div className="flex min-w-0 items-center gap-4">
                 {me && <BallBadge rank={myIndex + 1} size="lg" />}
                 <div className="min-w-0">
@@ -105,10 +89,6 @@ export default function DashboardPage() {
                   </p>
                 </div>
               )}
-            </div>
-
-            <div className="mt-5">
-              <PlayerTabs playerId={player.id} as="buttons" />
             </div>
           </Card>
         )}

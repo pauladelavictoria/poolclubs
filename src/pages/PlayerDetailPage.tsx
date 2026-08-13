@@ -12,16 +12,17 @@ import {
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useAuth } from "@/hooks/useAuth";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import ChallengeButton from "@/components/ChallengeButton";
 import GamesList from "@/components/GamesList";
 import PlayerTabs from "@/components/PlayerTabs";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { CategoryBadge } from "@/components/ui/Ball";
 import { Stat } from "@/components/ui/Stat";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { SERIES, useChartTheme } from "@/libs/chartTheme";
+import { useChartTheme } from "@/libs/chartTheme";
 import { useT } from "@/i18n";
 
 export default function PlayerDetailPage() {
@@ -110,8 +111,8 @@ export default function PlayerDetailPage() {
   if (isLoadingPlayers || isLoadingGames) {
     return (
       <>
-        <PageHeader title={t("players.detailTitle")} back="/app/players" />
-        <div className="mx-auto max-w-5xl px-3 py-4">
+        <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+          <PageTitle title={t("players.detailTitle")} />
           <Card className="p-3">
             <SkeletonRows rows={6} />
           </Card>
@@ -123,8 +124,8 @@ export default function PlayerDetailPage() {
   if (!player) {
     return (
       <>
-        <PageHeader title={t("players.detailTitle")} back="/app/players" />
-        <div className="mx-auto max-w-5xl px-3 py-4">
+        <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+          <PageTitle title={t("players.detailTitle")} />
           <Card>
             <EmptyState
               title={t("players.notFound")}
@@ -146,13 +147,10 @@ export default function PlayerDetailPage() {
 
   return (
     <>
-      <PageHeader
-        title={player.name}
-        subtitle={t(`category.${player.category}`)}
-        back="/app/players"
-      />
-
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+        <PageTitle title={player.name}>
+          <CategoryBadge category={player.category} full />
+        </PageTitle>
         {user && (
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0 flex-1">
@@ -216,7 +214,7 @@ export default function PlayerDetailPage() {
                       type="step"
                       name={t("players.racks")}
                       dataKey="rackWinRate"
-                      stroke={SERIES.racks}
+                      stroke={chart.series.racks}
                       strokeWidth={2}
                       strokeDasharray="3 3"
                       dot={false}
@@ -225,7 +223,7 @@ export default function PlayerDetailPage() {
                       type="step"
                       name={t("players.games")}
                       dataKey="gameWinRate"
-                      stroke={SERIES.games}
+                      stroke={chart.series.games}
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 5 }}

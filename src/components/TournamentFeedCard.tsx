@@ -20,7 +20,7 @@ function Head({ tournament, label }: { tournament: Tournament; label: Key }) {
 
   return (
     <div className="min-w-0">
-      <p className="text-caption font-medium uppercase tracking-[0.08em] text-mark-tournaments">
+      <p className="text-caption font-medium uppercase tracking-[0.08em] text-strike">
         {t(label)}
       </p>
       <Link
@@ -115,7 +115,7 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
                     url={byId.get(id)?.avatar_url}
                     className="h-6 w-6"
                   />
-                  <span className="truncate text-caption text-ink-soft transition-colors duration-150 group-hover:text-strike group-hover:underline">
+                  <span className="truncate text-caption text-ink-soft transition-colors duration-150 group-hover:text-strike">
                     {byId.get(id)?.name ?? "—"}
                   </span>
                 </Link>

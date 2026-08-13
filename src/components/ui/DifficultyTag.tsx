@@ -42,7 +42,7 @@ export function DifficultyTag({
             key={i}
             aria-hidden
             className={`h-1.5 w-1.5 rounded-full ${
-              i < PIPS[difficulty] ? "bg-mark-drills" : "bg-hairline-strong"
+              i < PIPS[difficulty] ? "bg-strike" : "bg-hairline-strong"
             }`}
           />
         ))}

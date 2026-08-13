@@ -9,7 +9,7 @@ import {
   useManageTournaments,
   type TournamentListItem,
 } from "@/hooks/useTournaments";
-import PageHeader from "@/components/PageHeader";
+import PageTitle from "@/components/PageTitle";
 import TournamentForm, {
   type TournamentValues,
 } from "@/components/TournamentForm";
@@ -32,14 +32,13 @@ const GROUPS: { key: Key; statuses: TournamentStatus[] }[] = [
 
 /**
  * The rail down the left edge of a card is the tournament's state, read before
- * anything is read. Yellow on `open` is the one place a section shares the
- * accent and it is earned: an open draw is a thing you can act on, and it is
- * the same yellow the dashboard already puts on one.
+ * anything is read. A live or open draw is something you can still act on, so
+ * it wears the club's colour; a finished one is history and gets a hairline.
  */
 const RAIL: Record<TournamentStatus, string> = {
   open: "border-l-strike",
-  groups: "border-l-mark-tournaments",
-  running: "border-l-mark-tournaments",
+  groups: "border-l-strike",
+  running: "border-l-strike",
   done: "border-l-hairline-strong",
 };
 
@@ -67,23 +66,19 @@ export default function TournamentsPage() {
 
   return (
     <>
-      <PageHeader
-        section="tournaments"
-        title={t("nav.tournaments")}
-        subtitle={t("tournaments.count", { n: all.length })}
-      >
-        {isClubAdmin && (
-          <Button size="sm" onClick={() => setIsModalOpen(true)}>
-            <LuPlus className="h-4 w-4" aria-hidden />
-            {t("tournaments.new")}
-          </Button>
-        )}
-      </PageHeader>
-
       {/* A draw sheet is a few big things pinned to a wall, not rows in a
           ledger — so the groups are separated by air rather than by a box each,
           and the space between them is four times the space inside. */}
       <div className="mx-auto max-w-5xl space-y-8 px-3 py-4">
+        <PageTitle title={t("nav.tournaments")}>
+          {isClubAdmin && (
+            <Button size="sm" onClick={() => setIsModalOpen(true)}>
+              <LuPlus className="h-4 w-4" aria-hidden />
+              {t("tournaments.new")}
+            </Button>
+          )}
+        </PageTitle>
+
         {isLoading ? (
           <Card className="p-3">
             <SkeletonRows rows={3} />
@@ -120,7 +115,7 @@ export default function TournamentsPage() {
 
       <dialog
         ref={dialogRef}
-        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-none sm:max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
         aria-label={t("tournaments.new")}
         onClose={() => setIsModalOpen(false)}
         onClick={(e) => {

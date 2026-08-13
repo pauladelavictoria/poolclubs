@@ -21,7 +21,10 @@ function Team({
 }) {
   return (
     <>
-      <Link to={`/app/players/${id1}`} className="hover:text-strike hover:underline">
+      <Link
+        to={`/app/players/${id1}`}
+        className="transition-colors duration-150 hover:text-strike"
+      >
         {name1}
       </Link>
       {id2 != null && (
@@ -29,7 +32,7 @@ function Team({
           {" / "}
           <Link
             to={`/app/players/${id2}`}
-            className="hover:text-strike hover:underline"
+            className="transition-colors duration-150 hover:text-strike"
           >
             {name2}
           </Link>
@@ -141,9 +144,9 @@ export default function GamesList({
               // the app bar; the env() term is the notch the bar itself clears.
               <h3
                 className={[
-                  "px-2 pb-1.5 pt-5 text-caption font-medium uppercase tracking-[0.08em] text-mark-games first:pt-0",
+                  "px-2 pb-1.5 pt-5 text-caption font-medium uppercase tracking-[0.08em] text-strike first:pt-0",
                   stickyDates
-                    ? "sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-10 -mx-1 border-b border-hairline bg-pocket/90 backdrop-blur-sm"
+                    ? "sticky top-0 z-10 -mx-1 border-b border-hairline bg-pocket/90 backdrop-blur-sm"
                     : "",
                 ].join(" ")}
               >

@@ -46,12 +46,13 @@ export default function ClubLogoUpload({
     <div className="flex items-center gap-4">
       <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-card border border-hairline bg-felt-raised">
         {url ? (
-          <img src={url} alt="" className="h-full w-full object-cover" />
+          <img
+            src={url}
+            alt=""
+            className="h-full w-full bg-white object-cover"
+          />
         ) : (
-          <span
-            aria-hidden
-            className="text-h4 font-semibold text-ink-soft"
-          >
+          <span aria-hidden className="text-h4 font-semibold text-ink-soft">
             {name.charAt(0).toUpperCase()}
           </span>
         )}

@@ -113,13 +113,14 @@ function Row({
 
   const racksFor = (playerId: number | null) => {
     if (!game || playerId === null) return null;
-    return game.player_1_id === playerId ? game.player_1_score : game.player_2_score;
+    return game.player_1_id === playerId
+      ? game.player_1_score
+      : game.player_2_score;
   };
 
   // Settled with an empty seat: the opposite side is not undecided, it is
   // nobody — the match was a walkover and is not going to be played.
-  const walkover =
-    played && (match.p1_id === null || match.p2_id === null);
+  const walkover = played && (match.p1_id === null || match.p2_id === null);
 
   const name = (playerId: number | null, slot: 1 | 2) => {
     if (playerId !== null) return nameOf(playerId);
@@ -138,7 +139,7 @@ function Row({
       <Link
         to={`/app/players/${playerId}`}
         onClick={(e) => e.stopPropagation()}
-        className="hover:text-strike hover:underline"
+        className="transition-colors duration-150 hover:text-strike"
       >
         {name(playerId, slot)}
       </Link>
@@ -170,7 +171,9 @@ function Row({
       <span className="font-mono text-caption tabular-nums text-ink-ghost">
         {index.number(match.id)}
       </span>
-      <span className={`min-w-0 truncate text-right text-body ${tone(match.p1_id)}`}>
+      <span
+        className={`min-w-0 truncate text-right text-body ${tone(match.p1_id)}`}
+      >
         {nameNode(match.p1_id, 1)}
       </span>
       <span

@@ -210,7 +210,9 @@ export const useTrainingPlan = (playerId?: number) => {
       return newPlan as TrainingPlan;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.trainingPlan.of(playerId) });
+      queryClient.invalidateQueries({
+        queryKey: keys.trainingPlan.of(playerId),
+      });
     },
   });
 
@@ -230,7 +232,9 @@ export const useTrainingPlan = (playerId?: number) => {
         .throwOnError();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.trainingPlan.of(playerId) });
+      queryClient.invalidateQueries({
+        queryKey: keys.trainingPlan.of(playerId),
+      });
     },
   });
 
@@ -244,7 +248,9 @@ export const useTrainingPlan = (playerId?: number) => {
         .throwOnError();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.trainingPlan.of(playerId) });
+      queryClient.invalidateQueries({
+        queryKey: keys.trainingPlan.of(playerId),
+      });
     },
   });
 

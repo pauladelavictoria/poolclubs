@@ -50,7 +50,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [isPlayerLoading, setIsPlayerLoading] = useState(false);
-  const [storedClubId, setStoredClubId] = useState<number | null>(readStoredClub);
+  const [storedClubId, setStoredClubId] = useState<number | null>(
+    readStoredClub,
+  );
 
   const fetchMemberships = useCallback(
     async (userId: string, avatarUrl?: string) => {
@@ -96,7 +98,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Stored club wins, but only while it is still one of yours — being removed
   // from a club should not leave the app pointing at data it can no longer read.
   const active =
-    memberships.find((m) => m.club_id === storedClubId && m.status === "active") ??
+    memberships.find(
+      (m) => m.club_id === storedClubId && m.status === "active",
+    ) ??
     memberships.find((m) => m.status === "active") ??
     null;
 
