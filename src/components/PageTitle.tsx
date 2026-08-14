@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { AppLink } from "@/components/AppLink";
 import { LuChevronRight } from "react-icons/lu";
-import { useRouteMeta } from "@/libs/routeMeta";
+import { useRouteMeta, type CrumbLink } from "@/libs/routeMeta";
 import { useT } from "@/i18n";
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
    * by the route — a player's name, say. Ancestors only: this page is the h1
    * below, not a link back to itself.
    */
-  crumbs?: { label: string; to: string }[];
+  crumbs?: (CrumbLink & { label: string })[];
   /** Wrapper classes for pages that have no content container to sit inside. */
   className?: string;
   /** Page actions, on the title's row. */
@@ -33,8 +33,13 @@ export default function PageTitle({
   const { t } = useT();
   const meta = useRouteMeta();
 
-  const trail =
-    crumbs ?? meta.crumbs.map((c) => ({ label: t(c.labelKey), to: c.to }));
+  const trail: (CrumbLink & { label: string })[] =
+    crumbs ??
+    meta.crumbs.map((c) => ({
+      label: t(c.labelKey),
+      to: c.to,
+      params: c.params,
+    }));
 
   return (
     <div className={className}>
@@ -46,17 +51,18 @@ export default function PageTitle({
           className="mb-1.5 flex items-center gap-1 text-caption text-ink-faint"
         >
           {trail.map((crumb, i) => (
-            <Fragment key={crumb.to}>
+            <Fragment key={String(crumb.to)}>
               {i > 0 && (
                 <LuChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
               )}
-              <Link
+              <AppLink
                 to={crumb.to}
+                params={crumb.params}
                 viewTransition
                 className="truncate transition-colors duration-150 hover:text-strike"
               >
                 {crumb.label}
-              </Link>
+              </AppLink>
             </Fragment>
           ))}
         </nav>

@@ -1,4 +1,3 @@
-import { Link, useNavigate } from "react-router-dom";
 import { LuChevronRight, LuSwords } from "react-icons/lu";
 import ActivityFeed from "@/components/ActivityFeed";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +11,8 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { BallBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
 import { useT } from "@/i18n";
+import { useNavigate } from "@tanstack/react-router";
+import { AppLink } from "@/components/AppLink";
 
 /** Turns "You vs {name}" into the same sentence with just the name linked to
  *  that player's page. */
@@ -21,13 +22,14 @@ function withPlayerLink(text: string, name: string, playerId: number) {
   return (
     <>
       {text.slice(0, idx)}
-      <Link
-        to={`/app/players/${playerId}`}
+      <AppLink
+        to="/app/$clubSlug/players/$playerId"
+        params={{ playerId: playerId }}
         onClick={(e) => e.stopPropagation()}
         className="text-ink hover:text-strike"
       >
         {name}
-      </Link>
+      </AppLink>
       {text.slice(idx + name.length)}
     </>
   );
@@ -36,7 +38,8 @@ function withPlayerLink(text: string, name: string, playerId: number) {
 export default function DashboardPage() {
   const { t } = useT();
   const navigate = useNavigate();
-  const { player } = useAuth();
+  const { player, activeClub } = useAuth();
+  const clubSlug = activeClub.slug;
   const myChallenges = useMyChallenges();
   const { data: players } = useGetPlayers();
   const { nameOf } = usePlayerLookup();
@@ -65,12 +68,13 @@ export default function DashboardPage() {
               <div className="flex min-w-0 items-center gap-4">
                 {me && <BallBadge rank={myIndex + 1} size="lg" />}
                 <div className="min-w-0">
-                  <Link
-                    to={`/app/players/${player.id}`}
+                  <AppLink
+                    to="/app/$clubSlug/players/$playerId"
+                    params={{ playerId: player.id }}
                     className="block truncate text-h3 font-semibold text-ink hover:text-strike"
                   >
                     {player.name}
-                  </Link>
+                  </AppLink>
                   <p className="mt-0.5 font-mono text-caption tabular-nums text-ink-faint">
                     {me
                       ? t("common.pts", { n: me.points })
@@ -121,16 +125,24 @@ export default function DashboardPage() {
                     : t("challenge.vsYou", { name: opponentName });
                 return (
                   <li key={c.id}>
-                    {/* Not a native <Link> because the opponent's name inside
+                    {/* Not a native <AppLink> because the opponent's name inside
                         is itself a link to their page, and <a> cannot nest. */}
                     <div
                       role="button"
                       tabIndex={0}
-                      onClick={() => navigate("/app/challenges")}
+                      onClick={() =>
+                        navigate({
+                          to: "/app/$clubSlug/challenges",
+                          params: { clubSlug },
+                        })
+                      }
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
-                          navigate("/app/challenges");
+                          navigate({
+                            to: "/app/$clubSlug/challenges",
+                            params: { clubSlug },
+                          });
                         }
                       }}
                       className={`flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-pocket ${

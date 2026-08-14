@@ -1,11 +1,11 @@
 import type { Game } from "@/types";
 import React from "react";
-import { Link } from "react-router-dom";
 import { EmptyState } from "@/components/ui/EmptyState";
 import SocialBar from "@/components/SocialBar";
 import { LuSwords } from "react-icons/lu";
 import { dayLabel, startsNewDay, timeOf } from "@/libs/dayLabel";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
 
 /** A team's name(s) on the tape, each one a tap to that player's page. */
 function Team({
@@ -21,21 +21,23 @@ function Team({
 }) {
   return (
     <>
-      <Link
-        to={`/app/players/${id1}`}
+      <AppLink
+        to="/app/$clubSlug/players/$playerId"
+        params={{ playerId: id1 }}
         className="transition-colors duration-150 hover:text-strike"
       >
         {name1}
-      </Link>
+      </AppLink>
       {id2 != null && (
         <>
           {" / "}
-          <Link
-            to={`/app/players/${id2}`}
+          <AppLink
+            to="/app/$clubSlug/players/$playerId"
+            params={{ playerId: id2 }}
             className="transition-colors duration-150 hover:text-strike"
           >
             {name2}
-          </Link>
+          </AppLink>
         </>
       )}
     </>
@@ -149,6 +151,9 @@ export default function GamesList({
                     ? "sticky top-0 z-10 -mx-1 border-b border-hairline bg-pocket/90 backdrop-blur-sm"
                     : "",
                 ].join(" ")}
+                // "Today" depends on the reader's timezone, which the server
+                // does not have — see libs/dayLabel.
+                suppressHydrationWarning
               >
                 {dayLabel(date, t, locale)}
               </h3>

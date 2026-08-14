@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayerLookup } from "@/hooks/useGetPlayers";
@@ -11,6 +10,7 @@ import { placings, resolveBracket } from "@/libs/bracket";
 import { leaguePodium, standings } from "@/libs/leagueTable";
 import { FORMAT_KEY, type Tournament } from "@/types";
 import { useT, type Key } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
 
 /** Name, discipline and format — the same line the tournament's own page leads
  *  with, so a card in the feed reads as that tournament and not as a summary of
@@ -23,12 +23,13 @@ function Head({ tournament, label }: { tournament: Tournament; label: Key }) {
       <p className="text-caption font-medium uppercase tracking-[0.08em] text-strike">
         {t(label)}
       </p>
-      <Link
-        to={`/app/tournaments/${tournament.id}`}
+      <AppLink
+        to="/app/$clubSlug/tournaments/$tournamentId"
+        params={{ tournamentId: tournament.id }}
         className="block truncate text-body font-semibold text-ink transition-colors duration-150 hover:text-strike"
       >
         {tournament.name}
-      </Link>
+      </AppLink>
       <p className="flex flex-wrap items-center gap-x-1 text-caption text-ink-faint">
         {tournament.category === null ? (
           t("tournaments.combined")
@@ -106,8 +107,9 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
           <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-2">
             {entrants.map((id) => (
               <li key={id} className="flex min-w-0 items-center gap-1.5">
-                <Link
-                  to={`/app/players/${id}`}
+                <AppLink
+                  to="/app/$clubSlug/players/$playerId"
+                  params={{ playerId: id }}
                   className="group flex min-w-0 items-center gap-1.5"
                 >
                   <Avatar
@@ -118,7 +120,7 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
                   <span className="truncate text-caption text-ink-soft transition-colors duration-150 group-hover:text-strike">
                     {byId.get(id)?.name ?? "—"}
                   </span>
-                </Link>
+                </AppLink>
               </li>
             ))}
           </ul>

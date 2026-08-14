@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { LuSwords } from "react-icons/lu";
 import ChallengeButton from "@/components/ChallengeButton";
@@ -16,6 +15,7 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import type { Challenge } from "@/types";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
 
 /** Turns "You vs {name}" into the same sentence with just the name linked to
  *  that player's page. */
@@ -25,12 +25,13 @@ function withPlayerLink(text: string, name: string, playerId: number) {
   return (
     <>
       {text.slice(0, idx)}
-      <Link
-        to={`/app/players/${playerId}`}
+      <AppLink
+        to="/app/$clubSlug/players/$playerId"
+        params={{ playerId: playerId }}
         className="text-ink hover:text-strike"
       >
         {name}
-      </Link>
+      </AppLink>
       {text.slice(idx + name.length)}
     </>
   );
@@ -139,12 +140,12 @@ export default function ChallengesPage() {
               title={t("challenge.emptyTitle")}
               hint={t("challenge.emptyHint")}
               action={
-                <Link
-                  to="/app/club"
+                <AppLink
+                  to="/app/$clubSlug/club"
                   className={buttonClasses({ variant: "secondary" })}
                 >
                   {t("club.membersTitle")}
-                </Link>
+                </AppLink>
               }
             />
           </Card>
@@ -191,12 +192,13 @@ export default function ChallengesPage() {
                 <ul className="divide-y divide-hairline">
                   {accepted.map((c) => (
                     <Row key={c.id} c={c}>
-                      <Link
-                        to={`/app/games/new?challenge=${c.id}`}
+                      <AppLink
+                        to="/app/$clubSlug/games/new"
+                        search={{ challenge: c.id }}
                         className={buttonClasses({ size: "sm" })}
                       >
                         {t("challenge.recordResult")}
-                      </Link>
+                      </AppLink>
                     </Row>
                   ))}
                 </ul>

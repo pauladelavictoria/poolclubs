@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom";
 import type { Drill } from "@/types";
 import PoolTableDiagram from "./PoolTableDiagram";
 import { cardClasses } from "@/components/ui/cardStyles";
 import { DifficultyTag } from "@/components/ui/DifficultyTag";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
 
 interface DrillCardProps {
   drill: Drill;
@@ -13,8 +13,9 @@ export default function DrillCard({ drill }: DrillCardProps) {
   const { t } = useT();
 
   return (
-    <Link
-      to={`/app/drills/${drill.id}`}
+    <AppLink
+      to="/app/$clubSlug/drills/$drillId"
+      params={{ drillId: drill.id }}
       className={cardClasses({
         interactive: true,
         className: "flex h-full flex-col overflow-hidden",
@@ -54,6 +55,6 @@ export default function DrillCard({ drill }: DrillCardProps) {
           </span>
         </div>
       </div>
-    </Link>
+    </AppLink>
   );
 }

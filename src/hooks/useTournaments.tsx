@@ -1,8 +1,14 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
-import { queryClient } from "@/libs/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
+import {
+  tournamentQuery,
+  tournamentsQuery,
+  type TournamentDetail,
+  type TournamentListItem,
+} from "@/queries/tournaments";
 import {
   buildGroups,
   buildKnockout,
@@ -21,77 +27,27 @@ import type {
   TournamentMatch,
 } from "@/types";
 
-export type TournamentDetail = Tournament & {
-  tournament_players: { player_id: number }[];
-  tournament_matches: TournamentMatch[];
-};
-
-/** A row on the index: the tournament plus how many have entered it. */
-export type TournamentListItem = Tournament & {
-  tournament_players: { count: number }[];
-};
+export type { TournamentDetail, TournamentListItem };
 
 /** PostgREST returns the aggregate as a one-row array, or none at all. */
 export const entrantCount = (t: TournamentListItem) =>
   t.tournament_players[0]?.count ?? 0;
 
-/** Both roots go stale together: a result changes the page and the index badge. */
-const refresh = () => {
+/** Both roots go stale together: a result changes the page and the index badge.
+ *  The client is passed in because there is one per request under SSR — see
+ *  libs/queryClient.ts. */
+const refreshTournaments = (queryClient: QueryClient) => () => {
   queryClient.invalidateQueries({ queryKey: keys.tournaments.all });
   queryClient.invalidateQueries({ queryKey: keys.tournament.all });
 };
 
 export const useGetTournaments = () => {
   const { activeClubId } = useAuth();
-
-  return useQuery({
-    queryKey: keys.tournaments.in(activeClubId),
-    enabled: !!activeClubId,
-    queryFn: async () => {
-      if (!activeClubId) throw new Error("no active club");
-
-      // The count comes back as an aggregate row rather than the entrant list:
-      // the index only ever prints the number, and pulling every player_id for
-      // every tournament to call .length on it is a bigger payload for the
-      // same digit.
-      const { data } = await supabase
-        .from("tournaments")
-        .select("*, tournament_players(count)")
-        .eq("club_id", activeClubId)
-        .order("created_at", { ascending: false })
-        .throwOnError();
-
-      return data as TournamentListItem[];
-    },
-  });
+  return useQuery(tournamentsQuery(activeClubId));
 };
 
-/**
- * A tournament with everything drawn from it: its entrants and every fixture,
- * each fixture carrying the racks from its game. One round trip, because the
- * bracket and the tables are derived from the whole list either way.
- */
 export const useGetTournament = (id?: number) =>
-  useQuery({
-    queryKey: keys.tournament.one(id),
-    enabled: !!id,
-    queryFn: async () => {
-      // `enabled` already stops this running without an id, but that is a
-      // runtime guarantee and the query builder wants a compile-time one.
-      if (!id) throw new Error("no tournament");
-
-      const { data } = await supabase
-        .from("tournaments")
-        .select(
-          "*, tournament_players(player_id), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, created_at))",
-        )
-        .eq("id", id)
-        .single()
-        .throwOnError();
-
-      return data as TournamentDetail;
-    },
-  });
+  useQuery({ ...tournamentQuery(id ?? 0), enabled: !!id });
 
 /**
  * Which tournament each of these games was played in, keyed by game id.
@@ -195,6 +151,8 @@ const rows = (tournamentId: number, matches: PlannedMatch[]) =>
 
 export const useManageTournaments = () => {
   const { activeClubId, player } = useAuth();
+  const queryClient = useQueryClient();
+  const refresh = refreshTournaments(queryClient);
 
   return {
     createTournament: useMutation({

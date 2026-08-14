@@ -1,12 +1,35 @@
-import { NavLink } from "react-router-dom";
+import type { LinkProps } from "@tanstack/react-router";
+import { AppLink } from "@/components/AppLink";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useT, type Key } from "@/i18n";
 
-const TABS: { suffix: string; labelKey: Key }[] = [
-  { suffix: "", labelKey: "players.tabGames" },
-  { suffix: "/training/plan", labelKey: "players.tabPlan" },
-  { suffix: "/training", labelKey: "players.tabProgress" },
-  { suffix: "/settings", labelKey: "players.tabSettings" },
+/**
+ * Whole routes rather than the "" / "/training/plan" suffixes this used to
+ * append to a base path: the club is implicit in AppLink, and a named route is
+ * checked at build time where a concatenated string never was. `own` marks the
+ * three that only make sense on your own profile.
+ */
+const TABS: { to: LinkProps["to"]; labelKey: Key; own: boolean }[] = [
+  {
+    to: "/app/$clubSlug/players/$playerId",
+    labelKey: "players.tabGames",
+    own: false,
+  },
+  {
+    to: "/app/$clubSlug/players/$playerId/training/plan",
+    labelKey: "players.tabPlan",
+    own: true,
+  },
+  {
+    to: "/app/$clubSlug/players/$playerId/training",
+    labelKey: "players.tabProgress",
+    own: true,
+  },
+  {
+    to: "/app/$clubSlug/players/$playerId/settings",
+    labelKey: "players.tabSettings",
+    own: true,
+  },
 ];
 
 // Tailwind needs the literal class name in source to generate it, so this
@@ -17,6 +40,13 @@ const BUTTON_GRID_COLS: Record<number, string> = {
   3: "sm:grid-cols-3",
   4: "sm:grid-cols-4",
 };
+
+const pill = ({ isActive }: { isActive: boolean }) =>
+  [
+    "shrink-0 whitespace-nowrap rounded-[7px] px-3 py-2 text-center text-caption font-medium",
+    "transition-[background-color,color] duration-150 ease-[var(--ease-out)]",
+    isActive ? "bg-rail text-ink" : "text-ink-faint hover:text-ink-soft",
+  ].join(" ");
 
 export default function PlayerTabs({
   playerId,
@@ -31,7 +61,7 @@ export default function PlayerTabs({
 }) {
   const isTabs = as === "tabs";
   const { t } = useT();
-  const tabs = isOwnProfile ? TABS : TABS.filter(({ suffix }) => suffix === "");
+  const tabs = isOwnProfile ? TABS : TABS.filter(({ own }) => !own);
 
   return (
     <nav
@@ -47,26 +77,24 @@ export default function PlayerTabs({
             `grid gap-2 ${BUTTON_GRID_COLS[tabs.length] ?? "sm:grid-cols-3"}`
       }
     >
-      {tabs.map(({ suffix, labelKey }) => (
-        <NavLink
-          key={suffix}
-          to={`/app/players/${playerId}${suffix}`}
+      {tabs.map(({ to, labelKey }) => (
+        <AppLink
+          key={String(to)}
+          to={to}
+          params={{ playerId }}
           // /training is a prefix of /training/plan, so every tab matches exactly
-          end
-          className={({ isActive }) =>
+          activeOptions={{ exact: true }}
+          className={
             isTabs
-              ? [
-                  "shrink-0 whitespace-nowrap rounded-[7px] px-3 py-2 text-center text-caption font-medium",
-                  "transition-[background-color,color] duration-150 ease-[var(--ease-out)]",
-                  isActive
-                    ? "bg-rail text-ink"
-                    : "text-ink-faint hover:text-ink-soft",
-                ].join(" ")
+              ? pill({ isActive: false })
               : buttonClasses({ variant: "secondary" })
+          }
+          activeProps={
+            isTabs ? { className: pill({ isActive: true }) } : undefined
           }
         >
           {t(labelKey)}
-        </NavLink>
+        </AppLink>
       ))}
     </nav>
   );

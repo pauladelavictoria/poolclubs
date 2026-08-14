@@ -2,10 +2,11 @@
  * Where to send someone once they finish signing in.
  *
  * Google sends the browser away and back, so the destination has to survive a
- * full page load: it rides in the /login URL and is parked in sessionStorage
- * for the round trip.
+ * full page load. It rides in the /app/login URL, and from there into the
+ * provider's redirect URL as /auth/callback?next=… — so it comes back with the
+ * browser rather than being parked in sessionStorage and picked up again by
+ * whichever component happened to notice the session had landed.
  */
-export const NEXT_KEY = "auth:next";
 
 /**
  * Only same-site paths. A value off the URL is attacker-controlled, so anything

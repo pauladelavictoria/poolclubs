@@ -84,6 +84,7 @@ export type Database = {
           logo_url: string | null
           name: string
           owner_id: string
+          slug: string
           theme_color: Database["public"]["Enums"]["BallColor"]
         }
         Insert: {
@@ -93,6 +94,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           owner_id: string
+          slug: string
           theme_color?: Database["public"]["Enums"]["BallColor"]
         }
         Update: {
@@ -102,6 +104,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           owner_id?: string
+          slug?: string
           theme_color?: Database["public"]["Enums"]["BallColor"]
         }
         Relationships: []
@@ -769,6 +772,7 @@ export type Database = {
           player_name: string
         }[]
       }
+      club_slug_reserved: { Args: never; Returns: string[] }
       create_club: { Args: { club_name: string }; Returns: number }
       is_club_admin: { Args: { cid: number }; Returns: boolean }
       is_club_member: { Args: { cid: number }; Returns: boolean }
@@ -778,6 +782,7 @@ export type Database = {
         Args: { claim_player_id?: number; code: string; display_name?: string }
         Returns: number
       }
+      slugify: { Args: { txt: string }; Returns: string }
       tournament_club: { Args: { tid: number }; Returns: number }
     }
     Enums: {

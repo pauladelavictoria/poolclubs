@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { AppLink } from "@/components/AppLink";
 import type { TrainingPlanStep } from "@/types";
 import { LuCheck, LuSkipForward, LuPlay } from "react-icons/lu";
 import { Button } from "@/components/ui/Button";
@@ -94,8 +94,12 @@ export default function TrainingPlanStepList({
                     {t("training.skip")}
                   </Button>
                 )}
-                <Link
-                  to={`/app/drills/${drill.id}?plan=${planId}&step=${step.id}&playerId=${playerId}`}
+                <AppLink
+                  to="/app/$clubSlug/drills/$drillId"
+                  params={{ drillId: drill.id }}
+                  // The query string tells the drill page which plan step it is
+                  // being opened for, so logging a result can tick it off.
+                  search={{ plan: planId, step: step.id, playerId }}
                   className={buttonClasses({
                     size: "sm",
                     variant: isSkipped ? "ghost" : "primary",
@@ -103,7 +107,7 @@ export default function TrainingPlanStepList({
                 >
                   <LuPlay className="h-3.5 w-3.5" aria-hidden />
                   {isSkipped ? t("training.resume") : t("training.start")}
-                </Link>
+                </AppLink>
               </div>
             ) : (
               <span className="shrink-0 text-caption text-ink-faint">

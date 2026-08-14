@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
-import { queryClient } from "@/libs/queryClient";
 import { keys } from "@/libs/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar } from "@/components/ui/Avatar";
@@ -15,7 +15,7 @@ import { useT } from "@/i18n";
  * onto the player row, so there is no bucket to configure.
  *
  * Every club writes the same picture: one person, one face, and the update is
- * keyed on user_id exactly as the OAuth sync in AuthContext is.
+ * keyed on user_id exactly as the OAuth sync in libs/auth.functions.ts is.
  */
 export default function AvatarUpload({
   name,
@@ -26,6 +26,7 @@ export default function AvatarUpload({
 }) {
   const { t } = useT();
   const { user, refreshMemberships } = useAuth();
+  const queryClient = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 

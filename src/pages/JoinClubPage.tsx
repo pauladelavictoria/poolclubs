@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import { useAuth } from "@/hooks/useAuth";
+import { useSession } from "@/hooks/useAuth";
 import { useClubPreview, useJoinOrCreateClub } from "@/hooks/useClub";
 import PageTitle from "@/components/PageTitle";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -9,14 +9,15 @@ import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { PageSkeleton, Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { loginLink } from "@/libs/nextPath";
 import { useT } from "@/i18n";
 
+const route = getRouteApi("/app/join/$code");
+
 /**
- * The invite link. Signed out, it bounces through login and comes back here via
- * the existing ?next= round-trip.
+ * The invite link. Signed out, the route bounces through login and comes back
+ * here via the ?next= round-trip.
  *
  * The claim list is the whole point: a club that predates accounts is full of
  * player rows with nobody attached, and the person arriving is usually one of
@@ -25,8 +26,9 @@ import { useT } from "@/i18n";
 export default function JoinClubPage() {
   const { t } = useT();
   const navigate = useNavigate();
-  const { code } = useParams<{ code: string }>();
-  const { user, isLoading, memberships } = useAuth();
+  const { code } = route.useParams();
+  // useSession rather than useAuth: this runs before there is a club.
+  const { user, memberships } = useSession();
   const {
     data: preview,
     isLoading: previewLoading,
@@ -40,35 +42,25 @@ export default function JoinClubPage() {
   // Left empty the RPC uses the OAuth full_name, so no state to sync with auth.
   const [name, setName] = useState("");
 
-  if (isLoading) return <PageSkeleton />;
-
-  if (!user) {
-    return <Navigate to={loginLink(`/app/join/${code}`)} replace />;
-  }
-
+  // Signed in by the time this renders — the route's beforeLoad saw to it.
   const already = memberships.find((m) => m.club_id === preview?.clubId);
 
   // Empty input means join_club() falls back to the OAuth name, so that is what
   // gets checked. Claiming an existing row skips the check entirely.
-  const wanted = (
-    name.trim() ||
-    user?.user_metadata?.full_name ||
-    "Player"
-  ).toLowerCase();
+  const wanted = (name.trim() || user?.fullName || "Player").toLowerCase();
   const nameTaken = !claimId && !!preview?.takenNames.has(wanted);
 
   const submit = () => {
     joinClub.mutate(
       {
-        code: code!,
+        code,
         claimPlayerId: claimId ? Number(claimId) : undefined,
         displayName: claimId ? undefined : name,
       },
       {
-        onSuccess: () => {
-          toast.success(t("club.requestSent"));
-          navigate("/app");
-        },
+        // joinClub navigates once the session has been re-read; a pending
+        // membership has no club to address yet, so that lands on /app.
+        onSuccess: () => toast.success(t("club.requestSent")),
         onError: (e) =>
           toast.error(
             t(
@@ -93,7 +85,7 @@ export default function JoinClubPage() {
               title={t("club.badCode")}
               hint={t("club.badCodeHint")}
               action={
-                <Button variant="secondary" onClick={() => navigate("/app")}>
+                <Button variant="secondary" onClick={() => navigate({ to: "/app" })}>
                   {t("common.back")}
                 </Button>
               }
@@ -109,7 +101,7 @@ export default function JoinClubPage() {
                   : t("club.awaitingHint")
               }
               action={
-                <Button variant="secondary" onClick={() => navigate("/app")}>
+                <Button variant="secondary" onClick={() => navigate({ to: "/app" })}>
                   {t("common.back")}
                 </Button>
               }
@@ -149,7 +141,7 @@ export default function JoinClubPage() {
                     id="name"
                     value={name}
                     maxLength={60}
-                    placeholder={user.user_metadata?.full_name ?? ""}
+                    placeholder={user?.fullName ?? ""}
                     onChange={(e) => setName(e.target.value)}
                   />
                   <p

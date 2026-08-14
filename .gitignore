@@ -10,6 +10,10 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# TanStack Start build + dev artefacts
+.output
+.nitro
+.tanstack
 *.local
 inspo
 

@@ -1,4 +1,15 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
+import {
+  LANG_COOKIE,
+  readPreferredLangs,
+  readPref,
+  writePref,
+} from "@/libs/prefs";
 import es from "./es.json";
 import en from "./en.json";
 import fr from "./fr.json";
@@ -27,24 +38,35 @@ export type Lang = (typeof LANGS)[number]["code"];
 
 const DICTS: Record<Lang, Record<Key, string>> = { es, en, fr };
 const FALLBACK: Lang = "es";
-const STORAGE_KEY = "lang";
 
 const isLang = (value: string | null | undefined): value is Lang =>
   LANGS.some((l) => l.code === value);
 
+const EVENT = "langchange";
+
 /**
- * A stored language is a choice and always wins. Otherwise walk the browser's
- * preference list in order — someone set to ["ca-ES", "fr", "es"] gets French,
- * not the fallback, which reading `navigator.language` alone would miss.
+ * A stored language is a choice and always wins, and it is in a cookie so the
+ * server picks the same dictionary the client will — otherwise every translated
+ * string on the page would be a hydration mismatch.
+ *
+ * Without a cookie, walk the browser's preference list in order: someone set to
+ * ["ca-ES", "fr", "es"] gets French, not the fallback, which reading
+ * `navigator.language` alone would miss.
  */
-function detect(): Lang {
-  const saved = localStorage.getItem(STORAGE_KEY);
+// eslint-disable-next-line react-refresh/only-export-components
+export function detectLang(): Lang {
+  const saved = readPref(LANG_COOKIE);
   if (isLang(saved)) return saved;
-  for (const tag of navigator.languages ?? [navigator.language]) {
+  for (const tag of readPreferredLangs()) {
     const code = tag.slice(0, 2);
     if (isLang(code)) return code;
   }
   return FALLBACK;
+}
+
+function subscribe(onChange: () => void) {
+  window.addEventListener(EVENT, onChange);
+  return () => window.removeEventListener(EVENT, onChange);
 }
 
 type Vars = Record<string, string | number>;
@@ -71,7 +93,11 @@ const I18nContext = createContext<I18n>({
 });
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useState<Lang>(detect);
+  // A store rather than state, the same shape libs/theme.ts uses: the language
+  // can change under us (the picker below) and the server needs its own snapshot.
+  // Both snapshots are the same function now that the server reads
+  // Accept-Language — so there is nothing for React to reconcile.
+  const lang = useSyncExternalStore(subscribe, detectLang, detectLang);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -81,8 +107,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   // pin the first visit's guess forever, even after the browser's own
   // preferences change.
   const chooseLang = (next: Lang) => {
-    localStorage.setItem(STORAGE_KEY, next);
-    setLang(next);
+    writePref(LANG_COOKIE, next);
+    window.dispatchEvent(new Event(EVENT));
   };
 
   const dict = DICTS[lang];

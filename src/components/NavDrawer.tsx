@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+import { Link, getRouteApi } from "@tanstack/react-router";
+import { AppLink } from "@/components/AppLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useDialog } from "@/libs/useDialog";
 import { toast } from "react-toastify";
@@ -55,41 +56,41 @@ export default function NavDrawer({
   const { user, player, activeClub, isClubAdmin, memberships, setActiveClub } =
     useAuth();
   const { t, lang, setLang } = useT();
+  // An absolute link, so it needs a host that exists on the server too.
+  const { origin } = getRouteApi("__root__").useRouteContext();
 
   // Only clubs you are actually in are switchable; a pending request is not a
   // place you can go yet.
   const switchable = memberships.filter((m) => m.status === "active");
 
-  // Without a linked player these point at /me/*, which sits behind
-  // ProtectedRoute and so asks for login first.
-  const me = player ? `/app/players/${player.id}` : "/app/me";
+  // Your own training pages. They used to need a "/app/me/*" fallback for the
+  // case where the player id wasn't known yet; inside a club it always is, and
+  // the /me routes are real redirects now anyway.
+  const myTraining: NavItem[] = [
+    {
+      to: "/app/$clubSlug/players/$playerId/training/plan",
+      labelKey: "nav.myPlan",
+      icon: LuClipboardList,
+      section: "drills",
+    },
+    {
+      to: "/app/$clubSlug/players/$playerId/training",
+      labelKey: "nav.myProgress",
+      icon: LuChartColumn,
+      section: "drills",
+    },
+  ];
+
   const sections = NAV_SECTIONS.map((section) => {
     if (section.headingKey === "nav.training") {
-      return {
-        ...section,
-        items: [
-          ...section.items,
-          {
-            to: `${me}/training/plan`,
-            labelKey: "nav.myPlan",
-            icon: LuClipboardList,
-            section: "drills",
-          },
-          {
-            to: `${me}/training`,
-            labelKey: "nav.myProgress",
-            icon: LuChartColumn,
-            section: "drills",
-          },
-        ] as NavItem[],
-      };
+      return { ...section, items: [...section.items, ...myTraining] };
     }
     // Club settings are the owner's to manage; everyone else gets the invite
     // button below instead of a page they can't do anything on.
     if (section.headingKey === "nav.club" && !isClubAdmin) {
       return {
         ...section,
-        items: section.items.filter((i) => i.to !== "/app/club"),
+        items: section.items.filter((i) => i.to !== "/app/$clubSlug/club"),
       };
     }
     return section;
@@ -99,7 +100,7 @@ export default function NavDrawer({
   // a specific person on a phone. Falls back to the clipboard on desktop.
   const sendInvite = async () => {
     if (!activeClub) return;
-    const link = `${window.location.origin}/app/join/${activeClub.join_code}`;
+    const link = `${origin}/app/join/${activeClub.join_code}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: activeClub.name, url: link });
@@ -164,14 +165,14 @@ export default function NavDrawer({
                 <span className="min-w-0 flex-1 truncate">{m.club?.name}</span>
               </button>
             ))}
-            <NavLink
+            <Link
               to="/app/clubs/new"
               onClick={onClose}
               className="flex h-9 items-center gap-2 rounded-control px-2 text-body text-ink-soft transition-colors duration-150 hover:bg-felt hover:text-ink"
             >
               <LuPlus className="h-4 w-4 shrink-0" aria-hidden />
               {t("club.create")}
-            </NavLink>
+            </Link>
           </div>
         </details>
       )}
@@ -180,17 +181,20 @@ export default function NavDrawer({
         <div key={section.headingKey}>
           <Heading>{t(section.headingKey)}</Heading>
           {section.items.map(({ to, labelKey, icon: Icon, end }) => (
-            <NavLink
-              key={to}
+            <AppLink
+              key={String(to)}
               to={to}
-              end={end}
-              className={({ isActive }) => item({ isActive })}
+              // The training links carry a playerId; the rest ignore it.
+              params={{ playerId: player.id }}
+              activeOptions={{ exact: end }}
+              className={item({ isActive: false })}
+              activeProps={{ className: item({ isActive: true }) }}
             >
               {/* The glyphs are ink now. Painting every one of them the club's
                     colour would make the drawer a wall of accent and leave the
                     current row nothing to stand out with. */}
               <Icon className="h-[18px] w-[18px] text-ink-soft" /> {t(labelKey)}
-            </NavLink>
+            </AppLink>
           ))}
           {section.headingKey === "nav.club" && !isClubAdmin && activeClub && (
             <button

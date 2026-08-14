@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { getRouteApi } from "@tanstack/react-router";
 import { LuPlus, LuTarget } from "react-icons/lu";
 import PageTitle from "@/components/PageTitle";
 import DrillCard from "@/components/DrillCard";
@@ -14,16 +13,26 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import type { DrillDifficulty, DrillSkillType } from "@/types";
 import { DIFFICULTIES, SKILL_TYPES } from "@/types";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
+
+const route = getRouteApi("/app/_authed/$clubSlug/drills/");
 
 export default function DrillsPage() {
   const { t } = useT();
-  const [difficulty, setDifficulty] = useState<DrillDifficulty | "">("");
-  const [skillType, setSkillType] = useState<DrillSkillType | "">("");
+  // In the URL rather than in useState, so the route's loader can fetch the
+  // filtered library before this renders — and so a filtered library is a link.
+  const { difficulty, skill } = route.useSearch();
+  const navigate = route.useNavigate();
+
+  const setFilter = (patch: {
+    difficulty?: DrillDifficulty;
+    skill?: DrillSkillType;
+  }) => navigate({ search: (prev) => ({ ...prev, ...patch }) });
 
   const { user } = useAuth();
   const { data: drills, isLoading } = useGetDrills({
-    difficulty: difficulty || undefined,
-    skill_type: skillType || undefined,
+    difficulty,
+    skill_type: skill,
   });
 
   return (
@@ -31,13 +40,13 @@ export default function DrillsPage() {
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         <PageTitle title={t("drills.title")}>
           {user && (
-            <Link
-              to="/app/drills/new"
+            <AppLink
+              to="/app/$clubSlug/drills/new"
               className={buttonClasses({ size: "sm", className: "shrink-0" })}
             >
               <LuPlus className="h-4 w-4" aria-hidden />
               {t("drills.new")}
-            </Link>
+            </AppLink>
           )}
         </PageTitle>
 
@@ -50,9 +59,12 @@ export default function DrillsPage() {
             <Select
               className="flex-1"
               aria-label={t("drills.filterDifficulty")}
-              value={difficulty}
+              value={difficulty ?? ""}
               onChange={(e) =>
-                setDifficulty(e.target.value as DrillDifficulty | "")
+                setFilter({
+                  difficulty:
+                    (e.target.value as DrillDifficulty) || undefined,
+                })
               }
             >
               <option value="">{t("drills.allDifficulties")}</option>
@@ -66,9 +78,11 @@ export default function DrillsPage() {
             <Select
               className="flex-1"
               aria-label={t("drills.filterSkill")}
-              value={skillType}
+              value={skill ?? ""}
               onChange={(e) =>
-                setSkillType(e.target.value as DrillSkillType | "")
+                setFilter({
+                  skill: (e.target.value as DrillSkillType) || undefined,
+                })
               }
             >
               <option value="">{t("drills.allSkills")}</option>
@@ -114,8 +128,7 @@ export default function DrillsPage() {
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    setDifficulty("");
-                    setSkillType("");
+                    navigate({ search: {} });
                   }}
                 >
                   {t("common.clearFilters")}

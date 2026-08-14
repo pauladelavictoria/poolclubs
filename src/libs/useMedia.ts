@@ -1,6 +1,19 @@
 import { useCallback, useSyncExternalStore } from "react";
 
-/** Live answer to a CSS media query, re-rendering when it flips. */
+/**
+ * Live answer to a CSS media query, re-rendering when it flips.
+ *
+ * The server has no `matchMedia` and no viewport to measure, so it answers
+ * `false` to everything and the real answer arrives on hydration. That is what
+ * getServerSnapshot is for: React expects the two to differ and re-renders
+ * rather than reporting a mismatch.
+ *
+ * ponytail: `false` means the server renders the narrow layout — the nav drawer
+ * unpinned, the pool table upright — and a wide screen corrects it on the first
+ * client render. Visible as a flicker on desktop. The fix if it ever grates is a
+ * CSS-only breakpoint rather than a JS one; nothing here needs to know the
+ * answer, only the layout does.
+ */
 export function useMedia(query: string) {
   const subscribe = useCallback(
     (onChange: () => void) => {
@@ -14,6 +27,7 @@ export function useMedia(query: string) {
   return useSyncExternalStore(
     subscribe,
     () => window.matchMedia(query).matches,
+    () => false,
   );
 }
 

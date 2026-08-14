@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import PageTitle from "@/components/PageTitle";
 import PlayerTabs from "@/components/PlayerTabs";
@@ -14,16 +14,14 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useT } from "@/i18n";
 
+const route = getRouteApi("/app/_authed/$clubSlug/players/$playerId/settings");
+
 export default function PlayerSettingsPage() {
   const { t } = useT();
-  const { playerId } = useParams<{ playerId: string }>();
+  const { clubSlug, playerId } = route.useParams();
   const playerIdNum = Number(playerId);
 
-  const {
-    player: authPlayer,
-    isLoading: isAuthLoading,
-    refreshMemberships,
-  } = useAuth();
+  const { refreshMemberships } = useAuth();
   const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
   const player = players?.find((p) => p.id === playerIdNum);
   const { updatePlayer } = useManagePlayers();
@@ -37,10 +35,8 @@ export default function PlayerSettingsPage() {
     setName(player.name);
   }
 
-  // These are private settings — only their owner can reach this page.
-  if (!isAuthLoading && authPlayer?.id !== playerIdNum) {
-    return <Navigate to={`/app/players/${playerIdNum}`} replace />;
-  }
+  // These are private settings — only their owner can reach this page, which the
+  // route's beforeLoad enforces before anything renders.
 
   const trimmed = name.trim();
   const dirty = !!player && trimmed !== player.name;
@@ -76,8 +72,12 @@ export default function PlayerSettingsPage() {
       crumbs={
         player
           ? [
-              { label: t("players.title"), to: "/app/players" },
-              { label: player.name, to: `/app/players/${playerIdNum}` },
+              { label: t("players.title"), to: "/app/$clubSlug/players" },
+              {
+                label: player.name,
+                to: "/app/$clubSlug/players/$playerId",
+                params: { clubSlug, playerId: String(playerIdNum) },
+              },
             ]
           : undefined
       }

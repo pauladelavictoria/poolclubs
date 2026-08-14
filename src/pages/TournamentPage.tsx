@@ -1,5 +1,4 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   LuChevronDown,
@@ -52,11 +51,17 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useDialog } from "@/libs/useDialog";
 import { FORMAT_KEY, type TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
+import { getRouteApi } from "@tanstack/react-router";
+import { AppLink } from "@/components/AppLink";
+
+const route = getRouteApi(
+  "/app/_authed/$clubSlug/tournaments/$tournamentId",
+);
 
 export default function TournamentPage() {
   const { t } = useT();
-  const { id } = useParams();
-  const tournamentId = Number(id);
+  const { tournamentId: tournamentIdParam } = route.useParams();
+  const tournamentId = Number(tournamentIdParam);
 
   const { player, activeClubId, isClubAdmin, isMember } = useAuth();
   const { data: tournament, isLoading } = useGetTournament(tournamentId);
@@ -417,12 +422,13 @@ export default function TournamentPage() {
                       {index + 1}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-body text-ink">
-                      <Link
-                        to={`/app/players/${playerId}`}
+                      <AppLink
+                        to="/app/$clubSlug/players/$playerId"
+                        params={{ playerId: playerId }}
                         className="transition-colors duration-150 hover:text-strike"
                       >
                         {nameOf(playerId)}
-                      </Link>
+                      </AppLink>
                       {playerId === player?.id && (
                         <span className="ml-2 text-caption text-ink-faint">
                           {t("club.you")}

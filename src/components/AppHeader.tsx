@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { LuChevronLeft, LuMenu } from "react-icons/lu";
+import { AppLink } from "@/components/AppLink";
 import NotificationBell from "@/components/NotificationBell";
 import ProfileMenu from "@/components/ProfileMenu";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,7 +31,10 @@ export default function AppHeader({
   const { crumbs } = useRouteMeta();
 
   const clubName = activeClub?.name ?? t("common.appName");
-  const back = crumbs.length > 0 ? crumbs[crumbs.length - 1].to : undefined;
+  // The trail's last entry is what the chevron goes back to. It carries the
+  // route's own pattern plus the parameters to fill it, so the link is checked
+  // rather than string-built.
+  const back = crumbs.at(-1);
 
   return (
     // pt clears the status bar: viewport-fit=cover puts the page under it, and
@@ -50,20 +53,21 @@ export default function AppHeader({
         )}
 
         {back && (
-          <Link
-            to={back}
+          <AppLink
+            to={back.to}
+            params={back.params}
             viewTransition
             aria-label={t("common.back")}
             className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-ink-soft transition-colors duration-150 hover:bg-felt-raised hover:text-ink md:hidden"
           >
             <LuChevronLeft className="h-5 w-5" aria-hidden />
-          </Link>
+          </AppLink>
         )}
 
         {/* The lobby is not a tab, so the club is the way back to it — the same
             job the ball does on the desktop rail. */}
-        <Link
-          to="/app"
+        <AppLink
+          to="/app/$clubSlug"
           viewTransition
           aria-label={t("nav.home")}
           className="flex min-w-0 flex-1 items-center gap-2 text-ink transition-colors duration-150 hover:text-strike"
@@ -82,7 +86,7 @@ export default function AppHeader({
           <span className="min-w-0 truncate text-h4 font-semibold">
             {clubName}
           </span>
-        </Link>
+        </AppLink>
 
         <NotificationBell />
         <ProfileMenu />

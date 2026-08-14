@@ -1,4 +1,4 @@
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { useGetDrill } from "@/hooks/useGetDrills";
 import PageTitle from "@/components/PageTitle";
@@ -7,19 +7,18 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useManageDrills, type DrillInput } from "@/hooks/useManageDrills";
-import { useAuth } from "@/hooks/useAuth";
-import { canEditDrill } from "@/libs/drillPermissions";
 import { useT } from "@/i18n";
 
 export default function DrillEditorPage() {
   const { t } = useT();
-  const { id } = useParams<{ id: string }>();
-  const drillId = id ? Number(id) : undefined;
+  // One component, two routes: /drills/new has no drillId, /drills/$drillId/edit
+  // does. `strict: false` is how you read a parameter that may not be there.
+  const { clubSlug, drillId: drillIdParam } = useParams({ strict: false });
+  const drillId = drillIdParam ? Number(drillIdParam) : undefined;
   const navigate = useNavigate();
 
   const { data: drill, isLoading } = useGetDrill(drillId);
 
-  const { user, isAdmin, isPlayerLoading } = useAuth();
   const { createDrill, updateDrill, deleteDrill } = useManageDrills();
   const isSubmitting = createDrill.isPending || updateDrill.isPending;
 
@@ -29,12 +28,23 @@ export default function DrillEditorPage() {
     if (drillId) {
       updateDrill.mutate(
         { id: drillId, ...values },
-        { onSuccess: () => navigate(`/app/drills/${drillId}`), onError },
+        {
+          onSuccess: () =>
+            navigate({
+              to: "/app/$clubSlug/drills/$drillId",
+              params: { clubSlug: clubSlug!, drillId: String(drillId) },
+            }),
+          onError,
+        },
       );
       return;
     }
     createDrill.mutate(values, {
-      onSuccess: (created) => navigate(`/app/drills/${created.id}`),
+      onSuccess: (created) =>
+        navigate({
+          to: "/app/$clubSlug/drills/$drillId",
+          params: { clubSlug: clubSlug!, drillId: String(created.id) },
+        }),
       onError,
     });
   };
@@ -43,14 +53,17 @@ export default function DrillEditorPage() {
     if (!drillId) return;
     if (!confirm(t("drills.deleteConfirm"))) return;
     deleteDrill.mutate(drillId, {
-      onSuccess: () => navigate("/app/drills"),
+      onSuccess: () =>
+        navigate({ to: "/app/$clubSlug/drills", params: { clubSlug: clubSlug! } }),
       onError: () => toast.error(t("drills.deleteError")),
     });
   };
 
-  // isAdmin is false until the linked player lands, so waiting here is what
-  // keeps the admin from being bounced off their own edit screen mid-load.
-  if (drillId && (isLoading || isPlayerLoading)) {
+  // The drill is primed by the edit route's loader, so this only shows on a
+  // client-side navigation that arrived ahead of the fetch. There is no longer an
+  // "is the linked player loaded yet" half of the condition — the router resolved
+  // that before this component existed.
+  if (drillId && isLoading) {
     return (
       <>
         <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
@@ -78,11 +91,9 @@ export default function DrillEditorPage() {
     );
   }
 
-  // Deep link to someone else's drill: send them back to the read-only page.
-  // RLS would refuse the save anyway; this just avoids the dead-end form.
-  if (drill && !canEditDrill(drill.created_by, user?.id, isAdmin)) {
-    return <Navigate to={`/app/drills/${drill.id}`} replace />;
-  }
+  // Who may edit a drill is checked in the edit route's loader, before the form
+  // is ever built — see routes/app/_authed/$clubSlug/drills/$drillId/edit.tsx.
+  // RLS would refuse the save regardless; the point is not to draw a dead end.
 
   return (
     <>

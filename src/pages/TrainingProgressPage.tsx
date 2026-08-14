@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { getRouteApi } from "@tanstack/react-router";
 import { LuTrash2 } from "react-icons/lu";
 import PageTitle from "@/components/PageTitle";
 import DrillProgressChart from "@/components/DrillProgressChart";
@@ -21,18 +21,23 @@ import { DIFFICULTIES, type DrillDifficulty } from "@/types";
 import { scoreBand, scorePct } from "@/libs/scoreBand";
 import { fmt, startsNewDay, timeOf } from "@/libs/dayLabel";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
+
+const route = getRouteApi(
+  "/app/_authed/$clubSlug/players/$playerId/training/",
+);
 
 export default function TrainingProgressPage() {
   const { t, locale } = useT();
   // The URL is the single source of truth for which player is shown
-  const { playerId } = useParams<{ playerId: string }>();
-  const selectedPlayerId = playerId ? Number(playerId) : null;
+  const { clubSlug, playerId } = route.useParams();
+  const selectedPlayerId = Number(playerId);
 
   // Filters are a view over data already in memory, so they stay local state
   const [difficulty, setDifficulty] = useState<DrillDifficulty | "">("");
   const [drillId, setDrillId] = useState<number | "">("");
 
-  const { user, player: authPlayer, isLoading: isAuthLoading } = useAuth();
+  const { user } = useAuth();
   const { data: players } = useGetPlayers();
   const { data: drills } = useGetDrills();
   const deleteLog = useDeleteDrillLog();
@@ -113,14 +118,8 @@ export default function TrainingProgressPage() {
     });
   }
 
-  // Training progress is private — only their owner can see it.
-  if (
-    !isAuthLoading &&
-    selectedPlayerId &&
-    authPlayer?.id !== selectedPlayerId
-  ) {
-    return <Navigate to={`/app/players/${selectedPlayerId}`} replace />;
-  }
+  // Training progress is private, which the route's beforeLoad enforces before
+  // anything here renders or fetches.
 
   return (
     <>
@@ -130,10 +129,14 @@ export default function TrainingProgressPage() {
           crumbs={
             player
               ? [
-                  { label: t("players.title"), to: "/app/players" },
+                  { label: t("players.title"), to: "/app/$clubSlug/players" },
                   {
                     label: player.name,
-                    to: `/app/players/${selectedPlayerId}`,
+                    to: "/app/$clubSlug/players/$playerId",
+                    params: {
+                      clubSlug,
+                      playerId: String(selectedPlayerId),
+                    },
                   },
                 ]
               : undefined
@@ -207,12 +210,12 @@ export default function TrainingProgressPage() {
                 title={t("training.noResults")}
                 hint={t("training.noResultsHint")}
                 action={
-                  <Link
-                    to="/app/drills"
+                  <AppLink
+                    to="/app/$clubSlug/drills"
                     className={buttonClasses({ variant: "secondary" })}
                   >
                     {t("training.seeDrills")}
-                  </Link>
+                  </AppLink>
                 }
               />
             )}
@@ -285,8 +288,9 @@ export default function TrainingProgressPage() {
                             state costs no gutter; only touch, where it is
                             always visible, pays for the space. */}
                         <div className="group relative">
-                          <Link
-                            to={`/app/drills/${log.drill_id}`}
+                          <AppLink
+                            to="/app/$clubSlug/drills/$drillId"
+                            params={{ drillId: log.drill_id }}
                             className={`block rounded-control px-2 py-2.5 transition-colors duration-150 hover:bg-felt-raised ${
                               user ? "max-sm:pr-11" : ""
                             }`}
@@ -332,7 +336,7 @@ export default function TrainingProgressPage() {
                                 {log.notes}
                               </p>
                             )}
-                          </Link>
+                          </AppLink>
 
                           {user && (
                             <IconButton

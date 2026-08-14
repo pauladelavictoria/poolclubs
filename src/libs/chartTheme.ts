@@ -27,10 +27,19 @@ const LIGHT = {
 
 /** Custom properties can't reach recharts, so they are read off the root. The
  *  accent is whatever the club set (see libs/clubTheme), which is why this is
- *  read at render rather than written down here. */
-const cssVar = (name: string, fallback: string) =>
-  getComputedStyle(document.documentElement).getPropertyValue(name).trim() ||
-  fallback;
+ *  read at render rather than written down here.
+ *
+ *  On the server there is no document and no computed style, so the fallback is
+ *  the answer — which is the app's own yellow, i.e. right for every club that
+ *  hasn't overridden it. A club with its own colour gets one frame of yellow in
+ *  its charts before hydration. */
+const cssVar = (name: string, fallback: string) => {
+  if (typeof document === "undefined") return fallback;
+  return (
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim() ||
+    fallback
+  );
+};
 
 export function useChartTheme() {
   const mode = useTheme();

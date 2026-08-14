@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { LuUsers, LuSearch, LuX } from "react-icons/lu";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useGetGames } from "@/hooks/useGetGames";
@@ -15,6 +14,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import type { Category, Player } from "@/types";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
 
 type SortMode = "name" | "category";
 
@@ -28,8 +28,9 @@ function PlayerCard({ player, record }: { player: Player; record?: Record_ }) {
   const { t } = useT();
 
   return (
-    <Link
-      to={`/app/players/${player.id}`}
+    <AppLink
+      to="/app/$clubSlug/players/$playerId"
+      params={{ playerId: player.id }}
       className={cardClasses({
         interactive: true,
         className: "group flex flex-col gap-3 p-4",
@@ -72,7 +73,7 @@ function PlayerCard({ player, record }: { player: Player; record?: Record_ }) {
           </div>
         )}
       </div>
-    </Link>
+    </AppLink>
   );
 }
 

@@ -1,12 +1,9 @@
 import { useForm } from "react-hook-form";
-import { Link, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
 import { useAddDrillLog } from "@/hooks/useAddDrillLog";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { buttonClasses } from "@/components/ui/buttonStyles";
-import { loginLink } from "@/libs/nextPath";
 import type { Drill } from "@/types";
 import { useT } from "@/i18n";
 
@@ -22,8 +19,7 @@ type FormData = {
 
 export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
   const { t } = useT();
-  const { user, player, isPlayerLoading } = useAuth();
-  const location = useLocation();
+  const { player } = useAuth();
   const { mutate: addDrillLog, isPending } = useAddDrillLog();
   const {
     register,
@@ -39,7 +35,7 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
 
     // The field rules below catch this first; this is the last gate before the
     // row is written, so it does not rely on them.
-    if (!player || isNaN(score) || score < 0 || score > drill.max_score) return;
+    if (isNaN(score) || score < 0 || score > drill.max_score) return;
 
     addDrillLog(
       {
@@ -62,29 +58,9 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
     );
   };
 
-  if (!user) {
-    return (
-      <div className="space-y-3">
-        <p className="text-body text-ink-soft">{t("drillLog.signInPrompt")}</p>
-        <Link
-          to={loginLink(location.pathname + location.search)}
-          className={buttonClasses({ variant: "primary" })}
-        >
-          {t("auth.signIn")}
-        </Link>
-      </div>
-    );
-  }
-
-  if (!player) {
-    return (
-      <p className="text-body text-ink-soft">
-        {isPlayerLoading
-          ? t("drillLog.loadingPlayer")
-          : t("drillLog.linkPrompt")}
-      </p>
-    );
-  }
+  // The "sign in first" and "no player row yet" branches this used to carry are
+  // unreachable now: the form only renders on a drill page, which lives inside a
+  // club, and being in one means having an approved player row.
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">

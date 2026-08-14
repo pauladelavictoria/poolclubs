@@ -1,5 +1,5 @@
-import { NavLink } from "react-router-dom";
 import { LuMenu } from "react-icons/lu";
+import { AppLink } from "@/components/AppLink";
 import { PRIMARY_NAV } from "@/components/navItems";
 import { useT } from "@/i18n";
 
@@ -7,7 +7,7 @@ import { useT } from "@/i18n";
  * Primary navigation on phones: a bottom tab bar, because this app gets used
  * one-handed at the table with a cue in the other hand. Desktops navigate from
  * the drawer instead — pinned open where there is room for it, one hamburger
- * away where there isn't (see pages/Layout).
+ * away where there isn't (see the club layout route).
  *
  * The active tab wears the club's accent. Colour alone was the whole affordance
  * once, which left the one tab without a hue of its own reading as barely
@@ -44,14 +44,15 @@ export default function NavRail({ onMore }: { onMore: () => void }) {
       ].join(" ")}
     >
       {PRIMARY_NAV.map(({ to, labelKey, icon: Icon, end }) => (
-        <NavLink
-          key={to}
+        <AppLink
+          key={String(to)}
           to={to}
-          end={end}
+          activeOptions={{ exact: end }}
           viewTransition
-          className={({ isActive }) => tab({ isActive })}
+          className={tab({ isActive: false })}
+          activeProps={{ className: tab({ isActive: true }) }}
         >
-          {({ isActive }) => (
+          {({ isActive }: { isActive: boolean }) => (
             <>
               {/* The indicator sits on the edge the bar is attached to. */}
               <span
@@ -68,7 +69,7 @@ export default function NavRail({ onMore }: { onMore: () => void }) {
               </span>
             </>
           )}
-        </NavLink>
+        </AppLink>
       ))}
 
       <button

@@ -1,6 +1,6 @@
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
-import { queryClient } from "./queryClient";
 import { keys, type ClubScopedKeys } from "./queryKeys";
 import { removeRow, upsertRow } from "./realtimeRows";
 import type { Comment, Reaction } from "@/types";
@@ -16,6 +16,7 @@ import type { Comment, Reaction } from "@/types";
  * derived from the whole list, so there a refetch is the honest answer.
  */
 function applySocialRow<T extends { id: number; club_id: number }>(
+  queryClient: QueryClient,
   table: ClubScopedKeys,
   matchesOptimistic: (candidate: T, incoming: T) => boolean,
 ) {
@@ -52,12 +53,13 @@ const sameTargetAndAuthor = (
   a.drill_log_id === b.drill_log_id;
 
 /** Drop everything cached for a table and let the screens refetch. */
-const invalidate = (queryKey: readonly string[]) => () =>
-  queryClient.invalidateQueries({ queryKey });
+const invalidate =
+  (queryClient: QueryClient, queryKey: readonly string[]) => () =>
+    queryClient.invalidateQueries({ queryKey });
 
 /** Three tables, one screen: the index and the tournament page both go stale
  *  whenever any of them changes. */
-const invalidateTournaments = () => {
+const invalidateTournaments = (queryClient: QueryClient) => () => {
   queryClient.invalidateQueries({ queryKey: keys.tournaments.all });
   queryClient.invalidateQueries({ queryKey: keys.tournament.all });
 };
@@ -73,29 +75,48 @@ const invalidateTournaments = () => {
  *
  * Both listeners are attached before subscribe(), which is the supported way to
  * watch several tables on one channel.
+ *
+ * Now called from an effect in routes/__root.tsx rather than at module scope:
+ * under SSR a module-scope call would try to open a websocket on the server.
+ * The `started` guard still makes it once per tab — the channel is meant to
+ * outlive any component, so there is nothing to tear down.
  */
 let started = false;
 
-export function startRealtime() {
+export function startRealtime(queryClient: QueryClient) {
   if (started) return;
   started = true;
 
   const onTable = (table: string) =>
     ({ event: "*", schema: "public", table }) as const;
 
+  const tournaments = invalidateTournaments(queryClient);
+
   supabase
     .channel("db-changes")
-    .on("postgres_changes", onTable("players"), invalidate(keys.players.all))
-    .on("postgres_changes", onTable("games"), invalidate(keys.games.all))
+    .on(
+      "postgres_changes",
+      onTable("players"),
+      invalidate(queryClient, keys.players.all),
+    )
+    .on(
+      "postgres_changes",
+      onTable("games"),
+      invalidate(queryClient, keys.games.all),
+    )
     // Drill logs share the home feed with games, so they refresh with them.
     .on(
       "postgres_changes",
       onTable("drill_logs"),
-      invalidate(keys.drillLogs.all),
+      invalidate(queryClient, keys.drillLogs.all),
     )
     // A new drill goes on the home feed and the notification bell for
     // everyone, so it needs to show up without a manual refresh too.
-    .on("postgres_changes", onTable("drills"), invalidate(keys.drills.all))
+    .on(
+      "postgres_changes",
+      onTable("drills"),
+      invalidate(queryClient, keys.drills.all),
+    )
     // Social tables: a conversation that needs a manual refresh is not one.
     // These two carry the row into the cache rather than invalidating — see
     // applySocialRow above.
@@ -103,6 +124,7 @@ export function startRealtime() {
       "postgres_changes",
       onTable("comments"),
       applySocialRow<Comment>(
+        queryClient,
         keys.comments,
         (a, b) => sameTargetAndAuthor(a, b) && a.body === b.body,
       ),
@@ -111,6 +133,7 @@ export function startRealtime() {
       "postgres_changes",
       onTable("reactions"),
       applySocialRow<Reaction>(
+        queryClient,
         keys.reactions,
         (a, b) => sameTargetAndAuthor(a, b) && a.emoji === b.emoji,
       ),
@@ -118,13 +141,13 @@ export function startRealtime() {
     .on(
       "postgres_changes",
       onTable("challenges"),
-      invalidate(keys.challenges.all),
+      invalidate(queryClient, keys.challenges.all),
     )
     // A tournament page is derived from its whole fixture list — one result
     // moves the bracket and the tables — so these refetch rather than patch.
     // Both roots: the index shows status, the page shows everything.
-    .on("postgres_changes", onTable("tournaments"), invalidateTournaments)
-    .on("postgres_changes", onTable("tournament_players"), invalidateTournaments)
-    .on("postgres_changes", onTable("tournament_matches"), invalidateTournaments)
+    .on("postgres_changes", onTable("tournaments"), tournaments)
+    .on("postgres_changes", onTable("tournament_players"), tournaments)
+    .on("postgres_changes", onTable("tournament_matches"), tournaments)
     .subscribe();
 }

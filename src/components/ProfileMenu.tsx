@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { AppLink } from "@/components/AppLink";
 import { LuUser, LuLogOut } from "react-icons/lu";
 import { toast } from "react-toastify";
 import { Avatar } from "@/components/ui/Avatar";
@@ -24,24 +24,13 @@ export default function ProfileMenu() {
   const ref = useRef<HTMLDivElement>(null);
   useOutsideClose(open, ref, () => setOpen(false));
 
-  if (!user) {
-    return (
-      <Link
-        to="/app/login"
-        className="inline-flex h-8 shrink-0 items-center rounded-control border border-hairline bg-felt-raised px-3 text-caption font-medium text-ink transition-colors duration-150 hover:border-hairline-strong"
-      >
-        {t("auth.signInShort")}
-      </Link>
-    );
-  }
-
-  // The player row wins: it carries an uploaded picture, the auth metadata only
-  // ever has the provider's.
-  const avatarUrl = player?.avatar_url ?? user.user_metadata?.avatar_url;
-  const userName = user.user_metadata?.full_name || user.email;
-
-  // Without a linked player this points at /me, which resolves once there is one.
-  const me = player ? `/app/players/${player.id}` : "/app/me";
+  // The signed-out branch this used to carry is gone: the header only renders
+  // inside a club, and getting into one requires a session.
+  //
+  // The player row wins for the picture: it carries an uploaded one, the auth
+  // metadata only ever has the provider's.
+  const avatarUrl = player.avatar_url;
+  const userName = user.fullName || user.email || undefined;
 
   const handleSignOut = async () => {
     setOpen(false);
@@ -84,15 +73,16 @@ export default function ProfileMenu() {
             )}
           </div>
 
-          <Link
-            to={me}
+          <AppLink
+            to="/app/$clubSlug/players/$playerId"
+            params={{ playerId: player.id }}
             role="menuitem"
             onClick={() => setOpen(false)}
             className={itemClasses}
           >
             <LuUser className="h-[18px] w-[18px] shrink-0" aria-hidden />
             {t("nav.myProfile")}
-          </Link>
+          </AppLink>
           <button
             type="button"
             role="menuitem"

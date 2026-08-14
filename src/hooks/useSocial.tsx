@@ -1,8 +1,9 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import { optimisticList, tempId } from "@/libs/optimistic";
 import { keys } from "@/libs/queryKeys";
+import { commentsQuery, reactionsQuery } from "@/queries/social";
 import type { Comment, Reaction, SocialTarget } from "@/types";
 
 /** Turns a target into the column pair the tables use. Exactly one is set —
@@ -20,64 +21,28 @@ export const matchesTarget = (
     ? row.game_id === target.gameId
     : row.drill_log_id === target.drillLogId;
 
-// ponytail: fetches the club's whole comment and reaction history in one query
-// each, then filters per row in the component. A club is a few dozen people, so
-// this is smaller than the games list it decorates — and it means a list of 20
-// results costs 2 queries instead of 40, with no prop threading. Switch to
-// `.in("game_id", visibleIds)` batching if a club ever passes a few thousand.
-
 export const useComments = () => {
   const { activeClubId } = useAuth();
-
-  return useQuery({
-    queryKey: keys.comments.in(activeClubId),
-    enabled: !!activeClubId,
-    queryFn: async () => {
-      if (!activeClubId) throw new Error("no active club");
-
-      const { data } = await supabase
-        .from("comments")
-        .select("*")
-        .eq("club_id", activeClubId)
-        .order("created_at")
-        .throwOnError();
-
-      return data as Comment[];
-    },
-  });
+  return useQuery(commentsQuery(activeClubId));
 };
 
 export const useReactions = () => {
   const { activeClubId } = useAuth();
-
-  return useQuery({
-    queryKey: keys.reactions.in(activeClubId),
-    enabled: !!activeClubId,
-    queryFn: async () => {
-      if (!activeClubId) throw new Error("no active club");
-
-      const { data } = await supabase
-        .from("reactions")
-        .select("*")
-        .eq("club_id", activeClubId)
-        .throwOnError();
-
-      return data as Reaction[];
-    },
-  });
+  return useQuery(reactionsQuery(activeClubId));
 };
 
 export const useSocialActions = () => {
   const { activeClubId, player } = useAuth();
   const { data: reactions } = useReactions();
+  const queryClient = useQueryClient();
 
   const commentsKey = keys.comments.in(activeClubId);
   const reactionsKey = keys.reactions.in(activeClubId);
 
-  const base = () => {
-    if (!activeClubId || !player) throw new Error("no active club");
-    return { club_id: activeClubId, author_player_id: player.id };
-  };
+  const base = () => ({
+    club_id: activeClubId,
+    author_player_id: player.id,
+  });
 
   return {
     addComment: useMutation({
@@ -95,12 +60,13 @@ export const useSocialActions = () => {
       },
       // Appended at the end because useComments orders by created_at ascending.
       ...optimisticList<{ target: SocialTarget; body: string }, Comment>(
+        queryClient,
         commentsKey,
         (rows, { target, body }) => [
           ...rows,
           {
             id: tempId(),
-            club_id: activeClubId!,
+            club_id: activeClubId,
             author_player_id: player!.id,
             ...targetColumns(target),
             body: body.trim(),
@@ -114,7 +80,7 @@ export const useSocialActions = () => {
       mutationFn: async (id: number) => {
         await supabase.from("comments").delete().eq("id", id).throwOnError();
       },
-      ...optimisticList<number, Comment>(commentsKey, (rows, id) =>
+      ...optimisticList<number, Comment>(queryClient, commentsKey, (rows, id) =>
         rows.filter((c) => c.id !== id),
       ),
     }),
@@ -155,6 +121,7 @@ export const useSocialActions = () => {
           .throwOnError();
       },
       ...optimisticList<{ target: SocialTarget; emoji: string }, Reaction>(
+        queryClient,
         reactionsKey,
         (rows, { target, emoji }) => {
           const mine = rows.find(
@@ -169,7 +136,7 @@ export const useSocialActions = () => {
                 ...rows,
                 {
                   id: tempId(),
-                  club_id: activeClubId!,
+                  club_id: activeClubId,
                   author_player_id: player!.id,
                   ...targetColumns(target),
                   emoji,

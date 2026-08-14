@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
 import { LuPlus, LuTv } from "react-icons/lu";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
@@ -12,22 +11,22 @@ import { Segmented } from "@/components/ui/Segmented";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useT } from "@/i18n";
+import { getRouteApi } from "@tanstack/react-router";
+import { AppLink } from "@/components/AppLink";
 
-function getTodayYYYYMMDD() {
-  return new Date().toISOString().split("T")[0];
-}
+// The "no date, so use today" and "is this even a date" cases both moved into
+// the route: it redirects a bare URL to today's, and validateSearch rejects
+// anything that isn't a YYYY-MM-DD. So there is nothing left to parse here.
 
-function parseDateParam(param: string | null): string {
-  if (!param) return getTodayYYYYMMDD();
-  const date = new Date(param);
-  if (Number.isNaN(date.getTime())) return getTodayYYYYMMDD();
-  return param.split("T")[0];
-}
+const route = getRouteApi("/app/_authed/$clubSlug/ranking/daily");
 
 export default function RankingDailyPage() {
   const { t } = useT();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const selectedDate = parseDateParam(searchParams.get("date"));
+  // The date is required in the URL and validated by the route, so there is no
+  // "today" to compute during render — which is what used to make this page a
+  // hydration mismatch waiting for midnight.
+  const { date: selectedDate } = route.useSearch();
+  const navigate = route.useNavigate();
 
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
   const tvRef = useRef<HTMLDivElement>(null);
@@ -51,7 +50,7 @@ export default function RankingDailyPage() {
   const games = gamesData?.games ?? [];
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) setSearchParams({ date: e.target.value });
+    if (e.target.value) navigate({ search: { date: e.target.value } });
   };
 
   const { data: players, isLoading: playersLoading } = useGetPlayers();
@@ -86,13 +85,13 @@ export default function RankingDailyPage() {
         >
           <LuTv className="h-4 w-4" aria-hidden />
         </button>
-        <Link
-          to="/app/games/new"
+        <AppLink
+          to="/app/$clubSlug/games/new"
           className={buttonClasses({ size: "sm", className: "shrink-0" })}
         >
           <LuPlus className="h-4 w-4" aria-hidden />
           {t("games.add")}
-        </Link>
+        </AppLink>
       </PageTitle>
 
       <div

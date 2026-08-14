@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { getRouteApi } from "@tanstack/react-router";
 import { LuPlus } from "react-icons/lu";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
@@ -10,21 +9,34 @@ import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
 
 const FILTER_ALL = "";
-const PAGE_SIZE = 50;
+/** Exported so the route loader fetches the same page the list will show. */
+export const PAGE_SIZE = 50;
+
+const route = getRouteApi("/app/_authed/$clubSlug/games/");
 
 export default function GamesPage() {
   const { t } = useT();
-  const [playerFilter, setPlayerFilter] = useState<string>(FILTER_ALL);
-  const [categoryFilter, setCategoryFilter] = useState<string>(FILTER_ALL);
-  const [page, setPage] = useState(1);
+  // The filters are in the URL, not in useState. A loader can only key on the
+  // URL, so this is what lets the page arrive already fetched — and it makes a
+  // filtered view something you can send someone.
+  const { page, playerId, category } = route.useSearch();
+  const navigate = route.useNavigate();
+
+  /** Changing a filter always goes back to page one; changing the page doesn't. */
+  const setFilter = (patch: { playerId?: number; category?: number }) =>
+    navigate({ search: (prev) => ({ ...prev, ...patch, page: 1 }) });
+
+  const setPage = (next: number) =>
+    navigate({ search: (prev) => ({ ...prev, page: next }) });
 
   const { data: gamesData, isLoading: gamesLoading } = useGetGames({
     page,
     pageSize: PAGE_SIZE,
-    playerId: playerFilter ? Number(playerFilter) : undefined,
-    category: categoryFilter ? Number(categoryFilter) : undefined,
+    playerId,
+    category,
   });
   const games = gamesData?.games ?? [];
   const totalCount = gamesData?.totalCount ?? 0;
@@ -36,13 +48,13 @@ export default function GamesPage() {
     <>
       <div className="mx-auto max-w-5xl px-3 py-4">
         <PageTitle title={t("games.title")} className="mb-4">
-          <Link
-            to="/app/games/new"
+          <AppLink
+            to="/app/$clubSlug/games/new"
             className={buttonClasses({ size: "sm", className: "shrink-0" })}
           >
             <LuPlus className="h-4 w-4" aria-hidden />
             {t("games.add")}
-          </Link>
+          </AppLink>
         </PageTitle>
 
         {/* Filters are a toolbar, not the content: compact, left-aligned, and
@@ -55,11 +67,10 @@ export default function GamesPage() {
           <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
             <Select
               size="sm"
-              value={playerFilter}
-              onChange={(e) => {
-                setPlayerFilter(e.target.value);
-                setPage(1);
-              }}
+              value={playerId ?? FILTER_ALL}
+              onChange={(e) =>
+                setFilter({ playerId: Number(e.target.value) || undefined })
+              }
               className="max-w-[12rem]"
               aria-label={t("games.filterByPlayer")}
             >
@@ -73,11 +84,10 @@ export default function GamesPage() {
 
             <Select
               size="sm"
-              value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value);
-                setPage(1);
-              }}
+              value={category ?? FILTER_ALL}
+              onChange={(e) =>
+                setFilter({ category: Number(e.target.value) || undefined })
+              }
               aria-label={t("games.filterByCategory")}
             >
               <option value={FILTER_ALL}>{t("games.allCategories")}</option>
@@ -104,7 +114,7 @@ export default function GamesPage() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={page <= 1}
                   >
                     {t("common.previous")}
@@ -115,7 +125,7 @@ export default function GamesPage() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => setPage((p) => p + 1)}
+                    onClick={() => setPage(page + 1)}
                     disabled={page * PAGE_SIZE >= totalCount}
                   >
                     {t("common.next")}

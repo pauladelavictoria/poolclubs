@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { LuMessageSquare, LuSmilePlus, LuX } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayerLookup } from "@/hooks/useGetPlayers";
@@ -14,6 +13,7 @@ import { Input } from "@/components/ui/Input";
 import { fmt } from "@/libs/dayLabel";
 import { REACTIONS, type SocialTarget } from "@/types";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
 
 /**
  * Reactions and comments on one result — a match or a drill log.
@@ -168,13 +168,14 @@ export default function SocialBar({
           className="mt-1.5 block w-full cursor-pointer text-left"
         >
           <span className="line-clamp-2 text-body text-ink-faint">
-            <Link
-              to={`/app/players/${comments[0].author_player_id}`}
+            <AppLink
+              to="/app/$clubSlug/players/$playerId"
+              params={{ playerId: comments[0].author_player_id }}
               onClick={(e) => e.stopPropagation()}
               className="font-medium text-ink-soft hover:text-strike"
             >
               {nameOf(comments[0].author_player_id)}
-            </Link>{" "}
+            </AppLink>{" "}
             {comments[0].body}
           </span>
         </div>
@@ -190,12 +191,13 @@ export default function SocialBar({
             <div key={c.id} className="group flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-caption text-ink-faint">
-                  <Link
-                    to={`/app/players/${c.author_player_id}`}
+                  <AppLink
+                    to="/app/$clubSlug/players/$playerId"
+                    params={{ playerId: c.author_player_id }}
                     className="font-medium text-ink-soft hover:text-strike"
                   >
                     {nameOf(c.author_player_id)}
-                  </Link>{" "}
+                  </AppLink>{" "}
                   <time dateTime={c.created_at}>
                     {timeFmt.format(new Date(c.created_at))}
                   </time>

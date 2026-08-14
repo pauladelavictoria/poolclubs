@@ -1,0 +1,177 @@
+import { useEffect } from "react";
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRouteWithContext,
+} from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
+import { ToastContainer } from "react-toastify";
+import { I18nProvider, detectLang } from "@/i18n";
+import type { Lang } from "@/i18n";
+import { useTheme } from "@/libs/theme";
+import { THEME_COOKIE, readOrigin, readPref } from "@/libs/prefs";
+import { startRealtime } from "@/libs/realtime";
+import { sessionQuery } from "@/queries/session";
+import RouteError from "@/components/RouteError";
+import { NotFound } from "@/components/NotFound";
+import indexCss from "../index.css?url";
+
+/**
+ * The document, and the two things every route below needs: who is looking at
+ * the page, and which way round it is.
+ *
+ * `beforeLoad` runs before any component, on the server, so a signed-in visitor
+ * gets a signed-in page in the first response — no skeleton while the browser
+ * asks Supabase who it is talking to.
+ */
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+}>()({
+  beforeLoad: async ({ context }) => {
+    // ensureQueryData rather than calling the server function directly: root
+    // beforeLoad runs on every navigation, and this way the session costs one
+    // round trip per page load instead of one per link. Sign-in and sign-out
+    // invalidate the key explicitly.
+    const session = await context.queryClient.ensureQueryData(sessionQuery());
+
+    return {
+      session,
+      // Read here rather than in the components that want them: on the server
+      // these come off the request's cookies, which is the only way the first
+      // render can agree with the client's.
+      theme: readPref(THEME_COOKIE) === "light" ? "light" : "dark",
+      lang: detectLang() as Lang,
+      // Absolute URLs (the club's invite link) need a host, and `window` does
+      // not exist while this is rendering on the server.
+      origin: readOrigin(),
+    };
+  },
+
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover",
+      },
+      { title: "PoolClubs" },
+      {
+        name: "description",
+        content:
+          "PoolClubs keeps your pool club on the record: Elo rankings, match results, challenges and training plans.",
+      },
+      {
+        name: "theme-color",
+        media: "(prefers-color-scheme: light)",
+        content: "#f3f5f9",
+      },
+      {
+        name: "theme-color",
+        media: "(prefers-color-scheme: dark)",
+        content: "#090b0e",
+      },
+      { property: "og:title", content: "PoolClubs" },
+      {
+        property: "og:description",
+        content:
+          "Elo rankings, match results, challenges and training plans for pool clubs.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:image", content: "/android-chrome-512x512.png" },
+    ],
+    links: [
+      { rel: "stylesheet", href: indexCss },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png" },
+      { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" },
+      { rel: "manifest", href: "/site.webmanifest" },
+      { rel: "icon", href: "/favicon.ico" },
+    ],
+    scripts: [{ children: THEME_BOOT }],
+  }),
+
+  errorComponent: (props) => (
+    <RootDocument>
+      <RouteError {...props} />
+    </RootDocument>
+  ),
+  notFoundComponent: () => (
+    <RootDocument>
+      <NotFound />
+    </RootDocument>
+  ),
+  component: () => (
+    <RootDocument>
+      <Outlet />
+    </RootDocument>
+  ),
+});
+
+/**
+ * The server cannot see `prefers-color-scheme` — it is not in the request — so a
+ * first-time visitor is served the dark default and this corrects the attribute
+ * before the first paint. A returning visitor has the cookie and the server
+ * already got it right, in which case this is a no-op.
+ *
+ * It runs blocking, in <head>, on purpose: after the first paint it would be a
+ * flash instead of a fix. Nothing is written back — pinning the first guess in a
+ * cookie would stop the app following the OS later, which is the same reason the
+ * language picker only stores an explicit choice.
+ */
+const THEME_BOOT = `(function(){try{
+var m=document.cookie.match(/(?:^|; )theme=([^;]*)/);
+document.documentElement.dataset.theme=m?decodeURIComponent(m[1]):
+(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");
+}catch(e){}})();`;
+
+function RootDocument({ children }: { children: React.ReactNode }) {
+  const { theme, lang } = Route.useRouteContext();
+
+  return (
+    // suppressHydrationWarning covers data-theme only: THEME_BOOT above may have
+    // corrected it between the server writing this and React hydrating it, which
+    // is the intended behaviour rather than a mismatch to fix.
+    <html lang={lang} data-theme={theme} suppressHydrationWarning>
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <I18nProvider>
+          {children}
+          <Toasts />
+        </I18nProvider>
+        <Realtime />
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+
+/** Toasts are the one surface not built from our tokens, so they get told which
+ *  way round the page is. */
+function Toasts() {
+  const theme = useTheme();
+  return (
+    <ToastContainer
+      theme={theme}
+      position="bottom-center"
+      autoClose={2600}
+      hideProgressBar
+    />
+  );
+}
+
+/**
+ * One realtime channel for the whole app. In an effect rather than at module
+ * scope, which is where it used to be: a module-scope call would try to open a
+ * websocket while rendering on the server.
+ */
+function Realtime() {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    startRealtime(queryClient);
+  }, [queryClient]);
+  return null;
+}

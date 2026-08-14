@@ -1,12 +1,11 @@
 import { useMemo } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import PageTitle from "@/components/PageTitle";
 import TrainingPlanStepList from "@/components/TrainingPlanStepList";
 import PlayerTabs from "@/components/PlayerTabs";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
-import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { Button } from "@/components/ui/Button";
@@ -14,12 +13,16 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useT } from "@/i18n";
 
+const route = getRouteApi("/app/_authed/$clubSlug/players/$playerId/training/plan");
+
 export default function TrainingPlanPage() {
   const { t } = useT();
-  const { playerId } = useParams<{ playerId: string }>();
+  // Own-player only, checked in the route's beforeLoad rather than here — the
+  // <Navigate> this replaces ran after the page had already rendered and
+  // fetched.
+  const { clubSlug, playerId } = route.useParams();
   const playerIdNum = Number(playerId);
 
-  const { player: authPlayer, isLoading: isAuthLoading } = useAuth();
   const { data: players } = useGetPlayers();
   const player = players?.find((p) => p.id === playerIdNum);
 
@@ -58,8 +61,12 @@ export default function TrainingPlanPage() {
       crumbs={
         player
           ? [
-              { label: t("players.title"), to: "/app/players" },
-              { label: player.name, to: `/app/players/${playerIdNum}` },
+              { label: t("players.title"), to: "/app/$clubSlug/players" },
+              {
+                label: player.name,
+                to: "/app/$clubSlug/players/$playerId",
+                params: { clubSlug, playerId: String(playerIdNum) },
+              },
             ]
           : undefined
       }
@@ -67,11 +74,6 @@ export default function TrainingPlanPage() {
       {player && <CategoryBadge category={player.category} full />}
     </PageTitle>
   );
-
-  // Training plans are private — only their owner can see them.
-  if (!isAuthLoading && authPlayer?.id !== playerIdNum) {
-    return <Navigate to={`/app/players/${playerIdNum}`} replace />;
-  }
 
   if (isLoading) {
     return (

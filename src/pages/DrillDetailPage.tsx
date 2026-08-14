@@ -1,9 +1,4 @@
-import {
-  useParams,
-  useSearchParams,
-  Link,
-  useNavigate,
-} from "react-router-dom";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { useGetDrill } from "@/hooks/useGetDrills";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
@@ -25,22 +20,21 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useTablePortrait } from "@/libs/useMedia";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
+
+const route = getRouteApi("/app/_authed/$clubSlug/drills/$drillId/");
 
 export default function DrillDetailPage() {
   const { t, locale } = useT();
   const portrait = useTablePortrait();
-  const { id } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
+  const { clubSlug, drillId: drillIdParam } = route.useParams();
   const navigate = useNavigate();
-  const drillId = Number(id);
+  const drillId = Number(drillIdParam);
 
-  const planId = searchParams.get("plan")
-    ? Number(searchParams.get("plan"))
-    : undefined;
-  const stepId = searchParams.get("step")
-    ? Number(searchParams.get("step"))
-    : undefined;
-  const planPlayerId = searchParams.get("playerId");
+  // Set when the drill was opened from a training plan: which plan, which step,
+  // and whose. Validated by the route, so these arrive as numbers or not at all.
+  const { plan: planId, step: stepId, playerId: planPlayerId } =
+    route.useSearch();
 
   const { data: drill, isLoading } = useGetDrill(drillId);
 
@@ -59,15 +53,11 @@ export default function DrillDetailPage() {
     if (!drill) return;
     if (!confirm(t("drills.deleteConfirm"))) return;
     deleteDrill.mutate(drill.id, {
-      onSuccess: () => navigate("/app/drills"),
+      onSuccess: () =>
+        navigate({ to: "/app/$clubSlug/drills", params: { clubSlug } }),
       onError: () => toast.error(t("drills.deleteError")),
     });
   };
-
-  const backLink =
-    planId && planPlayerId
-      ? `/app/players/${planPlayerId}/training/plan`
-      : "/app/drills";
 
   if (isLoading) {
     return (
@@ -96,12 +86,12 @@ export default function DrillDetailPage() {
               title={t("drills.notFound")}
               hint={t("drills.notFoundHint")}
               action={
-                <Link
-                  to="/app/drills"
+                <AppLink
+                  to="/app/$clubSlug/drills"
                   className={buttonClasses({ variant: "secondary" })}
                 >
                   {t("drills.seeAll")}
-                </Link>
+                </AppLink>
               }
             />
           </Card>
@@ -116,12 +106,13 @@ export default function DrillDetailPage() {
         <PageTitle title={drill.name}>
           {canEdit && (
             <>
-              <Link
-                to={`/app/drills/${drill.id}/edit`}
+              <AppLink
+                to="/app/$clubSlug/drills/$drillId/edit"
+                params={{ drillId: drill.id }}
                 className={buttonClasses({ variant: "secondary", size: "sm" })}
               >
                 {t("common.edit")}
-              </Link>
+              </AppLink>
               <button
                 type="button"
                 onClick={handleDelete}
@@ -135,12 +126,13 @@ export default function DrillDetailPage() {
         </PageTitle>
 
         {planId && planPlayerId && (
-          <Link
-            to={backLink}
+          <AppLink
+            to="/app/$clubSlug/players/$playerId/training/plan"
+            params={{ playerId: planPlayerId }}
             className="block rounded-control border border-strike/40 bg-strike-tint px-4 py-2.5 text-center text-body font-medium text-strike transition-colors duration-150 hover:bg-strike/20"
           >
             {t("drills.backToPlan")}
-          </Link>
+          </AppLink>
         )}
 
         {/* Wide enough and the table sits beside the reading, not above it,
@@ -210,12 +202,13 @@ export default function DrillDetailPage() {
                     return (
                       <li key={log.id} className="rounded-control px-2 py-2">
                         <div className="flex items-baseline gap-3">
-                          <Link
-                            to={`/app/players/${log.player_id}`}
+                          <AppLink
+                            to="/app/$clubSlug/players/$playerId"
+                            params={{ playerId: log.player_id }}
                             className="min-w-0 flex-1 truncate text-body text-ink hover:text-strike"
                           >
                             {nameOf(log.player_id)}
-                          </Link>
+                          </AppLink>
                           <time
                             dateTime={log.created_at}
                             className="shrink-0 text-caption tabular-nums text-ink-faint"

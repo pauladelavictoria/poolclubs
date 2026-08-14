@@ -1,6 +1,8 @@
-import type { UseGetGamesFilters } from "@/hooks/useGetGames";
-import type { UseGetDrillLogsFilters } from "@/hooks/useGetDrillLogs";
-import type { UseGetDrillsFilters } from "@/hooks/useGetDrills";
+import type { UseGetGamesFilters } from "@/queries/games";
+import type {
+  UseGetDrillLogsFilters,
+  UseGetDrillsFilters,
+} from "@/queries/drills";
 
 /**
  * Every cache key in one place.

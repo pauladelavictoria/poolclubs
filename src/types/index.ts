@@ -31,7 +31,14 @@ type Row<T extends keyof Database["public"]["Tables"]> =
  */
 type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
 
-export type Club = Stamped<Row<"clubs">>;
+/**
+ * `slug` is intersected in rather than read from the generated Row because the
+ * app is typed against it before `sql/club-slug.sql` has been applied and
+ * `npm run db:types` re-run. The intersection is harmless once the column is
+ * generated — it is the same `string` — so this line does not need removing,
+ * but it can go once the schema catches up.
+ */
+export type Club = Stamped<Row<"clubs">> & { slug: string };
 
 /** The club's accent colour, keyed to a real Postgres enum so it stays in
  *  lockstep with the palette in libs/clubTheme.ts. Ordered 1-8, the solids'
@@ -163,13 +170,16 @@ export const CATEGORY_TO_DIFFICULTY: Record<Category, DrillDifficulty> = {
 
 /* Display order for the filters and the editor. The labels themselves live in
    src/i18n as `difficulty.${key}` and `skill.${key}`. */
-export const DIFFICULTIES: DrillDifficulty[] = [
+/* `as const` so the literal types survive: the drills route builds its
+   ?difficulty validator straight from this list, and a plain
+   DrillDifficulty[] would widen the parsed value back to `string`. */
+export const DIFFICULTIES = [
   'beginner',
   'intermediate',
   'advanced',
-];
+] as const satisfies readonly DrillDifficulty[];
 
-export const SKILL_TYPES: DrillSkillType[] = [
+export const SKILL_TYPES = [
   'potting',
   'position',
   'safety',
@@ -178,7 +188,7 @@ export const SKILL_TYPES: DrillSkillType[] = [
   'kicks',
   'patterns',
   'specials',
-];
+] as const satisfies readonly DrillSkillType[];
 
 // Tournaments — see sql/tournaments.sql and libs/bracket.ts.
 

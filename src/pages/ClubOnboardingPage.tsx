@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { LuUsers } from "react-icons/lu";
-import { useAuth } from "@/hooks/useAuth";
+import { useSession } from "@/hooks/useAuth";
 import { useJoinOrCreateClub } from "@/hooks/useClub";
 import PageTitle from "@/components/PageTitle";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -19,7 +19,9 @@ import { useT } from "@/i18n";
 export default function ClubOnboardingPage() {
   const { t } = useT();
   const navigate = useNavigate();
-  const { memberships } = useAuth();
+  // useSession, not useAuth: this page also renders at /app/clubs/new, where
+  // there is no club in the URL to read one from.
+  const { memberships } = useSession();
   const { createClub } = useJoinOrCreateClub();
 
   const [name, setName] = useState("");
@@ -31,10 +33,9 @@ export default function ClubOnboardingPage() {
     e.preventDefault();
     if (!name.trim()) return;
     createClub.mutate(name, {
-      onSuccess: () => {
-        toast.success(t("club.created"));
-        navigate("/app");
-      },
+      // createClub's own mutationFn navigates to the new club once the session
+      // has been re-read and its slug is known — see useJoinOrCreateClub.
+      onSuccess: () => toast.success(t("club.created")),
       onError: () => toast.error(t("common.error")),
     });
   };
@@ -97,7 +98,7 @@ export default function ClubOnboardingPage() {
             onSubmit={(e) => {
               e.preventDefault();
               const clean = code.trim().toLowerCase();
-              if (clean) navigate(`/app/join/${encodeURIComponent(clean)}`);
+              if (clean) navigate({ to: "/app/join/$code", params: { code: clean } });
             }}
           >
             <div className="space-y-1.5">

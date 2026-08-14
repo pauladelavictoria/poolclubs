@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { LuPlus, LuNetwork, LuUsers } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +21,7 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/libs/useDialog";
 import { FORMAT_KEY, type TournamentStatus } from "@/types";
 import { useT, type Key } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
 
 /** Live first, then what you can still enter, then the archive. */
 const GROUPS: { key: Key; statuses: TournamentStatus[] }[] = [
@@ -149,8 +149,9 @@ function EventCard({ tournament }: { tournament: TournamentListItem }) {
   const entrants = entrantCount(tournament);
 
   return (
-    <Link
-      to={`/app/tournaments/${tournament.id}`}
+    <AppLink
+      to="/app/$clubSlug/tournaments/$tournamentId"
+      params={{ tournamentId: tournament.id }}
       viewTransition
       className={cardClasses({
         interactive: true,
@@ -189,6 +190,6 @@ function EventCard({ tournament }: { tournament: TournamentListItem }) {
           {entrants}
         </span>
       </div>
-    </Link>
+    </AppLink>
   );
 }

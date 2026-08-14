@@ -1,17 +1,17 @@
-import { useRouteError } from "react-router-dom";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { LuTriangleAlert } from "react-icons/lu";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useT } from "@/i18n";
 
 /**
- * A render error used to be a white screen. This is the router's errorElement,
- * so it also catches a route chunk that failed to arrive — which is the one
- * error this app is actually likely to throw in production, see isStaleChunk.
+ * A render error used to be a white screen. This is the router's
+ * defaultErrorComponent, so it also catches a route chunk that failed to
+ * arrive — which is the one error this app is actually likely to throw in
+ * production, see isStaleChunk.
  */
-export default function RouteError() {
+export default function RouteError({ error }: ErrorComponentProps) {
   const { t } = useT();
-  const error = useRouteError();
 
   // Nothing else reports this, so the console is the only record.
   console.error(error);

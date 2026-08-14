@@ -1,13 +1,63 @@
 import { Suspense, useEffect, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  Outlet,
+  createFileRoute,
+  notFound,
+  useLocation,
+} from "@tanstack/react-router";
 import AppHeader from "@/components/AppHeader";
 import NavDrawer from "@/components/NavDrawer";
 import NavRail from "@/components/NavRail";
 import { PageSkeleton } from "@/components/ui/Skeleton";
-import { useAuth } from "@/hooks/useAuth";
-import { NEXT_KEY, isSafePath } from "@/libs/nextPath";
+import ClubOnboardingPage from "@/pages/ClubOnboardingPage";
 import { useClubTheme } from "@/libs/clubTheme";
 import { useMedia } from "@/libs/useMedia";
+import { playersQuery } from "@/queries/players";
+
+/**
+ * A club, and everything inside it.
+ *
+ * The slug is resolved against the memberships already on the context, so this
+ * costs no query: if it isn't one of yours, it isn't found. That is deliberate —
+ * a wrong slug must not tell you whether the club exists.
+ *
+ * This is also where the app's chrome lives. It used to be one level up, on
+ * /app, but every link in the rail and the drawer now needs to know which club
+ * it is pointing at.
+ */
+export const Route = createFileRoute("/app/_authed/$clubSlug")({
+  beforeLoad: ({ context, params }) => {
+    const membership = context.memberships.find(
+      (m) => m.club?.slug === params.clubSlug,
+    );
+
+    // A club you are not in reads the same as a club that does not exist.
+    if (!membership?.club) throw notFound();
+
+    return {
+      player: membership,
+      activeClub: membership.club,
+      activeClubId: membership.club_id,
+      /** Signed in, approved, and looking at a club. Everything club-scoped
+       *  waits on this — a pending member has a player row but may read
+       *  nothing. */
+      isMember: membership.status === "active",
+      isClubAdmin: membership.club.owner_id === context.user.id,
+    };
+  },
+
+  // The roster: nearly every page under here needs it, and prefetching once at
+  // the layout means the pages below hit a warm cache rather than each waiting
+  // on their own round trip.
+  loader: ({ context }) => {
+    if (!context.isMember) return;
+    void context.queryClient.ensureQueryData(
+      playersQuery(context.activeClubId),
+    );
+  },
+
+  component: ClubLayout,
+});
 
 /**
  * The nav column is 19rem and the content is 64rem wide at most; below the two
@@ -16,9 +66,8 @@ import { useMedia } from "@/libs/useMedia";
  */
 const PINNED = "(min-width: 1360px)";
 
-export default function Layout() {
-  const { user, activeClub } = useAuth();
-  const navigate = useNavigate();
+function ClubLayout() {
+  const { activeClub, isMember } = Route.useRouteContext();
   const { pathname } = useLocation();
   const scroller = useRef<HTMLElement>(null);
   const pinned = useMedia(PINNED);
@@ -27,19 +76,9 @@ export default function Layout() {
   // one opened from a button stays until it is dismissed.
   const [byPointer, setByPointer] = useState(false);
 
-  // Every page under /app shares one active club, so its accent is set here
-  // rather than in each page that happens to render something coloured.
+  // Every page under a club shares its accent, so it is set here rather than in
+  // each page that happens to render something coloured.
   useClubTheme(activeClub);
-
-  // Google drops everyone back on the site root. If they were on their way
-  // somewhere before signing in, finish the trip.
-  useEffect(() => {
-    if (!user) return;
-    const next = sessionStorage.getItem(NEXT_KEY);
-    if (!next) return;
-    sessionStorage.removeItem(NEXT_KEY);
-    if (isSafePath(next)) navigate(next, { replace: true });
-  }, [user, navigate]);
 
   // The page scrolls, the chrome does not — so the scrollbar lives inside the
   // content and taking or freeing it can't move the bar or the tabs. Router
@@ -47,6 +86,12 @@ export default function Layout() {
   useEffect(() => {
     scroller.current?.scrollTo(0, 0);
   }, [pathname]);
+
+  // Approved membership is what every club-scoped query waits on. Rather than
+  // showing a wall of empty states, swap the whole thing for the way in — and
+  // render it in place instead of redirecting, so the URL survives: approve the
+  // member in another window and the page they wanted is one refresh away.
+  if (!isMember) return <ClubOnboardingPage />;
 
   return (
     <>

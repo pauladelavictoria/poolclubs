@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react";
+import { useEffect } from "react";
 import { useTheme } from "@/libs/theme";
 import type { BallColor, Club } from "@/types";
 
@@ -162,14 +162,16 @@ const VARS = [
 /**
  * Applies the active club's colour to the document root. Called once, high up
  * (see pages/Layout.tsx), so it repaints ahead of anything below it — a
- * layout effect rather than an effect, so switching clubs or toggling light/
- * dark doesn't flash the previous accent for a frame.
+ * An effect, not a layout effect: React warns about useLayoutEffect during
+ * server rendering, and an effect does not run there at all. The cost is one
+ * frame of the previous accent when switching clubs — the flash the layout
+ * effect used to avoid.
  */
 export function useClubTheme(club: Club | null | undefined) {
   const mode = useTheme();
   const color = club?.theme_color;
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const root = document.documentElement.style;
 
     // No club, or the default ball: the stylesheet's own yellow already is

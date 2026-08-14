@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
 import type { BracketIndex } from "@/libs/bracket";
 import type { TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
 
 /**
  * One fixture, in every format.
@@ -69,13 +69,14 @@ export default function MatchCard({
           {playerId === null ? (
             empty(slot)
           ) : (
-            <Link
-              to={`/app/players/${playerId}`}
+            <AppLink
+              to="/app/$clubSlug/players/$playerId"
+              params={{ playerId: playerId }}
               onClick={(e) => e.stopPropagation()}
               className="transition-colors duration-150 hover:text-strike"
             >
               {nameOf(playerId)}
-            </Link>
+            </AppLink>
           )}
         </span>
         <span className="shrink-0 font-mono text-body tabular-nums text-ink-soft">

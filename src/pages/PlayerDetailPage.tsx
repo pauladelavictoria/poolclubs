@@ -1,4 +1,3 @@
-import { useParams, Link } from "react-router-dom";
 import { useMemo } from "react";
 import {
   LineChart,
@@ -23,11 +22,18 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useChartTheme } from "@/libs/chartTheme";
+import { getRouteApi } from "@tanstack/react-router";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
+
+/** A player's whole history, not a page of it — the charts are cumulative. */
+export const PLAYER_GAMES_LIMIT = 1000;
+
+const route = getRouteApi("/app/_authed/$clubSlug/players/$playerId/");
 
 export default function PlayerDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const playerId = Number(id);
+  const { playerId: playerIdParam } = route.useParams();
+  const playerId = Number(playerIdParam);
   const { t, locale } = useT();
   const chart = useChartTheme();
 
@@ -38,7 +44,7 @@ export default function PlayerDetailPage() {
 
   const { data: gamesData, isLoading: isLoadingGames } = useGetGames({
     playerId,
-    pageSize: 1000,
+    pageSize: PLAYER_GAMES_LIMIT,
   });
 
   const stats = useMemo(() => {
@@ -131,12 +137,12 @@ export default function PlayerDetailPage() {
               title={t("players.notFound")}
               hint={t("players.notFoundHint")}
               action={
-                <Link
-                  to="/app/players"
+                <AppLink
+                  to="/app/$clubSlug/players"
                   className={buttonClasses({ variant: "secondary" })}
                 >
                   {t("players.title")}
-                </Link>
+                </AppLink>
               }
             />
           </Card>
@@ -250,9 +256,9 @@ export default function PlayerDetailPage() {
               title={t("players.noGamesTitle")}
               hint={t("players.noGamesHint", { name: player.name })}
               action={
-                <Link to="/app/games/new" className={buttonClasses({})}>
+                <AppLink to="/app/$clubSlug/games/new" className={buttonClasses({})}>
                   {t("games.add")}
-                </Link>
+                </AppLink>
               }
             />
           </Card>

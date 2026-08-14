@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { LuCheck, LuCopy, LuUserMinus, LuPencil, LuPlus } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +16,8 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/libs/useDialog";
 import type { Player, Category, BallColor } from "@/types";
 import { useT } from "@/i18n";
+import { getRouteApi } from "@tanstack/react-router";
+import { AppLink } from "@/components/AppLink";
 
 /**
  * The club's own page: settings, invites and the roster. Owner-only — other
@@ -25,7 +26,11 @@ import { useT } from "@/i18n";
  */
 export default function ClubPage() {
   const { t } = useT();
-  const { activeClub, isClubAdmin, player, user } = useAuth();
+  const { activeClub, player, user } = useAuth();
+  // The invite link needs an absolute URL, and `window` does not exist while the
+  // page is being rendered on the server — so the request's own origin comes
+  // down from the root route instead.
+  const { origin } = getRouteApi("__root__").useRouteContext();
   const { data: members, isLoading } = useClubMembers();
   const { approveMember, removeMember, updateClub } = useManageClub();
   const { createPlayer, updatePlayer } = useManagePlayers();
@@ -40,10 +45,9 @@ export default function ClubPage() {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const dialogRef = useDialog(isModalOpen);
 
-  if (!activeClub) return null;
-  if (!isClubAdmin) return <Navigate to="/app" replace />;
+  // Admin-only, enforced by the route's beforeLoad before this renders.
 
-  const link = `${window.location.origin}/app/join/${activeClub.join_code}`;
+  const link = `${origin}/app/join/${activeClub.join_code}`;
   const pending = (members ?? []).filter((m) => m.status === "pending");
   const active = (members ?? []).filter((m) => m.status === "active");
 
@@ -257,12 +261,13 @@ export default function ClubPage() {
               {active.map((m) => (
                 <li key={m.id} className="flex items-center gap-3 px-4 py-3">
                   <span className="min-w-0 flex-1 truncate text-body text-ink">
-                    <Link
-                      to={`/app/players/${m.id}`}
+                    <AppLink
+                      to="/app/$clubSlug/players/$playerId"
+                      params={{ playerId: m.id }}
                       className="transition-colors duration-150 hover:text-strike"
                     >
                       {m.name}
-                    </Link>
+                    </AppLink>
                     {m.id === player?.id && (
                       <span className="ml-2 text-caption text-ink-faint">
                         {t("club.you")}

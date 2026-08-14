@@ -1,12 +1,12 @@
 import { supabase } from "@/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/libs/queryKeys";
+import { trainingPlanQuery } from "@/queries/trainingPlan";
 import {
   CATEGORY_TO_DIFFICULTY,
   DIFFICULTIES,
   SKILL_TYPES,
   type TrainingPlan,
-  type TrainingPlanStep,
   type Drill,
   type DrillLog,
   type Category,
@@ -113,37 +113,10 @@ function shuffleArray<T>(arr: T[]): T[] {
 export const useTrainingPlan = (playerId?: number) => {
   const queryClient = useQueryClient();
 
-  // Fetch active plan with steps + joined drill data
+  // The query itself lives in src/queries/trainingPlan.ts so the route loader
+  // can prime the same key.
   const planQuery = useQuery({
-    queryKey: keys.trainingPlan.of(playerId),
-    queryFn: async () => {
-      if (!playerId) return null;
-
-      const { data: plans } = await supabase
-        .from("training_plans")
-        .select("*")
-        .eq("player_id", playerId)
-        .eq("active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .throwOnError();
-
-      if (plans.length === 0) return null;
-
-      const plan = plans[0] as TrainingPlan;
-
-      const { data: steps } = await supabase
-        .from("training_plan_steps")
-        .select("*, drill:drills(*)")
-        .eq("plan_id", plan.id)
-        .order("step_order")
-        .throwOnError();
-
-      return {
-        plan,
-        steps: steps as TrainingPlanStep[],
-      };
-    },
+    ...trainingPlanQuery(playerId ?? 0),
     enabled: !!playerId,
   });
 

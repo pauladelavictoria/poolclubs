@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { useSearchParams } from "react-router-dom";
+import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { useAddGame } from "@/hooks/useAddGame";
@@ -15,6 +15,8 @@ import { Segmented } from "@/components/ui/Segmented";
 import { DisciplineBall } from "@/components/ui/Ball";
 import { DISCIPLINES, type Discipline, type Game } from "@/types";
 import { useT } from "@/i18n";
+
+const route = getRouteApi("/app/_authed/$clubSlug/games/new");
 
 const SIDES = [1, 2] as const;
 
@@ -31,8 +33,7 @@ export default function AddGamePage() {
 
   // Arriving from an accepted challenge: prefill the two names and close the
   // challenge once the result lands, so the loop ends where it started.
-  const [searchParams] = useSearchParams();
-  const challengeId = Number(searchParams.get("challenge")) || null;
+  const { challenge: challengeId } = route.useSearch();
   const { data: challenges } = useGetChallenges();
   const { respondToChallenge } = useManageChallenges();
   const challenge = challenges?.find((c) => c.id === challengeId) ?? null;

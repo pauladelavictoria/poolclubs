@@ -1,10 +1,10 @@
 import type { DailyRankingEntry } from "@/types";
-import { Link } from "react-router-dom";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
 import { useAuth } from "@/hooks/useAuth";
 import type { ViewMode } from "./Ranking";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/AppLink";
 
 interface RankingTableProps {
   entries: DailyRankingEntry[];
@@ -101,8 +101,9 @@ export default function RankingTable({
             )}
 
             <td className="py-2 pl-3 pr-3">
-              <Link
-                to={`/app/players/${entry.playerId}`}
+              <AppLink
+                to="/app/$clubSlug/players/$playerId"
+                params={{ playerId: entry.playerId }}
                 className={`block truncate text-ink transition-colors duration-150 hover:text-strike ${
                   entry.playerId === player?.id
                     ? "font-semibold"
@@ -110,7 +111,7 @@ export default function RankingTable({
                 }`}
               >
                 {entry.playerName}
-              </Link>
+              </AppLink>
               {/* Form drops under the name once the column is gone */}
               <div className="mt-1 sm:hidden">
                 <ScoreString results={entry.last10Games ?? []} />

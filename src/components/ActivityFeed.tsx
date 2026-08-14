@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { LuActivity, LuChevronRight, LuTrophy } from "react-icons/lu";
 import PoolTableDiagram from "@/components/PoolTableDiagram";
 import SocialBar from "@/components/SocialBar";
@@ -19,6 +18,8 @@ import { dayLabel, startsNewDay, timeOf } from "@/libs/dayLabel";
 import { groupTournamentRuns } from "@/libs/feedGroups";
 import type { Drill, DrillLog, Game, Tournament } from "@/types";
 import { useT } from "@/i18n";
+import type { LinkProps } from "@tanstack/react-router";
+import { AppLink } from "@/components/AppLink";
 
 /** One row of the club's history: a match, a logged drill, or one of the two
  *  things that get created rather than played — a drill or a tournament. */
@@ -75,13 +76,14 @@ function DrillRow({ log }: { log: DrillLog }) {
           <p className="text-caption font-medium uppercase tracking-[0.08em] text-strike">
             {t("drills.detailTitle")}
           </p>
-          <Link
-            to={`/app/drills/${log.drill_id}`}
+          <AppLink
+            to="/app/$clubSlug/drills/$drillId"
+            params={{ drillId: log.drill_id }}
             className="block truncate text-body font-semibold text-ink transition-colors duration-150 hover:text-strike"
           >
             {drills?.find((d) => d.id === log.drill_id)?.name ??
               t("drills.numbered", { id: log.drill_id })}
-          </Link>
+          </AppLink>
         </div>
         <div className="shrink-0 text-right">
           <p
@@ -98,8 +100,9 @@ function DrillRow({ log }: { log: DrillLog }) {
       </div>
 
       {/* Who did it. */}
-      <Link
-        to={`/app/players/${log.player_id}`}
+      <AppLink
+        to="/app/$clubSlug/players/$playerId"
+        params={{ playerId: log.player_id }}
         className="mt-2 flex items-center gap-2 text-ink-soft transition-colors duration-150 hover:text-strike"
       >
         <Avatar name={name} url={author?.avatar_url} />
@@ -110,7 +113,7 @@ function DrillRow({ log }: { log: DrillLog }) {
         >
           {timeOf(new Date(log.created_at), locale)}
         </time>
-      </Link>
+      </AppLink>
 
       <div className="mt-3 border-t border-hairline pt-2">
         <SocialBar target={{ drillLogId: log.id }} preview />
@@ -126,8 +129,9 @@ function DrillCreatedRow({ drill, at }: { drill: Drill; at: string }) {
   const { t, locale } = useT();
 
   return (
-    <Link
-      to={`/app/drills/${drill.id}`}
+    <AppLink
+      to="/app/$clubSlug/drills/$drillId"
+      params={{ drillId: drill.id }}
       className="flex flex-col gap-3 rounded-card border border-dashed border-hairline p-2 transition-colors duration-150 hover:border-hairline-strong hover:bg-felt sm:flex-row sm:items-center"
     >
       {/* Always lying down — a table is a landscape object, and turning it up on
@@ -164,7 +168,7 @@ function DrillCreatedRow({ drill, at }: { drill: Drill; at: string }) {
       >
         {timeOf(new Date(at), locale)}
       </time>
-    </Link>
+    </AppLink>
   );
 }
 
@@ -179,19 +183,22 @@ function CreatedRow({
   label,
   name,
   to,
+  params,
   at,
 }: {
   icon: ReactNode;
   label: string;
   name: string;
-  to: string;
+  to: LinkProps["to"];
+  params?: Record<string, string | number>;
   at: string;
 }) {
   const { locale } = useT();
 
   return (
-    <Link
+    <AppLink
       to={to}
+      params={params}
       className="flex items-center gap-2.5 rounded-card border border-dashed border-hairline px-3 py-2 text-caption transition-colors duration-150 hover:border-hairline-strong hover:bg-felt"
     >
       <span className="shrink-0">{icon}</span>
@@ -205,7 +212,7 @@ function CreatedRow({
       >
         {timeOf(new Date(at), locale)}
       </time>
-    </Link>
+    </AppLink>
   );
 }
 
@@ -253,12 +260,13 @@ function Side({
           <span key={p.id ?? i}>
             {i > 0 && " / "}
             {p.id != null ? (
-              <Link
-                to={`/app/players/${p.id}`}
+              <AppLink
+                to="/app/$clubSlug/players/$playerId"
+                params={{ playerId: p.id }}
                 className="transition-colors duration-150 hover:text-strike"
               >
                 {p.name}
-              </Link>
+              </AppLink>
             ) : (
               p.name
             )}
@@ -288,13 +296,14 @@ function MatchCard({
       {/* A fixture belongs to its bracket first: the card says so before it says
           anything about the score. */}
       {tournament && (
-        <Link
-          to={`/app/tournaments/${tournament.id}`}
+        <AppLink
+          to="/app/$clubSlug/tournaments/$tournamentId"
+          params={{ tournamentId: tournament.id }}
           className="mb-2 flex items-center gap-1.5 border-b border-hairline pb-2 text-caption font-medium text-ink-soft transition-colors duration-150 hover:text-strike"
         >
           <LuTrophy className="h-3.5 w-3.5 shrink-0 text-strike" />
           <span className="truncate">{tournament.name}</span>
-        </Link>
+        </AppLink>
       )}
 
       <div className="flex items-baseline justify-between gap-3">
@@ -369,8 +378,9 @@ function TournamentGamesCard({
 
   return (
     <>
-      <Link
-        to={`/app/tournaments/${tournament.id}`}
+      <AppLink
+        to="/app/$clubSlug/tournaments/$tournamentId"
+        params={{ tournamentId: tournament.id }}
         className="mb-2 flex items-baseline gap-1.5 border-b border-hairline pb-2 text-caption font-medium text-ink-soft transition-colors duration-150 hover:text-strike"
       >
         <LuTrophy className="h-3.5 w-3.5 shrink-0 self-center text-strike" />
@@ -378,7 +388,7 @@ function TournamentGamesCard({
         <span className="shrink-0 font-mono tabular-nums text-ink-ghost">
           {t("games.count", { n: games.length })}
         </span>
-      </Link>
+      </AppLink>
 
       <ul className="divide-y divide-hairline">
         {shown.map((game) => {
@@ -396,21 +406,23 @@ function TournamentGamesCard({
                 <span
                   className={`min-w-0 truncate text-right text-body ${side(p1 > p2)}`}
                 >
-                  <Link
-                    to={`/app/players/${game.player_1_id}`}
+                  <AppLink
+                    to="/app/$clubSlug/players/$playerId"
+                    params={{ playerId: game.player_1_id }}
                     className="transition-colors duration-150 hover:text-strike"
                   >
                     {game.player_1_name}
-                  </Link>
+                  </AppLink>
                   {isDoubles && game.player_1b_id != null && (
                     <>
                       {" / "}
-                      <Link
-                        to={`/app/players/${game.player_1b_id}`}
+                      <AppLink
+                        to="/app/$clubSlug/players/$playerId"
+                        params={{ playerId: game.player_1b_id }}
                         className="transition-colors duration-150 hover:text-strike"
                       >
                         {game.player_1b_name}
-                      </Link>
+                      </AppLink>
                     </>
                   )}
                 </span>
@@ -424,21 +436,23 @@ function TournamentGamesCard({
                   </span>
                 </span>
                 <span className={`min-w-0 truncate text-body ${side(p2 > p1)}`}>
-                  <Link
-                    to={`/app/players/${game.player_2_id}`}
+                  <AppLink
+                    to="/app/$clubSlug/players/$playerId"
+                    params={{ playerId: game.player_2_id }}
                     className="transition-colors duration-150 hover:text-strike"
                   >
                     {game.player_2_name}
-                  </Link>
+                  </AppLink>
                   {isDoubles && game.player_2b_id != null && (
                     <>
                       {" / "}
-                      <Link
-                        to={`/app/players/${game.player_2b_id}`}
+                      <AppLink
+                        to="/app/$clubSlug/players/$playerId"
+                        params={{ playerId: game.player_2b_id }}
                         className="transition-colors duration-150 hover:text-strike"
                       >
                         {game.player_2b_name}
-                      </Link>
+                      </AppLink>
                     </>
                   )}
                 </span>
@@ -460,15 +474,16 @@ function TournamentGamesCard({
       </ul>
 
       {rest > 0 && (
-        <Link
-          to={`/app/tournaments/${tournament.id}`}
+        <AppLink
+          to="/app/$clubSlug/tournaments/$tournamentId"
+          params={{ tournamentId: tournament.id }}
           className="mt-2 flex items-center justify-between gap-2 border-t border-hairline pt-2 text-caption font-medium text-ink-soft transition-colors duration-150 hover:text-strike"
         >
           <span className="min-w-0 truncate">
             {t("feed.moreGames", { n: rest })}
           </span>
           <LuChevronRight className="h-4 w-4 shrink-0" aria-hidden />
-        </Link>
+        </AppLink>
       )}
     </>
   );
@@ -626,6 +641,9 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
                 className={`px-1 pb-1.5 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint ${
                   index === 0 ? "" : "pt-5"
                 }`}
+                // "Today" depends on the reader's timezone, which the server
+                // does not have — see libs/dayLabel.
+                suppressHydrationWarning
               >
                 {dayLabel(date, t, locale)}
               </h3>
@@ -650,7 +668,8 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
                 }
                 label={t("tournaments.new")}
                 name={item.tournament.name}
-                to={`/app/tournaments/${item.tournament.id}`}
+                to="/app/$clubSlug/tournaments/$tournamentId"
+                params={{ tournamentId: item.tournament.id }}
                 at={item.at}
               />
             ) : (

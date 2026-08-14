@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { AppLink } from "@/components/AppLink";
 import {
   LuBell,
   LuSwords,
@@ -106,8 +106,9 @@ export default function NotificationBell() {
                 const Icon = ICONS[item.kind];
                 return (
                   <li key={item.id}>
-                    <Link
-                      to={item.to}
+                    <AppLink
+                      to={item.link.to}
+                      params={item.link.params}
                       onClick={() => setOpen(false)}
                       className={`flex items-start gap-3 px-4 py-3 text-body transition-colors duration-150 hover:bg-felt ${
                         item.needsAction ? "bg-strike-tint" : ""
@@ -120,7 +121,7 @@ export default function NotificationBell() {
                         aria-hidden
                       />
                       <span className="min-w-0 text-ink">{item.message}</span>
-                    </Link>
+                    </AppLink>
                   </li>
                 );
               })}

@@ -1,20 +1,35 @@
 import { useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/supabaseClient";
-import { useAuth } from "@/hooks/useAuth";
+import { getRouteApi } from "@tanstack/react-router";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { NEXT_KEY, isSafePath } from "@/libs/nextPath";
+import { signIn, signUp, startGoogleOAuth } from "@/libs/auth.functions";
+import { useSessionRefresh } from "@/hooks/useAuth";
+import { isSafePath } from "@/libs/nextPath";
 import { useT } from "@/i18n";
 
+const route = getRouteApi("/app/login");
+
+/**
+ * Signing in, on the server.
+ *
+ * All three routes — Google, email sign-in, email sign-up — go through server
+ * functions in libs/auth.functions.ts, so the session lands in httpOnly cookies
+ * and no token is ever handled by code on this page.
+ *
+ * The old sessionStorage handoff is gone with it. `next` used to be written here
+ * and read back by the layout once a session appeared, because the OAuth round
+ * trip destroyed the page in between; now it travels in the provider's redirect
+ * URL and comes back on /auth/callback.
+ */
 export default function LoginPage() {
-  const { user, isLoading } = useAuth();
   const { t } = useT();
-  const [searchParams] = useSearchParams();
-  const rawNext = searchParams.get("next");
-  const next = isSafePath(rawNext) ? rawNext : "/app";
+  const search = route.useSearch();
+  const navigate = route.useNavigate();
+  const refreshSession = useSessionRefresh();
+
+  const next = isSafePath(search.next) ? search.next : "/app";
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [busy, setBusy] = useState(false);
@@ -22,18 +37,23 @@ export default function LoginPage() {
   // the two is ever on screen.
   const [note, setNote] = useState<{ text: string; ok?: boolean } | null>(null);
 
-  // Already signed in — nothing to do here but leave
-  if (!isLoading && user) return <Navigate to={next} replace />;
+  /** The session cookies are set; make the router notice and move on. */
+  const arrive = async () => {
+    await refreshSession();
+    await navigate({ href: next });
+  };
 
-  const signIn = () => {
-    // Google returns to a fixed URL, so the destination has to outlive the
-    // page load. Layout picks it up again once the session lands — which means
-    // coming back inside /app, not on the public landing at "/".
-    sessionStorage.setItem(NEXT_KEY, next);
-    supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/app` },
-    });
+  const signInWithGoogle = async () => {
+    setBusy(true);
+    setNote(null);
+    const result = await startGoogleOAuth({ data: { next } });
+    if ("error" in result) {
+      setNote({ text: t("auth.badCredentials") });
+      setBusy(false);
+      return;
+    }
+    // A full page load, not a router navigation: the destination is Google.
+    window.location.href = result.url;
   };
 
   const submitEmail = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -45,37 +65,38 @@ export default function LoginPage() {
 
     setBusy(true);
     setNote(null);
-    // Same round-trip as OAuth: the confirmation link reloads the app at the
-    // site root, so ?next= has to survive in sessionStorage.
-    sessionStorage.setItem(NEXT_KEY, next);
 
-    const { data, error } =
-      mode === "signin"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({
-            email,
-            password,
-            // Same key Google fills, so join_club() and the profile menu read
-            // one field regardless of how the account was made.
-            options: {
-              emailRedirectTo: `${window.location.origin}/app`,
-              data: { full_name: fullName },
-            },
-          });
-    setBusy(false);
+    try {
+      if (mode === "signin") {
+        const result = await signIn({ data: { email, password } });
+        if (result?.error) {
+          // Supabase messages are English-only; ours are translated, and vaguer
+          // on purpose — "wrong password" tells a stranger the account exists.
+          setNote({ text: t("auth.badCredentials") });
+          return;
+        }
+        await arrive();
+        return;
+      }
 
-    if (error) {
-      // Supabase messages are English-only; ours are translated, and vaguer on
-      // purpose — "wrong password" tells a stranger the account exists.
-      setNote({
-        text: t(mode === "signin" ? "auth.badCredentials" : "auth.signUpError"),
+      const result = await signUp({
+        data: { email, password, fullName, next },
       });
-      return;
-    }
-    // Sign-up with email confirmation on returns a user but no session; the
-    // auth listener takes over from here when a session does land.
-    if (mode === "signup" && !data.session) {
-      setNote({ text: t("auth.checkInbox"), ok: true });
+      if ("error" in result) {
+        setNote({ text: t("auth.signUpError") });
+        return;
+      }
+      // With email confirmation on there is a user but no session yet; the
+      // confirmation link comes back through /auth/callback.
+      if (result.needsConfirmation) {
+        setNote({ text: t("auth.checkInbox"), ok: true });
+        return;
+      }
+      await arrive();
+    } catch {
+      setNote({ text: t(mode === "signin" ? "auth.badCredentials" : "auth.signUpError") });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -98,11 +119,12 @@ export default function LoginPage() {
 
         <button
           type="button"
-          onClick={signIn}
+          onClick={signInWithGoogle}
+          disabled={busy}
           // Filled with ink, not with the accent: signing in with Google is the
           // way in, but the accent is spent on actions inside the app. The hover
           // is a token, since `white` is invisible under light mode's pale text.
-          className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-control bg-ink font-medium text-pocket transition-[background-color,transform] duration-150 ease-[var(--ease-out)] hover:bg-ink-strong active:scale-[0.97]"
+          className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-control bg-ink font-medium text-pocket transition-[background-color,transform] duration-150 ease-[var(--ease-out)] hover:bg-ink-strong active:scale-[0.97] disabled:opacity-60"
         >
           <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" aria-hidden>
             <path
