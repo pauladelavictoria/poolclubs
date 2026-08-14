@@ -283,7 +283,6 @@
   "score.low": "Bas",
   "scoreString.title": "{won} sur {total} gagnés",
   "scoreString.aria": "{total} derniers matchs : {won} gagnés",
-  "club.noClub": "Aucun club",
   "club.welcome": "Bienvenue",
   "club.switch": "Club",
   "club.createTitle": "Créer un club",

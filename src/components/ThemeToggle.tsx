@@ -1,11 +1,18 @@
 import { LuMoon, LuSun } from "react-icons/lu";
+import { pickerClasses } from "@/components/ui/buttonStyles";
 import { setTheme, useTheme } from "@/libs/theme";
 import { useT } from "@/i18n";
 
 /**
- * Two states, one button: the icon shows where you are, the label says where
- * you'd land. Small enough to sit next to the language picker in the drawer
- * and in the landing footer, which are the only two places it appears.
+ * Two states, one button, showing the one you are not in: a sun to go light, a
+ * moon to go dark. Nothing to read — with two themes and those two glyphs the
+ * label was saying what the icon already said, and it was saying it at three
+ * times the width of the language buttons it now shares a row with.
+ *
+ * It wears the unselected pill from that row rather than the lit one. Sitting
+ * beside three choices where one is on, a lit pill would claim to be a fourth
+ * choice that is on; this is the one control in the row that acts rather than
+ * reports. The name stays on `title` and `aria-label`.
  */
 export default function ThemeToggle({
   className = "",
@@ -20,15 +27,15 @@ export default function ThemeToggle({
     <button
       type="button"
       onClick={() => setTheme(next)}
+      aria-label={t(`theme.${next}`)}
       title={t(`theme.${next}`)}
-      className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-control border border-hairline px-3 text-caption font-medium text-ink-faint transition-colors duration-150 hover:border-hairline-strong hover:text-ink ${className}`}
+      className={`${pickerClasses(false)} w-8 shrink-0 ${className}`}
     >
-      {theme === "dark" ? (
+      {next === "light" ? (
         <LuSun className="h-4 w-4" aria-hidden />
       ) : (
         <LuMoon className="h-4 w-4" aria-hidden />
       )}
-      {t(`theme.${next}`)}
     </button>
   );
 }

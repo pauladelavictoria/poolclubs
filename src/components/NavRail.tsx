@@ -49,7 +49,7 @@ export default function NavRail({ onMore }: { onMore: () => void }) {
           to={to}
           activeOptions={{ exact: end }}
           viewTransition
-          className={tab({ isActive: false })}
+          inactiveProps={{ className: tab({ isActive: false }) }}
           activeProps={{ className: tab({ isActive: true }) }}
         >
           {({ isActive }: { isActive: boolean }) => (

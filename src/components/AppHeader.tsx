@@ -1,14 +1,19 @@
 import { LuChevronLeft, LuMenu } from "react-icons/lu";
 import { AppLink } from "@/components/AppLink";
+import ClubMenu from "@/components/ClubMenu";
 import NotificationBell from "@/components/NotificationBell";
 import ProfileMenu from "@/components/ProfileMenu";
-import { useAuth } from "@/hooks/useAuth";
 import { useRouteMeta } from "@/libs/routeMeta";
 import { useT } from "@/i18n";
 
 /**
- * One 56px bar, the same on every screen: where you are signed in (the club),
- * what is waiting on you, and who you are. Nothing about the page under it.
+ * One 56px bar: where you are signed in (the club), what is waiting on you, and
+ * who you are. Nothing about the page under it.
+ *
+ * It is not on every screen any more. A wide desktop keeps the nav column pinned
+ * open, and that column has room for the same three things across its top — so
+ * the bar would be a second row of chrome saying what the column already says.
+ * The club layout renders this only when the nav isn't pinned.
  *
  * The page's own name, its trail and its actions moved into the content, where
  * a title can be a real h1 with room to breathe and an action can sit next to
@@ -27,10 +32,8 @@ export default function AppHeader({
   onMenu?: () => void;
 }) {
   const { t } = useT();
-  const { activeClub } = useAuth();
   const { crumbs } = useRouteMeta();
 
-  const clubName = activeClub?.name ?? t("common.appName");
   // The trail's last entry is what the chevron goes back to. It carries the
   // route's own pattern plus the parameters to fill it, so the link is checked
   // rather than string-built.
@@ -39,7 +42,7 @@ export default function AppHeader({
   return (
     // pt clears the status bar: viewport-fit=cover puts the page under it, and
     // the bar's own background is what fills the gap.
-    <header className="z-30 shrink-0 border-b border-hairline bg-felt/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+    <header className="relative z-30 shrink-0 border-b border-hairline bg-felt/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-3">
         {onMenu && (
           <button
@@ -64,29 +67,7 @@ export default function AppHeader({
           </AppLink>
         )}
 
-        {/* The lobby is not a tab, so the club is the way back to it — the same
-            job the ball does on the desktop rail. */}
-        <AppLink
-          to="/app/$clubSlug"
-          viewTransition
-          aria-label={t("nav.home")}
-          className="flex min-w-0 flex-1 items-center gap-2 text-ink transition-colors duration-150 hover:text-strike"
-        >
-          <img
-            src={activeClub?.logo_url || "/ball.png"}
-            alt=""
-            // A crest uploaded with a transparent background is drawn for
-            // paper, not for a dark bar — so it gets its paper.
-            className={`h-8 w-8 shrink-0 object-cover ${
-              activeClub?.logo_url
-                ? "rounded-full border border-hairline bg-white"
-                : "rounded-full"
-            }`}
-          />
-          <span className="min-w-0 truncate text-h4 font-semibold">
-            {clubName}
-          </span>
-        </AppLink>
+        <ClubMenu className="flex-1" />
 
         <NotificationBell />
         <ProfileMenu />

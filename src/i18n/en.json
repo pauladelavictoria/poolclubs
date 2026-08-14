@@ -283,7 +283,6 @@
   "score.low": "Poor",
   "scoreString.title": "{won} of {total} won",
   "scoreString.aria": "Last {total} matches: {won} won",
-  "club.noClub": "No club",
   "club.welcome": "Welcome",
   "club.switch": "Club",
   "club.createTitle": "Start a club",

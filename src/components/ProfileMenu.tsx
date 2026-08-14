@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { AppLink } from "@/components/AppLink";
 import { LuUser, LuLogOut } from "react-icons/lu";
-import { toast } from "react-toastify";
 import { Avatar } from "@/components/ui/Avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useSignOut } from "@/hooks/useSignOut";
@@ -31,17 +30,6 @@ export default function ProfileMenu() {
   // metadata only ever has the provider's.
   const avatarUrl = player.avatar_url;
   const userName = user.fullName || user.email || undefined;
-
-  const handleSignOut = async () => {
-    setOpen(false);
-    try {
-      await signOut.mutateAsync();
-      toast.success(t("auth.signedOut"));
-    } catch {
-      // Logged by the mutation cache; this is the part the user sees.
-      toast.error(t("auth.signOutError"));
-    }
-  };
 
   return (
     <div ref={ref} className="relative shrink-0">
@@ -86,7 +74,10 @@ export default function ProfileMenu() {
           <button
             type="button"
             role="menuitem"
-            onClick={handleSignOut}
+            onClick={() => {
+              setOpen(false);
+              signOut.mutate();
+            }}
             className={itemClasses}
           >
             <LuLogOut className="h-[18px] w-[18px] shrink-0" aria-hidden />

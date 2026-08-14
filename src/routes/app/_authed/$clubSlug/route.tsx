@@ -11,7 +11,6 @@ import NavRail from "@/components/NavRail";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import ClubOnboardingPage from "@/pages/ClubOnboardingPage";
 import { useClubTheme } from "@/libs/clubTheme";
-import { useMedia } from "@/libs/useMedia";
 import { playersQuery } from "@/queries/players";
 
 /**
@@ -59,18 +58,10 @@ export const Route = createFileRoute("/app/_authed/$clubSlug")({
   component: ClubLayout,
 });
 
-/**
- * The nav column is 19rem and the content is 64rem wide at most; below the two
- * of them plus their gutters the drawer would be taking room off the pages it
- * leads to, so it goes back to being something you open.
- */
-const PINNED = "(min-width: 1360px)";
-
 function ClubLayout() {
   const { activeClub, isMember } = Route.useRouteContext();
   const { pathname } = useLocation();
   const scroller = useRef<HTMLElement>(null);
-  const pinned = useMedia(PINNED);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   // A drawer the pointer opened is one the pointer should be able to put away;
   // one opened from a button stays until it is dismissed.
@@ -95,8 +86,12 @@ function ClubLayout() {
 
   return (
     <>
+      {/* Both nav forms, each hiding itself outside its own width. Nothing here
+          asks how wide the window is: every one of these is a CSS breakpoint, so
+          the HTML the server sends is already the right one and there is nothing
+          for hydration to move. See --breakpoint-pinned. */}
+      <NavDrawer pinned />
       <NavDrawer
-        pinned={pinned}
         open={isDrawerOpen}
         closeOnLeave={byPointer}
         onClose={() => {
@@ -107,30 +102,33 @@ function ClubLayout() {
 
       {/* Nothing to see: a strip along the edge the nav lives behind, so on a
           desktop reaching for it is enough and the hamburger is only the
-          keyboard's way in. Phones have the tab bar and never grow one. */}
-      {!pinned && (
-        <div
-          aria-hidden
-          onMouseEnter={() => {
-            setIsDrawerOpen(true);
-            setByPointer(true);
-          }}
-          className="fixed inset-y-0 left-0 z-30 hidden w-3 md:block"
-        />
-      )}
+          keyboard's way in. Phones have the tab bar and never grow one; pinned
+          the column is already there. */}
+      <div
+        aria-hidden
+        onMouseEnter={() => {
+          setIsDrawerOpen(true);
+          setByPointer(true);
+        }}
+        className="fixed inset-y-0 left-0 z-30 hidden w-3 md:block pinned:hidden"
+      />
 
       <div
         data-app-shell
-        className={`flex h-dvh flex-col overflow-hidden ${
-          pinned ? "pl-[19rem]" : ""
-        }`}
+        className="flex h-dvh flex-col overflow-hidden pinned:pl-[19rem]"
       >
         <NavRail onMore={() => setIsDrawerOpen(true)} />
-        <AppHeader onMenu={pinned ? undefined : () => setIsDrawerOpen(true)} />
-        {/* Clear the bottom tab bar on phones, including the home-indicator inset */}
+        {/* The pinned column carries the club, the bell and the user across its
+            own ends, so a bar here would be a second row of chrome repeating it. */}
+        <div className="shrink-0 pinned:hidden">
+          <AppHeader onMenu={() => setIsDrawerOpen(true)} />
+        </div>
+        {/* Clear the bottom tab bar on phones, including the home-indicator inset.
+            The pt is for the pinned case: with no bar above it, the page's own
+            py-4 is all there is between the first heading and the window. */}
         <main
           ref={scroller}
-          className="flex-1 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"
+          className="flex-1 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 pinned:pt-2"
         >
           <Suspense fallback={<PageSkeleton />}>
             <Outlet />

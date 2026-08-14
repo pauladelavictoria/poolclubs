@@ -29,6 +29,17 @@
   --text-h1: 2rem; /* 32 */
   --text-display: 3rem; /* 48 */
 
+  /* The width at which the nav stops being something you open and becomes the
+     app's left column. The column is 19rem and the content is 64rem at most;
+     below the two of them plus their gutters the nav would be taking room off
+     the pages it leads to.
+     It is a breakpoint rather than a matchMedia call because the server has
+     neither a viewport nor matchMedia: anything JS decides here is decided
+     wrongly first and corrected on hydration, which on a desktop was the whole
+     column and 19rem of padding appearing under the cursor. CSS just renders it
+     right the first time. */
+  --breakpoint-pinned: 85rem; /* 1360 */
+
   /* Surfaces — one hue, lightness only. pocket < felt < raised < rail */
   --color-pocket: #090b0e; /* page canvas, and input fill (inputs are inset) */
   --color-felt: #171c22; /* cards, app bar */

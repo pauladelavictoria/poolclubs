@@ -79,7 +79,14 @@ export default function NotificationBell() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-card border border-hairline bg-felt-raised"
+          // Hangs off whichever edge has the room. In the bar the bell is at the
+          // top right of the window, so the panel grows leftwards; in the pinned
+          // column it is 40px from the left of a 19rem strip and 20rem of panel
+          // does not fit there, so it grows rightwards over the page instead.
+          // A breakpoint rather than a prop because those two are the same two
+          // sides of --breakpoint-pinned: the bar is display:none above it and
+          // the column does not exist below it.
+          className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-card border border-hairline bg-felt-raised pinned:right-auto pinned:left-0"
         >
           <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
             <p className="text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">

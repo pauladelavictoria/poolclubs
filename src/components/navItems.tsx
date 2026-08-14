@@ -8,6 +8,7 @@ import {
   LuPlus,
   LuSettings,
   LuUsers,
+  LuHouse,
 } from "react-icons/lu";
 import type { LinkProps } from "@tanstack/react-router";
 import type { Key } from "@/i18n";
@@ -30,28 +31,30 @@ export type NavItem = {
 };
 
 /**
- * The four thumb-reachable destinations: the four places the app is made of,
- * in the order libs/sections declares them.
+ * The four thumb-reachable destinations, with "More" making the fifth tab.
  *
- * The lobby is not among them. It is not a fifth place, it is where the four
- * show up, and it is one tap away on the club name in the bar (the same job
- * the ball does on the desktop rail). That is what buys tournaments — a
- * section with its own hue, its own glyph and its own page — a slot here
- * instead of a line in the drawer.
+ * The lobby leads them now. It is where everything else shows up — the feed, the
+ * standings, what is waiting on you — and on a phone there is no pinned column
+ * and no bar row to reach it from, so a tab is the only place left for it.
+ *
+ * Games gave up the slot rather than the lobby squeezing in as a sixth: five
+ * tabs is what fits a 360px phone (see NavRail), and the two things a tab for
+ * games led to — the list and adding one — are the club's home page and the
+ * button on it.
  */
 export const PRIMARY_NAV: NavItem[] = [
+  {
+    to: "/app/$clubSlug",
+    labelKey: "nav.home",
+    icon: LuHouse,
+    section: "home",
+    end: true,
+  },
   {
     to: "/app/$clubSlug/tournaments",
     labelKey: "nav.tournaments",
     icon: LuNetwork,
     section: "tournaments",
-    end: true,
-  },
-  {
-    to: "/app/$clubSlug/games",
-    labelKey: "nav.games",
-    icon: LuCircleDot,
-    section: "games",
     end: true,
   },
   {
@@ -73,13 +76,23 @@ export const PRIMARY_NAV: NavItem[] = [
 /**
  * Full map, used by the drawer, in the order the club is thought about: where
  * you are, what you played, what you practise, where that puts you.
- * The club identity and switcher sit above these — they're not a destination.
+ *
+ * The lobby leads it. It used to be the club name in the bar, and then a line
+ * inside the club switcher — but "go to the club's front page" and "go to a
+ * different club" are not the same errand, and only one of them is navigation.
  * Administering the roster is part of club settings; reading it is its own page.
  */
 export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
   {
     headingKey: "nav.club",
     items: [
+      {
+        to: "/app/$clubSlug",
+        labelKey: "nav.home",
+        icon: LuHouse,
+        section: "home",
+        end: true,
+      },
       {
         to: "/app/$clubSlug/players",
         labelKey: "nav.players",
