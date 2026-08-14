@@ -1,7 +1,14 @@
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import {
+  useParams,
+  useSearchParams,
+  Link,
+  useNavigate,
+} from "react-router-dom";
+import { toast } from "react-toastify";
 import { useGetDrill } from "@/hooks/useGetDrills";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
+import { useManageDrills } from "@/hooks/useManageDrills";
 import { useAuth } from "@/hooks/useAuth";
 import { canEditDrill } from "@/libs/drillPermissions";
 import PageTitle from "@/components/PageTitle";
@@ -24,6 +31,7 @@ export default function DrillDetailPage() {
   const portrait = useTablePortrait();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const drillId = Number(id);
 
   const planId = searchParams.get("plan")
@@ -41,9 +49,19 @@ export default function DrillDetailPage() {
   const { completeStep } = useTrainingPlan(undefined);
   const { user, isAdmin } = useAuth();
   const canEdit = canEditDrill(drill?.created_by, user?.id, isAdmin);
+  const { deleteDrill } = useManageDrills();
 
   const handleLogSuccess = (drillLogId: number) => {
     if (planId && stepId) completeStep.mutate({ stepId, drillLogId });
+  };
+
+  const handleDelete = () => {
+    if (!drill) return;
+    if (!confirm(t("drills.deleteConfirm"))) return;
+    deleteDrill.mutate(drill.id, {
+      onSuccess: () => navigate("/app/drills"),
+      onError: () => toast.error(t("drills.deleteError")),
+    });
   };
 
   const backLink =
@@ -97,12 +115,22 @@ export default function DrillDetailPage() {
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         <PageTitle title={drill.name}>
           {canEdit && (
-            <Link
-              to={`/app/drills/${drill.id}/edit`}
-              className={buttonClasses({ variant: "secondary", size: "sm" })}
-            >
-              {t("common.edit")}
-            </Link>
+            <>
+              <Link
+                to={`/app/drills/${drill.id}/edit`}
+                className={buttonClasses({ variant: "secondary", size: "sm" })}
+              >
+                {t("common.edit")}
+              </Link>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleteDrill.isPending}
+                className={buttonClasses({ variant: "ghost", size: "sm" })}
+              >
+                {t("common.delete")}
+              </button>
+            </>
           )}
         </PageTitle>
 

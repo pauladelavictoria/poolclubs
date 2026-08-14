@@ -1,14 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { keys } from "@/libs/queryKeys";
+import { useAuth } from "@/hooks/useAuth";
 import type { Drill } from "@/types";
 
 /** Everything on a drill except the columns the database fills in. `created_by`
- *  is one of them: leaving it out is what keeps ownership unforgeable. */
-export type DrillInput = Omit<Drill, "id" | "created_at" | "created_by">;
+ *  is one of them: leaving it out is what keeps ownership unforgeable. `club_id`
+ *  is another: it's stamped from the active club, not user-editable. */
+export type DrillInput = Omit<
+  Drill,
+  "id" | "created_at" | "created_by" | "club_id"
+>;
 
 export const useManageDrills = () => {
   const queryClient = useQueryClient();
+  const { activeClubId } = useAuth();
 
   const onSuccess = (drill?: Drill) => {
     queryClient.invalidateQueries({ queryKey: keys.drills.all });
@@ -19,9 +25,11 @@ export const useManageDrills = () => {
   return {
     createDrill: useMutation({
       mutationFn: async (newDrill: DrillInput) => {
+        if (!activeClubId) throw new Error("no active club");
+
         const { data } = await supabase
           .from("drills")
-          .insert([newDrill])
+          .insert([{ ...newDrill, club_id: activeClubId }])
           .select()
           .single()
           .throwOnError();
@@ -48,7 +56,15 @@ export const useManageDrills = () => {
 
     deleteDrill: useMutation({
       mutationFn: async (id: number) => {
-        await supabase.from("drills").delete().eq("id", id).throwOnError();
+        // `count` is the only way to notice RLS refusing the row: a blocked
+        // delete is not an error, just nothing deleted.
+        const { count } = await supabase
+          .from("drills")
+          .delete({ count: "exact" })
+          .eq("id", id)
+          .throwOnError();
+
+        if (!count) throw new Error("No se pudo borrar el ejercicio");
       },
       onSuccess: () => onSuccess(),
     }),

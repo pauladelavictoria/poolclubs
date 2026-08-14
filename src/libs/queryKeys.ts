@@ -48,8 +48,8 @@ export const keys = {
 
   drills: {
     all: ["drills"] as const,
-    list: (f: UseGetDrillsFilters) =>
-      ["drills", f.difficulty, f.skill_type] as const,
+    list: (f: UseGetDrillsFilters, clubId: number | null | undefined) =>
+      ["drills", clubId, f.difficulty, f.skill_type] as const,
   },
 
   /** A single drill has its own root, so saving one refreshes its page without
