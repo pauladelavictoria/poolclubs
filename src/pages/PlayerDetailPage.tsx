@@ -14,7 +14,6 @@ import { useAuth } from "@/hooks/useAuth";
 import PageTitle from "@/components/PageTitle";
 import ChallengeButton from "@/components/ChallengeButton";
 import GamesList from "@/components/GamesList";
-import PlayerTabs from "@/components/PlayerTabs";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { Stat } from "@/components/ui/Stat";
@@ -22,25 +21,23 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useChartTheme } from "@/libs/chartTheme";
-import { getRouteApi } from "@tanstack/react-router";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/AppLink";
 
 /** A player's whole history, not a page of it — the charts are cumulative. */
 export const PLAYER_GAMES_LIMIT = 1000;
 
-const route = getRouteApi("/app/_authed/$clubSlug/players/$playerId/");
-
-export default function PlayerDetailPage() {
-  const { playerId: playerIdParam } = route.useParams();
-  const playerId = Number(playerIdParam);
+/** The id comes from whichever route rendered this: the club's roster passes
+ *  the one in the URL, "/me" passes your own. That is the only difference
+ *  between the two, and it is what decides whether the page carries a
+ *  "Players" crumb back to the list. */
+export default function PlayerDetailPage({ playerId }: { playerId: number }) {
   const { t, locale } = useT();
   const chart = useChartTheme();
 
   const { user } = useAuth();
   const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
   const player = players?.find((p) => p.id === playerId);
-  const isOwnProfile = !!user && player?.user_id === user.id;
 
   const { data: gamesData, isLoading: isLoadingGames } = useGetGames({
     playerId,
@@ -157,14 +154,7 @@ export default function PlayerDetailPage() {
         <PageTitle title={player.name}>
           <CategoryBadge category={player.category} full />
         </PageTitle>
-        {user && (
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <PlayerTabs playerId={player.id} isOwnProfile={isOwnProfile} />
-            </div>
-            <ChallengeButton toPlayerId={player.id} />
-          </div>
-        )}
+        {user && <ChallengeButton toPlayerId={player.id} />}
 
         {stats && stats.totalGames > 0 ? (
           <>

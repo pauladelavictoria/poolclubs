@@ -1,6 +1,4 @@
-import { useEffect } from "react";
-import { useTheme } from "@/libs/theme";
-import type { BallColor, Club } from "@/types";
+import type { BallColor } from "@/types";
 
 /**
  * One club, one accent. Whatever solid ball its admin picked on the club
@@ -22,7 +20,7 @@ import type { BallColor, Club } from "@/types";
  * mode — dark mode's felt is #171c22, light mode's is #ffffff — the same bar
  * the yellow default was already held to.
  */
-type Shades = {
+export type Shades = {
   base: string;
   light: string;
   deep: string;
@@ -151,40 +149,3 @@ export const CLUB_THEME_PALETTE: Record<
     },
   },
 };
-
-const VARS = [
-  "--color-strike",
-  "--color-strike-light",
-  "--color-strike-deep",
-  "--color-strike-tint",
-] as const;
-
-/**
- * Applies the active club's colour to the document root. Called once, high up
- * (see pages/Layout.tsx), so it repaints ahead of anything below it — a
- * An effect, not a layout effect: React warns about useLayoutEffect during
- * server rendering, and an effect does not run there at all. The cost is one
- * frame of the previous accent when switching clubs — the flash the layout
- * effect used to avoid.
- */
-export function useClubTheme(club: Club | null | undefined) {
-  const mode = useTheme();
-  const color = club?.theme_color;
-
-  useEffect(() => {
-    const root = document.documentElement.style;
-
-    // No club, or the default ball: the stylesheet's own yellow already is
-    // this, so clearing the override is enough.
-    if (!color || color === "yellow") {
-      VARS.forEach((v) => root.removeProperty(v));
-      return;
-    }
-
-    const shades = CLUB_THEME_PALETTE[color][mode];
-    root.setProperty("--color-strike", shades.base);
-    root.setProperty("--color-strike-light", shades.light);
-    root.setProperty("--color-strike-deep", shades.deep);
-    root.setProperty("--color-strike-tint", shades.tint);
-  }, [color, mode]);
-}

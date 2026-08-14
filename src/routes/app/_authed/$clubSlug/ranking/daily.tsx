@@ -13,10 +13,9 @@ import { gamesQuery } from "@/queries/games";
  * only ever reads a date somebody already decided.
  */
 export const Route = createFileRoute("/app/_authed/$clubSlug/ranking/daily")({
-  staticData: {
-    section: "ranking",
-    crumbs: [{ labelKey: "nav.ranking", to: "/app/$clubSlug/ranking" }],
-  },
+  // No crumb back to the all-time ladder: the two views are one section now and
+  // the tabs on the page are the way between them.
+  staticData: { section: "ranking" },
 
   validateSearch: z.object({
     date: z

@@ -4,11 +4,11 @@ import {
   LuCircleDot,
   LuNetwork,
   LuTarget,
-  LuCalendarDays,
-  LuPlus,
   LuSettings,
   LuUsers,
   LuHouse,
+  LuClipboardList,
+  LuChartColumn,
 } from "react-icons/lu";
 import type { LinkProps } from "@tanstack/react-router";
 import type { Key } from "@/i18n";
@@ -26,7 +26,13 @@ export type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
   /** Which of the four places this leads to — carries the mark. See libs/sections. */
   section: SectionId;
-  /** Exact matching, so a parent route doesn't stay highlighted on its children. */
+  /**
+   * Exact matching. Only for rows that would otherwise swallow a sibling: the
+   * lobby (every club path starts with it) and the rows under a player, whose
+   * paths nest inside each other. A section's own row leaves this off, so
+   * "Players" stays marked while you are reading one player, and the same for
+   * tournaments, matches, drills and the two ranking views.
+   */
   end?: boolean;
 };
 
@@ -55,32 +61,32 @@ export const PRIMARY_NAV: NavItem[] = [
     labelKey: "nav.tournaments",
     icon: LuNetwork,
     section: "tournaments",
-    end: true,
   },
   {
     to: "/app/$clubSlug/ranking",
     labelKey: "nav.ranking",
     icon: LuTrophy,
     section: "ranking",
-    end: true,
   },
   {
     to: "/app/$clubSlug/drills",
     labelKey: "nav.drills",
     icon: LuTarget,
     section: "drills",
-    end: true,
   },
 ];
 
 /**
- * Full map, used by the drawer, in the order the club is thought about: where
- * you are, what you played, what you practise, where that puts you.
+ * The drawer is two lists: the club, then you.
  *
- * The lobby leads it. It used to be the club name in the bar, and then a line
- * inside the club switcher — but "go to the club's front page" and "go to a
- * different club" are not the same errand, and only one of them is navigation.
- * Administering the roster is part of club settings; reading it is its own page.
+ * One row per destination and no sub-lists. What used to be four headings with
+ * one or two rows under each ("Rankings → Overall, Daily") is a heading for
+ * every place you can be in the club, in the order the club is thought about.
+ * Ranking is a single row on purpose: the ladder defaults to all-time and the
+ * page itself switches to a day, which is a filter, not a second destination.
+ *
+ * Club settings sit last, after the places, because administering the club is
+ * not one of them. They only render for admins (see NavDrawer).
  */
 export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
   {
@@ -98,7 +104,30 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         labelKey: "nav.players",
         icon: LuUsers,
         section: "home",
-        end: true,
+      },
+      {
+        to: "/app/$clubSlug/tournaments",
+        labelKey: "nav.tournaments",
+        icon: LuNetwork,
+        section: "tournaments",
+      },
+      {
+        to: "/app/$clubSlug/ranking",
+        labelKey: "nav.ranking",
+        icon: LuTrophy,
+        section: "ranking",
+      },
+      {
+        to: "/app/$clubSlug/games",
+        labelKey: "nav.games",
+        icon: LuCircleDot,
+        section: "games",
+      },
+      {
+        to: "/app/$clubSlug/drills",
+        labelKey: "nav.drills",
+        icon: LuTarget,
+        section: "drills",
       },
       {
         to: "/app/$clubSlug/club",
@@ -109,71 +138,45 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
       },
     ],
   },
+];
+
+/**
+ * Your half of the drawer. The rows addressed by player id get it from the
+ * drawer, which fills in one `params` for the whole list.
+ */
+export const ME_NAV: NavItem[] = [
   {
-    headingKey: "nav.tournaments",
-    items: [
-      {
-        to: "/app/$clubSlug/tournaments",
-        labelKey: "nav.allTournaments",
-        icon: LuNetwork,
-        section: "tournaments",
-        end: true,
-      },
-    ],
+    to: "/app/$clubSlug/me",
+    labelKey: "nav.games",
+    icon: LuCircleDot,
+    section: "games",
+    end: true,
   },
   {
-    headingKey: "nav.games",
-    items: [
-      {
-        to: "/app/$clubSlug/games",
-        labelKey: "nav.allGames",
-        icon: LuCircleDot,
-        section: "games",
-        end: true,
-      },
-      {
-        to: "/app/$clubSlug/challenges",
-        labelKey: "nav.challenges",
-        icon: LuSwords,
-        section: "games",
-        end: true,
-      },
-      {
-        to: "/app/$clubSlug/games/new",
-        labelKey: "nav.addGame",
-        icon: LuPlus,
-        section: "games",
-      },
-    ],
+    to: "/app/$clubSlug/challenges",
+    labelKey: "nav.challenges",
+    icon: LuSwords,
+    section: "games",
+    end: true,
   },
   {
-    headingKey: "nav.training",
-    items: [
-      {
-        to: "/app/$clubSlug/drills",
-        labelKey: "nav.drills",
-        icon: LuTarget,
-        section: "drills",
-        end: true,
-      },
-    ],
+    to: "/app/$clubSlug/players/$playerId/training/plan",
+    labelKey: "nav.trainingPlan",
+    icon: LuClipboardList,
+    section: "drills",
   },
   {
-    headingKey: "nav.rankings",
-    items: [
-      {
-        to: "/app/$clubSlug/ranking",
-        labelKey: "nav.rankingGlobal",
-        icon: LuTrophy,
-        section: "ranking",
-        end: true,
-      },
-      {
-        to: "/app/$clubSlug/ranking/daily",
-        labelKey: "nav.rankingDaily",
-        icon: LuCalendarDays,
-        section: "ranking",
-      },
-    ],
+    to: "/app/$clubSlug/players/$playerId/training",
+    labelKey: "nav.trainingProgress",
+    icon: LuChartColumn,
+    section: "drills",
+    end: true,
+  },
+  {
+    to: "/app/$clubSlug/players/$playerId/settings",
+    labelKey: "nav.settings",
+    icon: LuSettings,
+    section: "home",
+    end: true,
   },
 ];

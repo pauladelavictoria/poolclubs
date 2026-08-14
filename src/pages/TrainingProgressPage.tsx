@@ -3,9 +3,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import { LuTrash2 } from "react-icons/lu";
 import PageTitle from "@/components/PageTitle";
 import DrillProgressChart from "@/components/DrillProgressChart";
-import PlayerTabs from "@/components/PlayerTabs";
 import SocialBar from "@/components/SocialBar";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { useGetDrills } from "@/hooks/useGetDrills";
 import { useDeleteDrillLog } from "@/hooks/useDeleteDrillLog";
@@ -30,7 +28,7 @@ const route = getRouteApi(
 export default function TrainingProgressPage() {
   const { t, locale } = useT();
   // The URL is the single source of truth for which player is shown
-  const { clubSlug, playerId } = route.useParams();
+  const { playerId } = route.useParams();
   const selectedPlayerId = Number(playerId);
 
   // Filters are a view over data already in memory, so they stay local state
@@ -38,7 +36,6 @@ export default function TrainingProgressPage() {
   const [drillId, setDrillId] = useState<number | "">("");
 
   const { user } = useAuth();
-  const { data: players } = useGetPlayers();
   const { data: drills } = useGetDrills();
   const deleteLog = useDeleteDrillLog();
   const { data: allLogs, isLoading } = useGetDrillLogs({
@@ -108,8 +105,6 @@ export default function TrainingProgressPage() {
     };
   }, [logs]);
 
-  const player = players?.find((p) => p.id === selectedPlayerId);
-
   // Deleting a result is not undoable and it moves the averages, so it asks
   function handleDelete(id: number) {
     if (!window.confirm(t("training.deleteConfirm"))) return;
@@ -126,23 +121,8 @@ export default function TrainingProgressPage() {
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         <PageTitle
           title={t("training.progressTitle")}
-          crumbs={
-            player
-              ? [
-                  { label: t("players.title"), to: "/app/$clubSlug/players" },
-                  {
-                    label: player.name,
-                    to: "/app/$clubSlug/players/$playerId",
-                    params: {
-                      clubSlug,
-                      playerId: String(selectedPlayerId),
-                    },
-                  },
-                ]
-              : undefined
-          }
+          crumbs={[]}
         />
-        {selectedPlayerId && <PlayerTabs playerId={selectedPlayerId} />}
 
         {allLogs && allLogs.length > 0 && (
           <div className="flex flex-wrap gap-2">

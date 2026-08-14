@@ -5,6 +5,8 @@ import { gamesQuery } from "@/queries/games";
 export const Route = createFileRoute(
   "/app/_authed/$clubSlug/players/$playerId/",
 )({
+  // Reached from the roster, so it says where it was reached from. Your own
+  // profile is /me, which has no list behind it and therefore no crumb.
   staticData: {
     crumbs: [{ labelKey: "players.title", to: "/app/$clubSlug/players" }],
   },
@@ -15,5 +17,10 @@ export const Route = createFileRoute(
         pageSize: PLAYER_GAMES_LIMIT,
       }),
     ),
-  component: PlayerDetailPage,
+  component: PlayerRoute,
 });
+
+function PlayerRoute() {
+  const { playerId } = Route.useParams();
+  return <PlayerDetailPage playerId={Number(playerId)} />;
+}

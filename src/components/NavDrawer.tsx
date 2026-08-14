@@ -8,15 +8,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSignOut } from "@/hooks/useSignOut";
 import { useDialog } from "@/libs/useDialog";
 import { toast } from "react-toastify";
-import { NAV_SECTIONS, type NavItem } from "@/components/navItems";
+import { NAV_SECTIONS, ME_NAV } from "@/components/navItems";
 import ThemeToggle from "@/components/ThemeToggle";
 import { LANGS, useT, type Lang } from "@/i18n";
-import {
-  LuClipboardList,
-  LuChartColumn,
-  LuLogOut,
-  LuSend,
-} from "react-icons/lu";
+import { LuLogOut, LuSend } from "react-icons/lu";
 
 /**
  * Where you are is a raised row wearing the club's colour, glyph and label both
@@ -82,38 +77,22 @@ export default function NavDrawer({
   // An absolute link, so it needs a host that exists on the server too.
   const { origin } = getRouteApi("__root__").useRouteContext();
 
-  // Your own training pages. They used to need a "/app/me/*" fallback for the
-  // case where the player id wasn't known yet; inside a club it always is, and
-  // the /me routes are real redirects now anyway.
-  const myTraining: NavItem[] = [
-    {
-      to: "/app/$clubSlug/players/$playerId/training/plan",
-      labelKey: "nav.myPlan",
-      icon: LuClipboardList,
-      section: "drills",
-    },
-    {
-      to: "/app/$clubSlug/players/$playerId/training",
-      labelKey: "nav.myProgress",
-      icon: LuChartColumn,
-      section: "drills",
-    },
+  const sections = [
+    ...NAV_SECTIONS.map((section) =>
+      // Club settings are the owner's to manage; everyone else gets the invite
+      // button below instead of a page they can't do anything on.
+      section.headingKey === "nav.club" && !isClubAdmin
+        ? {
+            ...section,
+            items: section.items.filter((i) => i.to !== "/app/$clubSlug/club"),
+          }
+        : section,
+    ),
+    // Your own rows only exist once there is a player to address them to, which
+    // inside a club there always is — the /app/me/* fallbacks these used to need
+    // are real redirects now.
+    { headingKey: "nav.me" as const, items: ME_NAV },
   ];
-
-  const sections = NAV_SECTIONS.map((section) => {
-    if (section.headingKey === "nav.training") {
-      return { ...section, items: [...section.items, ...myTraining] };
-    }
-    // Club settings are the owner's to manage; everyone else gets the invite
-    // button below instead of a page they can't do anything on.
-    if (section.headingKey === "nav.club" && !isClubAdmin) {
-      return {
-        ...section,
-        items: section.items.filter((i) => i.to !== "/app/$clubSlug/club"),
-      };
-    }
-    return section;
-  });
 
   // "Send" over "copy": the share sheet is the natural way to hand a link to
   // a specific person on a phone. Falls back to the clipboard on desktop.
@@ -147,7 +126,7 @@ export default function NavDrawer({
           <Heading>{t(section.headingKey)}</Heading>
           {section.items.map(({ to, labelKey, icon: Icon, end }) => (
             <AppLink
-              key={String(to)}
+              key={String(to) + String(labelKey)}
               to={to}
               // The training links carry a playerId; the rest ignore it.
               params={{ playerId: player.id }}
@@ -246,8 +225,7 @@ export default function NavDrawer({
             needs a menu because it has one slot; a footer can just show both. */}
         <div className="flex shrink-0 items-center gap-2 border-t border-hairline px-3 py-2">
           <AppLink
-            to="/app/$clubSlug/players/$playerId"
-            params={{ playerId: player.id }}
+            to="/app/$clubSlug/me"
             className="flex min-w-0 flex-1 items-center gap-2.5 rounded-control px-1 py-1.5 text-ink-soft transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
           >
             <Avatar

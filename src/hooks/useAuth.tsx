@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { getRouteApi, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { SESSION_KEY } from "@/queries/session";
+import { sessionQuery } from "@/queries/session";
 import type { Membership } from "@/types";
 
 /** Owner of the GLOBAL drill library — not a club role. Drills are shared by
@@ -26,7 +26,15 @@ export const useSessionRefresh = () => {
   const router = useRouter();
 
   return useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: SESSION_KEY });
+    // fetchQuery with the options, not invalidateQueries with the key: the
+    // session is hydrated out of the SSR payload, so its cache entry arrives
+    // with data but no queryFn — the client never called ensureQueryData,
+    // because the root's beforeLoad resolved on the server. Refetching by key
+    // alone threw "Missing queryFn" and left the stale session in place, which
+    // is why a club that changed its name or colour kept the old one until the
+    // page was reloaded. Passing the options is what supplies the function, and
+    // staleTime 0 overrides the query's own Infinity for this one call.
+    await queryClient.fetchQuery({ ...sessionQuery(), staleTime: 0 });
     await router.invalidate();
   }, [queryClient, router]);
 };

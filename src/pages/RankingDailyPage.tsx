@@ -4,6 +4,7 @@ import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useDailyRanking } from "@/hooks/useDailyRanking";
 import PageTitle from "@/components/PageTitle";
+import RankingPeriodTabs from "@/components/RankingPeriodTabs";
 import Ranking, { type ViewMode } from "@/components/Ranking";
 import GamesList from "@/components/GamesList";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -65,6 +66,7 @@ export default function RankingDailyPage() {
         className="mx-auto max-w-5xl px-3 pt-4"
         title={t("ranking.dailyTitle")}
       >
+        <RankingPeriodTabs daily />
         <input
           type="date"
           value={selectedDate}

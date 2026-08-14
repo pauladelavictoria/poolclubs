@@ -3,7 +3,6 @@ import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import PageTitle from "@/components/PageTitle";
 import TrainingPlanStepList from "@/components/TrainingPlanStepList";
-import PlayerTabs from "@/components/PlayerTabs";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { Card } from "@/components/ui/Card";
@@ -20,7 +19,7 @@ export default function TrainingPlanPage() {
   // Own-player only, checked in the route's beforeLoad rather than here — the
   // <Navigate> this replaces ran after the page had already rendered and
   // fetched.
-  const { clubSlug, playerId } = route.useParams();
+  const { playerId } = route.useParams();
   const playerIdNum = Number(playerId);
 
   const { data: players } = useGetPlayers();
@@ -58,18 +57,7 @@ export default function TrainingPlanPage() {
   const title = (
     <PageTitle
       title={t("training.planTitle")}
-      crumbs={
-        player
-          ? [
-              { label: t("players.title"), to: "/app/$clubSlug/players" },
-              {
-                label: player.name,
-                to: "/app/$clubSlug/players/$playerId",
-                params: { clubSlug, playerId: String(playerIdNum) },
-              },
-            ]
-          : undefined
-      }
+      crumbs={[]}
     >
       {player && <CategoryBadge category={player.category} full />}
     </PageTitle>
@@ -90,7 +78,6 @@ export default function TrainingPlanPage() {
     <>
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         {title}
-        <PlayerTabs playerId={playerIdNum} />
 
         {!planData || !stats ? (
           <Card>

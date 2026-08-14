@@ -3,6 +3,7 @@ import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import PageTitle from "@/components/PageTitle";
+import RankingPeriodTabs from "@/components/RankingPeriodTabs";
 import Ranking, { type ViewMode } from "@/components/Ranking";
 import { Segmented } from "@/components/ui/Segmented";
 import { useT } from "@/i18n";
@@ -24,7 +25,9 @@ export default function RankingAllTimePage() {
           list itself is the object, so it hangs on the canvas between two rules
           with the controls above it rather than inside a card header. */}
       <div className="mx-auto max-w-5xl px-3 py-4">
-        <PageTitle className="mb-4" title={t("ranking.globalTitle")} />
+        <PageTitle className="mb-4" title={t("ranking.globalTitle")}>
+          <RankingPeriodTabs daily={false} />
+        </PageTitle>
 
         <div className="flex items-center justify-between gap-3 px-1 pb-3">
           <h2 className="flex items-baseline gap-2 text-h4 font-semibold text-ink">

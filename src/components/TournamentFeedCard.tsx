@@ -15,14 +15,18 @@ import { AppLink } from "@/components/AppLink";
 /** Name, discipline and format — the same line the tournament's own page leads
  *  with, so a card in the feed reads as that tournament and not as a summary of
  *  it. */
-function Head({ tournament, label }: { tournament: Tournament; label: Key }) {
+function Head({ tournament, label }: { tournament: Tournament; label?: Key }) {
   const { t } = useT();
 
   return (
     <div className="min-w-0">
-      <p className="text-caption font-medium uppercase tracking-[0.08em] text-strike">
-        {t(label)}
-      </p>
+      {/* Optional: the open card sits under a heading that already says
+          "entries open", so it would be the same words twice. */}
+      {label && (
+        <p className="text-caption font-medium uppercase tracking-[0.08em] text-strike">
+          {t(label)}
+        </p>
+      )}
       <AppLink
         to="/app/$clubSlug/tournaments/$tournamentId"
         params={{ tournamentId: tournament.id }}
@@ -81,7 +85,7 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
   return (
     <>
       <div className="flex items-start justify-between gap-3">
-        <Head tournament={tournament} label="tournaments.openTitle" />
+        <Head tournament={tournament} />
         {isMember && canEnter && (
           <Button
             size="sm"

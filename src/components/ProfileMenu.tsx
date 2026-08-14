@@ -62,8 +62,7 @@ export default function ProfileMenu() {
           </div>
 
           <AppLink
-            to="/app/$clubSlug/players/$playerId"
-            params={{ playerId: player.id }}
+            to="/app/$clubSlug/me"
             role="menuitem"
             onClick={() => setOpen(false)}
             className={itemClasses}

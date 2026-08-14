@@ -10,7 +10,7 @@ import NavDrawer from "@/components/NavDrawer";
 import NavRail from "@/components/NavRail";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import ClubOnboardingPage from "@/pages/ClubOnboardingPage";
-import { useClubTheme } from "@/libs/clubTheme";
+import ClubThemeStyle from "@/components/ClubThemeStyle";
 import { playersQuery } from "@/queries/players";
 
 /**
@@ -69,7 +69,7 @@ function ClubLayout() {
 
   // Every page under a club shares its accent, so it is set here rather than in
   // each page that happens to render something coloured.
-  useClubTheme(activeClub);
+  const accent = <ClubThemeStyle club={activeClub} />;
 
   // The page scrolls, the chrome does not — so the scrollbar lives inside the
   // content and taking or freeing it can't move the bar or the tabs. Router
@@ -82,10 +82,17 @@ function ClubLayout() {
   // showing a wall of empty states, swap the whole thing for the way in — and
   // render it in place instead of redirecting, so the URL survives: approve the
   // member in another window and the page they wanted is one refresh away.
-  if (!isMember) return <ClubOnboardingPage />;
+  if (!isMember)
+    return (
+      <>
+        {accent}
+        <ClubOnboardingPage />
+      </>
+    );
 
   return (
     <>
+      {accent}
       {/* Both nav forms, each hiding itself outside its own width. Nothing here
           asks how wide the window is: every one of these is a CSS breakpoint, so
           the HTML the server sends is already the right one and there is nothing

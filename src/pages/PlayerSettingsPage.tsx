@@ -2,7 +2,6 @@ import { useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import PageTitle from "@/components/PageTitle";
-import PlayerTabs from "@/components/PlayerTabs";
 import AvatarUpload from "@/components/AvatarUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
@@ -18,7 +17,7 @@ const route = getRouteApi("/app/_authed/$clubSlug/players/$playerId/settings");
 
 export default function PlayerSettingsPage() {
   const { t } = useT();
-  const { clubSlug, playerId } = route.useParams();
+  const { playerId } = route.useParams();
   const playerIdNum = Number(playerId);
 
   const { refreshMemberships } = useAuth();
@@ -69,18 +68,7 @@ export default function PlayerSettingsPage() {
   const title = (
     <PageTitle
       title={t("players.accountSettings")}
-      crumbs={
-        player
-          ? [
-              { label: t("players.title"), to: "/app/$clubSlug/players" },
-              {
-                label: player.name,
-                to: "/app/$clubSlug/players/$playerId",
-                params: { clubSlug, playerId: String(playerIdNum) },
-              },
-            ]
-          : undefined
-      }
+      crumbs={[]}
     />
   );
 
@@ -100,8 +88,6 @@ export default function PlayerSettingsPage() {
     <>
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         {title}
-
-        <PlayerTabs playerId={player.id} isOwnProfile />
 
         <Card className="p-4">
           <AvatarUpload name={player.name} url={player.avatar_url} />

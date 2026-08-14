@@ -60,7 +60,9 @@ function PlayerCard({ player, record }: { player: Player; record?: Record_ }) {
         </div>
         {record ? (
           <div className="mt-0.5 flex items-baseline gap-2">
-            <span className="font-mono text-h2 font-semibold tabular-nums text-pot">
+            {/* The club's own ball, not the fixed green: this figure is the
+                page's headline, so it wears the one accent the club picked. */}
+            <span className="font-mono text-h2 font-semibold tabular-nums text-strike">
               {Math.round((record.won / record.played) * 100)}%
             </span>
             <span className="text-caption text-ink-faint">
