@@ -1,16 +1,21 @@
 /**
- * An image slot for the public side, three states in priority order:
+ * An image slot for the public side, two states:
  *
  *   1. a real file in the SHOTS registry — the custom illustration, once it exists
- *   2. a `seed` — a deterministic stock stand-in
- *   3. neither — a reserved box (or nothing, with `fallback="none"`)
+ *   2. no file — a reserved box (or nothing, with `fallback="none"`)
  *
- * The ratio is reserved in all three cases, so swapping a stand-in for real
- * artwork never moves the layout: width/height attributes are emitted
- * alongside aspect-ratio, so the box exists before CSS parses.
+ * There was a third state: a picsum seed standing in for artwork that did not
+ * exist yet. It is gone. Random stock photography told the reader nothing, and
+ * under a club's name it actively lied about whose room they were looking at.
+ * Every surface it used to fill now draws real objects instead — the rack, the
+ * discipline balls, a wall of real member faces.
+ *
+ * The ratio is reserved in both states, so dropping real artwork in never moves
+ * the layout: width/height attributes are emitted alongside aspect-ratio, so the
+ * box exists before CSS parses.
  *
  * Drop files into `public/art/` and register them below to promote a slot from
- * stock or empty to real artwork — nothing else about a call site changes.
+ * empty to real artwork — nothing else about a call site changes.
  */
 const SHOTS: Record<string, string> = {
   // LandingPage's four, carried over from its local Shot.
@@ -18,16 +23,6 @@ const SHOTS: Record<string, string> = {
   ranking: "",
   drill: "",
   challenge: "",
-
-  // Page heroes, 16/9.
-  "hero-clubs": "",
-  "hero-players": "",
-  "hero-tournaments": "",
-  "hero-drills": "",
-  "hero-search": "",
-
-  // CTA band backdrop, 21/9.
-  "cta-band": "",
 
   // Empty states, 1/1.
   "empty-clubs": "",
@@ -42,19 +37,10 @@ const SHOTS: Record<string, string> = {
   "drill.flourish": "",
 };
 
-/** Deterministic on purpose: the same seed is the same photo forever, so a card
- *  does not reshuffle between the server render and hydration. Grayscale is not
- *  optional: picsum returns random-palette photography, and a teal photo under a
- *  purple club reads as a broken theme. Desaturated under .wash, a random photo
- *  becomes texture wearing the club's hue. */
-const stock = (seed: string, w: number, h: number) =>
-  `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}?grayscale`;
-
 export function Shot({
   name,
   alt,
   size,
-  seed,
   className = "",
   priority = false,
   fallback = "frame",
@@ -64,13 +50,8 @@ export function Shot({
    *  will never match a registry entry. */
   name: keyof typeof SHOTS | (string & {});
   alt: string;
-  /** Pixel size: reserves the box (width/height + aspect-ratio) and, when
-   *  falling back to stock, is the size requested from picsum. */
+  /** Pixel size: reserves the box (width/height + aspect-ratio). */
   size: readonly [number, number];
-  /** A stock stand-in, tried after the SHOTS registry and before the
-   *  reserved-box fallback. Omit for slots picsum has no business filling
-   *  (players, drills — see the plan's imagery constraints). */
-  seed?: string;
   className?: string;
   /** Heroes only: eager + fetchpriority="high" instead of lazy. */
   priority?: boolean;
@@ -80,7 +61,7 @@ export function Shot({
 }) {
   const [w, h] = size;
   const ratio = `${w} / ${h}`;
-  const src = SHOTS[name] || (seed ? stock(seed, w, h) : "");
+  const src = SHOTS[name];
 
   if (src) {
     return (

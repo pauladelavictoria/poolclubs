@@ -35,7 +35,9 @@ export default function PublicDrillPage() {
   const { data: sameSkill } = useSuspenseQuery(
     publicDrillsQuery({ skill_type: drill.skill_type }),
   );
-  const related = sameSkill.filter((d) => d.id !== drill.id).slice(0, RELATED_COUNT);
+  const related = sameSkill
+    .filter((d) => d.id !== drill.id)
+    .slice(0, RELATED_COUNT);
 
   const url = `${origin}/drills/${drill.id}`;
 
@@ -63,7 +65,7 @@ export default function PublicDrillPage() {
         <div className="lg:col-span-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-h1 font-semibold tracking-tight text-ink md:text-display">
+              <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
                 {drill.name}
               </h1>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-caption text-ink-soft">
@@ -78,7 +80,11 @@ export default function PublicDrillPage() {
                 </span>
               </div>
             </div>
-            <ShareButton title={drill.name} url={url} text={drill.description} />
+            <ShareButton
+              title={drill.name}
+              url={url}
+              text={drill.description}
+            />
           </div>
 
           <p className="mt-6 text-h3 leading-relaxed text-ink">

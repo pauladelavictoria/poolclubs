@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import PublicShell from "@/components/PublicShell";
-import ClubThemeStyle from "@/components/ClubThemeStyle";
 import GamesList from "@/components/GamesList";
 import ShareButton from "@/components/ShareButton";
 import { Avatar } from "@/components/ui/Avatar";
@@ -51,7 +50,11 @@ export default function PublicPlayerPage() {
     const last10: boolean[] = [];
     const opponents = new Map<number, Opponent>();
 
-    const addOpponent = (id: number | null, name: string | null, won: boolean) => {
+    const addOpponent = (
+      id: number | null,
+      name: string | null,
+      won: boolean,
+    ) => {
       if (id === null || name === null) return;
       const entry = opponents.get(id) ?? { id, name, wins: 0, losses: 0 };
       if (won) entry.wins++;
@@ -108,10 +111,6 @@ export default function PublicPlayerPage() {
 
   return (
     <>
-      {/* The player wears their club's accent: out here the club is the only
-          context a stranger has for who this is. */}
-      <ClubThemeStyle color={player.club?.theme_color} />
-
       <PlayerHero player={player} stats={stats} url={url} />
 
       <PublicShell>
@@ -171,12 +170,13 @@ export default function PublicPlayerPage() {
             to="/clubs/$slug"
             params={{ slug: player.club.slug }}
             data-ball={player.club.theme_color}
-            className="wash lift mt-10 flex flex-col items-center gap-4 rounded-sheet border border-hairline p-8 text-center sm:flex-row sm:justify-between sm:text-left"
+            className="wash wash-soft lift mt-10 flex flex-col items-center gap-4 rounded-sheet border border-hairline p-8 text-center sm:flex-row sm:justify-between sm:text-left"
           >
             <div className="flex items-center gap-3">
               <Avatar
                 name={player.club.name}
                 url={player.club.logo_url}
+                mark
                 shape="plate"
                 className="h-14 w-14"
               />
@@ -184,10 +184,14 @@ export default function PublicPlayerPage() {
                 <p className="text-caption text-ink-faint">
                   {t("public.publicPlayer.playsFor")}
                 </p>
-                <p className="text-h3 font-semibold text-ink">{player.club.name}</p>
+                <p className="text-h3 font-semibold text-ink">
+                  {player.club.name}
+                </p>
               </div>
             </div>
-            <span className={buttonClasses({ variant: "secondary", size: "sm" })}>
+            <span
+              className={buttonClasses({ variant: "secondary", size: "sm" })}
+            >
               {t("public.publicPlayer.viewClub")}
             </span>
           </Link>
@@ -225,7 +229,7 @@ function PlayerHero({
   return (
     <section
       data-ball={player.club?.theme_color}
-      className="wash dotfield relative overflow-hidden border-b border-hairline"
+      className="wash wash-soft relative overflow-hidden border-b border-hairline"
     >
       <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
@@ -237,7 +241,7 @@ function PlayerHero({
               className="h-20 w-20 sm:h-28 sm:w-28"
             />
             <div className="min-w-0">
-              <h1 className="truncate text-h1 font-semibold tracking-tight text-ink md:text-display">
+              <h1 className="truncate text-display leading-[1.05] font-semibold tracking-tighter text-ink">
                 {player.name}
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -250,6 +254,7 @@ function PlayerHero({
                     <Avatar
                       name={player.club.name}
                       url={player.club.logo_url}
+                      mark
                       className="h-4 w-4"
                     />
                     {player.club.name}
@@ -276,13 +281,19 @@ function PlayerHero({
               <Stat
                 label={t("players.gamesWon")}
                 value={`${stats.winRate}%`}
-                delta={t("players.ofTotal", { n: stats.won, total: stats.played })}
+                delta={t("players.ofTotal", {
+                  n: stats.won,
+                  total: stats.played,
+                })}
                 tone="good"
               />
               <Stat
                 label={t("players.racksWon")}
                 value={`${stats.rackRate}%`}
-                delta={t("players.ofTotal", { n: stats.racksWon, total: stats.racks })}
+                delta={t("players.ofTotal", {
+                  n: stats.racksWon,
+                  total: stats.racks,
+                })}
               />
             </div>
 

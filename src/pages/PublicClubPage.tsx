@@ -1,6 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import ClubThemeStyle from "@/components/ClubThemeStyle";
 import GamesList from "@/components/GamesList";
 import ShareButton from "@/components/ShareButton";
 import PublicShell from "@/components/PublicShell";
@@ -8,16 +7,17 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { DisciplineBall } from "@/components/ui/Ball";
 import { SectionHead } from "@/components/ui/SectionHead";
-import { Shot } from "@/components/ui/Shot";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { useEloRanking } from "@/hooks/useEloRanking";
 import { gamesQuery } from "@/queries/games";
 import {
   publicClubRosterQuery,
   publicTournamentsQuery,
 } from "@/queries/public";
-import type { PublicClub, PublicPlayer, PublicTournamentListItem } from "@/queries/public";
-import type { DailyRankingEntry } from "@/types";
+import type {
+  PublicClub,
+  PublicPlayer,
+  PublicTournamentListItem,
+} from "@/queries/public";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/_public/clubs/$slug");
@@ -25,9 +25,6 @@ const route = getRouteApi("/_public/clubs/$slug");
 /** Enough recent results to show the club is alive, not its whole history —
  *  which is what /clubs/$slug is for and the club's own app is not. */
 export const CLUB_GAMES_LIMIT = 30;
-
-/** How many of the ranking the podium prints. */
-const TOP_N = 3;
 
 const isLive = (status: PublicTournamentListItem["status"]) =>
   status === "running" || status === "groups";
@@ -59,17 +56,6 @@ export default function PublicClubPage() {
 
   const url = `${origin}/clubs/${club.slug}`;
 
-  // Same hook and the same games the club's own ranking uses, so a figure here
-  // is the figure a member sees — the whole roster goes in, opted-out members
-  // included. Leaving them out would make the club's public ranking disagree
-  // with its own, which is the club's record being edited by one person's
-  // preference about being listed.
-  const ranking = useEloRanking({
-    games: gamesData.games,
-    players: roster as PublicPlayer[],
-  });
-  const top = (ranking ?? []).slice(0, TOP_N);
-
   // The roster grid is the one block that is a list of people, so it is the one
   // place the opt-out applies. Everything else on this page is the club's record.
   const listed = roster.filter((player) => player.is_public);
@@ -85,16 +71,18 @@ export default function PublicClubPage() {
 
   return (
     <>
-      {/* The club wears its own accent out here too — it is the one thing that
-          makes two of these pages look like different clubs. */}
-      <ClubThemeStyle color={club.theme_color} />
-
       <ClubHero club={club} listed={listed} url={url} />
 
       <PublicShell>
         <div className="grid grid-cols-3 divide-x divide-hairline">
-          <Stat value={club.member_count} label={t("public.publicClub.statMembers")} />
-          <Stat value={gamesData.totalCount ?? 0} label={t("public.publicClub.statGames")} />
+          <Stat
+            value={club.member_count}
+            label={t("public.publicClub.statMembers")}
+          />
+          <Stat
+            value={gamesData.totalCount ?? 0}
+            label={t("public.publicClub.statGames")}
+          />
           {playingSince && (
             <Stat
               value={playingSince}
@@ -119,9 +107,15 @@ export default function PublicClubPage() {
                   className="lift flex w-56 shrink-0 snap-start flex-col gap-2 rounded-card border border-hairline bg-felt p-4"
                 >
                   <div className="flex items-center justify-between">
-                    <DisciplineBall discipline={tournament.discipline} className="h-6 w-6" />
+                    <DisciplineBall
+                      discipline={tournament.discipline}
+                      className="h-6 w-6"
+                    />
                     {isLive(tournament.status) && (
-                      <span className="live-dot h-1.5 w-1.5 rounded-full bg-strike" aria-hidden />
+                      <span
+                        className="live-dot h-1.5 w-1.5 rounded-full bg-strike"
+                        aria-hidden
+                      />
                     )}
                   </div>
                   <span className="truncate text-body font-medium text-ink">
@@ -133,17 +127,6 @@ export default function PublicClubPage() {
                 </Link>
               ))}
             </div>
-          )}
-        </section>
-
-        <section className="mt-10">
-          <SectionHead title={t("public.publicClub.topPlayers")} />
-          {top.length === 0 ? (
-            <p className="mt-4 text-body text-ink-faint">
-              {t("public.publicClub.noRankingHint")}
-            </p>
-          ) : (
-            <LeaderboardPodium entries={top} />
           )}
         </section>
 
@@ -195,9 +178,9 @@ export default function PublicClubPage() {
 
         <section
           data-ball={club.theme_color}
-          className="wash mt-10 flex flex-col items-center gap-3 rounded-sheet border border-hairline p-10 text-center"
+          className="wash wash-soft mt-10 flex flex-col items-center gap-3 rounded-sheet border border-hairline p-10 text-center"
         >
-          <h2 className="max-w-[24ch] text-h1 font-semibold tracking-tight text-ink md:text-display">
+          <h2 className="max-w-[24ch] text-display leading-[1.05] font-semibold tracking-tighter text-ink">
             {t("public.publicClub.joinTitle", { name: club.name })}
           </h2>
           <p className="max-w-[46ch] text-body text-ink-soft">
@@ -231,29 +214,24 @@ function ClubHero({
   const { t } = useT();
 
   return (
-    <section data-ball={club.theme_color} className="wash relative overflow-hidden border-b border-hairline">
-      <Shot
-        name={`club-${club.id}`}
-        seed={`club-${club.id}`}
-        size={[1600, 500]}
-        alt=""
-        priority
-        className="absolute inset-0 h-full w-full opacity-35"
-      />
-      <div className="scrim absolute inset-0" />
+    <section
+      data-ball={club.theme_color}
+      className="wash wash-soft relative overflow-hidden border-b border-hairline"
+    >
       <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-6">
           <div className="w-fit rounded-sheet bg-felt p-1.5">
             <Avatar
               name={club.name}
               url={club.logo_url}
+              mark
               shape="plate"
               className="h-20 w-20 sm:h-28 sm:w-28"
             />
           </div>
 
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-h1 font-semibold tracking-tight text-ink md:text-display">
+            <h1 className="truncate text-display leading-[1.05] font-semibold tracking-tighter text-ink">
               {club.name}
             </h1>
             {listed.length > 0 && (
@@ -295,56 +273,6 @@ function Stat({ value, label }: { value: number; label: string }) {
         {value}
       </span>
       <span className="text-caption text-ink-faint">{label}</span>
-    </div>
-  );
-}
-
-/** Second on the left, winner in the middle, third on the right: the shape of
- *  a real podium, read middle-first rather than left-to-right — same grammar
- *  as `TournamentPodium`, keyed to win rate instead of a bracket's placings. */
-const HEIGHT: Record<number, string> = { 1: "h-16", 2: "h-11", 3: "h-8" };
-
-function LeaderboardPodium({ entries }: { entries: DailyRankingEntry[] }) {
-  const steps = [
-    entries[1] && { entry: entries[1], rank: 2 },
-    entries[0] && { entry: entries[0], rank: 1 },
-    entries[2] && { entry: entries[2], rank: 3 },
-  ].filter((step): step is { entry: DailyRankingEntry; rank: number } => Boolean(step));
-
-  return (
-    <div className="mt-4 flex items-end justify-center gap-3 sm:gap-6">
-      {steps.map(({ entry, rank }) => {
-        const winRate =
-          entry.gamesPlayed > 0
-            ? `${Math.round((entry.gamesWon / entry.gamesPlayed) * 100)}%`
-            : "—";
-        return (
-          <Link
-            key={entry.playerId}
-            to="/players/$playerId"
-            params={{ playerId: String(entry.playerId) }}
-            className="group flex min-w-0 flex-1 basis-0 flex-col items-center gap-2 sm:max-w-40"
-          >
-            <span className="line-clamp-2 text-center text-caption font-medium text-ink transition-colors duration-150 group-hover:text-strike">
-              {entry.playerName}
-            </span>
-            <span className="font-mono text-caption tabular-nums text-ink-faint">
-              {winRate}
-            </span>
-            <div
-              className={`flex w-full items-center justify-center rounded-t-control border border-b-0 border-hairline bg-felt-raised ${HEIGHT[rank]}`}
-            >
-              <span
-                className={`font-mono font-semibold tabular-nums ${
-                  rank === 1 ? "text-h2 text-strike" : "text-h3 text-ink-soft"
-                }`}
-              >
-                {rank}
-              </span>
-            </div>
-          </Link>
-        );
-      })}
     </div>
   );
 }

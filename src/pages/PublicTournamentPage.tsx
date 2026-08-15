@@ -3,7 +3,6 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { LuGitFork, LuList } from "react-icons/lu";
 import PublicShell from "@/components/PublicShell";
-import ClubThemeStyle from "@/components/ClubThemeStyle";
 import ShareButton from "@/components/ShareButton";
 import BracketView from "@/components/BracketView";
 import LeagueTable from "@/components/LeagueTable";
@@ -85,8 +84,6 @@ export default function PublicTournamentPage() {
 
   return (
     <>
-      <ClubThemeStyle color={tournament.club?.theme_color} />
-
       <TournamentHero
         tournament={tournament}
         entrantIds={entrantIds}
@@ -130,7 +127,7 @@ export default function PublicTournamentPage() {
         {finished && (
           <section
             data-ball={tournament.club?.theme_color}
-            className="wash mt-10 overflow-hidden rounded-sheet border border-hairline"
+            className="wash wash-soft mt-10 overflow-hidden rounded-sheet border border-hairline"
           >
             <h2 className="px-6 pt-6 text-h3 font-semibold tracking-tight text-ink">
               {t("tournaments.results")}
@@ -150,7 +147,10 @@ export default function PublicTournamentPage() {
         ) : isLeague ? (
           <Card className="mt-10 overflow-hidden">
             <CardHeader title={t("tournaments.standings")} />
-            <LeagueTable rows={standings(entrantIds, matches)} nameOf={nameOf} />
+            <LeagueTable
+              rows={standings(entrantIds, matches)}
+              nameOf={nameOf}
+            />
           </Card>
         ) : (
           <>
@@ -223,12 +223,13 @@ export default function PublicTournamentPage() {
             to="/clubs/$slug"
             params={{ slug: tournament.club.slug }}
             data-ball={tournament.club.theme_color}
-            className="wash lift mt-10 flex flex-col items-center gap-4 rounded-sheet border border-hairline p-8 text-center sm:flex-row sm:justify-between sm:text-left"
+            className="wash wash-soft lift mt-10 flex flex-col items-center gap-4 rounded-sheet border border-hairline p-8 text-center sm:flex-row sm:justify-between sm:text-left"
           >
             <div className="flex items-center gap-3">
               <Avatar
                 name={tournament.club.name}
                 url={tournament.club.logo_url}
+                mark
                 shape="plate"
                 className="h-14 w-14"
               />
@@ -241,7 +242,9 @@ export default function PublicTournamentPage() {
                 </p>
               </div>
             </div>
-            <span className={buttonClasses({ variant: "secondary", size: "sm" })}>
+            <span
+              className={buttonClasses({ variant: "secondary", size: "sm" })}
+            >
               {t("public.publicPlayer.viewClub")}
             </span>
           </Link>
@@ -281,7 +284,7 @@ function TournamentHero({
   return (
     <section
       data-ball={tournament.club?.theme_color}
-      className="wash relative overflow-hidden border-b border-hairline"
+      className="wash wash-soft relative overflow-hidden border-b border-hairline"
     >
       <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
@@ -295,12 +298,13 @@ function TournamentHero({
                 <Avatar
                   name={tournament.club.name}
                   url={tournament.club.logo_url}
+                  mark
                   className="h-4 w-4"
                 />
                 {tournament.club.name}
               </Link>
             )}
-            <h1 className="mt-1 truncate text-h1 font-semibold tracking-tight text-ink md:text-display">
+            <h1 className="mt-1 truncate text-display leading-[1.05] font-semibold tracking-tighter text-ink">
               {tournament.name}
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-ink-faint">
@@ -331,7 +335,7 @@ function TournamentHero({
         </div>
 
         {tournament.status === "done" && champion ? (
-          <div className="mt-8 flex items-center gap-4">
+          <div className="flood mt-8 flex items-center gap-4 rounded-sheet p-5 sm:p-6">
             <Avatar
               name={champion.name}
               url={champion.avatar_url}
@@ -339,18 +343,22 @@ function TournamentHero({
               className="h-20 w-20 sm:h-24 sm:w-24"
             />
             <div className="min-w-0">
-              <p className="text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
+              <p className="text-caption font-semibold tracking-[0.08em] uppercase">
                 {t("public.publicTournament.champion")}
               </p>
-              <p className="truncate text-h1 font-semibold tracking-tight text-ink md:text-display">
+              <p className="truncate text-display leading-[1.05] font-semibold tracking-tighter">
                 {champion.name}
               </p>
             </div>
           </div>
-        ) : tournament.status === "running" || tournament.status === "groups" ? (
+        ) : tournament.status === "running" ||
+          tournament.status === "groups" ? (
           <div className="mt-8 max-w-md">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-pocket/70 px-2 py-1 font-mono text-caption font-semibold text-strike">
-              <span className="live-dot h-1.5 w-1.5 rounded-full bg-strike" aria-hidden />
+              <span
+                className="live-dot h-1.5 w-1.5 rounded-full bg-strike"
+                aria-hidden
+              />
               {t("tournaments.status.running")}
             </span>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-felt-raised">

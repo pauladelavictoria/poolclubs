@@ -1,17 +1,15 @@
 import type { CSSProperties } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import { LuChevronDown, LuNetwork, LuUsers } from "react-icons/lu";
+import { LuNetwork, LuUsers } from "react-icons/lu";
 import PublicShell, { CtaBand } from "@/components/PublicShell";
 import { Avatar } from "@/components/ui/Avatar";
 import { CategoryBadge, DisciplineBall } from "@/components/ui/Ball";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FilterGroup, FilterMenu } from "@/components/ui/FilterMenu";
 import { FilterPills } from "@/components/ui/FilterPills";
 import { Pager } from "@/components/ui/Pager";
-import { SearchInput } from "@/components/ui/SearchInput";
-import { Shot } from "@/components/ui/Shot";
-import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
 import { PUBLIC_PAGE_SIZE, publicTournamentsQuery } from "@/queries/public";
 import type { PublicTournamentListItem } from "@/queries/public";
 import {
@@ -33,11 +31,7 @@ const GROUPS: { key: Key; statuses: TournamentStatus[] }[] = [
 ];
 
 const STATUSES: TournamentStatus[] = ["open", "running", "done"];
-const FORMATS: TournamentFormat[] = [
-  "double_elim",
-  "league",
-  "group_knockout",
-];
+const FORMATS: TournamentFormat[] = ["double_elim", "league", "group_knockout"];
 
 const isLive = (status: TournamentStatus) =>
   status === "groups" || status === "running";
@@ -57,13 +51,6 @@ export default function PublicTournamentsPage() {
   // its own canonical form.
   const page = search.page ?? 1;
 
-  const [q, setQ] = useDebouncedQuery(search.q ?? "", (value) =>
-    navigate({
-      search: { ...search, q: value || undefined, page: 1 },
-      replace: true,
-    }),
-  );
-
   // One patch function for all three facets: each resets to page 1, because
   // page 4 of a different filter is not a place anyone asked to be.
   const setFacet = (patch: Partial<typeof search>) =>
@@ -82,104 +69,44 @@ export default function PublicTournamentsPage() {
     Boolean(search.format) ||
     Boolean(search.discipline);
 
-  const advancedCount = (search.format ? 1 : 0) + (search.discipline ? 1 : 0);
-
-  // The one live event worth a feature band — hidden under any filter, since
-  // "what's live right now" stops being true of the filtered set.
-  const featured = !filtered ? all.find((x) => isLive(x.status)) : undefined;
+  // Drawn on the filter button. All three facets count, not just the two that
+  // used to sit behind a "more" disclosure: the menu hides every one of them
+  // now, so every one of them has to be announced.
+  const activeFacets =
+    (search.status ? 1 : 0) +
+    (search.format ? 1 : 0) +
+    (search.discipline ? 1 : 0);
 
   return (
-    <PublicShell>
-      <section className="relative mt-6 overflow-hidden rounded-sheet border border-hairline-strong bg-felt">
-        <Shot
-          name="hero-tournaments"
-          seed="tournaments-hero"
-          size={[1600, 900]}
-          alt=""
-          priority
-          className="absolute inset-0 h-full opacity-70"
-        />
-        <div className="scrim absolute inset-0" />
-        <div className="relative flex min-h-[200px] flex-col justify-end gap-2 p-6 sm:min-h-[260px] sm:p-8">
-          <h1 className="text-h1 font-semibold tracking-tight text-ink md:text-display">
+    <>
+      <section>
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+          <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
             {t("public.publicTournaments.title")}
           </h1>
-          <p className="max-w-[52ch] text-body text-ink-soft sm:text-h4">
+          <p className="mt-4 max-w-[46ch] text-h4 text-ink-soft">
             {t("public.publicTournaments.subtitle")}
           </p>
         </div>
       </section>
 
-      {featured && (
-        <Link
-          to="/tournaments/$tournamentId"
-          params={{ tournamentId: String(featured.id) }}
-          data-ball={featured.club?.theme_color}
-          className="wash lift group relative mt-8 flex flex-col gap-4 overflow-hidden rounded-sheet border border-hairline-strong p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8"
-        >
-          <div className="min-w-0">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-pocket/70 px-2 py-1 font-mono text-caption font-semibold text-strike">
-              <span className="live-dot h-1.5 w-1.5 rounded-full bg-strike" aria-hidden />
-              {t("tournaments.status.running")}
-            </span>
-            <h2 className="mt-3 truncate text-h2 font-semibold tracking-tight text-ink transition-colors duration-150 group-hover:text-strike">
-              {featured.name}
-            </h2>
-            {featured.club && (
-              <p className="mt-1 flex items-center gap-1.5 text-body text-ink-soft">
-                <Avatar
-                  name={featured.club.name}
-                  url={featured.club.logo_url}
-                  className="h-5 w-5"
+      <PublicShell>
+        <div className="sticky top-16 z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
+          <div className="flex items-center justify-between gap-3">
+            <FilterMenu activeCount={activeFacets}>
+              <FilterGroup label={t("tournaments.statusLabel")}>
+                <FilterPills
+                  label={t("tournaments.statusLabel")}
+                  anyLabel={t("public.filters.anyStatus")}
+                  value={search.status}
+                  onChange={(status) => setFacet({ status })}
+                  options={STATUSES.map((s) => ({
+                    value: s,
+                    label: t(`tournaments.status.${s}`),
+                  }))}
                 />
-                {featured.club.name}
-              </p>
-            )}
-          </div>
-          <div className="shrink-0 text-left sm:text-right">
-            <span className="font-mono text-display font-semibold tabular-nums text-ink">
-              {entrants(featured)}
-            </span>
-            <p className="text-caption text-ink-faint">
-              {t("tournaments.entrants", { n: entrants(featured) })}
-            </p>
-          </div>
-        </Link>
-      )}
-
-      <div className="sticky top-16 z-10 -mx-4 mt-10 border-y border-hairline bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
-        <div className="flex flex-col gap-3">
-          <SearchInput
-            value={q}
-            onChange={setQ}
-            placeholder={t("public.publicTournaments.searchPlaceholder")}
-            className="w-full sm:max-w-sm"
-          />
-          <div className="flex items-center gap-2">
-            <FilterPills
-              label={t("tournaments.statusLabel")}
-              anyLabel={t("public.filters.anyStatus")}
-              value={search.status}
-              onChange={(status) => setFacet({ status })}
-              options={STATUSES.map((s) => ({
-                value: s,
-                label: t(`tournaments.status.${s}`),
-              }))}
-            />
-            <details className="group relative ml-auto shrink-0">
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-control border border-hairline px-2.5 py-1.5 text-caption text-ink-soft select-none hover:text-ink [&::-webkit-details-marker]:hidden">
-                {t("public.filters.more")}
-                {advancedCount > 0 && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-strike px-1 font-mono text-[11px] font-semibold text-pocket">
-                    {advancedCount}
-                  </span>
-                )}
-                <LuChevronDown
-                  className="h-3.5 w-3.5 transition-transform duration-150 group-open:rotate-180"
-                  aria-hidden
-                />
-              </summary>
-              <div className="absolute right-4 z-10 mt-2 flex w-[min(90vw,22rem)] flex-col gap-3 rounded-card border border-hairline-strong bg-felt p-3 shadow-lg sm:right-6">
+              </FilterGroup>
+              <FilterGroup label={t("tournaments.format")}>
                 <FilterPills
                   label={t("tournaments.format")}
                   anyLabel={t("public.filters.anyFormat")}
@@ -190,6 +117,8 @@ export default function PublicTournamentsPage() {
                     label: t(`tournaments.${FORMAT_KEY[f]}`),
                   }))}
                 />
+              </FilterGroup>
+              <FilterGroup label={t("games.discipline")}>
                 <FilterPills
                   label={t("games.discipline")}
                   anyLabel={t("public.filters.anyDiscipline")}
@@ -200,74 +129,77 @@ export default function PublicTournamentsPage() {
                     label: t(`discipline.${d}`),
                   }))}
                 />
-              </div>
-            </details>
+              </FilterGroup>
+            </FilterMenu>
           </div>
         </div>
-      </div>
 
-      {all.length === 0 ? (
-        <Card className="mt-6">
-          <EmptyState
-            icon={<LuNetwork className="h-5 w-5" aria-hidden />}
-            title={
-              filtered
-                ? t("public.publicTournaments.noResults")
-                : t("public.publicTournaments.emptyTitle")
-            }
-            hint={
-              filtered
-                ? t("public.publicTournaments.noResultsHint")
-                : t("public.publicTournaments.emptyHint")
-            }
-          />
-        </Card>
-      ) : (
-        <>
-          <div className="mt-6 space-y-8">
-            {grouped.map(({ key, rows }) => (
-              <section key={key}>
-                <h2 className="px-1 pb-2 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
-                  {t(key)}
-                </h2>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {rows.map((tournament, i) => (
-                    <TournamentCard
-                      key={tournament.id}
-                      tournament={tournament}
-                      index={i}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
+        {all.length === 0 ? (
+          <Card className="mt-6">
+            <EmptyState
+              icon={<LuNetwork className="h-5 w-5" aria-hidden />}
+              title={
+                filtered
+                  ? t("public.publicTournaments.noResults")
+                  : t("public.publicTournaments.emptyTitle")
+              }
+              hint={
+                filtered
+                  ? t("public.publicTournaments.noResultsHint")
+                  : t("public.publicTournaments.emptyHint")
+              }
+            />
+          </Card>
+        ) : (
+          <>
+            <div className="mt-6 space-y-8">
+              {grouped.map(({ key, rows }) => (
+                <section key={key}>
+                  <h2 className="px-1 pb-2 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
+                    {t(key)}
+                  </h2>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {rows.map((tournament, i) => (
+                      <TournamentCard
+                        key={tournament.id}
+                        tournament={tournament}
+                        index={i}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
 
-            {/* The archive must not look like the news: rows in one Card, not
+              {/* The archive must not look like the news: rows in one Card, not
                 cards of their own. */}
-            {finished.length > 0 && (
-              <section>
-                <h2 className="px-1 pb-2 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
-                  {t("tournaments.finished")}
-                </h2>
-                <Card className="divide-y divide-hairline">
-                  {finished.map((tournament) => (
-                    <TournamentRow key={tournament.id} tournament={tournament} />
-                  ))}
-                </Card>
-              </section>
-            )}
-          </div>
-          <Pager
-            page={page}
-            pageSize={PUBLIC_PAGE_SIZE}
-            totalCount={data.totalCount}
-            onPage={(page) => navigate({ search: { ...search, page } })}
-          />
-        </>
-      )}
+              {finished.length > 0 && (
+                <section>
+                  <h2 className="px-1 pb-2 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
+                    {t("tournaments.finished")}
+                  </h2>
+                  <Card className="divide-y divide-hairline">
+                    {finished.map((tournament) => (
+                      <TournamentRow
+                        key={tournament.id}
+                        tournament={tournament}
+                      />
+                    ))}
+                  </Card>
+                </section>
+              )}
+            </div>
+            <Pager
+              page={page}
+              pageSize={PUBLIC_PAGE_SIZE}
+              totalCount={data.totalCount}
+              onPage={(page) => navigate({ search: { ...search, page } })}
+            />
+          </>
+        )}
 
-      <CtaBand />
-    </PublicShell>
+        <CtaBand />
+      </PublicShell>
+    </>
   );
 }
 
@@ -292,13 +224,19 @@ export function TournamentCard({
       params={{ tournamentId: String(tournament.id) }}
       data-ball={tournament.club?.theme_color}
       style={{ "--i": index } as CSSProperties}
-      className="rise lift group flex flex-col overflow-hidden rounded-card border border-hairline bg-felt"
+      className="pop lift group flex flex-col overflow-hidden rounded-card border border-hairline bg-felt"
     >
-      <div className="wash flex items-center justify-between px-4 py-3">
-        <DisciplineBall discipline={tournament.discipline} className="h-7 w-7" />
+      <div className="wash flex items-center justify-between px-4 py-3 transition-[filter] duration-300 group-hover:saturate-150">
+        <DisciplineBall
+          discipline={tournament.discipline}
+          className="h-10 w-10 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-12"
+        />
         {live && (
           <span className="flex items-center gap-1.5 rounded-full bg-pocket/70 px-2 py-1 font-mono text-caption font-semibold text-strike">
-            <span className="live-dot h-1.5 w-1.5 rounded-full bg-strike" aria-hidden />
+            <span
+              className="live-dot h-1.5 w-1.5 rounded-full bg-strike"
+              aria-hidden
+            />
             {t("tournaments.status.running")}
           </span>
         )}
@@ -313,6 +251,7 @@ export function TournamentCard({
             <Avatar
               name={tournament.club.name}
               url={tournament.club.logo_url}
+              mark
               className="h-4 w-4"
             />
             <span className="truncate">{tournament.club.name}</span>
@@ -362,9 +301,7 @@ export function TournamentRow({
       <div className="min-w-0 flex-1">
         <p className="truncate text-body text-ink">{tournament.name}</p>
         <p className="mt-0.5 truncate text-caption text-ink-faint">
-          {!hideClub && tournament.club
-            ? `${tournament.club.name} · `
-            : null}
+          {!hideClub && tournament.club ? `${tournament.club.name} · ` : null}
           {t(`tournaments.status.${tournament.status}`)}
         </p>
       </div>

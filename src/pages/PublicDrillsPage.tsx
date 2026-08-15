@@ -6,10 +6,8 @@ import DrillCard from "@/components/DrillCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FilterGroup, FilterMenu } from "@/components/ui/FilterMenu";
 import { FilterPills } from "@/components/ui/FilterPills";
-import { SearchInput } from "@/components/ui/SearchInput";
-import { Shot } from "@/components/ui/Shot";
-import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
 import { publicDrillsQuery } from "@/queries/public";
 import {
   CLUB_BALL_COLORS,
@@ -52,10 +50,6 @@ export default function PublicDrillsPage() {
     publicDrillsQuery({ q: search.q, difficulty: search.difficulty }),
   );
 
-  const [q, setQ] = useDebouncedQuery(search.q ?? "", (value) =>
-    navigate({ search: { ...search, q: value || undefined }, replace: true }),
-  );
-
   const bySkill = (skill: DrillSkillType) =>
     drills.filter((d) => d.skill_type === skill);
 
@@ -65,127 +59,127 @@ export default function PublicDrillsPage() {
 
   const filtered = Boolean(search.q ?? search.difficulty ?? search.skill);
 
-  const groups: { difficulty: DrillDifficulty; rows: Drill[] }[] = search.difficulty
-    ? []
-    : DIFFICULTIES.map((difficulty) => ({
-        difficulty,
-        rows: shown.filter((d) => d.difficulty === difficulty),
-      })).filter((g) => g.rows.length > 0);
+  const groups: { difficulty: DrillDifficulty; rows: Drill[] }[] =
+    search.difficulty
+      ? []
+      : DIFFICULTIES.map((difficulty) => ({
+          difficulty,
+          rows: shown.filter((d) => d.difficulty === difficulty),
+        })).filter((g) => g.rows.length > 0);
 
   return (
-    <PublicShell>
-      <section className="relative mt-6 overflow-hidden rounded-sheet border border-hairline-strong bg-felt">
-        <Shot
-          name="hero-drills"
-          seed="drills-hero"
-          size={[1600, 900]}
-          alt=""
-          priority
-          className="absolute inset-0 h-full opacity-60"
-        />
-        <div className="scrim absolute inset-0" />
-        <div className="relative flex min-h-[200px] flex-col justify-end gap-2 p-6 sm:min-h-[260px] sm:p-8">
-          <h1 className="text-h1 font-semibold tracking-tight text-ink md:text-display">
+    <>
+      <section>
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+          <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
             {t("public.publicDrills.title")}
           </h1>
-          <p className="max-w-[52ch] text-body text-ink-soft sm:text-h4">
+          <p className="mt-4 max-w-[46ch] text-h4 text-ink-soft">
             {t("public.publicDrills.subtitle")}
           </p>
         </div>
       </section>
 
-      <section className="mt-10">
-        <div className="no-bar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
-          {SKILL_TYPES.map((skill) => {
-            const active = search.skill === skill;
-            return (
-              <button
-                key={skill}
-                type="button"
-                data-ball={SKILL_BALL[skill]}
-                aria-pressed={active}
-                onClick={() =>
-                  navigate({
-                    search: { ...search, skill: active ? undefined : skill },
-                  })
-                }
-                className={`wash flex shrink-0 snap-start flex-col items-start gap-1.5 rounded-card border px-4 py-3 text-left transition-colors duration-150 ${
-                  active ? "border-strike" : "border-hairline hover:border-hairline-strong"
-                }`}
-              >
-                <span className="text-body font-semibold text-ink">
-                  {t(`skill.${skill}`)}
-                </span>
-                <span className="font-mono text-caption tabular-nums text-ink-faint">
-                  {bySkill(skill).length}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <div className="sticky top-16 z-10 -mx-4 mt-10 flex flex-col gap-3 border-y border-hairline bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
-        <SearchInput
-          value={q}
-          onChange={setQ}
-          placeholder={t("public.publicDrills.searchPlaceholder")}
-          className="w-full sm:max-w-sm"
-        />
-        <FilterPills
-          label={t("drills.filterDifficulty")}
-          anyLabel={t("drills.allDifficulties")}
-          value={search.difficulty}
-          onChange={(difficulty) => navigate({ search: { ...search, difficulty } })}
-          options={DIFFICULTIES.map((key) => ({
-            value: key,
-            label: t(`difficulty.${key}`),
-          }))}
-        />
-      </div>
-
-      {shown.length === 0 ? (
-        <Card className="mt-6">
-          <EmptyState
-            icon={<LuTarget className="h-5 w-5" aria-hidden />}
-            title={t("drills.noneMatch")}
-            hint={t("drills.noneMatchHint")}
-            action={
-              filtered ? (
-                <Button
-                  variant="secondary"
-                  onClick={() => navigate({ search: {} })}
+      <PublicShell>
+        {/* The skill facet, as a rail rather than a second row of pills: eight
+            options each carrying a live count is more than a pill row can hold,
+            and the colour is what makes it scannable. Not in the hero — it is a
+            filter, and it belongs next to the other one. */}
+        <section className="mt-8">
+          <div className="no-bar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+            {SKILL_TYPES.map((skill) => {
+              const active = search.skill === skill;
+              return (
+                <button
+                  key={skill}
+                  type="button"
+                  data-ball={SKILL_BALL[skill]}
+                  aria-pressed={active}
+                  onClick={() =>
+                    navigate({
+                      search: { ...search, skill: active ? undefined : skill },
+                    })
+                  }
+                  className={`wash flex shrink-0 snap-start flex-col items-start gap-1.5 rounded-card border px-4 py-3 text-left transition-colors duration-150 ${
+                    active
+                      ? "border-strike"
+                      : "border-hairline hover:border-hairline-strong"
+                  }`}
                 >
-                  {t("common.clearFilters")}
-                </Button>
-              ) : undefined
-            }
-          />
-        </Card>
-      ) : search.difficulty ? (
-        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-          {shown.map((drill, i) => (
-            <DrillCard key={drill.id} drill={drill} public index={i} />
-          ))}
-        </div>
-      ) : (
-        <div className="mt-6 space-y-8">
-          {groups.map(({ difficulty, rows }) => (
-            <section key={difficulty}>
-              <h2 className="px-1 pb-2 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
-                {t(`difficulty.${difficulty}`)}
-              </h2>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-                {rows.map((drill, i) => (
-                  <DrillCard key={drill.id} drill={drill} public index={i} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
+                  <span className="text-body font-semibold text-ink">
+                    {t(`skill.${skill}`)}
+                  </span>
+                  <span className="font-mono text-caption tabular-nums text-ink-faint">
+                    {bySkill(skill).length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-      <CtaBand />
-    </PublicShell>
+        <div className="sticky top-16 z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
+          <FilterMenu activeCount={search.difficulty ? 1 : 0}>
+            <FilterGroup label={t("drills.filterDifficulty")}>
+              <FilterPills
+                label={t("drills.filterDifficulty")}
+                anyLabel={t("drills.allDifficulties")}
+                value={search.difficulty}
+                onChange={(difficulty) =>
+                  navigate({ search: { ...search, difficulty } })
+                }
+                options={DIFFICULTIES.map((key) => ({
+                  value: key,
+                  label: t(`difficulty.${key}`),
+                }))}
+              />
+            </FilterGroup>
+          </FilterMenu>
+        </div>
+
+        {shown.length === 0 ? (
+          <Card className="mt-6">
+            <EmptyState
+              icon={<LuTarget className="h-5 w-5" aria-hidden />}
+              title={t("drills.noneMatch")}
+              hint={t("drills.noneMatchHint")}
+              action={
+                filtered ? (
+                  <Button
+                    variant="secondary"
+                    onClick={() => navigate({ search: {} })}
+                  >
+                    {t("common.clearFilters")}
+                  </Button>
+                ) : undefined
+              }
+            />
+          </Card>
+        ) : search.difficulty ? (
+          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {shown.map((drill, i) => (
+              <DrillCard key={drill.id} drill={drill} public index={i} />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-6 space-y-8">
+            {groups.map(({ difficulty, rows }) => (
+              <section key={difficulty}>
+                <h2 className="px-1 pb-2 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
+                  {t(`difficulty.${difficulty}`)}
+                </h2>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                  {rows.map((drill, i) => (
+                    <DrillCard key={drill.id} drill={drill} public index={i} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+
+        <CtaBand />
+      </PublicShell>
+    </>
   );
 }

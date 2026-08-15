@@ -14,7 +14,7 @@ interface DrillCardProps {
    *  path — this picks the public URL instead. */
   public?: boolean;
   /** Entrance stagger index — public catalog only. /app's own grids stay
-   *  exactly as they were; `.rise` and `.lift` are no-ops there anyway (the
+   *  exactly as they were; `.pop` and `.lift` are no-ops there anyway (the
    *  tokens they read are transparent outside the public skin), but the entry
    *  animation itself is a public-only touch. */
   index?: number;
@@ -31,7 +31,7 @@ export default function DrillCard({
     interactive: true,
     className: [
       "flex h-full flex-col overflow-hidden",
-      isPublic ? "group rise lift" : "",
+      isPublic ? "group pop lift" : "",
     ]
       .filter(Boolean)
       .join(" "),

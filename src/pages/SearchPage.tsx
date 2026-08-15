@@ -55,8 +55,8 @@ export default function SearchPage() {
       data.drills.length
     : 0;
 
-  const suggestions = (
-    <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+  const chips = (align: string) => (
+    <div className={`mt-5 flex flex-wrap items-center gap-2 ${align}`}>
       <span className="text-caption text-ink-faint">
         {t("public.search.suggestionsLabel")}
       </span>
@@ -74,140 +74,170 @@ export default function SearchPage() {
   );
 
   return (
-    <PublicShell>
-      <header className="pt-6">
-        <h1 className="text-h1 font-semibold tracking-tight text-ink">
-          {t("public.search.title")}
-        </h1>
-      </header>
-
-      <SearchInput
-        value={q}
-        onChange={setQ}
-        placeholder={t("public.search.placeholder")}
-        className="mt-6 w-full sm:max-w-lg"
-        autoFocus
-      />
-
-      {/* The proof the search worked: a count per kind, right under the field,
-          before any block below has to earn the reader's attention. */}
-      {data && total > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {data.clubs.length > 0 && (
-            <CountChip label={t("public.publicClubs.count", { n: data.clubs.length })} />
-          )}
-          {data.players.length > 0 && (
-            <CountChip label={t("ranking.playersCount", { n: data.players.length })} />
-          )}
-          {data.tournaments.length > 0 && (
-            <CountChip label={t("tournaments.count", { n: data.tournaments.length })} />
-          )}
-          {data.drills.length > 0 && (
-            <CountChip label={t("public.publicDrills.count", { n: data.drills.length })} />
-          )}
-        </div>
-      )}
-
-      {!term ? (
-        <Card className="mt-6">
-          <EmptyState
-            icon={<LuSearch className="h-5 w-5" aria-hidden />}
-            title={t("public.search.promptTitle")}
-            hint={t("public.search.promptHint")}
-            action={suggestions}
+    <>
+      {/* The field is the hero. No photograph and no grid above the fold: on a
+          page whose whole job is one box, the box is the image. */}
+      <section>
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+          <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
+            {t("public.search.title")}
+          </h1>
+          <SearchInput
+            value={q}
+            onChange={setQ}
+            placeholder={t("public.search.placeholder")}
+            className="mt-8 w-full sm:max-w-xl"
+            autoFocus
           />
-        </Card>
-      ) : total === 0 && !isFetching ? (
-        <Card className="mt-6">
-          <EmptyState
-            icon={<LuSearch className="h-5 w-5" aria-hidden />}
-            title={t("public.search.noResults")}
-            hint={t("public.search.noResultsHint")}
-            action={suggestions}
-          />
-        </Card>
-      ) : (
-        <div className="mt-6 space-y-10">
-          {data && data.clubs.length > 0 && (
-            <Block titleKey="public.publicClubs.title" to="/clubs" q={term}>
-              <div className="no-bar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
-                {data.clubs.map((club) => (
-                  <Link
-                    key={club.id}
-                    to="/clubs/$slug"
-                    params={{ slug: club.slug }}
-                    data-ball={club.theme_color}
-                    className="wash lift flex w-44 shrink-0 snap-start flex-col items-center gap-2 rounded-card border border-hairline p-4 text-center"
-                  >
-                    <Avatar name={club.name} url={club.logo_url} className="h-12 w-12" />
-                    <span className="w-full truncate text-body font-medium text-ink">
-                      {club.name}
-                    </span>
-                    <span className="font-mono text-caption tabular-nums text-ink-faint">
-                      {t("public.publicClubs.members", { n: club.member_count })}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </Block>
-          )}
-
-          {data && data.players.length > 0 && (
-            <Block titleKey="public.publicPlayers.title" to="/players" q={term}>
-              <Card className="divide-y divide-hairline">
-                {data.players.map((player) => (
-                  <Link
-                    key={player.id}
-                    to="/players/$playerId"
-                    params={{ playerId: String(player.id) }}
-                    data-ball={player.club?.theme_color}
-                    className="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 hover:bg-felt-raised"
-                  >
-                    <Avatar name={player.name} url={player.avatar_url} className="h-9 w-9" />
-                    <span className="min-w-0 flex-1 truncate text-body text-ink">
-                      {player.name}
-                      {player.club && (
-                        <span className="text-ink-faint">
-                          {" · "}
-                          {player.club.name}
-                        </span>
-                      )}
-                    </span>
-                    <CategoryBadge category={player.category} />
-                  </Link>
-                ))}
-              </Card>
-            </Block>
-          )}
-
-          {data && data.tournaments.length > 0 && (
-            <Block
-              titleKey="public.publicTournaments.title"
-              to="/tournaments"
-              q={term}
-            >
-              <div className="flex flex-col gap-3">
-                {data.tournaments.map((tournament, i) => (
-                  <TournamentCard key={tournament.id} tournament={tournament} index={i} />
-                ))}
-              </div>
-            </Block>
-          )}
-
-          {data && data.drills.length > 0 && (
-            <Block titleKey="public.publicDrills.title" to="/drills" q={term}>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-                {data.drills.map((drill, i) => (
-                  <DrillCard key={drill.id} drill={drill} public index={i} />
-                ))}
-              </div>
-            </Block>
-          )}
+          {chips("justify-start")}
         </div>
-      )}
+      </section>
 
-      <CtaBand />
-    </PublicShell>
+      <PublicShell>
+        {/* The proof the search worked: a count per kind, before any block below
+            has to earn the reader's attention. */}
+        {data && total > 0 && (
+          <div className="mt-8 flex flex-wrap items-center gap-2">
+            {data.clubs.length > 0 && (
+              <CountChip
+                label={t("public.publicClubs.count", { n: data.clubs.length })}
+              />
+            )}
+            {data.players.length > 0 && (
+              <CountChip
+                label={t("ranking.playersCount", { n: data.players.length })}
+              />
+            )}
+            {data.tournaments.length > 0 && (
+              <CountChip
+                label={t("tournaments.count", { n: data.tournaments.length })}
+              />
+            )}
+            {data.drills.length > 0 && (
+              <CountChip
+                label={t("public.publicDrills.count", {
+                  n: data.drills.length,
+                })}
+              />
+            )}
+          </div>
+        )}
+
+        {!term ? (
+          <Card className="mt-6">
+            <EmptyState
+              icon={<LuSearch className="h-5 w-5" aria-hidden />}
+              title={t("public.search.promptTitle")}
+              hint={t("public.search.promptHint")}
+              action={chips("justify-center")}
+            />
+          </Card>
+        ) : total === 0 && !isFetching ? (
+          <Card className="mt-6">
+            <EmptyState
+              icon={<LuSearch className="h-5 w-5" aria-hidden />}
+              title={t("public.search.noResults")}
+              hint={t("public.search.noResultsHint")}
+              action={chips("justify-center")}
+            />
+          </Card>
+        ) : (
+          <div className="mt-6 space-y-10">
+            {data && data.clubs.length > 0 && (
+              <Block titleKey="public.publicClubs.title" to="/clubs">
+                <div className="no-bar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+                  {data.clubs.map((club) => (
+                    <Link
+                      key={club.id}
+                      to="/clubs/$slug"
+                      params={{ slug: club.slug }}
+                      data-ball={club.theme_color}
+                      className="wash lift flex w-44 shrink-0 snap-start flex-col items-center gap-2 rounded-card border border-hairline p-4 text-center"
+                    >
+                      <Avatar
+                        name={club.name}
+                        url={club.logo_url}
+                        mark
+                        className="h-12 w-12"
+                      />
+                      <span className="w-full truncate text-body font-medium text-ink">
+                        {club.name}
+                      </span>
+                      <span className="font-mono text-caption tabular-nums text-ink-faint">
+                        {t("public.publicClubs.members", {
+                          n: club.member_count,
+                        })}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </Block>
+            )}
+
+            {data && data.players.length > 0 && (
+              <Block titleKey="public.publicPlayers.title" to="/players">
+                <Card className="divide-y divide-hairline">
+                  {data.players.map((player) => (
+                    <Link
+                      key={player.id}
+                      to="/players/$playerId"
+                      params={{ playerId: String(player.id) }}
+                      data-ball={player.club?.theme_color}
+                      className="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 hover:bg-felt-raised"
+                    >
+                      <Avatar
+                        name={player.name}
+                        url={player.avatar_url}
+                        className="h-9 w-9"
+                      />
+                      <span className="min-w-0 flex-1 truncate text-body text-ink">
+                        {player.name}
+                        {player.club && (
+                          <span className="text-ink-faint">
+                            {" · "}
+                            {player.club.name}
+                          </span>
+                        )}
+                      </span>
+                      <CategoryBadge category={player.category} />
+                    </Link>
+                  ))}
+                </Card>
+              </Block>
+            )}
+
+            {data && data.tournaments.length > 0 && (
+              <Block
+                titleKey="public.publicTournaments.title"
+                to="/tournaments"
+              >
+                <div className="flex flex-col gap-3">
+                  {data.tournaments.map((tournament, i) => (
+                    <TournamentCard
+                      key={tournament.id}
+                      tournament={tournament}
+                      index={i}
+                    />
+                  ))}
+                </div>
+              </Block>
+            )}
+
+            {data && data.drills.length > 0 && (
+              <Block titleKey="public.publicDrills.title" to="/drills">
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                  {data.drills.map((drill, i) => (
+                    <DrillCard key={drill.id} drill={drill} public index={i} />
+                  ))}
+                </div>
+              </Block>
+            )}
+          </div>
+        )}
+
+        <CtaBand />
+      </PublicShell>
+    </>
   );
 }
 
@@ -223,12 +253,10 @@ function CountChip({ label }: { label: string }) {
 function Block({
   titleKey,
   to,
-  q,
   children,
 }: {
   titleKey: Key;
   to: "/clubs" | "/players" | "/tournaments" | "/drills";
-  q: string;
   children: React.ReactNode;
 }) {
   const { t } = useT();
@@ -241,9 +269,11 @@ function Block({
         </h2>
         <Link
           to={to}
-          // The query travels with the reader, so "see all" lands on the same
-          // search rather than on an unfiltered directory.
-          search={{ q }}
+          // Deliberately drops the term. /search is the only place on the public
+          // side that takes typed input now, so a directory has no field to show
+          // the term in and no way to clear it — landing there filtered would be
+          // a short list with no visible cause. "See all" means the whole
+          // section; the matches for the term are already on this page.
           className="shrink-0 text-caption font-medium text-strike transition-colors duration-150 hover:text-strike-light"
         >
           {t("common.seeAll")}
