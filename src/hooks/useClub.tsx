@@ -62,6 +62,8 @@ export const useManageClub = () => {
         name?: string;
         logoUrl?: string | null;
         themeColor?: BallColor;
+        /** Listed in the public club directory at /clubs. */
+        isPublic?: boolean;
       }) => {
         if (!activeClubId) throw new Error("no active club");
 
@@ -69,11 +71,13 @@ export const useManageClub = () => {
           name?: string;
           logo_url?: string | null;
           theme_color?: BallColor;
+          is_public?: boolean;
         } = {};
         if (updates.name !== undefined) patch.name = updates.name.trim();
         if (updates.logoUrl !== undefined) patch.logo_url = updates.logoUrl;
         if (updates.themeColor !== undefined)
           patch.theme_color = updates.themeColor;
+        if (updates.isPublic !== undefined) patch.is_public = updates.isPublic;
 
         await supabase
           .from("clubs")

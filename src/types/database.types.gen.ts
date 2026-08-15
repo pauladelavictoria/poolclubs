@@ -80,8 +80,10 @@ export type Database = {
         Row: {
           created_at: string | null
           id: number
+          is_public: boolean
           join_code: string
           logo_url: string | null
+          member_count: number
           name: string
           owner_id: string
           slug: string
@@ -90,8 +92,10 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: number
+          is_public?: boolean
           join_code?: string
           logo_url?: string | null
+          member_count?: number
           name: string
           owner_id: string
           slug: string
@@ -100,8 +104,10 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: number
+          is_public?: boolean
           join_code?: string
           logo_url?: string | null
+          member_count?: number
           name?: string
           owner_id?: string
           slug?: string
@@ -393,6 +399,7 @@ export type Database = {
           category: number
           club_id: number
           id: number
+          is_public: boolean
           name: string
           status: string
           user_id: string | null
@@ -402,6 +409,7 @@ export type Database = {
           category?: number
           club_id: number
           id?: number
+          is_public?: boolean
           name: string
           status?: string
           user_id?: string | null
@@ -411,6 +419,7 @@ export type Database = {
           category?: number
           club_id?: number
           id?: number
+          is_public?: boolean
           name?: string
           status?: string
           user_id?: string | null
@@ -778,6 +787,7 @@ export type Database = {
       is_club_member: { Args: { cid: number }; Returns: boolean }
       is_drill_admin: { Args: never; Returns: boolean }
       is_own_player: { Args: { pid: number }; Returns: boolean }
+      is_public_club: { Args: { cid: number }; Returns: boolean }
       join_club: {
         Args: { claim_player_id?: number; code: string; display_name?: string }
         Returns: number

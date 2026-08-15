@@ -72,6 +72,7 @@ export const Route = createRootRouteWithContext<{
         media: "(prefers-color-scheme: dark)",
         content: "#090b0e",
       },
+      { property: "og:site_name", content: "PoolClubs" },
       { property: "og:title", content: "PoolClubs" },
       {
         property: "og:description",
@@ -79,7 +80,12 @@ export const Route = createRootRouteWithContext<{
           "Elo rankings, match results, challenges and training plans for pool clubs.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "/android-chrome-512x512.png" },
+      // The fallback for anything with no card of its own. It used to be
+      // /android-chrome-512x512.png — a square PWA icon, which every preview
+      // renderer cropped into a thumbnail rather than drawing as a card. Every
+      // public route overrides this from its own data; see libs/publicMeta.ts.
+      { property: "og:image", content: "/og/default.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: indexCss },

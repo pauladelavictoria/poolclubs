@@ -69,7 +69,7 @@ function ClubLayout() {
 
   // Every page under a club shares its accent, so it is set here rather than in
   // each page that happens to render something coloured.
-  const accent = <ClubThemeStyle club={activeClub} />;
+  const accent = <ClubThemeStyle color={activeClub?.theme_color} />;
 
   // The page scrolls, the chrome does not — so the scrollbar lives inside the
   // content and taking or freeing it can't move the bar or the tabs. Router

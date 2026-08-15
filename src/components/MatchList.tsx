@@ -1,7 +1,7 @@
 import type { BracketIndex } from "@/libs/bracket";
 import type { BracketSide, TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
-import { AppLink } from "@/components/AppLink";
+import PlayerLink from "@/components/PlayerLink";
 
 /** Reading order of a tournament: groups, then the main draw, then the repêchage
  *  it feeds, then the match everything has been building to. Kept in step with
@@ -136,14 +136,13 @@ function Row({
   const nameNode = (playerId: number | null, slot: 1 | 2) => {
     if (playerId === null) return name(playerId, slot);
     return (
-      <AppLink
-        to="/app/$clubSlug/players/$playerId"
-        params={{ playerId: playerId }}
+      <PlayerLink
+        playerId={playerId}
         onClick={(e) => e.stopPropagation()}
         className="transition-colors duration-150 hover:text-strike"
       >
         {name(playerId, slot)}
-      </AppLink>
+      </PlayerLink>
     );
   };
 

@@ -131,6 +131,44 @@ $$;
 ALTER FUNCTION "public"."club_slug_reserved"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."clubs_recount_members"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+    ids integer[] := '{}';
+    cid integer;
+BEGIN
+    -- Both sides, because an UPDATE can move a player between clubs. The TG_OP
+    -- checks are statements rather than a CASE inside one expression: plpgsql
+    -- raises on any reference to OLD during an INSERT, so the guard has to stop
+    -- the reference being evaluated at all.
+    IF TG_OP <> 'INSERT' THEN
+        ids := ids || OLD.club_id;
+    END IF;
+    IF TG_OP <> 'DELETE' THEN
+        ids := ids || NEW.club_id;
+    END IF;
+
+    FOR cid IN
+        SELECT DISTINCT c FROM unnest(ids) AS c WHERE c IS NOT NULL
+    LOOP
+        UPDATE public.clubs
+        SET member_count = (
+            SELECT count(*) FROM public.players
+            WHERE club_id = cid AND status = 'active'
+        )
+        WHERE id = cid;
+    END LOOP;
+
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."clubs_recount_members"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."clubs_set_slug"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -230,6 +268,17 @@ $$;
 
 
 ALTER FUNCTION "public"."is_own_player"("pid" integer) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."is_public_club"("cid" integer) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+    SELECT EXISTS (SELECT 1 FROM clubs WHERE id = cid AND is_public);
+$$;
+
+
+ALTER FUNCTION "public"."is_public_club"("cid" integer) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."join_club"("code" "text", "claim_player_id" integer DEFAULT NULL::integer, "display_name" "text" DEFAULT NULL::"text") RETURNS integer
@@ -443,6 +492,8 @@ CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "logo_url" "text",
     "theme_color" "public"."BallColor" DEFAULT 'yellow'::"public"."BallColor" NOT NULL,
     "slug" "text" NOT NULL,
+    "is_public" boolean DEFAULT true NOT NULL,
+    "member_count" integer DEFAULT 0 NOT NULL,
     CONSTRAINT "clubs_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
     CONSTRAINT "clubs_slug_shape" CHECK ((("slug" ~ '^[a-z0-9][a-z0-9-]*$'::"text") AND (NOT ("slug" = ANY ("public"."club_slug_reserved"())))))
 );
@@ -597,6 +648,7 @@ CREATE TABLE IF NOT EXISTS "public"."players" (
     "club_id" integer NOT NULL,
     "status" "text" DEFAULT 'pending'::"text" NOT NULL,
     "avatar_url" "text",
+    "is_public" boolean DEFAULT true NOT NULL,
     CONSTRAINT "players_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text"])))
 );
 
@@ -980,6 +1032,10 @@ CREATE OR REPLACE TRIGGER "players_guard_user_id" BEFORE UPDATE ON "public"."pla
 
 
 
+CREATE OR REPLACE TRIGGER "players_recount_members" AFTER INSERT OR DELETE OR UPDATE OF "status", "club_id" ON "public"."players" FOR EACH ROW EXECUTE FUNCTION "public"."clubs_recount_members"();
+
+
+
 CREATE OR REPLACE TRIGGER "tournament_matches_guard" BEFORE UPDATE ON "public"."tournament_matches" FOR EACH ROW EXECUTE FUNCTION "public"."tournament_match_guard"();
 
 
@@ -1222,18 +1278,6 @@ CREATE POLICY "Admin can update tournaments" ON "public"."tournaments" FOR UPDAT
 
 
 
-CREATE POLICY "Any authenticated user can update players" ON "public"."players" FOR UPDATE TO "authenticated" USING (true);
-
-
-
-CREATE POLICY "Anyone can add games" ON "public"."games" FOR INSERT WITH CHECK (true);
-
-
-
-CREATE POLICY "Anyone can read players" ON "public"."players" FOR SELECT USING (true);
-
-
-
 CREATE POLICY "Authenticated users can create clubs" ON "public"."clubs" FOR INSERT TO "authenticated" WITH CHECK (("owner_id" = "auth"."uid"()));
 
 
@@ -1258,23 +1302,23 @@ CREATE POLICY "Creator or admin can update drills" ON "public"."drills" FOR UPDA
 
 
 
-CREATE POLICY "Drill logs are viewable by everyone" ON "public"."drill_logs" FOR SELECT USING (true);
-
-
-
 CREATE POLICY "Either side can respond" ON "public"."challenges" FOR UPDATE TO "authenticated" USING (("public"."is_own_player"("to_player_id") OR "public"."is_own_player"("from_player_id"))) WITH CHECK (("public"."is_own_player"("to_player_id") OR "public"."is_own_player"("from_player_id")));
 
 
 
-CREATE POLICY "Enable delete for authenticated users only" ON "public"."players" FOR DELETE TO "authenticated" USING (true);
-
-
-
-CREATE POLICY "Enable insert for authenticated users only" ON "public"."players" FOR INSERT TO "authenticated" WITH CHECK (true);
-
-
-
 CREATE POLICY "Entrant or admin can withdraw" ON "public"."tournament_players" FOR DELETE TO "authenticated" USING (("public"."is_own_player"("player_id") OR "public"."is_club_admin"("public"."tournament_club"("tournament_id"))));
+
+
+
+CREATE POLICY "Entrants of public tournaments are readable by anyone" ON "public"."tournament_players" FOR SELECT TO "anon" USING ("public"."is_public_club"("public"."tournament_club"("tournament_id")));
+
+
+
+CREATE POLICY "Games of public clubs are readable by anyone" ON "public"."games" FOR SELECT TO "anon" USING ("public"."is_public_club"("club_id"));
+
+
+
+CREATE POLICY "Matches of public tournaments are readable by anyone" ON "public"."tournament_matches" FOR SELECT TO "anon" USING ("public"."is_public_club"("public"."tournament_club"("tournament_id")));
 
 
 
@@ -1392,6 +1436,10 @@ CREATE POLICY "Members can write training plans" ON "public"."training_plans" FO
 
 
 
+CREATE POLICY "Own row can be updated" ON "public"."players" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "Owner can delete club" ON "public"."clubs" FOR DELETE TO "authenticated" USING ("public"."is_club_admin"("id"));
 
 
@@ -1400,11 +1448,19 @@ CREATE POLICY "Owner can update club" ON "public"."clubs" FOR UPDATE TO "authent
 
 
 
-CREATE POLICY "Training plan steps are viewable by everyone" ON "public"."training_plan_steps" FOR SELECT USING (true);
+CREATE POLICY "Players of public clubs are readable by anyone" ON "public"."players" FOR SELECT TO "anon" USING ((("status" = 'active'::"text") AND "public"."is_public_club"("club_id")));
 
 
 
-CREATE POLICY "Training plans are viewable by everyone" ON "public"."training_plans" FOR SELECT USING (true);
+CREATE POLICY "Public clubs are readable by anyone" ON "public"."clubs" FOR SELECT TO "anon" USING ("is_public");
+
+
+
+CREATE POLICY "The shared drill catalog is readable by anyone" ON "public"."drills" FOR SELECT TO "anon" USING (("club_id" IS NULL));
+
+
+
+CREATE POLICY "Tournaments of public clubs are readable by anyone" ON "public"."tournaments" FOR SELECT TO "anon" USING ("public"."is_public_club"("club_id"));
 
 
 
@@ -1674,6 +1730,12 @@ GRANT ALL ON FUNCTION "public"."club_slug_reserved"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."clubs_recount_members"() TO "anon";
+GRANT ALL ON FUNCTION "public"."clubs_recount_members"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."clubs_recount_members"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."clubs_set_slug"() TO "anon";
 GRANT ALL ON FUNCTION "public"."clubs_set_slug"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."clubs_set_slug"() TO "service_role";
@@ -1706,6 +1768,12 @@ GRANT ALL ON FUNCTION "public"."is_drill_admin"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."is_own_player"("pid" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."is_own_player"("pid" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_own_player"("pid" integer) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."is_public_club"("cid" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."is_public_club"("cid" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."is_public_club"("cid" integer) TO "service_role";
 
 
 
@@ -1765,9 +1833,41 @@ GRANT ALL ON SEQUENCE "public"."challenges_id_seq" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."clubs" TO "anon";
+GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE "public"."clubs" TO "anon";
 GRANT ALL ON TABLE "public"."clubs" TO "authenticated";
 GRANT ALL ON TABLE "public"."clubs" TO "service_role";
+
+
+
+GRANT SELECT("id") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("name") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("created_at") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("logo_url") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("theme_color") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("slug") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("is_public") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("member_count") ON TABLE "public"."clubs" TO "anon";
 
 
 
@@ -1801,9 +1901,57 @@ GRANT ALL ON SEQUENCE "public"."drill_logs_id_seq" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."drills" TO "anon";
+GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE "public"."drills" TO "anon";
 GRANT ALL ON TABLE "public"."drills" TO "authenticated";
 GRANT ALL ON TABLE "public"."drills" TO "service_role";
+
+
+
+GRANT SELECT("id") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("name") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("description") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("difficulty") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("skill_type") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("setup_instructions") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("scoring_method") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("max_score") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("ball_positions") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("shot_paths") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("created_at") ON TABLE "public"."drills" TO "anon";
+
+
+
+GRANT SELECT("club_id") ON TABLE "public"."drills" TO "anon";
 
 
 
@@ -1819,9 +1967,37 @@ GRANT ALL ON TABLE "public"."games" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."players" TO "anon";
+GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE "public"."players" TO "anon";
 GRANT ALL ON TABLE "public"."players" TO "authenticated";
 GRANT ALL ON TABLE "public"."players" TO "service_role";
+
+
+
+GRANT SELECT("id") ON TABLE "public"."players" TO "anon";
+
+
+
+GRANT SELECT("name") ON TABLE "public"."players" TO "anon";
+
+
+
+GRANT SELECT("category") ON TABLE "public"."players" TO "anon";
+
+
+
+GRANT SELECT("club_id") ON TABLE "public"."players" TO "anon";
+
+
+
+GRANT SELECT("status") ON TABLE "public"."players" TO "anon";
+
+
+
+GRANT SELECT("avatar_url") ON TABLE "public"."players" TO "anon";
+
+
+
+GRANT SELECT("is_public") ON TABLE "public"."players" TO "anon";
 
 
 

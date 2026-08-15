@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getRouteApi } from "@tanstack/react-router";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import PageTitle from "@/components/PageTitle";
 import AvatarUpload from "@/components/AvatarUpload";
@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
+import { Toggle } from "@/components/ui/Toggle";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useT } from "@/i18n";
 
@@ -28,24 +29,27 @@ export default function PlayerSettingsPage() {
   // Synced from `player` on load, then left alone — an in-flight edit
   // shouldn't be clobbered by a background refetch of the same row.
   const [name, setName] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   const [syncedId, setSyncedId] = useState<number | null>(null);
   if (player && syncedId !== player.id) {
     setSyncedId(player.id);
     setName(player.name);
+    setIsPublic(player.is_public);
   }
 
   // These are private settings — only their owner can reach this page, which the
   // route's beforeLoad enforces before anything renders.
 
   const trimmed = name.trim();
-  const dirty = !!player && trimmed !== player.name;
+  const dirty =
+    !!player && (trimmed !== player.name || isPublic !== player.is_public);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!player || !trimmed || !dirty) return;
 
     updatePlayer.mutate(
-      { id: player.id, name: trimmed },
+      { id: player.id, name: trimmed, is_public: isPublic },
       {
         onSuccess: async () => {
           toast.success(t("players.updated"));
@@ -107,6 +111,29 @@ export default function PlayerSettingsPage() {
                 disabled={updatePlayer.isPending}
               />
             </div>
+
+            {/* Said in full rather than as "public profile": the two halves of
+                what this does are easy to get wrong, and getting it wrong is
+                the difference between being findable and being hidden. */}
+            <div className="border-t border-hairline pt-3">
+              <Toggle
+                checked={isPublic}
+                onChange={setIsPublic}
+                label={t("players.publicProfile")}
+                hint={t("players.publicProfileHint")}
+                disabled={updatePlayer.isPending}
+              />
+              {isPublic && (
+                <Link
+                  to="/players/$playerId"
+                  params={{ playerId: String(player.id) }}
+                  className="mt-2 inline-block pl-7 text-caption font-medium text-strike transition-colors duration-150 hover:text-strike-light"
+                >
+                  {t("players.viewPublicProfile")}
+                </Link>
+              )}
+            </div>
+
             <div className="flex justify-end">
               <Button
                 type="submit"

@@ -14,6 +14,7 @@ const player = (id: number, category: 1 | 2 | 3): Player => ({
   status: "active",
   user_id: null,
   avatar_url: null,
+  is_public: true,
 });
 
 /** Same division either side, so no margin is expected of anyone by default. */

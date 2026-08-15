@@ -1,7 +1,7 @@
 import { BallBadge } from "@/components/ui/Ball";
 import type { Standing } from "@/libs/leagueTable";
 import { useT } from "@/i18n";
-import { AppLink } from "@/components/AppLink";
+import PlayerLink from "@/components/PlayerLink";
 
 /**
  * The table a round robin produces. One of these for a league, one per group
@@ -64,13 +64,12 @@ export default function LeagueTable({
               <BallBadge rank={index + 1} />
             </td>
             <td className="py-2.5 pr-3">
-              <AppLink
-                to="/app/$clubSlug/players/$playerId"
-                params={{ playerId: row.playerId }}
+              <PlayerLink
+                playerId={row.playerId}
                 className="block truncate font-medium text-ink transition-colors duration-150 hover:text-strike"
               >
                 {nameOf(row.playerId)}
-              </AppLink>
+              </PlayerLink>
             </td>
             <td className="py-2.5 pr-3 text-right">
               <span className="font-mono text-caption tabular-nums text-ink-faint">

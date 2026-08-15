@@ -1,5 +1,6 @@
 import type { Game } from "@/types";
 import React from "react";
+import { Link } from "@tanstack/react-router";
 import { EmptyState } from "@/components/ui/EmptyState";
 import SocialBar from "@/components/SocialBar";
 import { LuSwords } from "react-icons/lu";
@@ -7,37 +8,62 @@ import { dayLabel, startsNewDay, timeOf } from "@/libs/dayLabel";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/AppLink";
 
-/** A team's name(s) on the tape, each one a tap to that player's page. */
+const NAME_LINK = "transition-colors duration-150 hover:text-strike";
+
+/**
+ * One player's name on the tape, as a tap to their page.
+ *
+ * The two branches are the whole reason this list takes a `public` flag: AppLink
+ * reads $clubSlug out of the route it is rendered under, so on a public page —
+ * which has no club in its path — it throws rather than degrading.
+ */
+function Name({
+  id,
+  name,
+  isPublic,
+}: {
+  id: number;
+  /** The doubles partner's name is absent on a singles row, so undefined is as
+   *  ordinary here as null. */
+  name: string | null | undefined;
+  isPublic: boolean;
+}) {
+  return isPublic ? (
+    <Link to="/players/$playerId" params={{ playerId: String(id) }} className={NAME_LINK}>
+      {name}
+    </Link>
+  ) : (
+    <AppLink
+      to="/app/$clubSlug/players/$playerId"
+      params={{ playerId: id }}
+      className={NAME_LINK}
+    >
+      {name}
+    </AppLink>
+  );
+}
+
+/** A team's name(s) on the tape. */
 function Team({
   id1,
   name1,
   id2,
   name2,
+  isPublic,
 }: {
   id1: number;
   name1: string | null;
   id2?: number | null;
   name2?: string | null;
+  isPublic: boolean;
 }) {
   return (
     <>
-      <AppLink
-        to="/app/$clubSlug/players/$playerId"
-        params={{ playerId: id1 }}
-        className="transition-colors duration-150 hover:text-strike"
-      >
-        {name1}
-      </AppLink>
+      <Name id={id1} name={name1} isPublic={isPublic} />
       {id2 != null && (
         <>
           {" / "}
-          <AppLink
-            to="/app/$clubSlug/players/$playerId"
-            params={{ playerId: id2 }}
-            className="transition-colors duration-150 hover:text-strike"
-          >
-            {name2}
-          </AppLink>
+          <Name id={id2} name={name2} isPublic={isPublic} />
         </>
       )}
     </>
@@ -58,6 +84,12 @@ interface GamesListProps {
    * `overflow-hidden` card, so it stays off by default.
    */
   stickyDates?: boolean;
+  /**
+   * Rendered outside /app. Names link to the public player pages instead of the
+   * club's, and the social bar goes away — reactions and comments are members'
+   * business, and anon cannot read either table.
+   */
+  public?: boolean;
 }
 
 /**
@@ -77,8 +109,10 @@ export default function GamesList({
   showDates,
   showSocial = true,
   stickyDates = false,
+  public: isPublic = false,
 }: GamesListProps) {
   const { t, locale } = useT();
+  const social = showSocial && !isPublic;
 
   if (!games || games.length === 0) {
     return (
@@ -173,6 +207,7 @@ export default function GamesList({
                   name1={player_1_name}
                   id2={isDoubles ? player_1b_id : undefined}
                   name2={player_1b_name}
+                  isPublic={isPublic}
                 />
               </span>
               <span className="shrink-0 font-mono text-h4 font-semibold tabular-nums">
@@ -190,13 +225,14 @@ export default function GamesList({
                   name1={player_2_name}
                   id2={isDoubles ? player_2b_id : undefined}
                   name2={player_2b_name}
+                  isPublic={isPublic}
                 />
               </span>
               <span className="hidden w-12 shrink-0 text-right text-caption font-medium text-ink-ghost sm:block">
                 {isDoubles ? "2v2" : ""}
               </span>
             </div>
-            {showSocial && <SocialBar target={{ gameId: id }} />}
+            {social && <SocialBar target={{ gameId: id }} />}
           </React.Fragment>
         );
       })}

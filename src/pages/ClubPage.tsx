@@ -12,11 +12,12 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button, IconButton } from "@/components/ui/Button";
+import { Toggle } from "@/components/ui/Toggle";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/libs/useDialog";
 import type { Player, Category, BallColor } from "@/types";
 import { useT } from "@/i18n";
-import { getRouteApi } from "@tanstack/react-router";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { AppLink } from "@/components/AppLink";
 
 /**
@@ -40,6 +41,7 @@ export default function ClubPage() {
   // the admin actually touched, in one Guardar rather than three saves.
   const [logoUrl, setLogoUrl] = useState<string | null | undefined>(undefined);
   const [color, setColor] = useState<BallColor | undefined>(undefined);
+  const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined);
   const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -68,7 +70,10 @@ export default function ClubPage() {
   };
 
   const hasChanges =
-    name.trim().length > 0 || logoUrl !== undefined || color !== undefined;
+    name.trim().length > 0 ||
+    logoUrl !== undefined ||
+    color !== undefined ||
+    isPublic !== undefined;
 
   const saveSettings = () => {
     updateClub.mutate(
@@ -76,12 +81,14 @@ export default function ClubPage() {
         ...(name.trim() && { name: name.trim() }),
         ...(logoUrl !== undefined && { logoUrl }),
         ...(color !== undefined && { themeColor: color }),
+        ...(isPublic !== undefined && { isPublic }),
       },
       {
         onSuccess: () => {
           setName("");
           setLogoUrl(undefined);
           setColor(undefined);
+          setIsPublic(undefined);
           toast.success(t("common.saved"));
         },
         onError: () => toast.error(t("common.error")),
@@ -152,6 +159,25 @@ export default function ClubPage() {
                 onChange={setColor}
                 disabled={updateClub.isPending}
               />
+            </div>
+
+            <div className="mt-5 space-y-2 border-t border-hairline pt-4">
+              <Toggle
+                checked={isPublic ?? activeClub.is_public}
+                onChange={setIsPublic}
+                label={t("club.publicListing")}
+                hint={t("club.publicListingHint")}
+                disabled={updateClub.isPending}
+              />
+              {(isPublic ?? activeClub.is_public) && (
+                <Link
+                  to="/clubs/$slug"
+                  params={{ slug: activeClub.slug }}
+                  className="inline-block pl-7 text-caption font-medium text-strike transition-colors duration-150 hover:text-strike-light"
+                >
+                  {t("club.viewPublicPage")}
+                </Link>
+              )}
             </div>
 
             <Button

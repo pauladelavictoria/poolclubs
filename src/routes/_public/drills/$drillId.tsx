@@ -1,0 +1,38 @@
+import { createFileRoute, notFound } from "@tanstack/react-router";
+import PublicDrillPage from "@/pages/PublicDrillPage";
+import { publicDrillQuery } from "@/queries/public";
+import { publicMeta, canonical } from "@/libs/publicMeta";
+
+export const Route = createFileRoute("/_public/drills/$drillId")({
+  loader: async ({ context, params }) => {
+    const id = Number(params.drillId);
+    if (!Number.isInteger(id) || id < 1) throw notFound();
+
+    const drill = await context.queryClient.ensureQueryData(
+      publicDrillQuery(id),
+    );
+    // Club-owned drills fall in here too: the query is restricted to the shared
+    // catalog, so a club's own drill is a 404 rather than a redirect to sign in.
+    if (!drill) throw notFound();
+
+    return { drill, origin: context.origin };
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) return {};
+    const { drill, origin } = loaderData;
+    const path = `/drills/${drill.id}`;
+    return {
+      meta: publicMeta({
+        title: `${drill.name} · Pool drill · PoolClubs`,
+        description: drill.description,
+        path,
+        origin,
+        // A drill's diagram is drawn as SVG in the page, so there is no image
+        // file to point a crawler at — the section card stands in.
+        fallback: "drills",
+      }),
+      links: canonical(path, origin),
+    };
+  },
+  component: PublicDrillPage,
+});

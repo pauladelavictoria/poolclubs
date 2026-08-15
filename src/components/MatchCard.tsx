@@ -1,7 +1,7 @@
 import type { BracketIndex } from "@/libs/bracket";
 import type { TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
-import { AppLink } from "@/components/AppLink";
+import PlayerLink from "@/components/PlayerLink";
 
 /**
  * One fixture, in every format.
@@ -69,14 +69,13 @@ export default function MatchCard({
           {playerId === null ? (
             empty(slot)
           ) : (
-            <AppLink
-              to="/app/$clubSlug/players/$playerId"
-              params={{ playerId: playerId }}
+            <PlayerLink
+              playerId={playerId}
               onClick={(e) => e.stopPropagation()}
               className="transition-colors duration-150 hover:text-strike"
             >
               {nameOf(playerId)}
-            </AppLink>
+            </PlayerLink>
           )}
         </span>
         <span className="shrink-0 font-mono text-body tabular-nums text-ink-soft">

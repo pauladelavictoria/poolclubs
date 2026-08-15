@@ -1,5 +1,5 @@
 import { CLUB_THEME_PALETTE, type Shades } from "@/libs/clubTheme";
-import type { Club } from "@/types";
+import type { BallColor } from "@/types";
 
 const decl = (shades: Shades) =>
   [
@@ -26,12 +26,13 @@ const decl = (shades: Shades) =>
  * stylesheet's does.
  */
 export default function ClubThemeStyle({
-  club,
+  color,
 }: {
-  club: Club | null | undefined;
+  /** The ball itself rather than the club row: the public club page reads a
+   *  redacted subset of the columns, so it has no full Club to hand over. */
+  color: BallColor | null | undefined;
 }) {
-  const color = club?.theme_color;
-  // No club, or the default ball: the stylesheet's own yellow already is this.
+  // No colour, or the default ball: the stylesheet's own yellow already is this.
   const shades = color && color !== "yellow" ? CLUB_THEME_PALETTE[color] : null;
   if (!shades) return null;
 

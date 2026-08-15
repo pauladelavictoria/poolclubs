@@ -1,4 +1,5 @@
 import type { Drill } from "@/types";
+import { Link } from "@tanstack/react-router";
 import PoolTableDiagram from "./PoolTableDiagram";
 import { cardClasses } from "@/components/ui/cardStyles";
 import { DifficultyTag } from "@/components/ui/DifficultyTag";
@@ -7,20 +8,22 @@ import { AppLink } from "@/components/AppLink";
 
 interface DrillCardProps {
   drill: Drill;
+  /** Rendered outside /app, on the public catalog. AppLink reads $clubSlug from
+   *  the route it sits under, so it cannot be used where there is no club in the
+   *  path — this picks the public URL instead. */
+  public?: boolean;
 }
 
-export default function DrillCard({ drill }: DrillCardProps) {
+export default function DrillCard({ drill, public: isPublic }: DrillCardProps) {
   const { t } = useT();
 
-  return (
-    <AppLink
-      to="/app/$clubSlug/drills/$drillId"
-      params={{ drillId: drill.id }}
-      className={cardClasses({
-        interactive: true,
-        className: "flex h-full flex-col overflow-hidden",
-      })}
-    >
+  const className = cardClasses({
+    interactive: true,
+    className: "flex h-full flex-col overflow-hidden",
+  });
+
+  const body = (
+    <>
       {/* Portrait, and edge to edge: the table is what you are choosing
           between, so it gets the whole width instead of sitting inside a
           second frame. */}
@@ -55,6 +58,24 @@ export default function DrillCard({ drill }: DrillCardProps) {
           </span>
         </div>
       </div>
+    </>
+  );
+
+  return isPublic ? (
+    <Link
+      to="/drills/$drillId"
+      params={{ drillId: String(drill.id) }}
+      className={className}
+    >
+      {body}
+    </Link>
+  ) : (
+    <AppLink
+      to="/app/$clubSlug/drills/$drillId"
+      params={{ drillId: drill.id }}
+      className={className}
+    >
+      {body}
     </AppLink>
   );
 }

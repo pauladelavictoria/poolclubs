@@ -2,7 +2,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import type { Places } from "@/libs/bracket";
 import type { Player } from "@/types";
 import { useT } from "@/i18n";
-import { AppLink } from "@/components/AppLink";
+import PlayerLink from "@/components/PlayerLink";
 
 /** Second on the left, winner in the middle, third on the right: the shape of a
  *  real podium, read middle-first rather than left-to-right. */
@@ -13,7 +13,9 @@ export default function TournamentPodium({
   byId,
 }: {
   places: Places;
-  byId: Map<number, Player>;
+  /** Only a name and a face are read, so the map asks for only those: the public
+   *  tournament page builds it from a redacted roster. */
+  byId: Map<number, Pick<Player, "name" | "avatar_url">>;
 }) {
   const { t } = useT();
 
@@ -39,13 +41,12 @@ export default function TournamentPodium({
               url={player?.avatar_url ?? undefined}
               className={rank === 1 ? "h-16 w-16" : "h-12 w-12"}
             />
-            <AppLink
-              to="/app/$clubSlug/players/$playerId"
-              params={{ playerId: playerId }}
+            <PlayerLink
+              playerId={playerId}
               className="line-clamp-2 text-center text-caption font-medium text-ink transition-colors duration-150 hover:text-strike"
             >
               {player?.name ?? "—"}
-            </AppLink>
+            </PlayerLink>
             {/* The block itself is the ranking: taller is better, and the ball
                 repeats it for anyone who cannot compare two heights at a
                 glance. */}
