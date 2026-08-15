@@ -101,6 +101,12 @@
   /* Red stopped being the accent when yellow took over, so this holds a real
      red: it is what error text is written in, and nothing else. */
   --color-accent-red: #e23744;
+
+  /* Off by default. `none` cannot be the off value: box-shadow composes as a
+     comma list and `none` inside a list invalidates the whole declaration. A
+     fully transparent shadow composes fine and costs nothing. */
+  --lift: 0 0 #0000;
+  --lift-strong: 0 0 #0000;
 }
 
 /*
@@ -150,6 +156,64 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
+}
+
+/*
+  Public skin. The authed tool is a dim pool room; the public surface is the
+  bar it opens onto — warm neutral surfaces, chunkier radii, real tinted lift.
+  `--color-strike*` is never redefined here: per-club colour (ClubThemeStyle,
+  [data-ball]) has to win every time, and both live at the same 0-1-0
+  specificity where document order alone decides.
+*/
+html:has([data-public]) {
+  /* Warm neutral, not blue. The blue-black is the pool room at night; this is
+     the bar it opens onto. Same lightness ladder, a wider first step, because a
+     card out here carries a photo and has to detach from the canvas. */
+  --color-pocket: #0b0a0a;
+  --color-felt: #1b1917;
+  --color-felt-raised: #262220;
+  --color-rail: #332e2a;
+
+  --color-hairline: rgba(255, 243, 230, 0.1);
+  --color-hairline-strong: rgba(255, 243, 230, 0.18);
+
+  --color-ink: #f7f3ec;
+  --color-ink-soft: #c6bdb2;
+  --color-ink-faint: #978d83;
+  --color-ink-ghost: #635b53;
+
+  /* Still control < card < sheet, still locked. Just a different lock out here,
+     where a card is a poster and not a row. */
+  --radius-control: 12px;
+  --radius-card: 22px;
+  --radius-sheet: 28px;
+
+  --lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.55);
+  --lift-strong: 0 2px 4px rgb(0 0 0 / 0.45), 0 20px 40px -16px rgb(0 0 0 / 0.7);
+
+  --lamp: color-mix(in srgb, var(--color-strike) 8%, transparent);
+  --lamp-strong: color-mix(in srgb, var(--color-strike) 16%, transparent);
+}
+
+/* Where the fable/patreon read actually lives: warm paper canvas, white cards
+   floating on it, and a real shadow, which light mode can afford and dark never
+   could. Shadows tinted with the canvas's own brown, never neutral grey. */
+html[data-theme="light"]:has([data-public]) {
+  --color-pocket: #f8f4ee; /* paper, not the app's cool #f3f5f9 */
+  --color-felt: #ffffff;
+  --color-felt-raised: #f3ece3;
+  --color-rail: #e7ded1;
+
+  --color-hairline: rgba(41, 30, 18, 0.09);
+  --color-hairline-strong: rgba(41, 30, 18, 0.18);
+
+  --color-ink: #191410;
+  --color-ink-soft: #564e45;
+  --color-ink-faint: #756b62;
+  --color-ink-ghost: #aaa197;
+
+  --lift: 0 1px 2px rgb(41 30 18 / 0.06), 0 10px 24px -14px rgb(41 30 18 / 0.22);
+  --lift-strong: 0 2px 6px rgb(41 30 18 / 0.08), 0 22px 44px -18px rgb(41 30 18 / 0.3);
 }
 
 @layer base {
@@ -363,6 +427,102 @@ dialog.sheet[open]::backdrop {
   );
 }
 
+/* Depth as an opt-in class, so /app and the public side share one <Card>.
+   Outside [data-public] --lift is transparent, so this is a no-op there. */
+.lift {
+  box-shadow: var(--lift);
+  transition:
+    box-shadow 220ms var(--ease-out),
+    translate 220ms var(--ease-out),
+    border-color 150ms var(--ease-out);
+}
+a.lift:hover,
+button.lift:hover {
+  box-shadow: var(--lift-strong);
+  translate: 0 -3px;
+}
+
+/* Entrance stagger. --i is the card index. The cap is the point: 24 cards at
+   45ms each is a page and a half of waiting, so the tail arrives together.
+   An inline animation-delay still wins, so LandingPage's hero delays keep working. */
+.rise {
+  animation-delay: calc(min(var(--i, 0), 8) * 45ms);
+}
+
+/* The club's colour as card art, for the many cards with no image of their own.
+   --color-strike is whatever [data-ball] on the card set it to, so eight clubs
+   in a grid are eight different cards. --wash tunes strength: card art is loud,
+   a hero band behind text is quiet. */
+.wash {
+  background-color: var(--color-felt-raised);
+  background-image:
+    radial-gradient(
+      90% 120% at 12% 0%,
+      color-mix(in srgb, var(--color-strike) var(--wash, 34%), transparent) 0%,
+      transparent 68%
+    ),
+    radial-gradient(
+      70% 90% at 92% 8%,
+      color-mix(in srgb, var(--color-strike) calc(var(--wash, 34%) / 2), transparent) 0%,
+      transparent 60%
+    );
+}
+/* Light mode's strike is a deep gold; 34% of it over paper is a bruise. */
+:root[data-theme="light"] .wash {
+  --wash: 14%;
+}
+
+/* A photo has to fade into the card it sits in, not stop at it. */
+.scrim {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-felt) 55%, transparent) 55%,
+    var(--color-felt) 100%
+  );
+}
+
+/* Chalk dust on the cloth. Texture for a hero band, one line, no asset. */
+.dotfield {
+  background-image: radial-gradient(var(--color-hairline-strong) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* The one thing on the public side happening right now. */
+@keyframes live-pulse {
+  50% {
+    opacity: 0.3;
+    scale: 0.7;
+  }
+}
+.live-dot {
+  animation: live-pulse 1.7s var(--ease-out) infinite;
+}
+
+/* Marquee. Track duplicated in markup, translated half its own width, so the
+   loop is seamless without measuring anything in JS. */
+@keyframes marquee {
+  to {
+    translate: -50% 0;
+  }
+}
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee var(--marquee, 48s) linear infinite;
+}
+.marquee-hold:hover .marquee,
+.marquee-hold:focus-within .marquee {
+  animation-play-state: paused;
+}
+
+.no-bar {
+  scrollbar-width: none;
+}
+.no-bar::-webkit-scrollbar {
+  display: none;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 180ms;
@@ -417,5 +577,18 @@ dialog.sheet[open]::backdrop {
   ::view-transition-old(*),
   ::view-transition-new(*) {
     animation: none !important;
+  }
+
+  /* The blanket rule would run this to its final frame in 0.01ms and park the
+     track at -50%, i.e. half the logos missing. Must be killed by name. */
+  .marquee {
+    animation: none !important;
+    translate: none !important;
+  }
+
+  /* Keep the shadow change on hover (that is feedback, not motion), drop the lift. */
+  a.lift:hover,
+  button.lift:hover {
+    translate: none !important;
   }
 }

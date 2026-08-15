@@ -1,5 +1,5 @@
 import { CLUB_THEME_PALETTE, type Shades } from "@/libs/clubTheme";
-import type { BallColor } from "@/types";
+import { CLUB_BALL_COLORS, type BallColor } from "@/types";
 
 const decl = (shades: Shades) =>
   [
@@ -42,4 +42,28 @@ export default function ClubThemeStyle({
         `:root[data-theme="light"]{${decl(shades.light)}}`}
     </style>
   );
+}
+
+/**
+ * Every ball colour as a scope, emitted once by the public layout.
+ *
+ * ClubThemeStyle paints one club onto the whole document, right for a club's own
+ * page. A directory is thirty clubs at once, so the same four tokens are scoped
+ * to whatever carries data-ball instead. No per-card <style>, no inline custom
+ * properties, no JS, both modes in the HTML so there is no hydration flash.
+ *
+ * `:root [data-ball]` rather than a bare attribute selector: on /clubs/$slug,
+ * ClubThemeStyle's own `:root` rule is later in the document and would win a
+ * specificity tie, painting every nested card with the host club's colour.
+ */
+export function BallScopeStyle() {
+  const dark = CLUB_BALL_COLORS.map(
+    (color) => `:root [data-ball="${color}"]{${decl(CLUB_THEME_PALETTE[color].dark)}}`,
+  ).join("");
+  const light = CLUB_BALL_COLORS.map(
+    (color) =>
+      `:root[data-theme="light"] [data-ball="${color}"]{${decl(CLUB_THEME_PALETTE[color].light)}}`,
+  ).join("");
+
+  return <style>{dark + light}</style>;
 }

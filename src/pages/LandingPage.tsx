@@ -10,74 +10,12 @@ import {
   LuMonitor,
   LuArrowRight,
 } from "react-icons/lu";
-import ThemeToggle from "@/components/ThemeToggle";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { LANGS, useT, type Key } from "@/i18n";
-
-/**
- * Drop the real screenshots in `public/landing/` and fill these in. Every slot
- * renders a labelled frame at the right aspect ratio until then, so the layout
- * never shifts when the images land (and nothing here is a fake screenshot
- * drawn out of divs).
- *
- *   phone     1170 x 2532   a portrait screen: the dashboard or the ranking
- *   ranking   2400 x 1500   the ranking page, wide, ideally on a big screen
- *   drill     1200 x 900    a drill with its table diagram
- *   challenge 1200 x 900    the challenges screen
- */
-const SHOTS: Record<string, string> = {
-  phone: "",
-  ranking: "",
-  drill: "",
-  challenge: "",
-};
-
-/**
- * An image slot. With a file it is an image; without one it is a frame the
- * same size, labelled with what belongs there.
- */
-function Shot({
-  name,
-  alt,
-  ratio,
-  className = "",
-}: {
-  name: keyof typeof SHOTS | string;
-  alt: string;
-  /** CSS aspect-ratio, e.g. "16 / 10". Reserved either way, so no layout shift. */
-  ratio: string;
-  className?: string;
-}) {
-  const src = SHOTS[name];
-
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        style={{ aspectRatio: ratio }}
-        className={`w-full object-cover ${className}`}
-      />
-    );
-  }
-
-  return (
-    <div
-      style={{ aspectRatio: ratio }}
-      role="img"
-      aria-label={alt}
-      className={`flex w-full items-center justify-center border border-dashed border-hairline-strong bg-felt/60 ${className}`}
-    >
-      <span className="px-4 text-center font-mono text-caption text-ink-ghost">
-        {name}
-      </span>
-    </div>
-  );
-}
+import { Shot } from "@/components/ui/Shot";
+import { useT, type Key } from "@/i18n";
 
 export default function LandingPage() {
-  const { t, lang, setLang } = useT();
+  const { t } = useT();
 
   useEffect(() => {
     document.documentElement.dataset.smooth = "";
@@ -90,7 +28,7 @@ export default function LandingPage() {
     icon: typeof LuTrophy;
     title: Key;
     body: Key;
-    shot?: { name: string; alt: Key; ratio: string };
+    shot?: { name: string; alt: Key; size: readonly [number, number] };
     span: string;
   }[] = [
     {
@@ -103,14 +41,14 @@ export default function LandingPage() {
       icon: LuSwords,
       title: "landing.f2Title",
       body: "landing.f2Body",
-      shot: { name: "challenge", alt: "landing.altChallenge", ratio: "4 / 3" },
+      shot: { name: "challenge", alt: "landing.altChallenge", size: [1200, 900] },
       span: "lg:col-span-5",
     },
     {
       icon: LuTarget,
       title: "landing.f3Title",
       body: "landing.f3Body",
-      shot: { name: "drill", alt: "landing.altDrill", ratio: "4 / 3" },
+      shot: { name: "drill", alt: "landing.altDrill", size: [1200, 900] },
       span: "lg:col-span-5",
     },
     {
@@ -140,47 +78,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-dvh overflow-x-clip">
-      <header className="sticky top-0 z-30 border-b border-hairline bg-pocket/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
-          <img src="/ball.png" alt="" className="h-7 w-7 rounded-full" />
-          <span className="font-semibold tracking-tight text-ink">
-            {t("common.appName")}
-          </span>
-
-          <nav className="ml-auto hidden items-center gap-6 text-caption text-ink-soft sm:flex">
-            <a
-              href="#features"
-              className="transition-colors duration-150 hover:text-ink"
-            >
-              {t("landing.nav.features")}
-            </a>
-            <a
-              href="#install"
-              className="transition-colors duration-150 hover:text-ink"
-            >
-              {t("landing.nav.install")}
-            </a>
-            <Link
-              to="/app/login"
-              className="transition-colors duration-150 hover:text-ink"
-            >
-              {t("landing.signIn")}
-            </Link>
-          </nav>
-
-          <Link
-            to="/app"
-            className={buttonClasses({
-              size: "sm",
-              className: "ml-auto sm:ml-6",
-            })}
-          >
-            {t("landing.openApp")}
-          </Link>
-        </div>
-      </header>
-
+    <>
       <main>
         {/* Hero: copy left, the product right. Split rather than centred, so
             the screenshot is doing work above the fold instead of decorating
@@ -239,7 +137,8 @@ export default function LandingPage() {
                 <Shot
                   name="phone"
                   alt={t("landing.altHero")}
-                  ratio="1170 / 2532"
+                  size={[1170, 2532]}
+                  priority
                   className="rounded-[14px]"
                 />
               </div>
@@ -263,7 +162,7 @@ export default function LandingPage() {
               <Shot
                 name="ranking"
                 alt={t("landing.altRanking")}
-                ratio="16 / 10"
+                size={[2400, 1500]}
               />
             </div>
           </div>
@@ -301,7 +200,7 @@ export default function LandingPage() {
                     <Shot
                       name={shot.name}
                       alt={t(shot.alt)}
-                      ratio={shot.ratio}
+                      size={shot.size}
                       className="rounded-t-card border-x border-t border-hairline"
                     />
                   </div>
@@ -372,36 +271,6 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-hairline">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-8 text-caption text-ink-faint sm:px-6">
-          <img src="/ball.png" alt="" className="h-5 w-5 rounded-full" />
-          <span>{t("landing.footer")}</span>
-
-          <ThemeToggle className="ml-auto" />
-
-          {/* The visitor may not read the language we guessed, so the picker is
-              on the page rather than behind a menu they would have to sign in
-              to reach. */}
-          <div className="flex gap-4">
-            {LANGS.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                onClick={() => setLang(l.code)}
-                aria-current={l.code === lang}
-                className={
-                  l.code === lang
-                    ? "text-ink"
-                    : "transition-colors duration-150 hover:text-ink-soft"
-                }
-              >
-                {l.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      </footer>
-    </div>
+    </>
   );
 }

@@ -27,6 +27,19 @@ export type Shades = {
   tint: string;
 };
 
+/** The rack number for the ball a club picked as its colour — same numbering
+ *  the theme picker itself uses: 1-7 solids, 8 the black. */
+export const CLUB_BALL_LABEL: Record<BallColor, string> = {
+  yellow: "1",
+  blue: "2",
+  red: "3",
+  purple: "4",
+  orange: "5",
+  green: "6",
+  maroon: "7",
+  black: "8",
+};
+
 export const CLUB_THEME_PALETTE: Record<
   BallColor,
   { dark: Shades; light: Shades }

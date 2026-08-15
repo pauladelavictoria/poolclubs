@@ -94,6 +94,10 @@ export const Route = createRootRouteWithContext<{
       { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" },
       { rel: "manifest", href: "/site.webmanifest" },
       { rel: "icon", href: "/favicon.ico" },
+      // Public pages' stock-photo stand-ins (see components/ui/Shot) all come
+      // from this origin; the connection is worth opening early everywhere
+      // rather than gating it behind which route matched.
+      { rel: "preconnect", href: "https://picsum.photos" },
     ],
     scripts: [{ children: THEME_BOOT }],
   }),

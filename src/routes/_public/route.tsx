@@ -1,4 +1,5 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { BallScopeStyle } from "@/components/ClubThemeStyle";
 import { PublicFooter, PublicNav } from "@/components/PublicShell";
 
 /**
@@ -20,7 +21,8 @@ export const Route = createFileRoute("/_public")({
 
 function PublicLayout() {
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div data-public className="flex min-h-dvh flex-col overflow-x-clip">
+      <BallScopeStyle />
       <PublicNav />
       <div className="flex-1">
         <Outlet />

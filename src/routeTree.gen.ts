@@ -9,11 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as PublicRouteRouteImport } from './routes/_public/route'
 import { Route as AppRouteRouteImport } from './routes/app/route'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicSearchRouteImport } from './routes/_public/search'
 import { Route as AppAuthedRouteRouteImport } from './routes/app/_authed/route'
 import { Route as AppLoginRouteImport } from './routes/app/login'
@@ -53,11 +53,6 @@ import { Route as AppAuthedClubSlugPlayersPlayerIdSettingsRouteImport } from './
 import { Route as AppAuthedClubSlugPlayersPlayerIdTrainingIndexRouteImport } from './routes/app/_authed/$clubSlug/players/$playerId/training/index'
 import { Route as AppAuthedClubSlugPlayersPlayerIdTrainingPlanRouteImport } from './routes/app/_authed/$clubSlug/players/$playerId/training/plan'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
   getParentRoute: () => rootRouteImport,
@@ -76,6 +71,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PublicIndexRoute = PublicIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicRouteRoute,
 } as any)
 const PublicSearchRoute = PublicSearchRouteImport.update({
   id: '/search',
@@ -289,7 +289,7 @@ const AppAuthedClubSlugPlayersPlayerIdTrainingPlanRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof PublicIndexRoute
   '/app': typeof AppRouteRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -332,13 +332,13 @@ export interface FileRoutesByFullPath {
   '/app/$clubSlug/players/$playerId/training/': typeof AppAuthedClubSlugPlayersPlayerIdTrainingIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/app': typeof AppAuthedIndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/search': typeof PublicSearchRoute
   '/app/login': typeof AppLoginRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/': typeof PublicIndexRoute
   '/clubs/$slug': typeof PublicClubsSlugRoute
   '/drills/$drillId': typeof PublicDrillsDrillIdRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
@@ -374,7 +374,6 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_public': typeof PublicRouteRouteWithChildren
   '/app': typeof AppRouteRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
@@ -383,6 +382,7 @@ export interface FileRoutesById {
   '/_public/search': typeof PublicSearchRoute
   '/app/login': typeof AppLoginRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/_public/': typeof PublicIndexRoute
   '/app/_authed/$clubSlug': typeof AppAuthedClubSlugRouteRouteWithChildren
   '/_public/clubs/$slug': typeof PublicClubsSlugRoute
   '/_public/drills/$drillId': typeof PublicDrillsDrillIdRoute
@@ -464,13 +464,13 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/players/$playerId/training/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/app'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/search'
     | '/app/login'
     | '/auth/callback'
+    | '/'
     | '/clubs/$slug'
     | '/drills/$drillId'
     | '/players/$playerId'
@@ -505,7 +505,6 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/players/$playerId/training'
   id:
     | '__root__'
-    | '/'
     | '/_public'
     | '/app'
     | '/robots.txt'
@@ -514,6 +513,7 @@ export interface FileRouteTypes {
     | '/_public/search'
     | '/app/login'
     | '/auth/callback'
+    | '/_public/'
     | '/app/_authed/$clubSlug'
     | '/_public/clubs/$slug'
     | '/_public/drills/$drillId'
@@ -551,7 +551,6 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
   AppRouteRoute: typeof AppRouteRouteWithChildren
   RobotsDottxtRoute: typeof RobotsDottxtRoute
@@ -561,13 +560,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_public': {
       id: '/_public'
       path: ''
@@ -595,6 +587,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_public/': {
+      id: '/_public/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRouteRoute
     }
     '/_public/search': {
       id: '/_public/search'
@@ -867,6 +866,7 @@ declare module '@tanstack/react-router' {
 
 interface PublicRouteRouteChildren {
   PublicSearchRoute: typeof PublicSearchRoute
+  PublicIndexRoute: typeof PublicIndexRoute
   PublicClubsSlugRoute: typeof PublicClubsSlugRoute
   PublicDrillsDrillIdRoute: typeof PublicDrillsDrillIdRoute
   PublicPlayersPlayerIdRoute: typeof PublicPlayersPlayerIdRoute
@@ -879,6 +879,7 @@ interface PublicRouteRouteChildren {
 
 const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicSearchRoute: PublicSearchRoute,
+  PublicIndexRoute: PublicIndexRoute,
   PublicClubsSlugRoute: PublicClubsSlugRoute,
   PublicDrillsDrillIdRoute: PublicDrillsDrillIdRoute,
   PublicPlayersPlayerIdRoute: PublicPlayersPlayerIdRoute,
@@ -991,7 +992,6 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   PublicRouteRoute: PublicRouteRouteWithChildren,
   AppRouteRoute: AppRouteRouteWithChildren,
   RobotsDottxtRoute: RobotsDottxtRoute,
