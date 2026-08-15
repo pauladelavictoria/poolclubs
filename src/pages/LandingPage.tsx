@@ -173,7 +173,7 @@ export default function LandingPage() {
             instead of repeating a row. */}
         <section
           id="features"
-          className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 lg:py-24"
+          className="mx-auto max-w-6xl scroll-mt-8 px-4 py-16 sm:px-6 lg:py-24"
         >
           <h2 className="reveal max-w-[20ch] text-h1 font-semibold leading-tight tracking-tight text-ink">
             {t("landing.featuresTitle")}
@@ -214,7 +214,7 @@ export default function LandingPage() {
             Three short instructions do not need three containers. */}
         <section
           id="install"
-          className="border-t border-hairline bg-felt/30 scroll-mt-20"
+          className="border-t border-hairline bg-felt/30 scroll-mt-8"
         >
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
             <div className="reveal flex flex-wrap items-end justify-between gap-4">

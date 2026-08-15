@@ -63,7 +63,7 @@ export default function PublicPlayersPage() {
       </section>
 
       <PublicShell>
-        <div className="sticky top-16 z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
+        <div className="sticky top-0 z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
           <div className="flex items-center justify-between gap-3">
             <FilterMenu
               activeCount={

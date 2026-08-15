@@ -44,12 +44,12 @@ export default function PublicDrillPage() {
   return (
     <PublicShell>
       <div className="grid gap-8 pt-6 lg:grid-cols-12 lg:items-start">
-        {/* The diagram is the hero: the page has three short paragraphs and a
-            table, so the table gets to lead rather than sit beside the text
-            in a sidebar. */}
-        <div className="lg:col-span-7">
+        {/* The diagram leads, but a turned table is tall and the setup text is
+            long, so the columns split the other way round: the table is capped
+            anyway and the words get the room they need. */}
+        <div className="lg:col-span-5">
           <div
-            className={`mx-auto w-full rotate-[-1.5deg] rounded-sheet border border-hairline-strong bg-felt p-2 lg:sticky lg:top-20 ${
+            className={`mx-auto w-full rounded-sheet border border-hairline-strong bg-felt p-2 lg:sticky lg:top-4 ${
               portrait ? "max-w-[420px]" : ""
             }`}
           >
@@ -62,7 +62,7 @@ export default function PublicDrillPage() {
           </div>
         </div>
 
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-7">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">

@@ -266,12 +266,6 @@ function PlayerHero({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <ShareButton title={player.name} url={url} />
-            <Link
-              to="/app"
-              className={buttonClasses({ variant: "secondary", size: "sm" })}
-            >
-              {t("public.cta.signIn")}
-            </Link>
           </div>
         </div>
 

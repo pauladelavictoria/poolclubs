@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { LuSearch } from "react-icons/lu";
+import { LuMenu, LuSearch, LuX } from "react-icons/lu";
 import ThemeToggle from "@/components/ThemeToggle";
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { useDialog } from "@/libs/useDialog";
 import { LANGS, useT } from "@/i18n";
 import type { Key } from "@/i18n";
 
@@ -36,24 +37,36 @@ export default function PublicShell({ children }: { children: ReactNode }) {
 
 export function PublicNav() {
   const { t } = useT();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useDialog(menuOpen);
 
   return (
     <header className="nav-settle sticky top-0 z-30 pt-[env(safe-area-inset-top)]">
-      <nav className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:px-6">
+      {/* Two layouts, one row of markup. Below md it is a three-column grid —
+          menu, wordmark, actions — so the wordmark sits on the centre line
+          whatever the two ends weigh; from md up it is the ordinary flex bar
+          with the sections spelled out. The sections used to scroll sideways
+          on a phone, which is a nav you have to discover by dragging. */}
+      <nav className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 md:flex">
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-label={t("nav.navigation")}
+          aria-expanded={menuOpen}
+          className="-ml-2 justify-self-start rounded-control p-2 text-ink-soft transition-colors duration-150 hover:bg-felt-raised hover:text-ink md:hidden"
+        >
+          <LuMenu className="h-5 w-5" aria-hidden />
+        </button>
+
         <Link
           to="/"
-          className="mr-1 flex shrink-0 items-center gap-2 text-ink transition-colors duration-150 hover:text-strike"
+          className="flex shrink-0 items-center gap-2 text-ink transition-colors duration-150 hover:text-strike md:mr-1"
         >
           <img src="/ball.png" alt="" className="h-7 w-7 rounded-full" />
-          <span className="hidden text-h4 font-semibold sm:inline">
-            {t("common.appName")}
-          </span>
+          <span className="text-h4 font-semibold">{t("common.appName")}</span>
         </Link>
 
-        {/* Scrolls rather than wraps: four sections plus a wordmark plus a
-            search field plus a sign-in pill does not fit a phone, and a nav bar
-            that becomes two rows moves the page under it. */}
-        <div className="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1">
+        <div className="hidden min-w-0 flex-1 items-center gap-1 md:flex">
           {PUBLIC_NAV.map((item) => (
             <Link
               key={item.to}
@@ -68,25 +81,88 @@ export function PublicNav() {
           ))}
         </div>
 
-        {/* An icon at every width, not a field at md and up. /search is the one
-            box on the public side — the directories no longer carry their own —
-            so this is a way in rather than a second place to type. */}
-        <Link
-          to="/search"
-          aria-label={t("public.search.title")}
-          className="ml-auto shrink-0 rounded-control p-2 text-ink-soft transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
-          activeProps={{ className: "text-ink" }}
-        >
-          <LuSearch className="h-4 w-4" aria-hidden />
-        </Link>
+        <div className="flex items-center gap-2 justify-self-end md:ml-auto">
+          {/* An icon at every width, not a field at md and up. /search is the
+              one box on the public side — the directories no longer carry their
+              own — so this is a way in rather than a second place to type. */}
+          <Link
+            to="/search"
+            aria-label={t("public.search.title")}
+            className="shrink-0 rounded-control p-2 text-ink-soft transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
+            activeProps={{ className: "text-ink" }}
+          >
+            <LuSearch className="h-4 w-4" aria-hidden />
+          </Link>
 
-        <Link
-          to="/app"
-          className={buttonClasses({ size: "sm", className: "shrink-0" })}
-        >
-          {t("auth.signInShort")}
-        </Link>
+          <Link
+            to="/app"
+            className={buttonClasses({ size: "sm", className: "shrink-0" })}
+          >
+            {t("auth.signInShort")}
+          </Link>
+        </div>
       </nav>
+
+      {/* The sections at full size, on a phone. Native <dialog> for the same
+          reasons the app drawer uses one: backdrop, Esc, focus trap, and the
+          page behind it inert. Closes on any link inside it — every child of
+          the list is a navigation. */}
+      <dialog
+        ref={menuRef}
+        // No md:hidden here: display:none on an open modal keeps the page
+        // behind it inert with nothing left to dismiss. It only opens from a
+        // button that is itself md:hidden, and it stays dismissible if the
+        // window grows while it is up.
+        className="drawer fixed inset-0 m-0 h-dvh max-h-dvh w-full max-w-none bg-felt text-ink"
+        aria-label={t("nav.navigation")}
+        onClose={() => setMenuOpen(false)}
+      >
+        <div className="flex h-full flex-col pt-[env(safe-area-inset-top)]">
+          <div className="flex h-16 shrink-0 items-center justify-end px-4 sm:px-6">
+            <button
+              type="button"
+              onClick={() => setMenuOpen(false)}
+              aria-label={t("common.close")}
+              className="-mr-2 rounded-control p-2 text-ink-soft transition-colors duration-150 hover:bg-felt-raised hover:text-ink"
+            >
+              <LuX className="h-5 w-5" aria-hidden />
+            </button>
+          </div>
+
+          <nav
+            className="flex flex-col gap-1 px-4 sm:px-6"
+            onClick={() => setMenuOpen(false)}
+          >
+            {PUBLIC_NAV.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="rounded-control py-3 text-h3 font-semibold tracking-tight text-ink-soft transition-colors duration-150 hover:text-ink"
+                activeProps={{ className: "text-strike" }}
+              >
+                {t(item.labelKey)}
+              </Link>
+            ))}
+            <Link
+              to="/search"
+              className="rounded-control py-3 text-h3 font-semibold tracking-tight text-ink-soft transition-colors duration-150 hover:text-ink"
+              activeProps={{ className: "text-strike" }}
+            >
+              {t("public.search.title")}
+            </Link>
+          </nav>
+
+          <div className="mt-auto px-4 pb-8 sm:px-6">
+            <Link
+              to="/app"
+              onClick={() => setMenuOpen(false)}
+              className={buttonClasses({ className: "w-full" })}
+            >
+              {t("auth.signInShort")}
+            </Link>
+          </div>
+        </div>
+      </dialog>
     </header>
   );
 }

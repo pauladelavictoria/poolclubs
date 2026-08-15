@@ -118,7 +118,7 @@ export default function PublicDrillsPage() {
           </div>
         </section>
 
-        <div className="sticky top-16 z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
+        <div className="sticky top-0 z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
           <FilterMenu activeCount={search.difficulty ? 1 : 0}>
             <FilterGroup label={t("drills.filterDifficulty")}>
               <FilterPills

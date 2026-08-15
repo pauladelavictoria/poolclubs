@@ -12,6 +12,7 @@ import {
   type Selection,
 } from "@/libs/drillGeometry";
 import { useTheme } from "@/libs/theme";
+import { BallShading, BallShadingDefs } from "@/components/ui/Ball";
 
 interface PoolTableDiagramProps {
   ballPositions: BallPosition[];
@@ -43,11 +44,6 @@ const SHORT_LABEL = /^([0-9]{1,2}|[A-Za-z])$/;
 // Presentation attributes are CSS properties, so the token reaches them and the
 // selection ring wears whatever colour the club picked.
 const SELECTED_STROKE = "var(--color-strike)";
-
-// A thumbnail carries no numbers, so a dark ball has only its shadow to
-// separate it from the felt, and on a dark felt that is not enough. A hairline
-// ring costs nothing at this size and the 8 stops disappearing.
-const COMPACT_RING = "rgba(244,242,236,0.35)";
 
 export default function PoolTableDiagram({
   ballPositions,
@@ -116,16 +112,26 @@ export default function PoolTableDiagram({
         <clipPath id="ball-clip">
           <circle r={BALL_RADIUS} />
         </clipPath>
-        {/* Lifts the balls off the felt, in place of an outline */}
-        <filter id="ball-shadow" x="-75%" y="-75%" width="250%" height="250%">
+        {/* The playing surface. A ball's shadow falls on cloth, not on the
+            cushion above it, so the whole ball layer is cut to this. */}
+        <clipPath id="felt-clip">
+          <rect x={0} y={0} width={100} height={50} />
+        </clipPath>
+        {/* The rails stand proud of the cloth, so they throw a shadow inwards.
+            A stroke on the felt edge, half of it outside and blurred, then cut
+            back to the felt: what is left is the band along the cushions. */}
+        {/* Lifts the balls off the felt, in place of an outline. Offset away
+            from the light so the ball sits on the cloth rather than hovering. */}
+        <filter id="ball-shadow" x="-50%" y="-50%" width="250%" height="250%">
           <feDropShadow
-            dx={0}
-            dy={0}
-            stdDeviation={0.5}
+            dx={portrait ? -0.35 : 0.35}
+            dy={0.35}
+            stdDeviation={0.45}
             floodColor="#000000"
-            floodOpacity={0.5}
+            floodOpacity={0.55}
           />
         </filter>
+        <BallShadingDefs />
       </defs>
 
       <g transform={turn}>
@@ -135,20 +141,34 @@ export default function PoolTableDiagram({
           transform={`translate(${FELT.x} ${FELT.y}) scale(${UNIT_X} ${UNIT_Y})`}
         >
           {/* Head string line */}
-          {!compact && (
-            <line
-              x1={25}
-              y1={2}
-              x2={25}
-              y2={50}
-              stroke="#f4f2ec3d"
-              strokeWidth={0.2}
-              strokeDasharray="1 1"
-            />
-          )}
+          <line
+            x1={25}
+            y1={0.5}
+            x2={25}
+            y2={49.7}
+            stroke="#f4f2ec3d"
+            strokeWidth={0.1}
+          />
+          <line
+            x1={0}
+            y1={15}
+            x2={25}
+            y2={15}
+            stroke="#f4f2ec3d"
+            strokeWidth={0.1}
+          />
+          <line
+            x1={0}
+            y1={35}
+            x2={25}
+            y2={35}
+            stroke="#f4f2ec3d"
+            strokeWidth={0.1}
+          />
 
-          {/* Foot spot */}
-          {!compact && <circle cx={75} cy={25} r={0.5} fill="#f4f2ec3d" />}
+          {/* Centre spot and foot spot */}
+          <circle cx={70} cy={25} r={0.35} fill="#f4f2ec3d" />
+          <circle cx={75} cy={25} r={0.35} fill="#f4f2ec3d" />
 
           {/* Shot paths */}
           {shotPaths.map((path, i) => {
@@ -179,9 +199,64 @@ export default function PoolTableDiagram({
             );
           })}
 
-          {/* Balls */}
+          {/* Ball bodies. Clipped as one layer rather than one ball at a time:
+              the clip is in felt coordinates, and each ball group carries its
+              own translate, so a shared path only lines up out here. Labels are
+              a second pass below, unclipped, so a ball by the bottom rail keeps
+              its caption and no ball covers a neighbour's. */}
+          <g clipPath="url(#felt-clip)">
+            {ballPositions.map((ball, i) => {
+              const fill = BALL_COLORS[ball.color] ?? ball.color;
+              const striped = isStriped(ball.label);
+              return (
+                <g
+                  key={`ball-${i}`}
+                  transform={`translate(${ball.x} ${ball.y})`}
+                >
+                  {striped ? (
+                    <>
+                      <circle
+                        r={BALL_RADIUS}
+                        fill="#FFFFFF"
+                        filter="url(#ball-shadow)"
+                      />
+                      {/* Turned back with the table: a stripe runs across the
+                        ball as you look at it, not along the felt. The clip is
+                        a circle, so it does not care which way the band
+                        points. */}
+                      <g transform={portrait ? "rotate(90)" : undefined}>
+                        <rect
+                          x={-BALL_RADIUS}
+                          y={-BALL_RADIUS * 0.55}
+                          width={BALL_RADIUS * 2}
+                          height={BALL_RADIUS * 1.1}
+                          fill={fill}
+                          clipPath="url(#ball-clip)"
+                        />
+                      </g>
+                    </>
+                  ) : (
+                    <circle
+                      r={BALL_RADIUS}
+                      fill={fill}
+                      filter="url(#ball-shadow)"
+                    />
+                  )}
+
+                  {/* Sphere shading. Turned back with the table but without the
+                    axis ratio the text needs: a circle is a circle either way,
+                    so it still covers the ball exactly, and the highlight stays
+                    in the upper left of the screen. */}
+                  <g transform={portrait ? "rotate(90)" : undefined}>
+                    <BallShading />
+                  </g>
+                </g>
+              );
+            })}
+          </g>
+
+          {/* Ball labels and the editor's selection ring */}
           {ballPositions.map((ball, i) => {
-            const fill = BALL_COLORS[ball.color] ?? ball.color;
             const isWhite = ball.color === "white";
             const striped = isStriped(ball.label);
             // Short labels go on the ball, anything longer sits underneath
@@ -189,7 +264,10 @@ export default function PoolTableDiagram({
             const isSelected =
               selected?.kind === "ball" && selected.index === i;
             return (
-              <g key={`ball-${i}`} transform={`translate(${ball.x} ${ball.y})`}>
+              <g
+                key={`label-${i}`}
+                transform={`translate(${ball.x} ${ball.y})`}
+              >
                 {isSelected && (
                   <circle
                     r={BALL_RADIUS + 0.7}
@@ -198,32 +276,6 @@ export default function PoolTableDiagram({
                     strokeWidth={0.35}
                   />
                 )}
-                {striped ? (
-                  <>
-                    <circle
-                      r={BALL_RADIUS}
-                      fill="#FFFFFF"
-                      filter="url(#ball-shadow)"
-                    />
-                    <rect
-                      x={-BALL_RADIUS}
-                      y={-BALL_RADIUS * 0.55}
-                      width={BALL_RADIUS * 2}
-                      height={BALL_RADIUS * 1.1}
-                      fill={fill}
-                      clipPath="url(#ball-clip)"
-                    />
-                  </>
-                ) : (
-                  <circle
-                    r={BALL_RADIUS}
-                    fill={fill}
-                    filter="url(#ball-shadow)"
-                    stroke={compact ? COMPACT_RING : undefined}
-                    strokeWidth={compact ? 0.3 : undefined}
-                  />
-                )}
-
                 {/* Ball label. The wrapper keeps it upright when the table is
                   turned; without a turn it is an empty transform. */}
                 <g transform={upright}>

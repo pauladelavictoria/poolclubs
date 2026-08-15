@@ -325,12 +325,6 @@ function TournamentHero({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <ShareButton title={tournament.name} url={url} />
-            <Link
-              to="/app"
-              className={buttonClasses({ variant: "secondary", size: "sm" })}
-            >
-              {t("public.cta.signIn")}
-            </Link>
           </div>
         </div>
 
@@ -361,7 +355,9 @@ function TournamentHero({
               />
               {t("tournaments.status.running")}
             </span>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-felt-raised">
+            {/* ponytail: track tinted from the fill color, not a surface token —
+                the page bg here already equals felt-raised, so the track vanished */}
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-strike/20">
               <div
                 className="h-full rounded-full bg-strike transition-[width] duration-500"
                 style={{ width: `${Math.round(progress * 100)}%` }}
