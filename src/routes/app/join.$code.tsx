@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import JoinClubPage from "@/pages/JoinClubPage";
+import JoinClubPage from "@/pages/app/JoinClubPage";
 import { clubPreviewQuery } from "@/queries/club";
 import { loginLink } from "@/libs/nextPath";
 

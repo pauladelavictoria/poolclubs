@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import PublicDrillsPage from "@/pages/PublicDrillsPage";
+import PublicDrillsPage from "@/pages/public/PublicDrillsPage";
 import { publicDrillsQuery } from "@/queries/public";
 import { publicMeta } from "@/libs/publicMeta";
 import { DIFFICULTIES, SKILL_TYPES } from "@/types";

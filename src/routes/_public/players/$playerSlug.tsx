@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import PublicPlayerPage, {
   PUBLIC_PLAYER_GAMES_LIMIT,
-} from "@/pages/PublicPlayerPage";
+} from "@/pages/public/PublicPlayerPage";
 import { gamesQuery } from "@/queries/games";
 import { publicClubRosterQuery, publicPersonQuery } from "@/queries/public";
 import { publicMeta, canonical } from "@/libs/publicMeta";

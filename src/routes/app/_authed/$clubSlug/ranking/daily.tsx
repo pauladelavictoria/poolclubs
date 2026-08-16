@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
-import RankingDailyPage from "@/pages/RankingDailyPage";
+import RankingDailyPage from "@/pages/app/RankingDailyPage";
 import { gamesQuery } from "@/queries/games";
 
 /**

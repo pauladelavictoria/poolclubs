@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import RankingAllTimePage from "@/pages/RankingAllTimePage";
+import RankingAllTimePage from "@/pages/app/RankingAllTimePage";
 import { gamesQuery } from "@/queries/games";
 
 /** Elo over every game the club has played, so the whole list is the input. The

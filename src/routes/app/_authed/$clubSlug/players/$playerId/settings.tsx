@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import PlayerSettingsPage from "@/pages/PlayerSettingsPage";
+import PlayerSettingsPage from "@/pages/app/PlayerSettingsPage";
 import { PLAYER_CRUMBS } from "@/libs/crumbs";
 
 export const Route = createFileRoute(

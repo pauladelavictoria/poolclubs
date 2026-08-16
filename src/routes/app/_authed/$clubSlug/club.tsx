@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import ClubPage from "@/pages/ClubPage";
+import ClubPage from "@/pages/app/ClubPage";
 import { clubMembersQuery } from "@/queries/players";
 
 /** Club settings: the roster including pending requests, plus name, crest and

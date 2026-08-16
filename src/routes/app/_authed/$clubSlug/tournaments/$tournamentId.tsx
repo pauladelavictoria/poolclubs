@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import TournamentPage from "@/pages/TournamentPage";
+import TournamentPage from "@/pages/app/TournamentPage";
 import { tournamentQuery } from "@/queries/tournaments";
 import { gamesQuery } from "@/queries/games";
 

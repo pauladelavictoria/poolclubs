@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import ChallengesPage from "@/pages/ChallengesPage";
+import ChallengesPage from "@/pages/app/ChallengesPage";
 import { challengesQuery } from "@/queries/challenges";
 
 /** Part of the games section, not a fifth place: a challenge is a game that has

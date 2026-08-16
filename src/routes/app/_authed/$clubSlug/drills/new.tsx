@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import DrillEditorPage from "@/pages/DrillEditorPage";
+import DrillEditorPage from "@/pages/app/DrillEditorPage";
 
 export const Route = createFileRoute("/app/_authed/$clubSlug/drills/new")({
   staticData: {

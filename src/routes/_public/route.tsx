@@ -1,6 +1,6 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { BallScopeStyle } from "@/components/ClubThemeStyle";
-import { PublicFooter, PublicNav } from "@/components/PublicShell";
+import { BallScopeStyle } from "@/components/club/ClubThemeStyle";
+import { PublicFooter, PublicNav } from "@/components/layout/PublicShell";
 
 /**
  * The public site's chrome, mounted once.

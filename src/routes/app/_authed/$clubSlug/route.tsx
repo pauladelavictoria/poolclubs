@@ -5,12 +5,12 @@ import {
   notFound,
   useLocation,
 } from "@tanstack/react-router";
-import AppHeader from "@/components/AppHeader";
-import NavDrawer from "@/components/NavDrawer";
-import NavRail from "@/components/NavRail";
+import AppHeader from "@/components/layout/AppHeader";
+import NavDrawer from "@/components/layout/NavDrawer";
+import NavRail from "@/components/layout/NavRail";
 import { PageSkeleton } from "@/components/ui/Skeleton";
-import ClubOnboardingPage from "@/pages/ClubOnboardingPage";
-import ClubThemeStyle from "@/components/ClubThemeStyle";
+import ClubOnboardingPage from "@/pages/app/ClubOnboardingPage";
+import ClubThemeStyle from "@/components/club/ClubThemeStyle";
 import { playersQuery } from "@/queries/players";
 
 /**

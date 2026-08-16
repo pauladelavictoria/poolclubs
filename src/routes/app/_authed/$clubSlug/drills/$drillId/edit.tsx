@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import DrillEditorPage from "@/pages/DrillEditorPage";
+import DrillEditorPage from "@/pages/app/DrillEditorPage";
 import { drillQuery } from "@/queries/drills";
 import { canEditDrill } from "@/libs/drillPermissions";
 import { ADMIN_PLAYER_ID } from "@/hooks/useAuth";

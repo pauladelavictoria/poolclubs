@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import PlayerDetailPage, { PLAYER_GAMES_LIMIT } from "@/pages/PlayerDetailPage";
+import PlayerDetailPage, { PLAYER_GAMES_LIMIT } from "@/pages/app/PlayerDetailPage";
 import { gamesQuery } from "@/queries/games";
 
 export const Route = createFileRoute(

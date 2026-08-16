@@ -1,5 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import PublicDrillPage from "@/pages/PublicDrillPage";
+import PublicDrillPage from "@/pages/public/PublicDrillPage";
 import { publicDrillQuery, publicDrillsQuery } from "@/queries/public";
 import { publicMeta, canonical } from "@/libs/publicMeta";
 

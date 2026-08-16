@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import DrillsPage from "@/pages/DrillsPage";
+import DrillsPage from "@/pages/app/DrillsPage";
 import { drillsQuery } from "@/queries/drills";
 import { DIFFICULTIES, SKILL_TYPES } from "@/types";
 

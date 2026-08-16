@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import TrainingPlanPage from "@/pages/TrainingPlanPage";
+import TrainingPlanPage from "@/pages/app/TrainingPlanPage";
 import { PLAYER_CRUMBS } from "@/libs/crumbs";
 import { trainingPlanQuery } from "@/queries/trainingPlan";
 

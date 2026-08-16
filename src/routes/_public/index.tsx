@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import LandingPage from "@/pages/LandingPage";
+import LandingPage from "@/pages/public/LandingPage";
 
 /**
  * The public front door. Everything a signed-in member uses lives under /app,

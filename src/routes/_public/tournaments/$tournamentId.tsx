@@ -1,5 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import PublicTournamentPage from "@/pages/PublicTournamentPage";
+import PublicTournamentPage from "@/pages/public/PublicTournamentPage";
 import { publicClubRosterQuery, publicTournamentQuery } from "@/queries/public";
 import { publicMeta, canonical } from "@/libs/publicMeta";
 import type { TournamentFormat } from "@/types";

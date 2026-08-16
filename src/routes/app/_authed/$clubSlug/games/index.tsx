@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import GamesPage, { PAGE_SIZE } from "@/pages/GamesPage";
+import GamesPage, { PAGE_SIZE } from "@/pages/app/GamesPage";
 import { gamesQuery } from "@/queries/games";
 
 /**

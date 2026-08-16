@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import PublicPlayersPage from "@/pages/PublicPlayersPage";
+import PublicPlayersPage from "@/pages/public/PublicPlayersPage";
 import { publicPlayersQuery } from "@/queries/public";
 import { publicMeta } from "@/libs/publicMeta";
 

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import TournamentsPage from "@/pages/TournamentsPage";
+import TournamentsPage from "@/pages/app/TournamentsPage";
 import { tournamentsQuery } from "@/queries/tournaments";
 
 export const Route = createFileRoute("/app/_authed/$clubSlug/tournaments/")({

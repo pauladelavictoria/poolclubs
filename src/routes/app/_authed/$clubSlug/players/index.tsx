@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import PlayersPage from "@/pages/PlayersPage";
+import PlayersPage from "@/pages/app/PlayersPage";
 import { gamesQuery } from "@/queries/games";
 
 /** Reading the roster and administering it are different jobs: this is the

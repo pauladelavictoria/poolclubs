@@ -1,5 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import PublicClubPage, { CLUB_GAMES_LIMIT } from "@/pages/PublicClubPage";
+import PublicClubPage, { CLUB_GAMES_LIMIT } from "@/pages/public/PublicClubPage";
 import { gamesQuery } from "@/queries/games";
 import {
   publicClubQuery,

@@ -14,8 +14,8 @@ import { useTheme } from "@/libs/theme";
 import { THEME_COOKIE, readOrigin, readPref } from "@/libs/prefs";
 import { startRealtime } from "@/libs/realtime";
 import { sessionQuery } from "@/queries/session";
-import RouteError from "@/components/RouteError";
-import { NotFound } from "@/components/NotFound";
+import RouteError from "@/components/layout/RouteError";
+import { NotFound } from "@/components/layout/NotFound";
 import indexCss from "../index.css?url";
 
 /**

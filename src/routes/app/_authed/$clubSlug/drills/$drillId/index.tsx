@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import DrillDetailPage from "@/pages/DrillDetailPage";
+import DrillDetailPage from "@/pages/app/DrillDetailPage";
 import { drillLogsQuery, drillQuery } from "@/queries/drills";
 
 export const Route = createFileRoute(

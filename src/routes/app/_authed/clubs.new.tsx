@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import ClubOnboardingPage from "@/pages/ClubOnboardingPage";
+import ClubOnboardingPage from "@/pages/app/ClubOnboardingPage";
 
 /**
  * Outside $clubSlug on purpose: starting or joining another club is the one
