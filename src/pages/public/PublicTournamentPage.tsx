@@ -22,7 +22,6 @@ import {
   raceFor,
   resolveBracket,
 } from "@/libs/bracket";
-import type { Places } from "@/libs/bracket";
 import { groupStandings, leaguePodium, standings } from "@/libs/leagueTable";
 import { publicClubRosterQuery } from "@/queries/public";
 import type { PublicTournament } from "@/queries/public";
@@ -92,14 +91,17 @@ export default function PublicTournamentPage() {
         tournament={tournament}
         entrantIds={entrantIds}
         byId={byId}
-        podium={podium}
         matchesTotal={matches.length}
         matchesPlayed={played}
         url={url}
       />
 
       <PublicShell>
-        {entrantIds.length > 0 && (
+        {/* Only while it is still open. Once it is under way the standings, the
+            bracket and the results say who is in it and how they are doing — a
+            flat grid of faces above them is the same list with the answer taken
+            out. */}
+        {tournament.status === "open" && entrantIds.length > 0 && (
           <section className="mt-6">
             <SectionHead title={t("public.publicTournament.entrantsLabel")} />
             <div className="mt-5 grid grid-cols-4 gap-4 sm:grid-cols-6 lg:grid-cols-8">
@@ -263,16 +265,15 @@ export default function PublicTournamentPage() {
 }
 
 /**
- * Status-driven, three shapes: `open` leads with the entrant count, `running`
- * with a live pill and a real progress bar, `done` with the champion's own
- * face — the one fact a stranger arriving at a finished tournament wants
- * first.
+ * Status-driven: `open` leads with the entrant count, `running` with a live
+ * pill and a real progress bar. A finished one leads with nothing — the results
+ * section below it opens with the podium, and saying it twice on one screen read
+ * as two different facts.
  */
 function TournamentHero({
   tournament,
   entrantIds,
   byId,
-  podium,
   matchesTotal,
   matchesPlayed,
   url,
@@ -280,13 +281,11 @@ function TournamentHero({
   tournament: PublicTournament;
   entrantIds: number[];
   byId: Map<number, Pick<Player, "id" | "name" | "avatar_url">>;
-  podium: Places;
   matchesTotal: number;
   matchesPlayed: number;
   url: string;
 }) {
   const { t } = useT();
-  const champion = podium.first !== null ? byId.get(podium.first) : undefined;
   const progress = matchesTotal > 0 ? matchesPlayed / matchesTotal : 0;
 
   return (
@@ -297,24 +296,28 @@ function TournamentHero({
       <div className="relative px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
+            {/* The title first, not the club above it: as an eyebrow it pushed
+                the h1 a line and a half down, and a tournament page opened from a
+                club page showed its title lower than the one before it. The club
+                reads as well under the name, next to the rest of the facts. */}
+            <h1 className="truncate text-display leading-[1.05] font-semibold tracking-tighter text-ink">
+              {tournament.name}
+            </h1>
             {tournament.club && (
               <Link
                 to="/clubs/$slug"
                 params={{ slug: tournament.club.slug }}
-                className="inline-flex items-center gap-1.5 text-caption text-ink-soft transition-colors duration-150 hover:text-strike"
+                className="mt-3 inline-flex max-w-full items-center gap-1.5 text-caption text-ink-soft transition-colors duration-150 hover:text-strike"
               >
                 <Avatar
                   name={tournament.club.name}
                   url={tournament.club.logo_url}
                   mark
-                  className="h-4 w-4"
+                  className="h-4 w-4 shrink-0"
                 />
-                {tournament.club.name}
+                <span className="truncate">{tournament.club.name}</span>
               </Link>
             )}
-            <h1 className="mt-1 truncate text-display leading-[1.05] font-semibold tracking-tighter text-ink">
-              {tournament.name}
-            </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-ink-faint">
               <span className="rounded-control border border-hairline bg-pocket px-1.5 py-0.5 font-mono tracking-[0.06em] text-ink-soft uppercase">
                 {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}
@@ -336,25 +339,10 @@ function TournamentHero({
           </div>
         </div>
 
-        {tournament.status === "done" && champion ? (
-          <div className="flood mt-8 flex items-center gap-4 rounded-sheet p-5 sm:p-6">
-            <Avatar
-              name={champion.name}
-              url={champion.avatar_url}
-              seed={champion.id}
-              className="h-20 w-20 sm:h-24 sm:w-24"
-            />
-            <div className="min-w-0">
-              <p className="text-caption font-semibold tracking-[0.08em] uppercase">
-                {t("public.publicTournament.champion")}
-              </p>
-              <p className="truncate text-display leading-[1.05] font-semibold tracking-tighter">
-                {champion.name}
-              </p>
-            </div>
-          </div>
-        ) : tournament.status === "running" ||
-          tournament.status === "groups" ? (
+        {/* Nothing under the title once it is finished: the results section
+            below opens with the podium, and the champion's face twice on one
+            screen made the second one look like a different fact. */}
+        {tournament.status === "running" || tournament.status === "groups" ? (
           <div className="mt-8 max-w-md">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-pocket/70 px-2 py-1 font-mono text-caption font-semibold text-strike">
               <span
@@ -378,7 +366,7 @@ function TournamentHero({
               })}
             </p>
           </div>
-        ) : (
+        ) : tournament.status === "open" ? (
           <div className="mt-8 flex flex-wrap items-end gap-6">
             <div>
               <span className="font-mono text-display font-semibold tabular-nums text-ink">
@@ -405,7 +393,7 @@ function TournamentHero({
               </div>
             )}
           </div>
-        )}
+        ) : null}
       </div>
     </section>
   );

@@ -20,6 +20,7 @@ export type TournamentValues = {
   category: Category | null;
   legs: 1 | 2;
   advance: number | null;
+  single_from: number;
   discipline: Discipline;
   race_to: number;
   race_semi: number | null;
@@ -27,6 +28,10 @@ export type TournamentValues = {
 };
 
 const ADVANCE = [2, 4, 8, 16];
+
+/** How far the double elimination runs, in players left when the two brackets
+ *  merge. 2 is the grand final — the whole draw played double elimination. */
+const SINGLE_FROM = [2, 16, 8, 4];
 
 /**
  * Four fields, so it lives in the club page's sheet rather than a route of its
@@ -54,6 +59,7 @@ export default function TournamentForm({
   );
   const [legs, setLegs] = useState<1 | 2>(initialValues?.legs ?? 1);
   const [advance, setAdvance] = useState(initialValues?.advance ?? 4);
+  const [singleFrom, setSingleFrom] = useState(initialValues?.single_from ?? 2);
   const [discipline, setDiscipline] = useState<Discipline>(
     initialValues?.discipline ?? "9ball",
   );
@@ -83,6 +89,7 @@ export default function TournamentForm({
       category,
       legs,
       advance: format === "group_knockout" ? advance : null,
+      single_from: format === "double_elim" ? singleFrom : 2,
       discipline,
       race_to: race,
       race_semi: hasFinal ? optional(raceSemi) : null,
@@ -176,6 +183,38 @@ export default function TournamentForm({
               groups: groupCount(advance),
               min: minimumEntrants("group_knockout", advance),
             })}
+          </p>
+        </div>
+      )}
+
+      {format === "double_elim" && (
+        <div className="space-y-1.5">
+          <Label htmlFor="tournament-single-from">
+            {t("tournaments.singleFrom")}
+          </Label>
+          <Select
+            id="tournament-single-from"
+            value={singleFrom}
+            onChange={(e) => setSingleFrom(Number(e.target.value))}
+            disabled={isSubmitting}
+          >
+            {SINGLE_FROM.map((n) => (
+              <option key={n} value={n}>
+                {n === 2
+                  ? t("tournaments.singleFromNever")
+                  : t("tournaments.singleFromN", { n })}
+              </option>
+            ))}
+          </Select>
+          {/* A cutoff wider than the field is not an error: the draw is then
+              single elimination throughout. */}
+          <p className="text-caption text-ink-faint">
+            {t(
+              singleFrom === 2
+                ? "tournaments.singleFromHintNever"
+                : "tournaments.singleFromHint",
+              { n: singleFrom },
+            )}
           </p>
         </div>
       )}

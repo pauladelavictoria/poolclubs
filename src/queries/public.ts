@@ -110,6 +110,17 @@ const likeEscape = (q: string) =>
 
 const contains = (q: string) => `%${likeEscape(q.trim())}%`;
 
+/**
+ * The same pattern, safe to drop inside an `.or()`.
+ *
+ * That filter is one comma-separated string, so a term containing a comma or a
+ * parenthesis would end the condition early and be read as another one.
+ * PostgREST accepts a double-quoted value; inside it only the quote and the
+ * backslash need escaping.
+ */
+const orContains = (q: string) =>
+  `"${contains(q).replace(/["\\]/g, (c) => `\\${c}`)}"`;
+
 /** 1-based page to the inclusive range PostgREST wants. */
 const rangeOf = (page: number, size = PUBLIC_PAGE_SIZE) => {
   const from = (Math.max(1, page) - 1) * size;
@@ -153,7 +164,18 @@ export const publicClubsQuery = (filters: PublicClubsFilters = {}) => {
         // them their own hidden club in a public directory.
         .eq("is_public", true);
 
-      if (q?.trim()) query = query.ilike("name", contains(q));
+      // Name or where it is: "Madrid" is as likely a search for a club as its
+      // name is, and the address, the city and the country are all places that
+      // word can live. A plain substring on each — near enough for a directory
+      // this size, and it needs no geocoding of the term.
+      if (q?.trim()) {
+        const term = orContains(q);
+        query = query.or(
+          ["name", "address", "city", "country"]
+            .map((col) => `${col}.ilike.${term}`)
+            .join(","),
+        );
+      }
 
       // A club with no coordinates drops out on its own: every comparison
       // against NULL is false, which is the right answer to "is it in view".
@@ -539,7 +561,12 @@ export const publicSearchQuery = (q: string) =>
           .from("clubs")
           .select(CLUB_COLS)
           .eq("is_public", true)
-          .ilike("name", term)
+          // Name or location, the same rule the clubs directory searches by.
+          .or(
+            ["name", "address", "city", "country"]
+              .map((col) => `${col}.ilike.${orContains(q)}`)
+              .join(","),
+          )
           .order("member_count", { ascending: false })
           .limit(SEARCH_LIMIT)
           .throwOnError(),

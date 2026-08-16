@@ -248,8 +248,11 @@ function PlayerHero({
       className="wash wash-soft relative overflow-hidden border-b border-hairline"
     >
       <div className="relative px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-6">
+        {/* Top-aligned, like the club and tournament heroes: bottom alignment
+            put the h1 wherever the detail under it happened to end, so the title
+            sat at a different height on each of the three profiles. */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
             <Avatar
               name={person.name}
               url={person.avatar_url}

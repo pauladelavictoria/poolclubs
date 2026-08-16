@@ -79,7 +79,7 @@ export default function SearchPage() {
       {/* The field is the hero. No photograph and no grid above the fold: on a
           page whose whole job is one box, the box is the image. */}
       <section>
-        <div className="px-4 py-10 sm:px-6 sm:py-14">
+        <div className="px-4 py-6 sm:px-6 sm:py-8">
           <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
             {t("public.search.title")}
           </h1>
@@ -87,7 +87,7 @@ export default function SearchPage() {
             value={q}
             onChange={setQ}
             placeholder={t("public.search.placeholder")}
-            className="mt-8 w-full sm:max-w-xl"
+            className="mt-5 w-full sm:max-w-xl"
             autoFocus
           />
           {chips("justify-start")}
@@ -145,7 +145,11 @@ export default function SearchPage() {
         ) : (
           <div className="mt-6 space-y-10">
             {data && data.clubs.length > 0 && (
-              <Block titleKey="public.publicClubs.title" to="/clubs">
+              <Block
+                titleKey="public.publicClubs.title"
+                to="/clubs"
+                term={term}
+              >
                 <div className="no-bar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
                   {data.clubs.map((club) => (
                     <Link
@@ -176,7 +180,11 @@ export default function SearchPage() {
             )}
 
             {data && data.people.length > 0 && (
-              <Block titleKey="public.publicPlayers.title" to="/players">
+              <Block
+                titleKey="public.publicPlayers.title"
+                to="/players"
+                term={term}
+              >
                 <Card className="divide-y divide-hairline">
                   {data.people.map((person) => {
                     // One hit per person, so the clubs are a list and the
@@ -227,6 +235,7 @@ export default function SearchPage() {
               <Block
                 titleKey="public.publicTournaments.title"
                 to="/tournaments"
+                term={term}
               >
                 <div className="flex flex-col gap-3">
                   {data.tournaments.map((tournament, i) => (
@@ -241,7 +250,11 @@ export default function SearchPage() {
             )}
 
             {data && data.drills.length > 0 && (
-              <Block titleKey="public.publicDrills.title" to="/drills">
+              <Block
+                titleKey="public.publicDrills.title"
+                to="/drills"
+                term={term}
+              >
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
                   {data.drills.map((drill, i) => (
                     <DrillCard key={drill.id} drill={drill} public index={i} />
@@ -270,10 +283,12 @@ function CountChip({ label }: { label: string }) {
 function Block({
   titleKey,
   to,
+  term,
   children,
 }: {
   titleKey: Key;
   to: "/clubs" | "/players" | "/tournaments" | "/drills";
+  term: string;
   children: React.ReactNode;
 }) {
   const { t } = useT();
@@ -286,11 +301,10 @@ function Block({
         </h2>
         <Link
           to={to}
-          // Deliberately drops the term. /search is the only place on the public
-          // side that takes typed input now, so a directory has no field to show
-          // the term in and no way to clear it — landing there filtered would be
-          // a short list with no visible cause. "See all" means the whole
-          // section; the matches for the term are already on this page.
+          // Carries the term: every directory has its own field now, so it
+          // arrives filled in and the short list has a visible cause and a way
+          // to clear it.
+          search={{ q: term || undefined }}
           className="shrink-0 text-caption font-medium text-strike transition-colors duration-150 hover:text-strike-light"
         >
           {t("common.seeAll")}

@@ -641,6 +641,7 @@ export type Database = {
           race_final: number | null
           race_semi: number | null
           race_to: number
+          single_from: number
           status: string
         }
         Insert: {
@@ -656,6 +657,7 @@ export type Database = {
           race_final?: number | null
           race_semi?: number | null
           race_to?: number
+          single_from?: number
           status?: string
         }
         Update: {
@@ -671,6 +673,7 @@ export type Database = {
           race_final?: number | null
           race_semi?: number | null
           race_to?: number
+          single_from?: number
           status?: string
         }
         Relationships: [

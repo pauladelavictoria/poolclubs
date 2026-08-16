@@ -76,7 +76,10 @@ for (const n of [4, 5, 8, 16]) {
       assert.equal(m.winner_to, null);
       continue;
     }
-    assert.ok(m.winner_to, `${m.bracket} r${m.round}s${m.slot} has no winner_to`);
+    assert.ok(
+      m.winner_to,
+      `${m.bracket} r${m.round}s${m.slot} has no winner_to`,
+    );
     assert.ok(m.winner_to_slot === 1 || m.winner_to_slot === 2);
   }
 
@@ -92,7 +95,8 @@ for (const n of [4, 5, 8, 16]) {
       seats.set(key, (seats.get(key) ?? 0) + 1);
     }
   }
-  for (const [key, count] of seats) assert.equal(count, 1, `two feeders for ${key}`);
+  for (const [key, count] of seats)
+    assert.equal(count, 1, `two feeders for ${key}`);
 
   // Only the winners bracket sheds losers, and only into the losers bracket.
   const byId = new Map(ms.map((m) => [m.id, m]));
@@ -125,7 +129,6 @@ for (const n of [4, 5, 8, 16]) {
     2,
     "both semi-finals already know at least one player",
   );
-
 }
 
 // --- playing a whole bracket out ---------------------------------------------
@@ -153,21 +156,33 @@ function playOut(
   return current;
 }
 
+// Every field size, every shape: the top seed wins out, nothing is left stuck
+// waiting for a player who is never coming, and there is exactly one final.
 for (const n of [2, 3, 4, 5, 6, 7, 8, 11, 16]) {
   for (const doubleElim of [false, true]) {
-    const played = playOut(buildKnockout(field(n), { doubleElim }, ids()));
-    const final = played.find((m) => m.bracket === "final")!;
-    assert.equal(
-      final.winner_id,
-      1,
-      `${n} players, doubleElim=${doubleElim}: the top seed should win out`,
-    );
-    // Every match either produced a champion or was an empty slot left by a
-    // walkover. Nothing is stuck waiting for a player who is never coming.
-    for (const m of played) {
-      const stuck =
-        m.winner_id === null && (m.p1_id !== null || m.p2_id !== null);
-      assert.ok(!stuck, `${m.bracket} r${m.round}s${m.slot} never resolved`);
+    for (const singleFrom of [undefined, 2, 4, 8, 16]) {
+      const played = playOut(
+        buildKnockout(field(n), { doubleElim, singleFrom }, ids()),
+      );
+      const final = played.find((m) => m.bracket === "final")!;
+      assert.equal(
+        final.winner_id,
+        1,
+        `${n} players, doubleElim=${doubleElim}, singleFrom=${singleFrom}: the top seed should win out`,
+      );
+      for (const m of played) {
+        const stuck =
+          m.winner_id === null && (m.p1_id !== null || m.p2_id !== null);
+        assert.ok(
+          !stuck,
+          `${n}/${singleFrom}: ${m.bracket} r${m.round}s${m.slot} never resolved`,
+        );
+      }
+      assert.equal(
+        played.filter((m) => m.bracket === "final").length,
+        1,
+        "exactly one match is the final",
+      );
     }
   }
 }
@@ -176,10 +191,16 @@ for (const n of [2, 3, 4, 5, 6, 7, 8, 11, 16]) {
   // The point of a losers bracket: one defeat is survivable, two is not.
   // Seed 2 loses its opener to seed 1 and still reaches the grand final.
   const ms = buildKnockout(field(4), { doubleElim: true }, ids());
-  const played = playOut(ms, (a, b) => (a === 1 || b === 1 ? 1 : Math.min(a, b)));
+  const played = playOut(ms, (a, b) =>
+    a === 1 || b === 1 ? 1 : Math.min(a, b),
+  );
   const final = played.find((m) => m.bracket === "final")!;
   assert.equal(final.p1_id, 1, "the unbeaten player comes in through seat 1");
-  assert.notEqual(final.p2_id, null, "somebody comes up from the losers bracket");
+  assert.notEqual(
+    final.p2_id,
+    null,
+    "somebody comes up from the losers bracket",
+  );
   assert.notEqual(final.p2_id, 1);
 }
 
@@ -193,7 +214,9 @@ for (const n of [2, 3, 4, 5, 6, 7, 8, 11, 16]) {
   r1[1].winner_id = 3;
 
   const resolved = resolveBracket(ms);
-  const wbFinal = resolved.find((m) => m.bracket === "winners" && m.round === 2)!;
+  const wbFinal = resolved.find(
+    (m) => m.bracket === "winners" && m.round === 2,
+  )!;
   assert.deepEqual([wbFinal.p1_id, wbFinal.p2_id], [1, 3], "winners advance");
 
   const lb = resolved.filter((m) => m.bracket === "losers" && m.round === 1)[0];
@@ -212,7 +235,11 @@ for (const n of [2, 3, 4, 5, 8]) {
     );
     for (const id of field(n)) {
       const played = ms.filter((m) => m.p1_id === id || m.p2_id === id);
-      assert.equal(played.length, legs * (n - 1), `player ${id} meets everyone`);
+      assert.equal(
+        played.length,
+        legs * (n - 1),
+        `player ${id} meets everyone`,
+      );
       assert.equal(
         new Set(played.map((m) => (m.p1_id === id ? m.p2_id : m.p1_id))).size,
         n - 1,
@@ -229,7 +256,11 @@ for (const n of [2, 3, 4, 5, 8]) {
       days.set(m.round, day);
     }
     for (const [round, players] of days) {
-      assert.equal(new Set(players).size, players.length, `clash on round ${round}`);
+      assert.equal(
+        new Set(players).size,
+        players.length,
+        `clash on round ${round}`,
+      );
     }
   }
 }
@@ -249,8 +280,8 @@ for (const n of [2, 3, 4, 5, 8]) {
     "the top seed heads the first group",
   );
   // Snake seeding spreads the strength: seeds 1..4 land one per group.
-  const topSeedGroups = [1, 2, 3, 4].map((seed) =>
-    ms.find((m) => m.p1_id === seed || m.p2_id === seed)!.group_no,
+  const topSeedGroups = [1, 2, 3, 4].map(
+    (seed) => ms.find((m) => m.p1_id === seed || m.p2_id === seed)!.group_no,
   );
   assert.equal(new Set(topSeedGroups).size, 4, "top seeds are not stacked");
   for (const m of ms) assert.equal(m.bracket, "group");
@@ -309,7 +340,10 @@ for (const n of [2, 3, 4, 5, 8]) {
       const occupied = slot === 1 ? m.p1_id : m.p2_id;
       if (occupied !== null || m.winner_id !== null) continue;
       const from = index.source(m.id, slot);
-      assert.ok(from, `${m.bracket} r${m.round}s${m.slot} seat ${slot} unexplained`);
+      assert.ok(
+        from,
+        `${m.bracket} r${m.round}s${m.slot} seat ${slot} unexplained`,
+      );
       assert.ok(
         from!.number < index.number(m.id)!,
         "a seat is filled by an earlier match",
@@ -370,7 +404,14 @@ for (const n of [2, 3, 4, 5, 8]) {
   const semis = se.filter((m) => m.bracket === "winners" && m.round === 2);
   assert.equal(semis.length, 2);
   for (const m of semis) assert.equal(raceFor(m, races, se), 6);
-  assert.equal(raceFor(se.find((m) => m.bracket === "final")!, races, se), 7);
+  assert.equal(
+    raceFor(
+      se.find((m) => m.bracket === "final")!,
+      races,
+      se,
+    ),
+    7,
+  );
 
   // A round robin has no closing stage.
   const league = buildLeague(field(4), 1, ids());
@@ -400,13 +441,94 @@ for (const n of [2, 3, 4, 5, 8]) {
   const { first, second, third } = placings(played);
   assert.equal(first, 1);
   assert.equal(third.length, 2, "joint third");
-  assert.equal(new Set([first, second, ...third]).size, 4, "four distinct names");
+  assert.equal(
+    new Set([first, second, ...third]).size,
+    4,
+    "four distinct names",
+  );
 }
 
 {
   // Two players is a final and nothing else — nobody is third.
   const played = playOut(buildKnockout(field(2), { doubleElim: true }, ids()));
   assert.deepEqual(placings(played), { first: 1, second: 2, third: [] });
+}
+
+// --- double elimination that stops part way ----------------------------------
+
+{
+  // Two lives until the last 16, one after it. 32 players: winners rounds 1-2
+  // and both losers rounds are the double-elimination half, and rounds 3-6 are
+  // a plain single-elimination draw of the 8 + 8 who survive it.
+  const ms = buildKnockout(
+    field(32),
+    { doubleElim: true, singleFrom: 16 },
+    ids(),
+  );
+  const round = (side: string, r: number) =>
+    ms.filter((m) => m.bracket === side && m.round === r);
+
+  assert.equal(round("winners", 1).length, 16);
+  assert.equal(round("winners", 2).length, 8);
+  assert.equal(round("losers", 1).length, 8);
+  assert.equal(round("losers", 2).length, 8);
+  assert.equal(
+    ms.filter((m) => m.bracket === "losers" && m.round > 2).length,
+    0,
+    "the losers bracket stops at the merge",
+  );
+  assert.equal(round("winners", 3).length, 8, "the merged stage is 16 players");
+  assert.equal(round("winners", 4).length, 4);
+  assert.equal(round("winners", 5).length, 2);
+  assert.equal(ms.filter((m) => m.bracket === "final").length, 1);
+
+  // Nobody goes out on one loss before the merge, and everybody does after it.
+  for (const m of ms.filter((m) => m.bracket === "winners" && m.round <= 2)) {
+    assert.ok(m.loser_to, `winners r${m.round} should drop its loser`);
+  }
+  for (const m of ms.filter((m) => m.bracket === "winners" && m.round > 2)) {
+    assert.equal(m.loser_to, null, "one loss is out from the merge on");
+  }
+
+  // The 16 seats of the merged stage are filled half from each bracket.
+  const stage = round("winners", 3);
+  const feeds = (slot: 1 | 2) =>
+    stage.map((s) =>
+      ms.find((m) => m.winner_to === s.id && m.winner_to_slot === slot)!,
+    );
+  assert.ok(feeds(1).every((m) => m.bracket === "winners" && m.round === 2));
+  assert.ok(feeds(2).every((m) => m.bracket === "losers" && m.round === 2));
+
+  const played = playOut(ms);
+  const { first, second, third } = placings(played);
+  assert.equal(first, 1, "the top seed wins out");
+  assert.equal(
+    third.length,
+    2,
+    "it ends single elimination, so third is joint",
+  );
+  assert.equal(
+    new Set([first, second, ...third]).size,
+    4,
+    "four distinct names",
+  );
+}
+
+{
+  // A cutoff at or above the field is the whole draw played single elimination,
+  // not an error: "single elimination from the last 16" over a field of eight.
+  const ms = buildKnockout(
+    field(8),
+    { doubleElim: true, singleFrom: 16 },
+    ids(),
+  );
+  assert.equal(ms.filter((m) => m.bracket === "losers").length, 0);
+  assert.equal(placings(playOut(ms)).third.length, 2);
+
+  // And the default is still a full double-elimination draw.
+  const full = buildKnockout(field(8), { doubleElim: true }, ids());
+  assert.ok(full.some((m) => m.bracket === "losers"));
+  assert.equal(placings(playOut(full)).third.length, 1);
 }
 
 {

@@ -1,5 +1,5 @@
 import type { DailyRankingEntry } from "@/types";
-import { CategoryBadge } from "@/components/ui/Ball";
+import { BallBadge, CategoryBadge } from "@/components/ui/Ball";
 import { ScoreString } from "@/components/ui/ScoreString";
 import { useAuth } from "@/hooks/useAuth";
 import type { ViewMode } from "./Ranking";
@@ -18,10 +18,10 @@ interface RankingTableProps {
  * rows, a spine down the rank column, and the rating as the largest object on
  * the page.
  *
- * The rank is set in mono digits rather than a coloured ball — that is what
- * keeps this from reading as the same component as a tournament's LeagueTable,
- * which keeps the balls because inside a draw the top three *are* a podium.
- * Here the number is a position on a long list, so it is written, not awarded.
+ * The rank is an object ball, the same one the league table and the podium use:
+ * 1 yellow, 2 blue, 3 red, everyone else the cue ball. One way of saying a
+ * placing everywhere in the app, and on a long ladder the three colours are also
+ * the only thing that finds the top of it at a glance.
  */
 export default function RankingTable({
   entries,
@@ -85,13 +85,7 @@ export default function RankingTable({
             }`}
           >
             <td className="w-12 border-r border-hairline py-2 pl-4 pr-3 text-right">
-              <span
-                className={`font-mono text-body tabular-nums ${
-                  index < 3 ? "font-semibold text-ink" : "text-ink-faint"
-                }`}
-              >
-                {index + 1}
-              </span>
+              <BallBadge rank={index + 1} />
             </td>
 
             {viewMode === "combined" && (

@@ -936,6 +936,7 @@ CREATE TABLE IF NOT EXISTS "public"."tournaments" (
     "race_to" smallint DEFAULT 5 NOT NULL,
     "race_semi" smallint,
     "race_final" smallint,
+    "single_from" smallint DEFAULT 2 NOT NULL,
     CONSTRAINT "tournaments_advance_check" CHECK ((("format" = 'group_knockout'::"text") = ("advance" IS NOT NULL))),
     CONSTRAINT "tournaments_advance_values_check" CHECK (("advance" = ANY (ARRAY[2, 4, 8, 16]))),
     CONSTRAINT "tournaments_category_check" CHECK (("category" = ANY (ARRAY[1, 2, 3]))),
@@ -945,6 +946,7 @@ CREATE TABLE IF NOT EXISTS "public"."tournaments" (
     CONSTRAINT "tournaments_race_final_check" CHECK ((("race_final" IS NULL) OR (("race_final" >= 1) AND ("race_final" <= 50)))),
     CONSTRAINT "tournaments_race_semi_check" CHECK ((("race_semi" IS NULL) OR (("race_semi" >= 1) AND ("race_semi" <= 50)))),
     CONSTRAINT "tournaments_race_to_check" CHECK ((("race_to" >= 1) AND ("race_to" <= 50))),
+    CONSTRAINT "tournaments_single_from_check" CHECK (("single_from" = ANY (ARRAY[2, 4, 8, 16, 32]))),
     CONSTRAINT "tournaments_status_check" CHECK (("status" = ANY (ARRAY['open'::"text", 'groups'::"text", 'running'::"text", 'done'::"text"])))
 );
 

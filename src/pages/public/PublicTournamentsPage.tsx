@@ -10,6 +10,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterGroup, FilterMenu } from "@/components/ui/FilterMenu";
 import { FilterPills } from "@/components/ui/FilterPills";
 import { Pager } from "@/components/ui/Pager";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
 import { PUBLIC_PAGE_SIZE, publicTournamentsQuery } from "@/queries/public";
 import type { PublicTournamentListItem } from "@/queries/public";
 import {
@@ -56,6 +58,14 @@ export default function PublicTournamentsPage() {
   const setFacet = (patch: Partial<typeof search>) =>
     navigate({ search: { ...search, ...patch, page: 1 } });
 
+  // `replace`: typing is one intent, not one history entry per pause.
+  const [q, setQ] = useDebouncedQuery(search.q ?? "", (value) =>
+    navigate({
+      search: { ...search, q: value || undefined, page: 1 },
+      replace: true,
+    }),
+  );
+
   const all = data.tournaments;
   const grouped = GROUPS.map(({ key, statuses }) => ({
     key,
@@ -80,11 +90,11 @@ export default function PublicTournamentsPage() {
   return (
     <>
       <section>
-        <div className="px-4 py-10 sm:px-6 sm:py-14">
+        <div className="px-4 py-6 sm:px-6 sm:py-8">
           <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
             {t("public.publicTournaments.title")}
           </h1>
-          <p className="mt-4 max-w-[46ch] text-h4 text-ink-soft">
+          <p className="mt-2 max-w-[46ch] text-h4 text-ink-soft">
             {t("public.publicTournaments.subtitle")}
           </p>
         </div>
@@ -131,6 +141,12 @@ export default function PublicTournamentsPage() {
                 />
               </FilterGroup>
             </FilterMenu>
+            <SearchInput
+              value={q}
+              onChange={setQ}
+              placeholder={t("public.publicTournaments.searchPlaceholder")}
+              className="min-w-0 flex-1"
+            />
           </div>
         </div>
 

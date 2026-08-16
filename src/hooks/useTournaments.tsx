@@ -138,6 +138,9 @@ export type NewTournament = {
   category: Category | null;
   legs: 1 | 2;
   advance: number | null;
+  /** Players left when a double-elimination draw turns single. 2 is the grand
+   *  final — the whole draw played double elimination. */
+  single_from: number;
   discipline: Discipline;
   race_to: number;
   race_semi: number | null;
@@ -255,7 +258,10 @@ export const useManageTournaments = () => {
           tournament.format === "league"
             ? buildLeague(seededIds, tournament.legs)
             : tournament.format === "double_elim"
-              ? buildKnockout(seededIds, { doubleElim: true })
+              ? buildKnockout(seededIds, {
+                  doubleElim: true,
+                  singleFrom: tournament.single_from,
+                })
               : buildGroups(
                   seededIds,
                   groupCount(tournament.advance ?? 2),

@@ -54,9 +54,7 @@ import { useT } from "@/i18n";
 import { getRouteApi } from "@tanstack/react-router";
 import { AppLink } from "@/components/layout/AppLink";
 
-const route = getRouteApi(
-  "/app/_authed/$clubSlug/tournaments/$tournamentId",
-);
+const route = getRouteApi("/app/_authed/$clubSlug/tournaments/$tournamentId");
 
 export default function TournamentPage() {
   const { t } = useT();
@@ -615,6 +613,7 @@ export default function TournamentPage() {
               category: tournament.category,
               legs: tournament.legs,
               advance: tournament.advance,
+              single_from: tournament.single_from,
               discipline: tournament.discipline,
               race_to: tournament.race_to,
               race_semi: tournament.race_semi,

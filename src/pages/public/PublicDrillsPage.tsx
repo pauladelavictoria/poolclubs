@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterGroup, FilterMenu } from "@/components/ui/FilterMenu";
 import { FilterPills } from "@/components/ui/FilterPills";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
 import { publicDrillsQuery } from "@/queries/public";
 import {
   CLUB_BALL_COLORS,
@@ -59,6 +61,11 @@ export default function PublicDrillsPage() {
 
   const filtered = Boolean(search.q ?? search.difficulty ?? search.skill);
 
+  // `replace`: typing is one intent, not one history entry per pause.
+  const [q, setQ] = useDebouncedQuery(search.q ?? "", (value) =>
+    navigate({ search: { ...search, q: value || undefined }, replace: true }),
+  );
+
   const groups: { difficulty: DrillDifficulty; rows: Drill[] }[] =
     search.difficulty
       ? []
@@ -70,11 +77,11 @@ export default function PublicDrillsPage() {
   return (
     <>
       <section>
-        <div className="px-4 py-10 sm:px-6 sm:py-14">
+        <div className="px-4 py-6 sm:px-6 sm:py-8">
           <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
             {t("public.publicDrills.title")}
           </h1>
-          <p className="mt-4 max-w-[46ch] text-h4 text-ink-soft">
+          <p className="mt-2 max-w-[46ch] text-h4 text-ink-soft">
             {t("public.publicDrills.subtitle")}
           </p>
         </div>
@@ -119,22 +126,30 @@ export default function PublicDrillsPage() {
         </section>
 
         <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
-          <FilterMenu activeCount={search.difficulty ? 1 : 0}>
-            <FilterGroup label={t("drills.filterDifficulty")}>
-              <FilterPills
-                label={t("drills.filterDifficulty")}
-                anyLabel={t("drills.allDifficulties")}
-                value={search.difficulty}
-                onChange={(difficulty) =>
-                  navigate({ search: { ...search, difficulty } })
-                }
-                options={DIFFICULTIES.map((key) => ({
-                  value: key,
-                  label: t(`difficulty.${key}`),
-                }))}
-              />
-            </FilterGroup>
-          </FilterMenu>
+          <div className="flex items-center gap-3">
+            <FilterMenu activeCount={search.difficulty ? 1 : 0}>
+              <FilterGroup label={t("drills.filterDifficulty")}>
+                <FilterPills
+                  label={t("drills.filterDifficulty")}
+                  anyLabel={t("drills.allDifficulties")}
+                  value={search.difficulty}
+                  onChange={(difficulty) =>
+                    navigate({ search: { ...search, difficulty } })
+                  }
+                  options={DIFFICULTIES.map((key) => ({
+                    value: key,
+                    label: t(`difficulty.${key}`),
+                  }))}
+                />
+              </FilterGroup>
+            </FilterMenu>
+            <SearchInput
+              value={q}
+              onChange={setQ}
+              placeholder={t("public.publicDrills.searchPlaceholder")}
+              className="min-w-0 flex-1"
+            />
+          </div>
         </div>
 
         {shown.length === 0 ? (

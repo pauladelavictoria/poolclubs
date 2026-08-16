@@ -20,6 +20,13 @@ export function useDebouncedQuery(
   urlValue: string,
   commit: (value: string) => void,
   delay = 300,
+  /**
+   * Below this many characters the term is committed as "" rather than kept:
+   * one or two letters match most of the table, so the answer is the unfiltered
+   * list, not a slow near-copy of it. Committing "" rather than doing nothing is
+   * what makes deleting back down to two letters undo the search.
+   */
+  minLength = 3,
 ) {
   const [value, setValue] = useState(urlValue);
   const [syncedUrl, setSyncedUrl] = useState(urlValue);
@@ -47,7 +54,10 @@ export function useDebouncedQuery(
   const change = (next: string) => {
     setValue(next);
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => commit(next), delay);
+    timer.current = setTimeout(
+      () => commit(next.trim().length >= minLength ? next : ""),
+      delay,
+    );
   };
 
   return [value, change] as const;

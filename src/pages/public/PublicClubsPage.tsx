@@ -13,7 +13,9 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterGroup, FilterMenu } from "@/components/ui/FilterMenu";
 import { FilterPills } from "@/components/ui/FilterPills";
 import { Pager } from "@/components/ui/Pager";
+import { SearchInput } from "@/components/ui/SearchInput";
 import MapView from "@/components/map/MapView";
+import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
 import {
   PUBLIC_PAGE_SIZE,
   publicClubPinsQuery,
@@ -79,6 +81,14 @@ export default function PublicClubsPage() {
 
   const setPage = (page: number) => navigate({ search: { ...search, page } });
 
+  // `replace`: typing is one intent, not one history entry per pause.
+  const [q, setQ] = useDebouncedQuery(search.q ?? "", (value) =>
+    navigate({
+      search: { ...search, q: value || undefined, page: 1 },
+      replace: true,
+    }),
+  );
+
   /**
    * Page 4 of everything is not page 4 of what the map can see, so a change to
    * the filter goes back to the first one.
@@ -104,11 +114,11 @@ export default function PublicClubsPage() {
   return (
     <>
       <section>
-        <div className="px-4 py-10 sm:px-6 sm:py-14">
+        <div className="px-4 py-6 sm:px-6 sm:py-8">
           <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
             {t("public.publicClubs.title")}
           </h1>
-          <p className="mt-4 max-w-[46ch] text-h4 text-ink-soft">
+          <p className="mt-2 max-w-[46ch] text-h4 text-ink-soft">
             {t("public.publicClubs.subtitle")}
           </p>
         </div>
@@ -206,6 +216,12 @@ export default function PublicClubsPage() {
                     />
                   </FilterGroup>
                 </FilterMenu>
+                <SearchInput
+                  value={q}
+                  onChange={setQ}
+                  placeholder={t("public.publicClubs.searchPlaceholder")}
+                  className="min-w-0 flex-1"
+                />
                 <span className="shrink-0 font-mono text-caption tabular-nums text-ink-faint">
                   {t("public.publicClubs.count", { n: totalCount })}
                 </span>

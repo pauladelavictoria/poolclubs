@@ -158,6 +158,12 @@ const BALL: Record<number, { bg: string; fg: string }> = {
   3: { bg: "bg-ball-3", fg: "text-white" },
 };
 
+/** The same fill and text pair, for anything that wears a rank's colour without
+ *  being a circle — the podium paints its whole step with it. */
+// eslint-disable-next-line react-refresh/only-export-components
+export const ballTone = (rank: number) =>
+  BALL[rank] ?? { bg: "bg-ball-cue", fg: "text-ink-soft" };
+
 /** `lg` is for the one hero rank per page; lists always use `sm`. */
 const SIZE = {
   sm: "h-7 w-7 text-caption",
@@ -173,14 +179,15 @@ export function BallBadge({
   size?: keyof typeof SIZE;
   className?: string;
 }) {
-  const ball = BALL[rank];
+  const ball = ballTone(rank);
   return (
     <span
       className={[
         "inline-flex shrink-0 items-center justify-center rounded-full",
         "font-mono font-semibold tabular-nums",
         SIZE[size],
-        ball ? `${ball.bg} ${ball.fg}` : "bg-ball-cue text-ink-soft",
+        ball.bg,
+        ball.fg,
         className,
       ].join(" ")}
     >

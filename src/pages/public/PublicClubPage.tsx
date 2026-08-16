@@ -257,7 +257,12 @@ function ClubHero({
       className="wash wash-soft relative overflow-hidden border-b border-hairline"
     >
       <div className="relative px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-6">
+        {/* Top-aligned, not bottom: the title has a different amount of detail
+            under it on a club, a player and a tournament, so aligning the block's
+            bottom to the avatar moves the h1 up or down with it — the title
+            visibly jumped between the three. Aligning the top pins every profile
+            title to the hero's own padding. */}
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
           <div className="w-fit rounded-sheet bg-felt p-1.5">
             <Avatar
               name={club.name}

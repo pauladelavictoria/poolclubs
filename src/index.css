@@ -255,7 +255,7 @@ html[data-theme="light"]:has([data-public]) {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overscroll-behavior: none;
+    overscroll-behavior-y: none;
   }
 
   /* Under /app the shell owns the scrolling, so the window must not scroll as
@@ -689,6 +689,7 @@ button.lift:active {
 
 .no-bar {
   scrollbar-width: none;
+  overscroll-behavior-x: contain;
 }
 .no-bar::-webkit-scrollbar {
   display: none;
