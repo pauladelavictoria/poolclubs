@@ -49,20 +49,21 @@ export default function PlayerSettingsPage() {
     if (!player || !trimmed || !dirty) return;
 
     updatePlayer.mutate(
-      { id: player.id, name: trimmed, is_public: isPublic },
+      {
+        id: player.id,
+        personId: player.person_id,
+        name: trimmed,
+        is_public: isPublic,
+      },
       {
         onSuccess: async () => {
           toast.success(t("players.updated"));
           await refreshMemberships();
         },
-        onError: (e) =>
-          toast.error(
-            t(
-              (e as { code?: string })?.code === "23505"
-                ? "players.nameTaken"
-                : "players.updateError",
-            ),
-          ),
+        // No name-clash branch any more: names stopped being unique per club
+        // when they moved to people. Two members can share one, and the slug
+        // keeps their profiles apart.
+        onError: () => toast.error(t("players.updateError")),
       },
     );
   };
@@ -125,8 +126,8 @@ export default function PlayerSettingsPage() {
               />
               {isPublic && (
                 <Link
-                  to="/players/$playerId"
-                  params={{ playerId: String(player.id) }}
+                  to="/players/$playerSlug"
+                  params={{ playerSlug: player.slug }}
                   className="mt-2 inline-block pl-7 text-caption font-medium text-strike transition-colors duration-150 hover:text-strike-light"
                 >
                   {t("players.viewPublicProfile")}

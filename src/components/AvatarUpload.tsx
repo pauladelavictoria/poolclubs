@@ -12,10 +12,11 @@ import { useT } from "@/i18n";
 /**
  * Your own picture, on your own profile. The file never leaves the browser as a
  * file — it is shrunk to a data URI (see libs/avatarImage) and written straight
- * onto the player row, so there is no bucket to configure.
+ * onto the person row, so there is no bucket to configure.
  *
- * Every club writes the same picture: one person, one face, and the update is
- * keyed on user_id exactly as the OAuth sync in libs/auth.functions.ts is.
+ * One person, one face — which is now a fact about the schema rather than
+ * something this component has to arrange. It used to write the same data URI to
+ * every player row matching user_id; since sql/people.sql it is one row.
  */
 export default function AvatarUpload({
   name,
@@ -36,7 +37,7 @@ export default function AvatarUpload({
     try {
       const dataUrl = await toAvatarDataUrl(file);
       await supabase
-        .from("players")
+        .from("people")
         .update({ avatar_url: dataUrl })
         .eq("user_id", user.id)
         .throwOnError();

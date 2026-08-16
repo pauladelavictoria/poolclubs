@@ -79,6 +79,37 @@ CREATE TYPE "public"."GameMode" AS ENUM (
 ALTER TYPE "public"."GameMode" OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text", "cat" double precision DEFAULT 3) RETURNS bigint
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  pid BIGINT;
+  new_player BIGINT;
+BEGIN
+  IF NOT is_club_admin(cid) THEN
+    RAISE EXCEPTION 'only the club owner may add players';
+  END IF;
+  IF btrim(COALESCE(pname, '')) = '' THEN
+    RAISE EXCEPTION 'a player needs a name';
+  END IF;
+
+  -- Deliberately always a new person. Matching a guest onto an existing person
+  -- by name is exactly the guess this file's backfill only made because it had
+  -- no alternative; going forward, claiming is how two rows become one human.
+  INSERT INTO people (name) VALUES (btrim(pname)) RETURNING id INTO pid;
+
+  INSERT INTO players (club_id, person_id, category, status)
+  VALUES (cid, pid, cat, 'active')
+  RETURNING id INTO new_player;
+
+  RETURN new_player;
+END $$;
+
+
+ALTER FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text", "cat" double precision) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."can_touch_plan"("pid" integer) RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -110,11 +141,12 @@ CREATE OR REPLACE FUNCTION "public"."club_preview"("code" "text") RETURNS TABLE(
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-  SELECT c.id, c.name, p.id, p.name, p.user_id IS NULL
+  SELECT c.id, c.name, p.id, pe.name, pe.user_id IS NULL
   FROM clubs c
   LEFT JOIN players p ON p.club_id = c.id
+  LEFT JOIN people pe ON pe.id = p.person_id
   WHERE c.join_code = lower(btrim(code))
-  ORDER BY p.name;
+  ORDER BY pe.name;
 $$;
 
 
@@ -239,8 +271,9 @@ CREATE OR REPLACE FUNCTION "public"."is_club_member"("cid" integer) RETURNS bool
     SET "search_path" TO 'public'
     AS $$
   SELECT EXISTS (
-    SELECT 1 FROM players
-    WHERE club_id = cid AND user_id = auth.uid() AND status = 'active'
+    SELECT 1 FROM players p
+    JOIN people pe ON pe.id = p.person_id
+    WHERE p.club_id = cid AND pe.user_id = auth.uid() AND p.status = 'active'
   );
 $$;
 
@@ -252,7 +285,11 @@ CREATE OR REPLACE FUNCTION "public"."is_drill_admin"() RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-  SELECT EXISTS (SELECT 1 FROM players WHERE id = 1 AND user_id = auth.uid());
+  SELECT EXISTS (
+    SELECT 1 FROM players p
+    JOIN people pe ON pe.id = p.person_id
+    WHERE p.id = 1 AND pe.user_id = auth.uid()
+  );
 $$;
 
 
@@ -263,7 +300,11 @@ CREATE OR REPLACE FUNCTION "public"."is_own_player"("pid" integer) RETURNS boole
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-  SELECT EXISTS (SELECT 1 FROM players WHERE id = pid AND user_id = auth.uid());
+  SELECT EXISTS (
+    SELECT 1 FROM players p
+    JOIN people pe ON pe.id = p.person_id
+    WHERE p.id = pid AND pe.user_id = auth.uid()
+  );
 $$;
 
 
@@ -288,7 +329,8 @@ CREATE OR REPLACE FUNCTION "public"."join_club"("code" "text", "claim_player_id"
 DECLARE
   cid INTEGER;
   uid UUID := auth.uid();
-  claimed INTEGER;
+  me BIGINT;
+  claimed BIGINT;
   pname TEXT;
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'sign in first'; END IF;
@@ -296,33 +338,44 @@ BEGIN
   SELECT id INTO cid FROM clubs WHERE join_code = lower(btrim(code));
   IF cid IS NULL THEN RAISE EXCEPTION 'unknown join code'; END IF;
 
-  IF EXISTS (SELECT 1 FROM players WHERE club_id = cid AND user_id = uid) THEN
+  SELECT id INTO me FROM people WHERE user_id = uid;
+
+  -- Already a member of this club, under whichever person is yours.
+  IF me IS NOT NULL AND EXISTS (
+    SELECT 1 FROM players WHERE club_id = cid AND person_id = me
+  ) THEN
     RETURN cid;
   END IF;
 
-  IF claim_player_id IS NOT NULL THEN
-    UPDATE players SET user_id = uid, status = 'pending'
-    WHERE id = claim_player_id AND club_id = cid AND user_id IS NULL
-    RETURNING id INTO claimed;
-    IF claimed IS NOT NULL THEN RETURN cid; END IF;
-    -- Someone claimed it between the preview and now: fall through to a new row.
+  IF claim_player_id IS NOT NULL AND me IS NULL THEN
+    UPDATE people pe
+    SET user_id = uid
+    FROM players p
+    WHERE p.id = claim_player_id
+      AND p.club_id = cid
+      AND pe.id = p.person_id
+      AND pe.user_id IS NULL
+    RETURNING pe.id INTO claimed;
+
+    IF claimed IS NOT NULL THEN
+      UPDATE players SET status = 'pending' WHERE person_id = claimed;
+      RETURN cid;
+    END IF;
+    -- Claimed between the preview and now, or you already had a person: fall
+    -- through and join as somebody new.
   END IF;
 
-  pname := COALESCE(
-    NULLIF(btrim(display_name), ''),
-    NULLIF(btrim(auth.jwt() -> 'user_metadata' ->> 'full_name'), ''),
-    'Player'
-  );
-
-  IF EXISTS (
-    SELECT 1 FROM players
-    WHERE club_id = cid AND lower(btrim(name)) = lower(pname)
-  ) THEN
-    RAISE EXCEPTION 'name taken in this club' USING ERRCODE = 'unique_violation';
+  IF me IS NULL THEN
+    pname := COALESCE(
+      NULLIF(btrim(display_name), ''),
+      NULLIF(btrim(auth.jwt() -> 'user_metadata' ->> 'full_name'), ''),
+      'Player'
+    );
+    INSERT INTO people (name, user_id) VALUES (pname, uid) RETURNING id INTO me;
   END IF;
 
-  INSERT INTO players (club_id, user_id, name, category, status)
-  VALUES (cid, uid, pname, 3, 'pending');
+  INSERT INTO players (club_id, person_id, category, status)
+  VALUES (cid, me, 3, 'pending');
 
   RETURN cid;
 END $$;
@@ -331,32 +384,140 @@ END $$;
 ALTER FUNCTION "public"."join_club"("code" "text", "claim_player_id" integer, "display_name" "text") OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."players_guard_user_id"() RETURNS "trigger"
+CREATE OR REPLACE FUNCTION "public"."people_drop_orphan"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  DELETE FROM people
+  WHERE id = OLD.person_id
+    AND user_id IS NULL
+    AND NOT EXISTS (SELECT 1 FROM players WHERE person_id = OLD.person_id);
+  RETURN NULL;
+END $$;
+
+
+ALTER FUNCTION "public"."people_drop_orphan"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."people_guard_user_id"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 BEGIN
   -- No auth.uid() means service_role or the SQL editor: your own maintenance,
-  -- including unlinking a player, still works.
+  -- including unlinking a person, still works.
   IF auth.uid() IS NULL THEN RETURN NEW; END IF;
 
   IF NEW.user_id IS DISTINCT FROM OLD.user_id THEN
     IF OLD.user_id IS NOT NULL OR NEW.user_id <> auth.uid() THEN
       RAISE EXCEPTION
-        'players.user_id may only be set to your own id, and only on an unlinked player';
+        'people.user_id may only be set to your own id, and only on an unlinked person';
     END IF;
   END IF;
+
+  -- The URL is written once and then never again, exactly as a club's is.
+  NEW.slug := OLD.slug;
+
+  RETURN NEW;
+END $$;
+
+
+ALTER FUNCTION "public"."people_guard_user_id"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."people_set_slug"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+DECLARE
+    base text;
+BEGIN
+    IF NEW.slug IS NOT NULL AND NEW.slug <> '' THEN
+        RETURN NEW;
+    END IF;
+
+    base := public.slugify(NEW.name);
+
+    IF EXISTS (SELECT 1 FROM public.people WHERE slug = base AND id <> NEW.id) THEN
+        NEW.slug := base || '-' || NEW.id;
+    ELSE
+        NEW.slug := base;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."people_set_slug"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."person_in_public_club"("pid" bigint) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM players p
+    WHERE p.person_id = pid AND p.status = 'active' AND is_public_club(p.club_id)
+  );
+$$;
+
+
+ALTER FUNCTION "public"."person_in_public_club"("pid" bigint) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."person_is_admins_guest"("pid" bigint) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM players p WHERE p.person_id = pid AND is_club_admin(p.club_id)
+  );
+$$;
+
+
+ALTER FUNCTION "public"."person_is_admins_guest"("pid" bigint) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."person_shares_club"("pid" bigint) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM players p WHERE p.person_id = pid AND is_club_member(p.club_id)
+  );
+$$;
+
+
+ALTER FUNCTION "public"."person_shares_club"("pid" bigint) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."players_guard_membership"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RETURN NEW; END IF;
 
   IF NEW.club_id IS DISTINCT FROM OLD.club_id AND NOT is_club_admin(OLD.club_id) THEN
     RAISE EXCEPTION 'only the club owner may move a player between clubs';
   END IF;
 
-  -- The one status change that is not the owner's: claiming an unclaimed player
-  -- drops it to 'pending', so holding the join code is not the same as being
-  -- that person. join_club() relies on this.
+  -- A membership never changes hands. Without this, "Members can update club
+  -- players" — which exists so the roster editor can set a division — would also
+  -- let a member point somebody else's membership at their own person.
+  IF NEW.person_id IS DISTINCT FROM OLD.person_id THEN
+    RAISE EXCEPTION 'a membership cannot be reassigned to another person';
+  END IF;
+
+  -- The one status change that is not the owner's: claiming an unclaimed person
+  -- drops their memberships to 'pending'. join_club() relies on this.
   IF NEW.status IS DISTINCT FROM OLD.status
      AND NOT is_club_admin(OLD.club_id)
-     AND NOT (OLD.user_id IS NULL AND NEW.user_id = auth.uid() AND NEW.status = 'pending') THEN
+     AND NOT (
+       NEW.status = 'pending'
+       AND EXISTS (SELECT 1 FROM people WHERE id = NEW.person_id AND user_id = auth.uid())
+     ) THEN
     RAISE EXCEPTION 'only the club owner may change a member''s status';
   END IF;
 
@@ -364,7 +525,7 @@ BEGIN
 END $$;
 
 
-ALTER FUNCTION "public"."players_guard_user_id"() OWNER TO "postgres";
+ALTER FUNCTION "public"."players_guard_membership"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."slugify"("txt" "text") RETURNS "text"
@@ -494,6 +655,13 @@ CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "slug" "text" NOT NULL,
     "is_public" boolean DEFAULT true NOT NULL,
     "member_count" integer DEFAULT 0 NOT NULL,
+    "address" "text",
+    "city" "text",
+    "country" "text",
+    "lat" double precision,
+    "lon" double precision,
+    CONSTRAINT "clubs_country_shape" CHECK ((("country" IS NULL) OR ("country" ~ '^[A-Z]{2}$'::"text"))),
+    CONSTRAINT "clubs_latlon_pair" CHECK (((("lat" IS NULL) = ("lon" IS NULL)) AND (("lat" IS NULL) OR ((("lat" >= ('-90'::integer)::double precision) AND ("lat" <= (90)::double precision)) AND (("lon" >= ('-180'::integer)::double precision) AND ("lon" <= (180)::double precision)))))),
     CONSTRAINT "clubs_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
     CONSTRAINT "clubs_slug_shape" CHECK ((("slug" ~ '^[a-z0-9][a-z0-9-]*$'::"text") AND (NOT ("slug" = ANY ("public"."club_slug_reserved"())))))
 );
@@ -621,15 +789,11 @@ ALTER SEQUENCE "public"."drills_id_seq" OWNED BY "public"."drills"."id";
 CREATE TABLE IF NOT EXISTS "public"."games" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "player_1_name" "text" NOT NULL,
-    "player_2_name" "text" NOT NULL,
     "player_1_score" bigint NOT NULL,
     "player_2_score" bigint NOT NULL,
     "player_1_id" bigint NOT NULL,
     "player_2_id" bigint NOT NULL,
     "mode" "public"."GameMode" DEFAULT 'single'::"public"."GameMode" NOT NULL,
-    "player_1b_name" "text",
-    "player_2b_name" "text",
     "player_1b_id" bigint,
     "player_2b_id" bigint,
     "club_id" integer NOT NULL,
@@ -640,15 +804,38 @@ CREATE TABLE IF NOT EXISTS "public"."games" (
 ALTER TABLE "public"."games" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."people" (
+    "id" bigint NOT NULL,
+    "slug" "text" NOT NULL,
+    "name" "text" NOT NULL,
+    "avatar_url" "text",
+    "user_id" "uuid",
+    "is_public" boolean DEFAULT true NOT NULL,
+    CONSTRAINT "people_name_check" CHECK (("char_length"("btrim"("name")) >= 1)),
+    CONSTRAINT "people_slug_shape" CHECK (("slug" ~ '^[a-z0-9][a-z0-9-]*$'::"text"))
+);
+
+
+ALTER TABLE "public"."people" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."people" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."people_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
 CREATE TABLE IF NOT EXISTS "public"."players" (
     "id" bigint NOT NULL,
-    "name" "text" NOT NULL,
     "category" double precision DEFAULT '3'::double precision NOT NULL,
-    "user_id" "uuid",
     "club_id" integer NOT NULL,
     "status" "text" DEFAULT 'pending'::"text" NOT NULL,
-    "avatar_url" "text",
-    "is_public" boolean DEFAULT true NOT NULL,
+    "person_id" bigint NOT NULL,
     CONSTRAINT "players_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text"])))
 );
 
@@ -901,13 +1088,18 @@ ALTER TABLE ONLY "public"."games"
 
 
 
-ALTER TABLE ONLY "public"."players"
-    ADD CONSTRAINT "players_club_name_key" UNIQUE ("club_id", "name");
+ALTER TABLE ONLY "public"."people"
+    ADD CONSTRAINT "people_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."people"
+    ADD CONSTRAINT "people_user_id_key" UNIQUE ("user_id");
 
 
 
 ALTER TABLE ONLY "public"."players"
-    ADD CONSTRAINT "players_club_user_key" UNIQUE ("club_id", "user_id");
+    ADD CONSTRAINT "players_club_person_key" UNIQUE ("club_id", "person_id");
 
 
 
@@ -992,11 +1184,15 @@ CREATE INDEX "idx_training_plans_player" ON "public"."training_plans" USING "btr
 
 
 
+CREATE UNIQUE INDEX "people_slug_key" ON "public"."people" USING "btree" ("slug");
+
+
+
 CREATE INDEX "players_club_idx" ON "public"."players" USING "btree" ("club_id", "status");
 
 
 
-CREATE UNIQUE INDEX "players_club_name_ci_key" ON "public"."players" USING "btree" ("club_id", "lower"("btrim"("name")));
+CREATE INDEX "players_person_idx" ON "public"."players" USING "btree" ("person_id");
 
 
 
@@ -1028,7 +1224,19 @@ CREATE OR REPLACE TRIGGER "clubs_set_slug" BEFORE INSERT ON "public"."clubs" FOR
 
 
 
-CREATE OR REPLACE TRIGGER "players_guard_user_id" BEFORE UPDATE ON "public"."players" FOR EACH ROW EXECUTE FUNCTION "public"."players_guard_user_id"();
+CREATE OR REPLACE TRIGGER "people_drop_orphan" AFTER DELETE ON "public"."players" FOR EACH ROW EXECUTE FUNCTION "public"."people_drop_orphan"();
+
+
+
+CREATE OR REPLACE TRIGGER "people_guard_user_id" BEFORE UPDATE ON "public"."people" FOR EACH ROW EXECUTE FUNCTION "public"."people_guard_user_id"();
+
+
+
+CREATE OR REPLACE TRIGGER "people_set_slug" BEFORE INSERT ON "public"."people" FOR EACH ROW EXECUTE FUNCTION "public"."people_set_slug"();
+
+
+
+CREATE OR REPLACE TRIGGER "players_guard_membership" BEFORE UPDATE ON "public"."players" FOR EACH ROW EXECUTE FUNCTION "public"."players_guard_membership"();
 
 
 
@@ -1116,17 +1324,7 @@ ALTER TABLE ONLY "public"."games"
 
 
 ALTER TABLE ONLY "public"."games"
-    ADD CONSTRAINT "games_player_1_name_fkey" FOREIGN KEY ("club_id", "player_1_name") REFERENCES "public"."players"("club_id", "name") ON UPDATE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."games"
     ADD CONSTRAINT "games_player_1b_id_fkey" FOREIGN KEY ("player_1b_id") REFERENCES "public"."players"("id");
-
-
-
-ALTER TABLE ONLY "public"."games"
-    ADD CONSTRAINT "games_player_1b_name_fkey" FOREIGN KEY ("club_id", "player_1b_name") REFERENCES "public"."players"("club_id", "name") ON UPDATE CASCADE;
 
 
 
@@ -1136,17 +1334,12 @@ ALTER TABLE ONLY "public"."games"
 
 
 ALTER TABLE ONLY "public"."games"
-    ADD CONSTRAINT "games_player_2_name_fkey" FOREIGN KEY ("club_id", "player_2_name") REFERENCES "public"."players"("club_id", "name") ON UPDATE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."games"
     ADD CONSTRAINT "games_player_2b_id_fkey" FOREIGN KEY ("player_2b_id") REFERENCES "public"."players"("id");
 
 
 
-ALTER TABLE ONLY "public"."games"
-    ADD CONSTRAINT "games_player_2b_name_fkey" FOREIGN KEY ("club_id", "player_2b_name") REFERENCES "public"."players"("club_id", "name") ON UPDATE CASCADE;
+ALTER TABLE ONLY "public"."people"
+    ADD CONSTRAINT "people_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
 
 
 
@@ -1156,7 +1349,7 @@ ALTER TABLE ONLY "public"."players"
 
 
 ALTER TABLE ONLY "public"."players"
-    ADD CONSTRAINT "players_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
+    ADD CONSTRAINT "players_person_id_fkey" FOREIGN KEY ("person_id") REFERENCES "public"."people"("id") ON DELETE CASCADE;
 
 
 
@@ -1271,6 +1464,10 @@ CREATE POLICY "Admin can generate matches" ON "public"."tournament_matches" FOR 
 
 
 CREATE POLICY "Admin can remove players" ON "public"."players" FOR DELETE TO "authenticated" USING ("public"."is_club_admin"("club_id"));
+
+
+
+CREATE POLICY "Admin can update guests in their club" ON "public"."people" FOR UPDATE TO "authenticated" USING ((("user_id" IS NULL) AND "public"."person_is_admins_guest"("id"))) WITH CHECK (("user_id" IS NULL));
 
 
 
@@ -1396,7 +1593,9 @@ CREATE POLICY "Members can view club games" ON "public"."games" FOR SELECT TO "a
 
 
 
-CREATE POLICY "Members can view club players" ON "public"."players" FOR SELECT TO "authenticated" USING (("public"."is_club_member"("club_id") OR ("user_id" = "auth"."uid"())));
+CREATE POLICY "Members can view club players" ON "public"."players" FOR SELECT TO "authenticated" USING (("public"."is_club_member"("club_id") OR ("person_id" IN ( SELECT "people"."id"
+   FROM "public"."people"
+  WHERE ("people"."user_id" = "auth"."uid"())))));
 
 
 
@@ -1405,6 +1604,10 @@ CREATE POLICY "Members can view club tournaments" ON "public"."tournaments" FOR 
 
 
 CREATE POLICY "Members can view entrants" ON "public"."tournament_players" FOR SELECT TO "authenticated" USING ("public"."is_club_member"("public"."tournament_club"("tournament_id")));
+
+
+
+CREATE POLICY "Members can view people in their clubs" ON "public"."people" FOR SELECT TO "authenticated" USING ((("user_id" = "auth"."uid"()) OR "public"."person_shares_club"("id")));
 
 
 
@@ -1436,7 +1639,15 @@ CREATE POLICY "Members can write training plans" ON "public"."training_plans" FO
 
 
 
-CREATE POLICY "Own row can be updated" ON "public"."players" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+CREATE POLICY "Own person can be updated" ON "public"."people" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "Own row can be updated" ON "public"."players" FOR UPDATE TO "authenticated" USING (("person_id" IN ( SELECT "people"."id"
+   FROM "public"."people"
+  WHERE ("people"."user_id" = "auth"."uid"())))) WITH CHECK (("person_id" IN ( SELECT "people"."id"
+   FROM "public"."people"
+  WHERE ("people"."user_id" = "auth"."uid"()))));
 
 
 
@@ -1445,6 +1656,10 @@ CREATE POLICY "Owner can delete club" ON "public"."clubs" FOR DELETE TO "authent
 
 
 CREATE POLICY "Owner can update club" ON "public"."clubs" FOR UPDATE TO "authenticated" USING ("public"."is_club_admin"("id")) WITH CHECK (("owner_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "People of public clubs are readable by anyone" ON "public"."people" FOR SELECT TO "anon" USING ("public"."person_in_public_club"("id"));
 
 
 
@@ -1480,6 +1695,9 @@ ALTER TABLE "public"."drills" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."games" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."people" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."players" ENABLE ROW LEVEL SECURITY;
@@ -1525,6 +1743,10 @@ ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."drill_logs";
 
 
 ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."games";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."people";
 
 
 
@@ -1706,6 +1928,12 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text", "cat" double precision) TO "anon";
+GRANT ALL ON FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text", "cat" double precision) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text", "cat" double precision) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."can_touch_plan"("pid" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."can_touch_plan"("pid" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."can_touch_plan"("pid" integer) TO "service_role";
@@ -1782,9 +2010,45 @@ GRANT ALL ON FUNCTION "public"."join_club"("code" "text", "claim_player_id" inte
 
 
 
-GRANT ALL ON FUNCTION "public"."players_guard_user_id"() TO "anon";
-GRANT ALL ON FUNCTION "public"."players_guard_user_id"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."players_guard_user_id"() TO "service_role";
+GRANT ALL ON FUNCTION "public"."people_drop_orphan"() TO "anon";
+GRANT ALL ON FUNCTION "public"."people_drop_orphan"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."people_drop_orphan"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."people_guard_user_id"() TO "anon";
+GRANT ALL ON FUNCTION "public"."people_guard_user_id"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."people_guard_user_id"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."people_set_slug"() TO "anon";
+GRANT ALL ON FUNCTION "public"."people_set_slug"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."people_set_slug"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."person_in_public_club"("pid" bigint) TO "anon";
+GRANT ALL ON FUNCTION "public"."person_in_public_club"("pid" bigint) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."person_in_public_club"("pid" bigint) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."person_is_admins_guest"("pid" bigint) TO "anon";
+GRANT ALL ON FUNCTION "public"."person_is_admins_guest"("pid" bigint) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."person_is_admins_guest"("pid" bigint) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."person_shares_club"("pid" bigint) TO "anon";
+GRANT ALL ON FUNCTION "public"."person_shares_club"("pid" bigint) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."person_shares_club"("pid" bigint) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."players_guard_membership"() TO "anon";
+GRANT ALL ON FUNCTION "public"."players_guard_membership"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."players_guard_membership"() TO "service_role";
 
 
 
@@ -1868,6 +2132,26 @@ GRANT SELECT("is_public") ON TABLE "public"."clubs" TO "anon";
 
 
 GRANT SELECT("member_count") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("address") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("city") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("country") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("lat") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("lon") ON TABLE "public"."clubs" TO "anon";
 
 
 
@@ -1967,6 +2251,38 @@ GRANT ALL ON TABLE "public"."games" TO "service_role";
 
 
 
+GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE "public"."people" TO "anon";
+GRANT ALL ON TABLE "public"."people" TO "authenticated";
+GRANT ALL ON TABLE "public"."people" TO "service_role";
+
+
+
+GRANT SELECT("id") ON TABLE "public"."people" TO "anon";
+
+
+
+GRANT SELECT("slug") ON TABLE "public"."people" TO "anon";
+
+
+
+GRANT SELECT("name") ON TABLE "public"."people" TO "anon";
+
+
+
+GRANT SELECT("avatar_url") ON TABLE "public"."people" TO "anon";
+
+
+
+GRANT SELECT("is_public") ON TABLE "public"."people" TO "anon";
+
+
+
+GRANT ALL ON SEQUENCE "public"."people_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."people_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."people_id_seq" TO "service_role";
+
+
+
 GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE "public"."players" TO "anon";
 GRANT ALL ON TABLE "public"."players" TO "authenticated";
 GRANT ALL ON TABLE "public"."players" TO "service_role";
@@ -1974,10 +2290,6 @@ GRANT ALL ON TABLE "public"."players" TO "service_role";
 
 
 GRANT SELECT("id") ON TABLE "public"."players" TO "anon";
-
-
-
-GRANT SELECT("name") ON TABLE "public"."players" TO "anon";
 
 
 
@@ -1993,11 +2305,7 @@ GRANT SELECT("status") ON TABLE "public"."players" TO "anon";
 
 
 
-GRANT SELECT("avatar_url") ON TABLE "public"."players" TO "anon";
-
-
-
-GRANT SELECT("is_public") ON TABLE "public"."players" TO "anon";
+GRANT SELECT("person_id") ON TABLE "public"."players" TO "anon";
 
 
 

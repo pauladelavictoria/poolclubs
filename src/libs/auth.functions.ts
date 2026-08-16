@@ -3,6 +3,7 @@ import { getRequestUrl } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { getSupabaseServer } from "./supabase.server";
 import { isSafePath } from "./nextPath";
+import { flattenPlayer } from "@/queries/players";
 import type { Membership } from "@/types";
 
 /**
@@ -44,31 +45,44 @@ export const getSession = createServerFn({ method: "GET" }).handler(
     const user = data.user;
     if (!user) return null;
 
+    // person!inner: the memberships are reached through the person now, since
+    // that is where user_id lives. The join being inner is what keeps this from
+    // returning every player row in the database when the user has no person
+    // yet — a filter on an embedded column is not on its own a filter on the
+    // parent.
     const { data: rows } = await supabase
       .from("players")
-      .select("*, club:clubs(*)")
-      .eq("user_id", user.id);
+      .select("*, person:people!inner(*), club:clubs(*)")
+      .eq("person.user_id", user.id);
 
-    const memberships = (rows ?? []) as unknown as Membership[];
+    // flattenPlayer keeps every field it does not recognise, so `club` rides
+    // through untouched — a Membership is a Player with a club on it.
+    const memberships = (rows ?? []).map(
+      (row) => flattenPlayer(row) as unknown as Membership,
+    );
+
     const avatarUrl = avatarOf(user.user_metadata);
 
     // Only the owner can read their own auth metadata, so the OAuth picture is
-    // copied onto the player rows — otherwise every other member sees an
-    // initial. An uploaded avatar is a data: URI and a deliberate choice, so it
-    // is left alone; otherwise the next sign-in would quietly put Google's face
-    // back.
-    const stale = memberships.filter(
-      (m) => m.avatar_url !== avatarUrl && !m.avatar_url?.startsWith("data:"),
-    );
-    if (avatarUrl && stale.length) {
+    // copied onto the person — otherwise every other member sees an initial. An
+    // uploaded avatar is a data: URI and a deliberate choice, so it is left
+    // alone; otherwise the next sign-in would quietly put Google's face back.
+    //
+    // One row, not one per club: that is the whole point of people existing. The
+    // memberships all carry the same flattened copy, so they are patched in
+    // memory rather than re-fetched.
+    const current = memberships[0];
+    if (
+      avatarUrl &&
+      current &&
+      current.avatar_url !== avatarUrl &&
+      !current.avatar_url?.startsWith("data:")
+    ) {
       await supabase
-        .from("players")
+        .from("people")
         .update({ avatar_url: avatarUrl })
-        .in(
-          "id",
-          stale.map((m) => m.id),
-        );
-      stale.forEach((m) => (m.avatar_url = avatarUrl));
+        .eq("user_id", user.id);
+      memberships.forEach((m) => (m.avatar_url = avatarUrl));
     }
 
     return {

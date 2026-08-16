@@ -108,7 +108,11 @@ GRANT ALL ON FUNCTION public.is_public_club(integer) TO service_role;
 -- join. owner_id is withheld because it identifies an auth user.
 REVOKE SELECT ON public.clubs FROM anon;
 GRANT SELECT (
-    id, name, slug, logo_url, theme_color, is_public, member_count, created_at
+    id, name, slug, logo_url, theme_color, is_public, member_count, created_at,
+    -- The venue's location, for the map on /clubs. Added by
+    -- sql/club-location.sql; repeated here so re-running this file does not
+    -- take it away again.
+    address, city, country, lat, lon
 ) ON public.clubs TO anon;
 
 -- players.user_id is withheld: it is the auth user's id. There is no created_at
@@ -229,3 +233,28 @@ SET member_count = (
 -- current row counts that is faster than the planning it would save. When it
 -- stops being: `CREATE EXTENSION pg_trgm` and a GIN trgm index on clubs.name,
 -- players.name, tournaments.name and drills.name.
+
+-- ---------------------------------------------------------------------------
+-- 7. Superseded by sql/people.sql
+-- ---------------------------------------------------------------------------
+--
+-- This file is kept as the record of how the public side came to be, but three
+-- of its decisions have since moved. Apply order is this file, then people.sql.
+--
+--   * The column grants in section 3 name players.name, players.avatar_url and
+--     players.is_public. All three moved to the new `people` table, and their
+--     grants went with the columns. people.sql grants the same list on people
+--     and adds players.person_id, which is what PostgREST needs to embed one
+--     from the other.
+--
+--   * "Public players of public clubs are readable by anyone" and "Own row can
+--     be updated" both read players.user_id, which is now people.user_id.
+--     people.sql drops and recreates both.
+--
+--   * The `is_public` opt-out is now a fact about a person rather than about one
+--     membership: opting out hides you from the directory everywhere, not in one
+--     club while another still lists you. The backfill takes the strict reading
+--     (opted out anywhere means opted out) rather than re-listing anybody.
+--
+-- The ponytail note above still holds, and now applies to people.name — that is
+-- the only column the public player search touches.

@@ -11,10 +11,14 @@ import PlayerLink from "@/components/PlayerLink";
 export default function LeagueTable({
   rows,
   nameOf,
+  slugOf,
   qualify = 0,
 }: {
   rows: Standing[];
   nameOf: (id: number) => string;
+  /** The person's slug for each id, for the public side's /players/:slug
+   *  links. Omitted inside a club, where PlayerLink uses the club route. */
+  slugOf?: (id: number) => string | undefined;
   /** How many of the top places go through. 0 for a plain league. */
   qualify?: number;
 }) {
@@ -66,6 +70,7 @@ export default function LeagueTable({
             <td className="py-2.5 pr-3">
               <PlayerLink
                 playerId={row.playerId}
+                playerSlug={slugOf?.(row.playerId)}
                 className="block truncate font-medium text-ink transition-colors duration-150 hover:text-strike"
               >
                 {nameOf(row.playerId)}

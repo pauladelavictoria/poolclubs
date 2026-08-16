@@ -8,6 +8,7 @@ import PageTitle from "@/components/PageTitle";
 import PlayerForm from "@/components/PlayerForm";
 import ClubLogoUpload from "@/components/ClubLogoUpload";
 import ClubThemePicker from "@/components/ClubThemePicker";
+import ClubLocationPicker from "@/components/ClubLocationPicker";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -15,6 +16,7 @@ import { Button, IconButton } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/libs/useDialog";
+import type { Place } from "@/libs/geocode";
 import type { Player, Category, BallColor } from "@/types";
 import { useT } from "@/i18n";
 import { Link, getRouteApi } from "@tanstack/react-router";
@@ -42,12 +44,26 @@ export default function ClubPage() {
   const [logoUrl, setLogoUrl] = useState<string | null | undefined>(undefined);
   const [color, setColor] = useState<BallColor | undefined>(undefined);
   const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined);
+  const [location, setLocation] = useState<Place | null | undefined>(undefined);
   const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const dialogRef = useDialog(isModalOpen);
 
   // Admin-only, enforced by the route's beforeLoad before this renders.
+
+  // The five location columns are written together, so a club either has
+  // coordinates or has no location at all.
+  const savedPlace: Place | null =
+    activeClub.lat !== null && activeClub.lon !== null
+      ? {
+          address: activeClub.address ?? "",
+          city: activeClub.city ?? "",
+          country: activeClub.country ?? "",
+          lat: activeClub.lat,
+          lon: activeClub.lon,
+        }
+      : null;
 
   const link = `${origin}/app/join/${activeClub.join_code}`;
   const pending = (members ?? []).filter((m) => m.status === "pending");
@@ -73,7 +89,8 @@ export default function ClubPage() {
     name.trim().length > 0 ||
     logoUrl !== undefined ||
     color !== undefined ||
-    isPublic !== undefined;
+    isPublic !== undefined ||
+    location !== undefined;
 
   const saveSettings = () => {
     updateClub.mutate(
@@ -82,6 +99,7 @@ export default function ClubPage() {
         ...(logoUrl !== undefined && { logoUrl }),
         ...(color !== undefined && { themeColor: color }),
         ...(isPublic !== undefined && { isPublic }),
+        ...(location !== undefined && { location }),
       },
       {
         onSuccess: () => {
@@ -89,6 +107,7 @@ export default function ClubPage() {
           setLogoUrl(undefined);
           setColor(undefined);
           setIsPublic(undefined);
+          setLocation(undefined);
           toast.success(t("common.saved"));
         },
         onError: () => toast.error(t("common.error")),
@@ -99,7 +118,11 @@ export default function ClubPage() {
   const savePlayer = async (values: { name: string; category: Category }) => {
     try {
       if (editingPlayer) {
-        await updatePlayer.mutateAsync({ id: editingPlayer.id, ...values });
+        await updatePlayer.mutateAsync({
+          id: editingPlayer.id,
+          personId: editingPlayer.person_id,
+          ...values,
+        });
         toast.success(t("players.updated"));
       } else {
         await createPlayer.mutateAsync(values);
@@ -157,6 +180,18 @@ export default function ClubPage() {
               <ClubThemePicker
                 value={color ?? activeClub.theme_color}
                 onChange={setColor}
+                disabled={updateClub.isPending}
+              />
+            </div>
+
+            <div className="mt-5 space-y-3 border-t border-hairline pt-4">
+              <Label>{t("club.location.title")}</Label>
+              <p className="text-body text-ink-soft">
+                {t("club.location.hint")}
+              </p>
+              <ClubLocationPicker
+                value={location !== undefined ? location : savedPlace}
+                onChange={setLocation}
                 disabled={updateClub.isPending}
               />
             </div>

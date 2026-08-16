@@ -351,10 +351,8 @@ export const useManageTournaments = () => {
               mode: "single" as const,
               discipline,
               player_1_id: p1.id,
-              player_1_name: p1.name,
               player_1_score: p1Score,
               player_2_id: p2.id,
-              player_2_name: p2.name,
               player_2_score: p2Score,
             },
           ])

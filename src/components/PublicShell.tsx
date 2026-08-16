@@ -31,7 +31,11 @@ const PUBLIC_NAV: {
 
 export default function PublicShell({ children }: { children: ReactNode }) {
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">{children}</main>
+    // `overflow-x-clip`, not `hidden`: hidden makes this a scroll container and
+    // every `position: sticky` inside it stops working. Clip only stops a child
+    // widening the page — which the map's hover card can do on a phone, since it
+    // is allowed to spill out past the map's edge.
+    <main className="overflow-x-clip px-4 pb-20 sm:px-6">{children}</main>
   );
 }
 
@@ -47,7 +51,7 @@ export function PublicNav() {
           whatever the two ends weigh; from md up it is the ordinary flex bar
           with the sections spelled out. The sections used to scroll sideways
           on a phone, which is a nav you have to discover by dragging. */}
-      <nav className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 md:flex">
+      <nav className="grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 md:flex">
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
@@ -202,7 +206,7 @@ export function PublicFooter() {
 
   return (
     <footer className="mt-20 border-t border-hairline">
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+      <div className="px-4 py-12 sm:px-6">
         <div className="flex flex-col gap-10 sm:flex-row sm:justify-between">
           <div className="max-w-[32ch]">
             <Link to="/" className="flex items-center gap-2 text-ink">
@@ -278,7 +282,7 @@ export function PublicFooter() {
       {/* The wordmark as texture, not as a message: clipped by the container so
           it is felt at the edge of the eye rather than read. */}
       <div className="overflow-hidden" aria-hidden>
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="px-4 sm:px-6">
           <span className="block translate-y-[0.12em] text-nowrap text-[clamp(3rem,15vw,11rem)] leading-none font-semibold tracking-tighter text-ink/[0.07] select-none">
             {t("common.appName")}
           </span>

@@ -99,6 +99,14 @@ export function startRealtime(queryClient: QueryClient) {
       onTable("players"),
       invalidate(queryClient, keys.players.all),
     )
+    // Same cache as players, because that is where a person's name and face are
+    // read from: the roster query embeds people and flattens it. Without this a
+    // rename or a new avatar would not reach the other members until a reload.
+    .on(
+      "postgres_changes",
+      onTable("people"),
+      invalidate(queryClient, keys.players.all),
+    )
     .on(
       "postgres_changes",
       onTable("games"),

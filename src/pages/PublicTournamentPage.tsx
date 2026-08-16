@@ -57,6 +57,10 @@ export default function PublicTournamentPage() {
 
   const byId = new Map(roster.map((p) => [p.id, p]));
   const nameOf = (id: number) => byId.get(id)?.name ?? t("tournaments.tbd");
+  // Out here a name links to the person, not to the membership, so the shared
+  // bracket components need the slug alongside the name. Inside a club they get
+  // neither — PlayerLink uses the club route there.
+  const slugOf = (id: number) => byId.get(id)?.slug;
 
   const entrantIds = tournament.tournament_players.map((e) => e.player_id);
   // resolveBracket fills each empty seat from the match that feeds it, so a draw
@@ -104,8 +108,8 @@ export default function PublicTournamentPage() {
                 return (
                   <Link
                     key={id}
-                    to="/players/$playerId"
-                    params={{ playerId: String(id) }}
+                    to="/players/$playerSlug"
+                    params={{ playerSlug: player?.slug ?? "" }}
                     className="group flex flex-col items-center gap-1.5 text-center"
                   >
                     <Avatar
@@ -150,6 +154,7 @@ export default function PublicTournamentPage() {
             <LeagueTable
               rows={standings(entrantIds, matches)}
               nameOf={nameOf}
+              slugOf={slugOf}
             />
           </Card>
         ) : (
@@ -165,6 +170,7 @@ export default function PublicTournamentPage() {
                       <LeagueTable
                         rows={rows}
                         nameOf={nameOf}
+                        slugOf={slugOf}
                         qualify={tournament.advance ? 2 : 0}
                       />
                     </Card>
@@ -201,6 +207,7 @@ export default function PublicTournamentPage() {
                 <BracketView
                   matches={matches}
                   nameOf={nameOf}
+                  slugOf={slugOf}
                   index={index}
                   raceFor={raceOf}
                   onRecord={() => null}
@@ -209,6 +216,7 @@ export default function PublicTournamentPage() {
                 <MatchList
                   matches={matches}
                   nameOf={nameOf}
+                  slugOf={slugOf}
                   index={index}
                   raceFor={raceOf}
                   onRecord={() => null}
@@ -286,7 +294,7 @@ function TournamentHero({
       data-ball={tournament.club?.theme_color}
       className="wash wash-soft relative overflow-hidden border-b border-hairline"
     >
-      <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
+      <div className="relative px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             {tournament.club && (

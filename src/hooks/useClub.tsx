@@ -6,6 +6,7 @@ import { keys } from "@/libs/queryKeys";
 import { SESSION_KEY, sessionQuery } from "@/queries/session";
 import { clubPreviewQuery } from "@/queries/club";
 import { clubMembersQuery } from "@/queries/players";
+import type { Place } from "@/libs/geocode";
 import type { BallColor } from "@/types";
 
 export type { ClubPreview } from "@/queries/club";
@@ -53,8 +54,9 @@ export const useManageClub = () => {
       onSuccess,
     }),
 
-    // Name, logo and accent colour are one settings form with one Guardar
-    // button, so they land in a single update rather than three round trips.
+    // Name, logo, accent colour and location are one settings form with one
+    // Guardar button, so they land in a single update rather than four round
+    // trips.
     // logoUrl is already a data URI by the time it gets here — see
     // libs/logoImage.ts, the same shrink-in-the-browser approach avatars use.
     updateClub: useMutation({
@@ -64,6 +66,9 @@ export const useManageClub = () => {
         themeColor?: BallColor;
         /** Listed in the public club directory at /clubs. */
         isPublic?: boolean;
+        /** All five columns or none: a picked suggestion, or null to forget
+         *  it. Never a hand-typed address without coordinates. */
+        location?: Place | null;
       }) => {
         if (!activeClubId) throw new Error("no active club");
 
@@ -72,12 +77,25 @@ export const useManageClub = () => {
           logo_url?: string | null;
           theme_color?: BallColor;
           is_public?: boolean;
+          address?: string | null;
+          city?: string | null;
+          country?: string | null;
+          lat?: number | null;
+          lon?: number | null;
         } = {};
         if (updates.name !== undefined) patch.name = updates.name.trim();
         if (updates.logoUrl !== undefined) patch.logo_url = updates.logoUrl;
         if (updates.themeColor !== undefined)
           patch.theme_color = updates.themeColor;
         if (updates.isPublic !== undefined) patch.is_public = updates.isPublic;
+        if (updates.location !== undefined) {
+          const place = updates.location;
+          patch.address = place?.address || null;
+          patch.city = place?.city || null;
+          patch.country = place?.country || null;
+          patch.lat = place?.lat ?? null;
+          patch.lon = place?.lon ?? null;
+        }
 
         await supabase
           .from("clubs")

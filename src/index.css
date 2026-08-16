@@ -282,7 +282,13 @@ html[data-theme="light"]:has([data-public]) {
       var(--lamp) 0%,
       transparent 60%
     );
-    background-attachment: fixed;
+    /* Scrolls away with the page: the lamp belongs to the top of the document,
+       not to the viewport. The size is pinned to one screen because body
+       backgrounds propagate to the canvas, where a percentage would resolve
+       against the whole document height and stretch the cone down the page. */
+    background-attachment: scroll;
+    background-size: 100% 100dvh;
+    background-repeat: no-repeat;
   }
 
   h1,
@@ -791,4 +797,60 @@ button.lift:active {
   button.lift:hover {
     translate: none !important;
   }
+}
+
+/* MapLibre's popup is a white bubble with a white arrow, which is a hole in the
+   page on either theme. Passed as Popup({ className: "map-popup" }) from
+   components/MapView.tsx.
+
+   The tip is hidden rather than recoloured: it is a CSS triangle whose visible
+   side is set per anchor, so tinting it means one rule for each of the eight
+   positions MapLibre can place a popup in. The card carries an offset instead,
+   which reads the same and is one line. */
+.map-popup .maplibregl-popup-content {
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-control);
+  background: var(--color-felt);
+  color: var(--color-ink);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+.map-popup .maplibregl-popup-tip {
+  display: none;
+}
+
+/* It is a label following the cursor, not a target. Clicking through it lands on
+   the marker underneath, which is what opens the club. The z-index is for the
+   part of the card that leaves the map (see below), so it sits over whatever it
+   is next to rather than under it — but still below the site header, at z-30. */
+.map-popup {
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* A pin near the edge of the map has its card cut in half, because MapLibre
+   draws popups inside `.maplibregl-map` and that clips. Letting it out is the
+   only fix that holds for a pin anywhere: shrinking the card or nudging the
+   anchor only moves the pin position at which it happens.
+
+   The clip moves inwards rather than away, because the two things that need to
+   escape and stay put live in different elements: a popup is created in
+   `.maplibregl-map`, a marker in `.maplibregl-canvas-container` inside it. So
+   the card is free and a pin is still cut off at the edge of the map, the way
+   it is on every other map.
+
+   The container is a bare div with no box of its own — the canvas and the
+   markers inside it are absolutely positioned against `.maplibregl-map`, which
+   is `position: relative`. Giving it that same box changes nothing about where
+   any of them land, and it is what there is to clip and round. */
+.map-frame .maplibregl-map {
+  overflow: visible;
+}
+
+.map-frame .maplibregl-canvas-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--radius-control);
 }

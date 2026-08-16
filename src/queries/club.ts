@@ -43,10 +43,8 @@ export const clubPreviewQuery = (code: string) =>
             id: r.player_id as number,
             name: r.player_name as string,
           })),
-        /** Lowercased and trimmed, to match the name check in join_club(). */
-        takenNames: new Set(
-          players.map((r) => (r.player_name as string).trim().toLowerCase()),
-        ),
+        // takenNames is gone: join_club() no longer rejects a duplicate name,
+        // because names are no longer unique inside a club. See sql/people.sql.
       };
     },
   });

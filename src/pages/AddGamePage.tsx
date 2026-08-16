@@ -39,21 +39,18 @@ export default function AddGamePage() {
   const challenge = challenges?.find((c) => c.id === challengeId) ?? null;
 
   useEffect(() => {
-    if (!challenge || !players) return;
-    const name = (id: number) => players.find((p) => p.id === id)?.name;
-    const from = name(challenge.from_player_id);
-    const to = name(challenge.to_player_id);
-    if (from) setValue("player_1_name", from);
-    if (to) setValue("player_2_name", to);
-  }, [challenge, players, setValue]);
+    if (!challenge) return;
+    setValue("player_1_id", challenge.from_player_id);
+    setValue("player_2_id", challenge.to_player_id);
+  }, [challenge, setValue]);
 
   // `useWatch`, not `watch()`: the hook form is memoizable, so React Compiler
   // doesn't bail out of optimising this whole component.
   const {
-    player_1_name,
-    player_2_name,
-    player_1b_name,
-    player_2b_name,
+    player_1_id,
+    player_2_id,
+    player_1b_id,
+    player_2b_id,
     player_1_score,
     player_2_score,
     mode,
@@ -62,9 +59,9 @@ export default function AddGamePage() {
 
   const isDoubles = mode === "doubles";
   const selectedPlayers = [
-    player_1_name,
-    player_2_name,
-    ...(isDoubles ? [player_1b_name, player_2b_name] : []),
+    player_1_id,
+    player_2_id,
+    ...(isDoubles ? [player_1b_id, player_2b_id] : []),
   ].filter(Boolean);
 
   const hasDuplicatePlayers =
@@ -82,33 +79,28 @@ export default function AddGamePage() {
       ? t("games.tie")
       : null;
 
-  const namesComplete =
-    !!player_1_name &&
-    !!player_2_name &&
-    (!isDoubles || (!!player_1b_name && !!player_2b_name));
+  const playersComplete =
+    !!player_1_id &&
+    !!player_2_id &&
+    (!isDoubles || (!!player_1b_id && !!player_2b_id));
 
   const addDisabled =
-    playersLoading || isPending || !namesComplete || !bothScoresIn || !!problem;
+    playersLoading ||
+    isPending ||
+    !playersComplete ||
+    !bothScoresIn ||
+    !!problem;
 
   const onSubmit = (game: Game) => {
-    const byName = (name?: string | null) =>
-      (name ? players?.find((p) => p.name === name)?.id : null) ?? null;
-
-    const player_1_id = byName(game.player_1_name);
-    const player_2_id = byName(game.player_2_name);
-
-    if (typeof player_1_id !== "number" || typeof player_2_id !== "number") {
-      toast.error(t("games.playersNotIdentified"));
-      return;
-    }
-
+    // The selects hold ids now rather than names, so there is nothing left to
+    // resolve here — games stopped carrying player names when those moved to
+    // people. See sql/people.sql.
     handleAddGame(
       {
         ...game,
-        player_1_id,
-        player_2_id,
-        player_1b_id: byName(game.player_1b_name),
-        player_2b_id: byName(game.player_2b_name),
+        // An unpicked partner select submits "", which is not a bigint.
+        player_1b_id: game.player_1b_id || null,
+        player_2b_id: game.player_2b_id || null,
       },
       {
         onSuccess: (saved) => {
@@ -128,7 +120,7 @@ export default function AddGamePage() {
   };
 
   const playerOptions = players?.map((player) => (
-    <option key={player.id} value={player.name}>
+    <option key={player.id} value={player.id}>
       {player.name}
     </option>
   ));
@@ -176,9 +168,15 @@ export default function AddGamePage() {
                 return (
                   <fieldset key={n} className="space-y-1.5">
                     <Label>{side}</Label>
+                    {/* valueAsNumber for the same reason the score input has
+                        it: a <select> hands back a string, and these are
+                        bigint columns the app compares with ===. */}
                     <Select
                       disabled={playersLoading}
-                      {...register(`player_${n}_name`, { required: true })}
+                      {...register(`player_${n}_id`, {
+                        required: true,
+                        valueAsNumber: true,
+                      })}
                     >
                       <option value="">{t("common.select")}</option>
                       {playerOptions}
@@ -186,7 +184,10 @@ export default function AddGamePage() {
                     {isDoubles && (
                       <Select
                         disabled={playersLoading}
-                        {...register(`player_${n}b_name`, { required: true })}
+                        {...register(`player_${n}b_id`, {
+                          required: true,
+                          valueAsNumber: true,
+                        })}
                       >
                         <option value="">{t("games.partner")}</option>
                         {playerOptions}

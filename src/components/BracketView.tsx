@@ -30,12 +30,16 @@ const SIDES: { side: BracketSide; heading: "winners" | "losers" | "final" }[] =
 export default function BracketView({
   matches,
   nameOf,
+  slugOf,
   index,
   raceFor,
   onRecord,
 }: {
   matches: TournamentMatch[];
   nameOf: (id: number) => string;
+  /** The person's slug for each id, for the public side's /players/:slug
+   *  links. Omitted inside a club, where PlayerLink uses the club route. */
+  slugOf?: (id: number) => string | undefined;
   index: BracketIndex;
   /** How many racks a fixture runs to; shown once per round. */
   raceFor: (match: TournamentMatch) => number;
@@ -107,6 +111,7 @@ export default function BracketView({
                             <MatchCard
                               match={match}
                               nameOf={nameOf}
+                              slugOf={slugOf}
                               index={index}
                               onRecord={onRecord(match) ?? undefined}
                             />

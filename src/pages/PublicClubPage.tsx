@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
+import { LuMapPin } from "react-icons/lu";
 import GamesList from "@/components/GamesList";
 import ShareButton from "@/components/ShareButton";
 import PublicShell from "@/components/PublicShell";
@@ -25,6 +26,27 @@ const route = getRouteApi("/_public/clubs/$slug");
 /** Enough recent results to show the club is alive, not its whole history —
  *  which is what /clubs/$slug is for and the club's own app is not. */
 export const CLUB_GAMES_LIMIT = 30;
+
+/** The address as the page prints it. Empty for a club that never set one. */
+const where = (club: PublicClub) =>
+  [club.address, club.city].filter(Boolean).join(", ");
+
+/**
+ * Coordinates when the club has them, because those are a geocoder's answer and
+ * the text is the question — "Sierra Billiards, Valencia" is a search Google can
+ * get wrong, a lat/lon is not. The name goes in the text fallback so the pin
+ * lands on the venue rather than on the middle of the street.
+ */
+const mapsUrl = (club: PublicClub) => {
+  const query =
+    club.lat != null && club.lon != null
+      ? `${club.lat},${club.lon}`
+      : [club.name, club.address, club.city, club.country]
+          .filter(Boolean)
+          .join(", ");
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+};
 
 const isLive = (status: PublicTournamentListItem["status"]) =>
   status === "running" || status === "groups";
@@ -58,12 +80,20 @@ export default function PublicClubPage() {
 
   // The roster grid is the one block that is a list of people, so it is the one
   // place the opt-out applies. Everything else on this page is the club's record.
-  const listed = roster.filter((player) => player.is_public);
+  //
+  // Faces first: the hero shows the first six of these, and six initials in
+  // circles say nothing about the club. Stable, so within each group the roster
+  // keeps the order it arrived in.
+  const listed = roster
+    .filter((player) => player.is_public)
+    .sort((a, b) => Number(!!b.avatar_url) - Number(!!a.avatar_url));
 
   const tournaments = tournamentsData.tournaments;
-  const onNow = tournaments.filter(
-    (x) => isLive(x.status) || x.status === "open",
-  );
+  // Being played first, still taking entries after: one is happening right now
+  // and the other is a date in somebody's diary. Stable within each group.
+  const onNow = tournaments
+    .filter((x) => isLive(x.status) || x.status === "open")
+    .sort((a, b) => Number(isLive(b.status)) - Number(isLive(a.status)));
 
   const playingSince = club.created_at
     ? new Date(club.created_at).getFullYear()
@@ -98,7 +128,10 @@ export default function PublicClubPage() {
               {t("public.publicClub.noTournamentsTitle")}
             </p>
           ) : (
-            <div className="no-bar -mx-4 mt-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+            // py-2, not pb-1: `overflow-x: auto` clips vertically too, so the
+            // 3px a card rises on hover — and the shadow above it — was cut off
+            // against the top edge of the scroller.
+            <div className="no-bar -mx-4 mt-2 flex snap-x gap-3 overflow-x-auto px-4 py-2 sm:-mx-6 sm:px-6">
               {onNow.map((tournament) => (
                 <Link
                   key={tournament.id}
@@ -141,8 +174,8 @@ export default function PublicClubPage() {
               {listed.map((player) => (
                 <Link
                   key={player.id}
-                  to="/players/$playerId"
-                  params={{ playerId: String(player.id) }}
+                  to="/players/$playerSlug"
+                  params={{ playerSlug: player.slug }}
                   className="group flex flex-col items-center gap-1.5 text-center"
                 >
                   <Avatar
@@ -172,7 +205,12 @@ export default function PublicClubPage() {
         <Card className="mt-10 overflow-hidden">
           <CardHeader title={t("public.publicClub.recentResults")} />
           <div className="p-3">
-            <GamesList games={gamesData.games} showDates public />
+            <GamesList
+              games={gamesData.games}
+              players={roster}
+              showDates
+              public
+            />
           </div>
         </Card>
 
@@ -218,7 +256,7 @@ function ClubHero({
       data-ball={club.theme_color}
       className="wash wash-soft relative overflow-hidden border-b border-hairline"
     >
-      <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
+      <div className="relative px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-6">
           <div className="w-fit rounded-sheet bg-felt p-1.5">
             <Avatar
@@ -234,6 +272,18 @@ function ClubHero({
             <h1 className="truncate text-display leading-[1.05] font-semibold tracking-tighter text-ink">
               {club.name}
             </h1>
+            {where(club) && (
+              <a
+                href={mapsUrl(club)}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={t("public.publicClub.directions")}
+                className="mt-3 inline-flex max-w-full items-center gap-1.5 text-caption text-ink-soft transition-colors hover:text-ink"
+              >
+                <LuMapPin className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="truncate">{where(club)}</span>
+              </a>
+            )}
             {listed.length > 0 && (
               <div className="mt-3 flex items-center gap-2.5">
                 <div className="flex -space-x-2.5">

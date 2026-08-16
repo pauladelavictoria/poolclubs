@@ -145,7 +145,11 @@ export default function RankingDailyPage() {
             {gamesLoading ? (
               <SkeletonRows rows={4} />
             ) : (
-              <GamesList games={games} showSocial={!isTv} />
+              <GamesList
+                games={games}
+                players={players ?? []}
+                showSocial={!isTv}
+              />
             )}
           </div>
         </Card>

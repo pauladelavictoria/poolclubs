@@ -1,4 +1,4 @@
-import type { Game } from "@/types";
+import type { Game, Player } from "@/types";
 import React from "react";
 import { Link } from "@tanstack/react-router";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -10,6 +10,11 @@ import { AppLink } from "@/components/AppLink";
 
 const NAME_LINK = "transition-colors duration-150 hover:text-strike";
 
+/** What this list needs to turn a game's player id into a linked name. Games
+ *  stopped carrying a copy of the name when names moved to people, so the
+ *  roster is now an input rather than a convenience. */
+export type GamesListPlayer = Pick<Player, "id" | "name" | "slug">;
+
 /**
  * One player's name on the tape, as a tap to their page.
  *
@@ -18,27 +23,32 @@ const NAME_LINK = "transition-colors duration-150 hover:text-strike";
  * which has no club in its path — it throws rather than degrading.
  */
 function Name({
-  id,
-  name,
+  player,
   isPublic,
 }: {
-  id: number;
-  /** The doubles partner's name is absent on a singles row, so undefined is as
-   *  ordinary here as null. */
-  name: string | null | undefined;
+  /** Undefined for somebody who has since left the club: the game keeps its id,
+   *  the roster no longer has the row. The em dash is what the rest of the app
+   *  shows for that — see usePlayerLookup. */
+  player: GamesListPlayer | undefined;
   isPublic: boolean;
 }) {
+  if (!player) return <>—</>;
+
   return isPublic ? (
-    <Link to="/players/$playerId" params={{ playerId: String(id) }} className={NAME_LINK}>
-      {name}
+    <Link
+      to="/players/$playerSlug"
+      params={{ playerSlug: player.slug }}
+      className={NAME_LINK}
+    >
+      {player.name}
     </Link>
   ) : (
     <AppLink
       to="/app/$clubSlug/players/$playerId"
-      params={{ playerId: id }}
+      params={{ playerId: player.id }}
       className={NAME_LINK}
     >
-      {name}
+      {player.name}
     </AppLink>
   );
 }
@@ -46,24 +56,22 @@ function Name({
 /** A team's name(s) on the tape. */
 function Team({
   id1,
-  name1,
   id2,
-  name2,
+  byId,
   isPublic,
 }: {
   id1: number;
-  name1: string | null;
   id2?: number | null;
-  name2?: string | null;
+  byId: Map<number, GamesListPlayer>;
   isPublic: boolean;
 }) {
   return (
     <>
-      <Name id={id1} name={name1} isPublic={isPublic} />
+      <Name player={byId.get(id1)} isPublic={isPublic} />
       {id2 != null && (
         <>
           {" / "}
-          <Name id={id2} name={name2} isPublic={isPublic} />
+          <Name player={byId.get(id2)} isPublic={isPublic} />
         </>
       )}
     </>
@@ -72,8 +80,10 @@ function Team({
 
 interface GamesListProps {
   games: Game[];
-  /** Whose page this is, if anyone's — their won frames get the accent. By id,
-   *  because the names on a row are a copy from when it was written. */
+  /** The roster these games were played in, for resolving ids to names. In the
+   *  app that is useGetPlayers(); on the public side, publicClubRosterQuery. */
+  players: GamesListPlayer[];
+  /** Whose page this is, if anyone's — their won frames get the accent. */
   playerId?: number;
   showDates?: boolean;
   /** Off for the TV board, which nobody is standing close enough to tap. */
@@ -105,6 +115,7 @@ interface GamesListProps {
  */
 export default function GamesList({
   games,
+  players,
   playerId,
   showDates,
   showSocial = true,
@@ -113,6 +124,10 @@ export default function GamesList({
 }: GamesListProps) {
   const { t, locale } = useT();
   const social = showSocial && !isPublic;
+  const byId = React.useMemo(
+    () => new Map(players.map((player) => [player.id, player])),
+    [players],
+  );
 
   if (!games || games.length === 0) {
     return (
@@ -130,15 +145,11 @@ export default function GamesList({
         const {
           id,
           player_1_id,
-          player_1_name,
           player_1_score,
           player_2_id,
           player_2_score,
-          player_2_name,
           player_1b_id,
-          player_1b_name,
           player_2b_id,
-          player_2b_name,
           mode,
           created_at,
         } = game;
@@ -204,9 +215,8 @@ export default function GamesList({
               <span className={`flex-1 truncate text-right ${side(p1Won)}`}>
                 <Team
                   id1={player_1_id}
-                  name1={player_1_name}
                   id2={isDoubles ? player_1b_id : undefined}
-                  name2={player_1b_name}
+                  byId={byId}
                   isPublic={isPublic}
                 />
               </span>
@@ -222,9 +232,8 @@ export default function GamesList({
               <span className={`flex-1 truncate ${side(p2Won)}`}>
                 <Team
                   id1={player_2_id}
-                  name1={player_2_name}
                   id2={isDoubles ? player_2b_id : undefined}
-                  name2={player_2b_name}
+                  byId={byId}
                   isPublic={isPublic}
                 />
               </span>

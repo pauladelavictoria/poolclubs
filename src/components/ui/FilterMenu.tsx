@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LuSlidersHorizontal } from "react-icons/lu";
 import { useT } from "@/i18n";
 
@@ -27,9 +27,39 @@ export function FilterMenu({
   children: ReactNode;
 }) {
   const { t } = useT();
+  const ref = useRef<HTMLDetailsElement>(null);
+  const [open, setOpen] = useState(false);
+
+  // Light dismiss, the one thing `<details>` does not bring with it. Still
+  // uncontrolled — the open state is the element's, and this only closes it —
+  // so the menu keeps working before hydration.
+  // ponytail: no popover library; `<details>` covers the rest.
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: Event) => {
+      if (e.type === "keydown") {
+        if ((e as KeyboardEvent).key !== "Escape") return;
+        // Escape closes from inside the menu, so focus has to come back out.
+        ref.current?.querySelector("summary")?.focus();
+      }
+      if (e.type === "pointerdown" && ref.current?.contains(e.target as Node))
+        return;
+      if (ref.current) ref.current.open = false;
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
 
   return (
-    <details className="relative shrink-0">
+    <details
+      ref={ref}
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+      className="relative shrink-0"
+    >
       <summary
         aria-label={t("public.filters.title")}
         className="relative flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-control border border-hairline text-ink-soft transition-colors duration-150 select-none hover:border-hairline-strong hover:text-ink [&::-webkit-details-marker]:hidden"

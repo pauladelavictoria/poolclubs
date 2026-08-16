@@ -70,7 +70,7 @@ export default function PublicDrillsPage() {
   return (
     <>
       <section>
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+        <div className="px-4 py-10 sm:px-6 sm:py-14">
           <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
             {t("public.publicDrills.title")}
           </h1>
@@ -118,7 +118,7 @@ export default function PublicDrillsPage() {
           </div>
         </section>
 
-        <div className="sticky top-0 z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
+        <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
           <FilterMenu activeCount={search.difficulty ? 1 : 0}>
             <FilterGroup label={t("drills.filterDifficulty")}>
               <FilterPills
@@ -156,19 +156,19 @@ export default function PublicDrillsPage() {
             />
           </Card>
         ) : search.difficulty ? (
-          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {shown.map((drill, i) => (
               <DrillCard key={drill.id} drill={drill} public index={i} />
             ))}
           </div>
         ) : (
-          <div className="mt-6 space-y-8">
+          <div className="mt-8 space-y-10">
             {groups.map(({ difficulty, rows }) => (
               <section key={difficulty}>
-                <h2 className="px-1 pb-2 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
+                <h2 className="px-1 pb-3 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
                   {t(`difficulty.${difficulty}`)}
                 </h2>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
                   {rows.map((drill, i) => (
                     <DrillCard key={drill.id} drill={drill} public index={i} />
                   ))}

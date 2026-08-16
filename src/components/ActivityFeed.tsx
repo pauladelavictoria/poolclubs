@@ -220,24 +220,27 @@ function CreatedRow({
  *  two people rather than as two rows of text. */
 function Side({
   ids,
-  names,
   won,
 }: {
   /** Null where the column is empty, undefined where singles skips the slot. */
   ids: (number | null | undefined)[];
-  names: (string | null | undefined)[];
   won: boolean;
 }) {
   const { byId } = usePlayerLookup();
-  // Singles pass an empty second slot; a doubles row missing its partner name
-  // drops the same way rather than rendering a blank face.
+  // The name comes from the same lookup as the face. Games used to carry a copy
+  // of it; they carry only the id since names moved to people.
+  //
+  // Singles pass an empty second slot, and a player the lookup has not got —
+  // someone removed from the roster — drops the same way rather than rendering
+  // a blank face.
   const people = ids
-    .map((id, i) => ({
-      id,
-      name: names[i],
-      url: id == null ? undefined : byId.get(id)?.avatar_url,
-    }))
-    .filter((person) => !!person.name);
+    .map((id) => (id == null ? null : byId.get(id)))
+    .filter((player) => !!player)
+    .map((player) => ({
+      id: player.id,
+      name: player.name,
+      url: player.avatar_url,
+    }));
 
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
@@ -245,7 +248,7 @@ function Side({
         {people.map((person, i) => (
           <Avatar
             key={i}
-            name={person.name ?? "?"}
+            name={person.name}
             url={person.url}
             className={`h-12 w-12 ${won ? "" : "opacity-70"}`}
           />
@@ -257,19 +260,15 @@ function Side({
         }`}
       >
         {people.map((p, i) => (
-          <span key={p.id ?? i}>
+          <span key={p.id}>
             {i > 0 && " / "}
-            {p.id != null ? (
-              <AppLink
-                to="/app/$clubSlug/players/$playerId"
-                params={{ playerId: p.id }}
-                className="transition-colors duration-150 hover:text-strike"
-              >
-                {p.name}
-              </AppLink>
-            ) : (
-              p.name
-            )}
+            <AppLink
+              to="/app/$clubSlug/players/$playerId"
+              params={{ playerId: p.id }}
+              className="transition-colors duration-150 hover:text-strike"
+            >
+              {p.name}
+            </AppLink>
           </span>
         ))}
       </span>
@@ -323,10 +322,6 @@ function MatchCard({
       <div className="mt-3 flex items-center gap-3">
         <Side
           ids={[game.player_1_id, isDoubles ? game.player_1b_id : undefined]}
-          names={[
-            game.player_1_name,
-            isDoubles ? game.player_1b_name : undefined,
-          ]}
           won={p1 > p2}
         />
         {/* h-12 self-start puts the score on the avatars' centre line, not on
@@ -338,10 +333,6 @@ function MatchCard({
         </span>
         <Side
           ids={[game.player_2_id, isDoubles ? game.player_2b_id : undefined]}
-          names={[
-            game.player_2_name,
-            isDoubles ? game.player_2b_name : undefined,
-          ]}
           won={p2 > p1}
         />
       </div>
@@ -370,6 +361,10 @@ function TournamentGamesCard({
   tournament: Pick<Tournament, "id" | "name">;
 }) {
   const { t, locale } = useT();
+  // Names come from the roster, not from the game: see the note in Side.
+  const { byId } = usePlayerLookup();
+  const nameOf = (id: number | null) =>
+    (id == null ? undefined : byId.get(id)?.name) ?? "";
 
   // Past five fixtures the card stops being a feed row and starts being the
   // tournament page done worse — so the rest is a link to the real thing.
@@ -411,7 +406,7 @@ function TournamentGamesCard({
                     params={{ playerId: game.player_1_id }}
                     className="transition-colors duration-150 hover:text-strike"
                   >
-                    {game.player_1_name}
+                    {nameOf(game.player_1_id)}
                   </AppLink>
                   {isDoubles && game.player_1b_id != null && (
                     <>
@@ -421,7 +416,7 @@ function TournamentGamesCard({
                         params={{ playerId: game.player_1b_id }}
                         className="transition-colors duration-150 hover:text-strike"
                       >
-                        {game.player_1b_name}
+                        {nameOf(game.player_1b_id)}
                       </AppLink>
                     </>
                   )}
@@ -441,7 +436,7 @@ function TournamentGamesCard({
                     params={{ playerId: game.player_2_id }}
                     className="transition-colors duration-150 hover:text-strike"
                   >
-                    {game.player_2_name}
+                    {nameOf(game.player_2_id)}
                   </AppLink>
                   {isDoubles && game.player_2b_id != null && (
                     <>
@@ -451,7 +446,7 @@ function TournamentGamesCard({
                         params={{ playerId: game.player_2b_id }}
                         className="transition-colors duration-150 hover:text-strike"
                       >
-                        {game.player_2b_name}
+                        {nameOf(game.player_2b_id)}
                       </AppLink>
                     </>
                   )}

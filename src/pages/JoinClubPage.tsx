@@ -37,18 +37,15 @@ export default function JoinClubPage() {
   const { joinClub } = useJoinOrCreateClub();
 
   const [claimId, setClaimId] = useState("");
-  // Names are unique inside a club because games resolve players by name, so a
-  // second Juan Garcia has to arrive as something else.
   // Left empty the RPC uses the OAuth full_name, so no state to sync with auth.
+  //
+  // No clash check here any more. Names had to be unique inside a club while
+  // games resolved players by name; games use ids and names live on people, so
+  // a second Juan García is simply a second person.
   const [name, setName] = useState("");
 
   // Signed in by the time this renders — the route's beforeLoad saw to it.
   const already = memberships.find((m) => m.club_id === preview?.clubId);
-
-  // Empty input means join_club() falls back to the OAuth name, so that is what
-  // gets checked. Claiming an existing row skips the check entirely.
-  const wanted = (name.trim() || user?.fullName || "Player").toLowerCase();
-  const nameTaken = !claimId && !!preview?.takenNames.has(wanted);
 
   const submit = () => {
     joinClub.mutate(
@@ -61,14 +58,7 @@ export default function JoinClubPage() {
         // joinClub navigates once the session has been re-read; a pending
         // membership has no club to address yet, so that lands on /app.
         onSuccess: () => toast.success(t("club.requestSent")),
-        onError: (e) =>
-          toast.error(
-            t(
-              (e as { code?: string })?.code === "23505"
-                ? "club.nameTaken"
-                : "club.joinError",
-            ),
-          ),
+        onError: () => toast.error(t("club.joinError")),
       },
     );
   };
@@ -144,14 +134,8 @@ export default function JoinClubPage() {
                     placeholder={user?.fullName ?? ""}
                     onChange={(e) => setName(e.target.value)}
                   />
-                  <p
-                    className={
-                      nameTaken
-                        ? "text-caption text-accent-red"
-                        : "text-caption text-ink-faint"
-                    }
-                  >
-                    {t(nameTaken ? "club.nameTaken" : "club.nameHint")}
+                  <p className="text-caption text-ink-faint">
+                    {t("club.nameHint")}
                   </p>
                 </div>
               )}
@@ -159,7 +143,7 @@ export default function JoinClubPage() {
               <Button
                 className="w-full"
                 onClick={submit}
-                disabled={joinClub.isPending || nameTaken}
+                disabled={joinClub.isPending}
               >
                 {joinClub.isPending
                   ? t("common.saving")

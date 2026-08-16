@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import PublicClubsPage from "@/pages/PublicClubsPage";
-import { publicClubsQuery } from "@/queries/public";
+import { publicClubPinsQuery, publicClubsQuery } from "@/queries/public";
 import { publicMeta } from "@/libs/publicMeta";
 
 /**
@@ -26,8 +26,24 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_public/clubs/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
+  /**
+   * The pins are loaded here rather than on the client, and both queries run
+   * together.
+   *
+   * Fetched from the component, the map section did not exist in the server's
+   * HTML at all — it appeared once the query resolved and pushed the whole grid
+   * down the page. Loading it here means the server renders the section, the
+   * heading and the map's frame at their final size, and only the canvas inside
+   * arrives late.
+   *
+   * The pin query ignores `deps`: it is every listed club, not this page of the
+   * current sort, so paging or re-sorting reads it straight from the cache.
+   */
   loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(publicClubsQuery(deps)),
+    Promise.all([
+      context.queryClient.ensureQueryData(publicClubsQuery(deps)),
+      context.queryClient.ensureQueryData(publicClubPinsQuery()),
+    ]),
   head: ({ match }) => ({
     meta: publicMeta({
       title: "Pool clubs · PoolClubs",

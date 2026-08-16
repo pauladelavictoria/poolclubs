@@ -13,11 +13,15 @@ import PlayerLink from "@/components/PlayerLink";
 export default function MatchCard({
   match,
   nameOf,
+  slugOf,
   index,
   onRecord,
 }: {
   match: TournamentMatch;
   nameOf: (id: number) => string;
+  /** The person's slug for each id, for the public side's /players/:slug
+   *  links. Omitted inside a club, where PlayerLink uses the club route. */
+  slugOf?: (id: number) => string | undefined;
   /** Numbering and seat provenance, shared across every view. */
   index?: BracketIndex;
   /** Omitted when the viewer cannot file a result, or the match is not ready. */
@@ -71,6 +75,7 @@ export default function MatchCard({
           ) : (
             <PlayerLink
               playerId={playerId}
+              playerSlug={slugOf?.(playerId)}
               onClick={(e) => e.stopPropagation()}
               className="transition-colors duration-150 hover:text-strike"
             >

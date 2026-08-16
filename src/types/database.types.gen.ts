@@ -78,11 +78,16 @@ export type Database = {
       }
       clubs: {
         Row: {
+          address: string | null
+          city: string | null
+          country: string | null
           created_at: string | null
           id: number
           is_public: boolean
           join_code: string
+          lat: number | null
           logo_url: string | null
+          lon: number | null
           member_count: number
           name: string
           owner_id: string
@@ -90,11 +95,16 @@ export type Database = {
           theme_color: Database["public"]["Enums"]["BallColor"]
         }
         Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           id?: number
           is_public?: boolean
           join_code?: string
+          lat?: number | null
           logo_url?: string | null
+          lon?: number | null
           member_count?: number
           name: string
           owner_id: string
@@ -102,11 +112,16 @@ export type Database = {
           theme_color?: Database["public"]["Enums"]["BallColor"]
         }
         Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           id?: number
           is_public?: boolean
           join_code?: string
+          lat?: number | null
           logo_url?: string | null
+          lon?: number | null
           member_count?: number
           name?: string
           owner_id?: string
@@ -283,15 +298,11 @@ export type Database = {
           id: string
           mode: Database["public"]["Enums"]["GameMode"]
           player_1_id: number
-          player_1_name: string
           player_1_score: number
           player_1b_id: number | null
-          player_1b_name: string | null
           player_2_id: number
-          player_2_name: string
           player_2_score: number
           player_2b_id: number | null
-          player_2b_name: string | null
         }
         Insert: {
           club_id: number
@@ -300,15 +311,11 @@ export type Database = {
           id?: string
           mode?: Database["public"]["Enums"]["GameMode"]
           player_1_id: number
-          player_1_name: string
           player_1_score: number
           player_1b_id?: number | null
-          player_1b_name?: string | null
           player_2_id: number
-          player_2_name: string
           player_2_score: number
           player_2b_id?: number | null
-          player_2b_name?: string | null
         }
         Update: {
           club_id?: number
@@ -317,15 +324,11 @@ export type Database = {
           id?: string
           mode?: Database["public"]["Enums"]["GameMode"]
           player_1_id?: number
-          player_1_name?: string
           player_1_score?: number
           player_1b_id?: number | null
-          player_1b_name?: string | null
           player_2_id?: number
-          player_2_name?: string
           player_2_score?: number
           player_2b_id?: number | null
-          player_2b_name?: string | null
         }
         Relationships: [
           {
@@ -343,25 +346,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "games_player_1_name_fkey"
-            columns: ["club_id", "player_1_name"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["club_id", "name"]
-          },
-          {
             foreignKeyName: "games_player_1b_id_fkey"
             columns: ["player_1b_id"]
             isOneToOne: false
             referencedRelation: "players"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "games_player_1b_name_fkey"
-            columns: ["club_id", "player_1b_name"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["club_id", "name"]
           },
           {
             foreignKeyName: "games_player_2_id_fkey"
@@ -371,58 +360,62 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "games_player_2_name_fkey"
-            columns: ["club_id", "player_2_name"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["club_id", "name"]
-          },
-          {
             foreignKeyName: "games_player_2b_id_fkey"
             columns: ["player_2b_id"]
             isOneToOne: false
             referencedRelation: "players"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "games_player_2b_name_fkey"
-            columns: ["club_id", "player_2b_name"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["club_id", "name"]
-          },
         ]
       }
-      players: {
+      people: {
         Row: {
           avatar_url: string | null
-          category: number
-          club_id: number
           id: number
           is_public: boolean
           name: string
-          status: string
+          slug: string
           user_id: string | null
         }
         Insert: {
           avatar_url?: string | null
-          category?: number
-          club_id: number
           id?: number
           is_public?: boolean
           name: string
-          status?: string
+          slug: string
           user_id?: string | null
         }
         Update: {
           avatar_url?: string | null
-          category?: number
-          club_id?: number
           id?: number
           is_public?: boolean
           name?: string
-          status?: string
+          slug?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      players: {
+        Row: {
+          category: number
+          club_id: number
+          id: number
+          person_id: number
+          status: string
+        }
+        Insert: {
+          category?: number
+          club_id: number
+          id?: number
+          person_id: number
+          status?: string
+        }
+        Update: {
+          category?: number
+          club_id?: number
+          id?: number
+          person_id?: number
+          status?: string
         }
         Relationships: [
           {
@@ -430,6 +423,13 @@ export type Database = {
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
             referencedColumns: ["id"]
           },
         ]
@@ -769,6 +769,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_guest_player: {
+        Args: { cat?: number; cid: number; pname: string }
+        Returns: number
+      }
       can_touch_plan: { Args: { pid: number }; Returns: boolean }
       can_touch_player: { Args: { pid: number }; Returns: boolean }
       club_preview: {
@@ -792,6 +796,9 @@ export type Database = {
         Args: { claim_player_id?: number; code: string; display_name?: string }
         Returns: number
       }
+      person_in_public_club: { Args: { pid: number }; Returns: boolean }
+      person_is_admins_guest: { Args: { pid: number }; Returns: boolean }
+      person_shares_club: { Args: { pid: number }; Returns: boolean }
       slugify: { Args: { txt: string }; Returns: string }
       tournament_club: { Args: { tid: number }; Returns: number }
     }

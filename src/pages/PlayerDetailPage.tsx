@@ -234,6 +234,7 @@ export default function PlayerDetailPage({ playerId }: { playerId: number }) {
               <div className="p-3">
                 <GamesList
                   games={gamesData?.games ?? []}
+                  players={players ?? []}
                   playerId={player.id}
                   showDates
                 />

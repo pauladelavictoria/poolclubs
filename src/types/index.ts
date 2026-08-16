@@ -37,6 +37,9 @@ type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
  * `npm run db:types` re-run. The intersection is harmless once the column is
  * generated — it is the same `string` — so this line does not need removing,
  * but it can go once the schema catches up.
+ *
+ * The location columns (address, city, country, lat, lon) are written together
+ * or not at all; see src/libs/geocode.ts for the `Place` they come from.
  */
 export type Club = Stamped<Row<"clubs">> & { slug: string };
 
@@ -72,11 +75,26 @@ export type Category = 1 | 2 | 3;
 /** 'pending' until the club owner approves the join request. */
 export type PlayerStatus = "pending" | "active";
 
-/** A player row is also the membership row: one per (club, user). */
+/** The human. One row per person, however many clubs they play in — see
+ *  sql/people.sql. Name, face and public listing live here and nowhere else. */
+export type Person = Row<"people">;
+
+/**
+ * A membership: this person, in this club, at this division.
+ *
+ * The person's fields are spread onto it rather than left under `person`, so the
+ * ~18 places that render `player.name` and `player.avatar_url` did not have to
+ * change when people split out of players. The flattening happens once per query
+ * in src/queries/players.ts — see the note there.
+ */
 export type Player = Omit<Row<"players">, "category" | "status"> & {
   category: Category;
   status: PlayerStatus;
-};
+} & Pick<Person, "name" | "avatar_url" | "slug" | "is_public"> & {
+    /** Null out here on the public side, where anon is not granted the column.
+     *  Only ClubPage reads it, to mark which member owns the club. */
+    user_id: string | null;
+  };
 
 /** A Player joined to its club — what AuthContext lists for the switcher.
  *  `club` is null while the membership is still pending: RLS lets you see your

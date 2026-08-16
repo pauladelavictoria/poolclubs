@@ -28,19 +28,23 @@ export const Route = createFileRoute("/sitemap.xml")({
         const origin = new URL(request.url).origin;
         const supabase = getSupabaseServer();
 
-        const [clubs, players, tournaments, drills] = await Promise.all([
+        const [clubs, people, tournaments, drills] = await Promise.all([
           supabase
             .from("clubs")
             .select("slug")
             .eq("is_public", true)
             .order("member_count", { ascending: false })
             .limit(MAX_PER_KIND),
+          // people, not players: one URL per person, which is what the public
+          // profile is keyed on now. The status filter moves onto the embed and
+          // !inner is what makes it drop somebody with no active membership
+          // rather than return them with an empty array.
           supabase
-            .from("players")
-            .select("id")
+            .from("people")
+            .select("slug, players!inner(id)")
             .eq("is_public", true)
-            .eq("status", "active")
-            .order("id")
+            .eq("players.status", "active")
+            .order("slug")
             .limit(MAX_PER_KIND),
           supabase
             .from("tournaments")
@@ -62,7 +66,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           "/tournaments",
           "/drills",
           ...(clubs.data ?? []).map((c) => `/clubs/${c.slug}`),
-          ...(players.data ?? []).map((p) => `/players/${p.id}`),
+          ...(people.data ?? []).map((p) => `/players/${p.slug}`),
           ...(tournaments.data ?? []).map((x) => `/tournaments/${x.id}`),
           ...(drills.data ?? []).map((d) => `/drills/${d.id}`),
         ];

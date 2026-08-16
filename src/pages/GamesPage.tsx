@@ -107,7 +107,12 @@ export default function GamesPage() {
             <SkeletonRows rows={8} />
           ) : (
             <>
-              <GamesList games={games} showDates stickyDates />
+              <GamesList
+                players={players ?? []}
+                games={games}
+                showDates
+                stickyDates
+              />
 
               {totalCount > PAGE_SIZE && (
                 <div className="mt-6 flex items-center justify-center gap-4">

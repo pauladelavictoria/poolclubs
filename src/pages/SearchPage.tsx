@@ -11,6 +11,7 @@ import { SearchInput } from "@/components/ui/SearchInput";
 import { TournamentCard } from "@/pages/PublicTournamentsPage";
 import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
 import { publicSearchQuery } from "@/queries/public";
+import type { Category } from "@/types";
 import { useT } from "@/i18n";
 import type { Key } from "@/i18n";
 
@@ -50,7 +51,7 @@ export default function SearchPage() {
 
   const total = data
     ? data.clubs.length +
-      data.players.length +
+      data.people.length +
       data.tournaments.length +
       data.drills.length
     : 0;
@@ -78,7 +79,7 @@ export default function SearchPage() {
       {/* The field is the hero. No photograph and no grid above the fold: on a
           page whose whole job is one box, the box is the image. */}
       <section>
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+        <div className="px-4 py-10 sm:px-6 sm:py-14">
           <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
             {t("public.search.title")}
           </h1>
@@ -103,9 +104,9 @@ export default function SearchPage() {
                 label={t("public.publicClubs.count", { n: data.clubs.length })}
               />
             )}
-            {data.players.length > 0 && (
+            {data.people.length > 0 && (
               <CountChip
-                label={t("ranking.playersCount", { n: data.players.length })}
+                label={t("ranking.playersCount", { n: data.people.length })}
               />
             )}
             {data.tournaments.length > 0 && (
@@ -174,34 +175,50 @@ export default function SearchPage() {
               </Block>
             )}
 
-            {data && data.players.length > 0 && (
+            {data && data.people.length > 0 && (
               <Block titleKey="public.publicPlayers.title" to="/players">
                 <Card className="divide-y divide-hairline">
-                  {data.players.map((player) => (
-                    <Link
-                      key={player.id}
-                      to="/players/$playerId"
-                      params={{ playerId: String(player.id) }}
-                      data-ball={player.club?.theme_color}
-                      className="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 hover:bg-felt-raised"
-                    >
-                      <Avatar
-                        name={player.name}
-                        url={player.avatar_url}
-                        className="h-9 w-9"
-                      />
-                      <span className="min-w-0 flex-1 truncate text-body text-ink">
-                        {player.name}
-                        {player.club && (
-                          <span className="text-ink-faint">
-                            {" · "}
-                            {player.club.name}
-                          </span>
+                  {data.people.map((person) => {
+                    // One hit per person, so the clubs are a list and the
+                    // division is the strongest of them — same reading as the
+                    // directory row in PublicPlayersPage.
+                    const [first] = person.memberships;
+                    return (
+                      <Link
+                        key={person.id}
+                        to="/players/$playerSlug"
+                        params={{ playerSlug: person.slug }}
+                        data-ball={first?.club.theme_color}
+                        className="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 hover:bg-felt-raised"
+                      >
+                        <Avatar
+                          name={person.name}
+                          url={person.avatar_url}
+                          className="h-9 w-9"
+                        />
+                        <span className="min-w-0 flex-1 truncate text-body text-ink">
+                          {person.name}
+                          {person.memberships.length > 0 && (
+                            <span className="text-ink-faint">
+                              {" · "}
+                              {person.memberships
+                                .map((m) => m.club.name)
+                                .join(", ")}
+                            </span>
+                          )}
+                        </span>
+                        {first && (
+                          <CategoryBadge
+                            category={
+                              Math.min(
+                                ...person.memberships.map((m) => m.category),
+                              ) as Category
+                            }
+                          />
                         )}
-                      </span>
-                      <CategoryBadge category={player.category} />
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </Card>
               </Block>
             )}

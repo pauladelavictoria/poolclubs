@@ -13,9 +13,9 @@ export default function TournamentPodium({
   byId,
 }: {
   places: Places;
-  /** Only a name and a face are read, so the map asks for only those: the public
-   *  tournament page builds it from a redacted roster. */
-  byId: Map<number, Pick<Player, "name" | "avatar_url">>;
+  /** A name, a face and the slug the public profile is keyed on — no more, so
+   *  the public tournament page can build it from a redacted roster. */
+  byId: Map<number, Pick<Player, "name" | "avatar_url" | "slug">>;
 }) {
   const { t } = useT();
 
@@ -43,6 +43,7 @@ export default function TournamentPodium({
             />
             <PlayerLink
               playerId={playerId}
+              playerSlug={player?.slug}
               className="line-clamp-2 text-center text-caption font-medium text-ink transition-colors duration-150 hover:text-strike"
             >
               {player?.name ?? "—"}

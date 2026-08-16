@@ -23,7 +23,7 @@ import { Route as PublicClubsSlugRouteImport } from './routes/_public/clubs/$slu
 import { Route as PublicDrillsIndexRouteImport } from './routes/_public/drills/index'
 import { Route as PublicDrillsDrillIdRouteImport } from './routes/_public/drills/$drillId'
 import { Route as PublicPlayersIndexRouteImport } from './routes/_public/players/index'
-import { Route as PublicPlayersPlayerIdRouteImport } from './routes/_public/players/$playerId'
+import { Route as PublicPlayersPlayerSlugRouteImport } from './routes/_public/players/$playerSlug'
 import { Route as PublicTournamentsIndexRouteImport } from './routes/_public/tournaments/index'
 import { Route as PublicTournamentsTournamentIdRouteImport } from './routes/_public/tournaments/$tournamentId'
 import { Route as AppAuthedIndexRouteImport } from './routes/app/_authed/index'
@@ -121,9 +121,9 @@ const PublicPlayersIndexRoute = PublicPlayersIndexRouteImport.update({
   path: '/players/',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-const PublicPlayersPlayerIdRoute = PublicPlayersPlayerIdRouteImport.update({
-  id: '/players/$playerId',
-  path: '/players/$playerId',
+const PublicPlayersPlayerSlugRoute = PublicPlayersPlayerSlugRouteImport.update({
+  id: '/players/$playerSlug',
+  path: '/players/$playerSlug',
   getParentRoute: () => PublicRouteRoute,
 } as any)
 const PublicTournamentsIndexRoute = PublicTournamentsIndexRouteImport.update({
@@ -299,7 +299,7 @@ export interface FileRoutesByFullPath {
   '/app/$clubSlug': typeof AppAuthedClubSlugRouteRouteWithChildren
   '/clubs/$slug': typeof PublicClubsSlugRoute
   '/drills/$drillId': typeof PublicDrillsDrillIdRoute
-  '/players/$playerId': typeof PublicPlayersPlayerIdRoute
+  '/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/app/join/$code': typeof AppJoinCodeRoute
   '/clubs/': typeof PublicClubsIndexRoute
@@ -341,7 +341,7 @@ export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/clubs/$slug': typeof PublicClubsSlugRoute
   '/drills/$drillId': typeof PublicDrillsDrillIdRoute
-  '/players/$playerId': typeof PublicPlayersPlayerIdRoute
+  '/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/app/join/$code': typeof AppJoinCodeRoute
   '/clubs': typeof PublicClubsIndexRoute
@@ -386,7 +386,7 @@ export interface FileRoutesById {
   '/app/_authed/$clubSlug': typeof AppAuthedClubSlugRouteRouteWithChildren
   '/_public/clubs/$slug': typeof PublicClubsSlugRoute
   '/_public/drills/$drillId': typeof PublicDrillsDrillIdRoute
-  '/_public/players/$playerId': typeof PublicPlayersPlayerIdRoute
+  '/_public/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/_public/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/app/join/$code': typeof AppJoinCodeRoute
   '/_public/clubs/': typeof PublicClubsIndexRoute
@@ -431,7 +431,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug'
     | '/clubs/$slug'
     | '/drills/$drillId'
-    | '/players/$playerId'
+    | '/players/$playerSlug'
     | '/tournaments/$tournamentId'
     | '/app/join/$code'
     | '/clubs/'
@@ -473,7 +473,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clubs/$slug'
     | '/drills/$drillId'
-    | '/players/$playerId'
+    | '/players/$playerSlug'
     | '/tournaments/$tournamentId'
     | '/app/join/$code'
     | '/clubs'
@@ -517,7 +517,7 @@ export interface FileRouteTypes {
     | '/app/_authed/$clubSlug'
     | '/_public/clubs/$slug'
     | '/_public/drills/$drillId'
-    | '/_public/players/$playerId'
+    | '/_public/players/$playerSlug'
     | '/_public/tournaments/$tournamentId'
     | '/app/join/$code'
     | '/_public/clubs/'
@@ -658,11 +658,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicPlayersIndexRouteImport
       parentRoute: typeof PublicRouteRoute
     }
-    '/_public/players/$playerId': {
-      id: '/_public/players/$playerId'
-      path: '/players/$playerId'
-      fullPath: '/players/$playerId'
-      preLoaderRoute: typeof PublicPlayersPlayerIdRouteImport
+    '/_public/players/$playerSlug': {
+      id: '/_public/players/$playerSlug'
+      path: '/players/$playerSlug'
+      fullPath: '/players/$playerSlug'
+      preLoaderRoute: typeof PublicPlayersPlayerSlugRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/tournaments/': {
@@ -869,7 +869,7 @@ interface PublicRouteRouteChildren {
   PublicIndexRoute: typeof PublicIndexRoute
   PublicClubsSlugRoute: typeof PublicClubsSlugRoute
   PublicDrillsDrillIdRoute: typeof PublicDrillsDrillIdRoute
-  PublicPlayersPlayerIdRoute: typeof PublicPlayersPlayerIdRoute
+  PublicPlayersPlayerSlugRoute: typeof PublicPlayersPlayerSlugRoute
   PublicTournamentsTournamentIdRoute: typeof PublicTournamentsTournamentIdRoute
   PublicClubsIndexRoute: typeof PublicClubsIndexRoute
   PublicDrillsIndexRoute: typeof PublicDrillsIndexRoute
@@ -882,7 +882,7 @@ const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicIndexRoute: PublicIndexRoute,
   PublicClubsSlugRoute: PublicClubsSlugRoute,
   PublicDrillsDrillIdRoute: PublicDrillsDrillIdRoute,
-  PublicPlayersPlayerIdRoute: PublicPlayersPlayerIdRoute,
+  PublicPlayersPlayerSlugRoute: PublicPlayersPlayerSlugRoute,
   PublicTournamentsTournamentIdRoute: PublicTournamentsTournamentIdRoute,
   PublicClubsIndexRoute: PublicClubsIndexRoute,
   PublicDrillsIndexRoute: PublicDrillsIndexRoute,

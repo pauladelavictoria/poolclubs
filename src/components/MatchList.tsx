@@ -18,12 +18,16 @@ const ORDER: BracketSide[] = ["group", "league", "winners", "losers", "final"];
 export default function MatchList({
   matches,
   nameOf,
+  slugOf,
   index,
   raceFor,
   onRecord,
 }: {
   matches: TournamentMatch[];
   nameOf: (id: number) => string;
+  /** The person's slug for each id, for the public side's /players/:slug
+   *  links. Omitted inside a club, where PlayerLink uses the club route. */
+  slugOf?: (id: number) => string | undefined;
   index: BracketIndex;
   /** How many racks a fixture runs to; shown once per stage. */
   raceFor: (match: TournamentMatch) => number;
@@ -75,6 +79,7 @@ export default function MatchList({
                   match={match}
                   index={index}
                   nameOf={nameOf}
+                  slugOf={slugOf}
                   onRecord={onRecord(match) ?? undefined}
                 />
               </li>
@@ -100,11 +105,13 @@ function Row({
   match,
   index,
   nameOf,
+  slugOf,
   onRecord,
 }: {
   match: TournamentMatch;
   index: BracketIndex;
   nameOf: (id: number) => string;
+  slugOf?: (id: number) => string | undefined;
   onRecord?: () => void;
 }) {
   const { t } = useT();
@@ -138,6 +145,7 @@ function Row({
     return (
       <PlayerLink
         playerId={playerId}
+        playerSlug={slugOf?.(playerId)}
         onClick={(e) => e.stopPropagation()}
         className="transition-colors duration-150 hover:text-strike"
       >

@@ -80,7 +80,7 @@ export default function PublicTournamentsPage() {
   return (
     <>
       <section>
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+        <div className="px-4 py-10 sm:px-6 sm:py-14">
           <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
             {t("public.publicTournaments.title")}
           </h1>
@@ -91,7 +91,7 @@ export default function PublicTournamentsPage() {
       </section>
 
       <PublicShell>
-        <div className="sticky top-0 z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
+        <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
           <div className="flex items-center justify-between gap-3">
             <FilterMenu activeCount={activeFacets}>
               <FilterGroup label={t("tournaments.statusLabel")}>
@@ -152,13 +152,13 @@ export default function PublicTournamentsPage() {
           </Card>
         ) : (
           <>
-            <div className="mt-6 space-y-8">
+            <div className="mt-8 space-y-10">
               {grouped.map(({ key, rows }) => (
                 <section key={key}>
-                  <h2 className="px-1 pb-2 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
+                  <h2 className="px-1 pb-3 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
                     {t(key)}
                   </h2>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                     {rows.map((tournament, i) => (
                       <TournamentCard
                         key={tournament.id}
@@ -174,7 +174,7 @@ export default function PublicTournamentsPage() {
                 cards of their own. */}
               {finished.length > 0 && (
                 <section>
-                  <h2 className="px-1 pb-2 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
+                  <h2 className="px-1 pb-3 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
                     {t("tournaments.finished")}
                   </h2>
                   <Card className="divide-y divide-hairline">
