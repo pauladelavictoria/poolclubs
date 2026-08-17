@@ -38,7 +38,6 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@netlify/vite-plugin-tanstack-start": "^1.3.17",
-    "@rolldown/binding-darwin-arm64": "^1.2.3",
     "@tanstack/react-router-devtools": "^1.167.1",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.13",
@@ -56,6 +55,7 @@
   },
   "_comment": "optionalDependencies pin the linux x64 native binaries so the build works on CI/deploy hosts; they stay MISSING locally on macOS. Vite 8 bundles with rolldown, so esbuild/rollup/swc are no longer in the tree.",
   "optionalDependencies": {
+    "@rolldown/binding-darwin-arm64": "^1.2.3",
     "@rolldown/binding-linux-x64-gnu": "^1.2.3",
     "@rolldown/binding-linux-x64-musl": "^1.2.3",
     "@tailwindcss/oxide-linux-x64-gnu": "^4.1.18",
