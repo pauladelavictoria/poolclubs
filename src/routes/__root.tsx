@@ -48,68 +48,94 @@ export const Route = createRootRouteWithContext<{
     };
   },
 
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1, viewport-fit=cover",
-      },
-      { title: "PoolClubs" },
-      {
-        name: "description",
-        content:
-          "PoolClubs keeps your pool club on the record: Elo rankings, match results, challenges and training plans.",
-      },
-      {
-        name: "theme-color",
-        media: "(prefers-color-scheme: light)",
-        content: "#f3f5f9",
-      },
-      {
-        name: "theme-color",
-        media: "(prefers-color-scheme: dark)",
-        content: "#090b0e",
-      },
-      { property: "og:site_name", content: "PoolClubs" },
-      { property: "og:title", content: "PoolClubs" },
-      {
-        property: "og:description",
-        content:
-          "Elo rankings, match results, challenges and training plans for pool clubs.",
-      },
-      { property: "og:type", content: "website" },
-      // The fallback for anything with no card of its own. It used to be
-      // /android-chrome-512x512.png — a square PWA icon, which every preview
-      // renderer cropped into a thumbnail rather than drawing as a card. Every
-      // public route overrides this from its own data; see libs/publicMeta.ts.
-      { property: "og:image", content: "/og/default.png" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [
-      { rel: "stylesheet", href: indexCss },
-      {
-        rel: "apple-touch-icon",
-        sizes: "180x180",
-        href: "/apple-touch-icon.png",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "32x32",
-        href: "/favicon-32x32.png",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "16x16",
-        href: "/favicon-16x16.png",
-      },
-      { rel: "manifest", href: "/site.webmanifest" },
-      { rel: "icon", href: "/favicon.ico" },
-    ],
-    scripts: [{ children: THEME_BOOT }],
-  }),
+  head: ({ matches }) => {
+    // The deepest match's own params carry the club slug when there is one —
+    // read once here rather than per link, since both the manifest and the
+    // touch icon below key off the same club.
+    const clubSlug = (
+      matches.at(-1)?.params as { clubSlug?: string } | undefined
+    )?.clubSlug;
+
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1, viewport-fit=cover",
+        },
+        { title: "PoolClubs" },
+        {
+          name: "description",
+          content:
+            "PoolClubs keeps your pool club on the record: Elo rankings, match results, challenges and training plans.",
+        },
+        {
+          name: "theme-color",
+          media: "(prefers-color-scheme: light)",
+          content: "#f3f5f9",
+        },
+        {
+          name: "theme-color",
+          media: "(prefers-color-scheme: dark)",
+          content: "#090b0e",
+        },
+        { property: "og:site_name", content: "PoolClubs" },
+        { property: "og:title", content: "PoolClubs" },
+        {
+          property: "og:description",
+          content:
+            "Elo rankings, match results, challenges and training plans for pool clubs.",
+        },
+        { property: "og:type", content: "website" },
+        // The fallback for anything with no card of its own. It used to be
+        // /android-chrome-512x512.png — a square PWA icon, which every preview
+        // renderer cropped into a thumbnail rather than drawing as a card. Every
+        // public route overrides this from its own data; see libs/publicMeta.ts.
+        { property: "og:image", content: "/og/default.png" },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: [
+        { rel: "stylesheet", href: indexCss },
+        {
+          rel: "apple-touch-icon",
+          // No `sizes`: unlike the manifest's icons, there's only ever one of
+          // these, so nothing picks between candidates by declared size — and
+          // it turned out to matter here for a different reason. Chrome's
+          // compact "Install app" prompt reads its icon from this tag, not
+          // from the manifest, so a club's own logo has to be linked here too
+          // or that dialog keeps showing PoolClubs' mark regardless of what
+          // the manifest says.
+          href: clubSlug
+            ? `/api/clubs/${clubSlug}/logo`
+            : "/apple-touch-icon.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "32x32",
+          href: "/favicon-32x32.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "16x16",
+          href: "/favicon-16x16.png",
+        },
+        {
+          rel: "manifest",
+          // One link, never two: __root can't know whether a descendant route
+          // will also render a manifest link, and the router doesn't dedupe
+          // links by `rel`, only by exact duplicate — a second tag here would
+          // just sit unused behind whichever one the browser reads first.
+          href: clubSlug
+            ? `/app/${clubSlug}/manifest.webmanifest`
+            : "/site.webmanifest",
+        },
+        { rel: "icon", href: "/favicon.ico" },
+      ],
+      scripts: [{ children: THEME_BOOT }],
+    };
+  },
 
   errorComponent: (props) => (
     <RootDocument>

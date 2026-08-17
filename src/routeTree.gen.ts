@@ -32,10 +32,13 @@ import { Route as PublicPlayersIndexRouteImport } from './routes/_public/players
 import { Route as PublicPlayersPlayerSlugRouteImport } from './routes/_public/players/$playerSlug'
 import { Route as PublicTournamentsIndexRouteImport } from './routes/_public/tournaments/index'
 import { Route as PublicTournamentsTournamentIdRouteImport } from './routes/_public/tournaments/$tournamentId'
+import { Route as AppClubSlugManifestDotwebmanifestRouteImport } from './routes/app/$clubSlug.manifest[.]webmanifest'
 import { Route as AppAuthedIndexRouteImport } from './routes/app/_authed/index'
 import { Route as AppAuthedClubSlugRouteRouteImport } from './routes/app/_authed/$clubSlug/route'
 import { Route as AppAuthedOpsRouteImport } from './routes/app/_authed/ops'
+import { Route as AppAuthedSelectClubRouteImport } from './routes/app/_authed/select-club'
 import { Route as AppJoinSlugRouteImport } from './routes/app/join.$slug'
+import { Route as ApiClubsSlugLogoRouteImport } from './routes/api/clubs/$slug/logo'
 import { Route as AppAuthedClubSlugIndexRouteImport } from './routes/app/_authed/$clubSlug/index'
 import { Route as AppAuthedClubSlugChallengesRouteImport } from './routes/app/_authed/$clubSlug/challenges'
 import { Route as AppAuthedClubSlugClubRouteImport } from './routes/app/_authed/$clubSlug/club'
@@ -175,6 +178,12 @@ const PublicTournamentsTournamentIdRoute =
     path: '/tournaments/$tournamentId',
     getParentRoute: () => PublicRouteRoute,
   } as any)
+const AppClubSlugManifestDotwebmanifestRoute =
+  AppClubSlugManifestDotwebmanifestRouteImport.update({
+    id: '/$clubSlug/manifest.webmanifest',
+    path: '/$clubSlug/manifest.webmanifest',
+    getParentRoute: () => AppRouteRoute,
+  } as any)
 const AppAuthedIndexRoute = AppAuthedIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -190,10 +199,20 @@ const AppAuthedOpsRoute = AppAuthedOpsRouteImport.update({
   path: '/ops',
   getParentRoute: () => AppAuthedRouteRoute,
 } as any)
+const AppAuthedSelectClubRoute = AppAuthedSelectClubRouteImport.update({
+  id: '/select-club',
+  path: '/select-club',
+  getParentRoute: () => AppAuthedRouteRoute,
+} as any)
 const AppJoinSlugRoute = AppJoinSlugRouteImport.update({
   id: '/join/$slug',
   path: '/join/$slug',
   getParentRoute: () => AppRouteRoute,
+} as any)
+const ApiClubsSlugLogoRoute = ApiClubsSlugLogoRouteImport.update({
+  id: '/api/clubs/$slug/logo',
+  path: '/api/clubs/$slug/logo',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppAuthedClubSlugIndexRoute = AppAuthedClubSlugIndexRouteImport.update({
   id: '/',
@@ -356,13 +375,16 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof PublicLegalTermsRoute
   '/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
+  '/app/$clubSlug/manifest.webmanifest': typeof AppClubSlugManifestDotwebmanifestRoute
   '/app/ops': typeof AppAuthedOpsRoute
+  '/app/select-club': typeof AppAuthedSelectClubRoute
   '/app/join/$slug': typeof AppJoinSlugRoute
   '/clubs/': typeof PublicClubsIndexRoute
   '/drills/': typeof PublicDrillsIndexRoute
   '/players/': typeof PublicPlayersIndexRoute
   '/tournaments/': typeof PublicTournamentsIndexRoute
   '/app/': typeof AppAuthedIndexRoute
+  '/api/clubs/$slug/logo': typeof ApiClubsSlugLogoRoute
   '/app/$clubSlug/challenges': typeof AppAuthedClubSlugChallengesRoute
   '/app/$clubSlug/club': typeof AppAuthedClubSlugClubRoute
   '/app/clubs/new': typeof AppAuthedClubsNewRoute
@@ -406,12 +428,15 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof PublicLegalTermsRoute
   '/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
+  '/app/$clubSlug/manifest.webmanifest': typeof AppClubSlugManifestDotwebmanifestRoute
   '/app/ops': typeof AppAuthedOpsRoute
+  '/app/select-club': typeof AppAuthedSelectClubRoute
   '/app/join/$slug': typeof AppJoinSlugRoute
   '/clubs': typeof PublicClubsIndexRoute
   '/drills': typeof PublicDrillsIndexRoute
   '/players': typeof PublicPlayersIndexRoute
   '/tournaments': typeof PublicTournamentsIndexRoute
+  '/api/clubs/$slug/logo': typeof ApiClubsSlugLogoRoute
   '/app/$clubSlug/challenges': typeof AppAuthedClubSlugChallengesRoute
   '/app/$clubSlug/club': typeof AppAuthedClubSlugClubRoute
   '/app/clubs/new': typeof AppAuthedClubsNewRoute
@@ -459,13 +484,16 @@ export interface FileRoutesById {
   '/_public/legal/terms': typeof PublicLegalTermsRoute
   '/_public/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/_public/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
+  '/app/$clubSlug/manifest.webmanifest': typeof AppClubSlugManifestDotwebmanifestRoute
   '/app/_authed/ops': typeof AppAuthedOpsRoute
+  '/app/_authed/select-club': typeof AppAuthedSelectClubRoute
   '/app/join/$slug': typeof AppJoinSlugRoute
   '/_public/clubs/': typeof PublicClubsIndexRoute
   '/_public/drills/': typeof PublicDrillsIndexRoute
   '/_public/players/': typeof PublicPlayersIndexRoute
   '/_public/tournaments/': typeof PublicTournamentsIndexRoute
   '/app/_authed/': typeof AppAuthedIndexRoute
+  '/api/clubs/$slug/logo': typeof ApiClubsSlugLogoRoute
   '/app/_authed/$clubSlug/challenges': typeof AppAuthedClubSlugChallengesRoute
   '/app/_authed/$clubSlug/club': typeof AppAuthedClubSlugClubRoute
   '/app/_authed/clubs/new': typeof AppAuthedClubsNewRoute
@@ -512,13 +540,16 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/players/$playerSlug'
     | '/tournaments/$tournamentId'
+    | '/app/$clubSlug/manifest.webmanifest'
     | '/app/ops'
+    | '/app/select-club'
     | '/app/join/$slug'
     | '/clubs/'
     | '/drills/'
     | '/players/'
     | '/tournaments/'
     | '/app/'
+    | '/api/clubs/$slug/logo'
     | '/app/$clubSlug/challenges'
     | '/app/$clubSlug/club'
     | '/app/clubs/new'
@@ -562,12 +593,15 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/players/$playerSlug'
     | '/tournaments/$tournamentId'
+    | '/app/$clubSlug/manifest.webmanifest'
     | '/app/ops'
+    | '/app/select-club'
     | '/app/join/$slug'
     | '/clubs'
     | '/drills'
     | '/players'
     | '/tournaments'
+    | '/api/clubs/$slug/logo'
     | '/app/$clubSlug/challenges'
     | '/app/$clubSlug/club'
     | '/app/clubs/new'
@@ -614,13 +648,16 @@ export interface FileRouteTypes {
     | '/_public/legal/terms'
     | '/_public/players/$playerSlug'
     | '/_public/tournaments/$tournamentId'
+    | '/app/$clubSlug/manifest.webmanifest'
     | '/app/_authed/ops'
+    | '/app/_authed/select-club'
     | '/app/join/$slug'
     | '/_public/clubs/'
     | '/_public/drills/'
     | '/_public/players/'
     | '/_public/tournaments/'
     | '/app/_authed/'
+    | '/api/clubs/$slug/logo'
     | '/app/_authed/$clubSlug/challenges'
     | '/app/_authed/$clubSlug/club'
     | '/app/_authed/clubs/new'
@@ -653,6 +690,7 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  ApiClubsSlugLogoRoute: typeof ApiClubsSlugLogoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -818,6 +856,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicTournamentsTournamentIdRouteImport
       parentRoute: typeof PublicRouteRoute
     }
+    '/app/$clubSlug/manifest.webmanifest': {
+      id: '/app/$clubSlug/manifest.webmanifest'
+      path: '/$clubSlug/manifest.webmanifest'
+      fullPath: '/app/$clubSlug/manifest.webmanifest'
+      preLoaderRoute: typeof AppClubSlugManifestDotwebmanifestRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/_authed/': {
       id: '/app/_authed/'
       path: '/'
@@ -839,12 +884,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthedOpsRouteImport
       parentRoute: typeof AppAuthedRouteRoute
     }
+    '/app/_authed/select-club': {
+      id: '/app/_authed/select-club'
+      path: '/select-club'
+      fullPath: '/app/select-club'
+      preLoaderRoute: typeof AppAuthedSelectClubRouteImport
+      parentRoute: typeof AppAuthedRouteRoute
+    }
     '/app/join/$slug': {
       id: '/app/join/$slug'
       path: '/join/$slug'
       fullPath: '/app/join/$slug'
       preLoaderRoute: typeof AppJoinSlugRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/api/clubs/$slug/logo': {
+      id: '/api/clubs/$slug/logo'
+      path: '/api/clubs/$slug/logo'
+      fullPath: '/api/clubs/$slug/logo'
+      preLoaderRoute: typeof ApiClubsSlugLogoRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/_authed/$clubSlug/': {
       id: '/app/_authed/$clubSlug/'
@@ -1129,6 +1188,7 @@ const AppAuthedClubSlugRouteRouteWithChildren =
 interface AppAuthedRouteRouteChildren {
   AppAuthedClubSlugRouteRoute: typeof AppAuthedClubSlugRouteRouteWithChildren
   AppAuthedOpsRoute: typeof AppAuthedOpsRoute
+  AppAuthedSelectClubRoute: typeof AppAuthedSelectClubRoute
   AppAuthedIndexRoute: typeof AppAuthedIndexRoute
   AppAuthedClubsNewRoute: typeof AppAuthedClubsNewRoute
 }
@@ -1136,6 +1196,7 @@ interface AppAuthedRouteRouteChildren {
 const AppAuthedRouteRouteChildren: AppAuthedRouteRouteChildren = {
   AppAuthedClubSlugRouteRoute: AppAuthedClubSlugRouteRouteWithChildren,
   AppAuthedOpsRoute: AppAuthedOpsRoute,
+  AppAuthedSelectClubRoute: AppAuthedSelectClubRoute,
   AppAuthedIndexRoute: AppAuthedIndexRoute,
   AppAuthedClubsNewRoute: AppAuthedClubsNewRoute,
 }
@@ -1147,12 +1208,15 @@ const AppAuthedRouteRouteWithChildren = AppAuthedRouteRoute._addFileChildren(
 interface AppRouteRouteChildren {
   AppAuthedRouteRoute: typeof AppAuthedRouteRouteWithChildren
   AppLoginRoute: typeof AppLoginRoute
+  AppClubSlugManifestDotwebmanifestRoute: typeof AppClubSlugManifestDotwebmanifestRoute
   AppJoinSlugRoute: typeof AppJoinSlugRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAuthedRouteRoute: AppAuthedRouteRouteWithChildren,
   AppLoginRoute: AppLoginRoute,
+  AppClubSlugManifestDotwebmanifestRoute:
+    AppClubSlugManifestDotwebmanifestRoute,
   AppJoinSlugRoute: AppJoinSlugRoute,
 }
 
@@ -1166,6 +1230,7 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  ApiClubsSlugLogoRoute: ApiClubsSlugLogoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

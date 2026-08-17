@@ -278,6 +278,8 @@
   "scoreString.title": "{won} de {total} ganados",
   "scoreString.aria": "Últimos {total} partidos: {won} ganados",
   "club.welcome": "Bienvenido",
+  "club.selectTitle": "Elige un club",
+  "club.selectHint": "Perteneces a más de uno. Elige cuál quieres abrir.",
   "club.switch": "Club",
   "club.createTitle": "Crear un club",
   "club.name": "Nombre del club",
