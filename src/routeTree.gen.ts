@@ -35,7 +35,7 @@ import { Route as PublicTournamentsTournamentIdRouteImport } from './routes/_pub
 import { Route as AppAuthedIndexRouteImport } from './routes/app/_authed/index'
 import { Route as AppAuthedClubSlugRouteRouteImport } from './routes/app/_authed/$clubSlug/route'
 import { Route as AppAuthedOpsRouteImport } from './routes/app/_authed/ops'
-import { Route as AppJoinCodeRouteImport } from './routes/app/join.$code'
+import { Route as AppJoinSlugRouteImport } from './routes/app/join.$slug'
 import { Route as AppAuthedClubSlugIndexRouteImport } from './routes/app/_authed/$clubSlug/index'
 import { Route as AppAuthedClubSlugChallengesRouteImport } from './routes/app/_authed/$clubSlug/challenges'
 import { Route as AppAuthedClubSlugClubRouteImport } from './routes/app/_authed/$clubSlug/club'
@@ -190,9 +190,9 @@ const AppAuthedOpsRoute = AppAuthedOpsRouteImport.update({
   path: '/ops',
   getParentRoute: () => AppAuthedRouteRoute,
 } as any)
-const AppJoinCodeRoute = AppJoinCodeRouteImport.update({
-  id: '/join/$code',
-  path: '/join/$code',
+const AppJoinSlugRoute = AppJoinSlugRouteImport.update({
+  id: '/join/$slug',
+  path: '/join/$slug',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppAuthedClubSlugIndexRoute = AppAuthedClubSlugIndexRouteImport.update({
@@ -357,7 +357,7 @@ export interface FileRoutesByFullPath {
   '/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/app/ops': typeof AppAuthedOpsRoute
-  '/app/join/$code': typeof AppJoinCodeRoute
+  '/app/join/$slug': typeof AppJoinSlugRoute
   '/clubs/': typeof PublicClubsIndexRoute
   '/drills/': typeof PublicDrillsIndexRoute
   '/players/': typeof PublicPlayersIndexRoute
@@ -407,7 +407,7 @@ export interface FileRoutesByTo {
   '/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/app/ops': typeof AppAuthedOpsRoute
-  '/app/join/$code': typeof AppJoinCodeRoute
+  '/app/join/$slug': typeof AppJoinSlugRoute
   '/clubs': typeof PublicClubsIndexRoute
   '/drills': typeof PublicDrillsIndexRoute
   '/players': typeof PublicPlayersIndexRoute
@@ -460,7 +460,7 @@ export interface FileRoutesById {
   '/_public/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/_public/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/app/_authed/ops': typeof AppAuthedOpsRoute
-  '/app/join/$code': typeof AppJoinCodeRoute
+  '/app/join/$slug': typeof AppJoinSlugRoute
   '/_public/clubs/': typeof PublicClubsIndexRoute
   '/_public/drills/': typeof PublicDrillsIndexRoute
   '/_public/players/': typeof PublicPlayersIndexRoute
@@ -513,7 +513,7 @@ export interface FileRouteTypes {
     | '/players/$playerSlug'
     | '/tournaments/$tournamentId'
     | '/app/ops'
-    | '/app/join/$code'
+    | '/app/join/$slug'
     | '/clubs/'
     | '/drills/'
     | '/players/'
@@ -563,7 +563,7 @@ export interface FileRouteTypes {
     | '/players/$playerSlug'
     | '/tournaments/$tournamentId'
     | '/app/ops'
-    | '/app/join/$code'
+    | '/app/join/$slug'
     | '/clubs'
     | '/drills'
     | '/players'
@@ -615,7 +615,7 @@ export interface FileRouteTypes {
     | '/_public/players/$playerSlug'
     | '/_public/tournaments/$tournamentId'
     | '/app/_authed/ops'
-    | '/app/join/$code'
+    | '/app/join/$slug'
     | '/_public/clubs/'
     | '/_public/drills/'
     | '/_public/players/'
@@ -839,11 +839,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthedOpsRouteImport
       parentRoute: typeof AppAuthedRouteRoute
     }
-    '/app/join/$code': {
-      id: '/app/join/$code'
-      path: '/join/$code'
-      fullPath: '/app/join/$code'
-      preLoaderRoute: typeof AppJoinCodeRouteImport
+    '/app/join/$slug': {
+      id: '/app/join/$slug'
+      path: '/join/$slug'
+      fullPath: '/app/join/$slug'
+      preLoaderRoute: typeof AppJoinSlugRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/_authed/$clubSlug/': {
@@ -1147,13 +1147,13 @@ const AppAuthedRouteRouteWithChildren = AppAuthedRouteRoute._addFileChildren(
 interface AppRouteRouteChildren {
   AppAuthedRouteRoute: typeof AppAuthedRouteRouteWithChildren
   AppLoginRoute: typeof AppLoginRoute
-  AppJoinCodeRoute: typeof AppJoinCodeRoute
+  AppJoinSlugRoute: typeof AppJoinSlugRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAuthedRouteRoute: AppAuthedRouteRouteWithChildren,
   AppLoginRoute: AppLoginRoute,
-  AppJoinCodeRoute: AppJoinCodeRoute,
+  AppJoinSlugRoute: AppJoinSlugRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(

@@ -137,7 +137,7 @@ $$;
 ALTER FUNCTION "public"."can_touch_player"("pid" integer) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."club_preview"("code" "text") RETURNS TABLE("club_id" integer, "club_name" "text", "player_id" integer, "player_name" "text", "claimable" boolean)
+CREATE OR REPLACE FUNCTION "public"."club_preview"("p_slug" "text") RETURNS TABLE("club_id" integer, "club_name" "text", "player_id" integer, "player_name" "text", "claimable" boolean)
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -145,12 +145,12 @@ CREATE OR REPLACE FUNCTION "public"."club_preview"("code" "text") RETURNS TABLE(
   FROM clubs c
   LEFT JOIN players p ON p.club_id = c.id
   LEFT JOIN people pe ON pe.id = p.person_id
-  WHERE c.join_code = lower(btrim(code))
+  WHERE c.slug = lower(btrim(p_slug))
   ORDER BY pe.name;
 $$;
 
 
-ALTER FUNCTION "public"."club_preview"("code" "text") OWNER TO "postgres";
+ALTER FUNCTION "public"."club_preview"("p_slug" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."club_slug_reserved"() RETURNS "text"[]
@@ -322,7 +322,7 @@ $$;
 ALTER FUNCTION "public"."is_public_club"("cid" integer) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."join_club"("code" "text", "claim_player_id" integer DEFAULT NULL::integer, "display_name" "text" DEFAULT NULL::"text") RETURNS integer
+CREATE OR REPLACE FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer DEFAULT NULL::integer, "display_name" "text" DEFAULT NULL::"text") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -335,8 +335,8 @@ DECLARE
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'sign in first'; END IF;
 
-  SELECT id INTO cid FROM clubs WHERE join_code = lower(btrim(code));
-  IF cid IS NULL THEN RAISE EXCEPTION 'unknown join code'; END IF;
+  SELECT id INTO cid FROM clubs WHERE clubs.slug = lower(btrim(p_slug));
+  IF cid IS NULL THEN RAISE EXCEPTION 'unknown club'; END IF;
 
   SELECT id INTO me FROM people WHERE user_id = uid;
 
@@ -381,7 +381,7 @@ BEGIN
 END $$;
 
 
-ALTER FUNCTION "public"."join_club"("code" "text", "claim_player_id" integer, "display_name" "text") OWNER TO "postgres";
+ALTER FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."people_drop_orphan"() RETURNS "trigger"
@@ -647,7 +647,6 @@ ALTER SEQUENCE "public"."challenges_id_seq" OWNED BY "public"."challenges"."id";
 CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "id" integer NOT NULL,
     "name" "text" NOT NULL,
-    "join_code" "text" DEFAULT "encode"("extensions"."gen_random_bytes"(6), 'hex'::"text") NOT NULL,
     "owner_id" "uuid" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"(),
     "logo_url" "text",
@@ -1060,9 +1059,6 @@ ALTER TABLE ONLY "public"."challenges"
     ADD CONSTRAINT "challenges_pkey" PRIMARY KEY ("id");
 
 
-
-ALTER TABLE ONLY "public"."clubs"
-    ADD CONSTRAINT "clubs_join_code_key" UNIQUE ("join_code");
 
 
 
@@ -1949,9 +1945,9 @@ GRANT ALL ON FUNCTION "public"."can_touch_player"("pid" integer) TO "service_rol
 
 
 
-GRANT ALL ON FUNCTION "public"."club_preview"("code" "text") TO "anon";
-GRANT ALL ON FUNCTION "public"."club_preview"("code" "text") TO "authenticated";
-GRANT ALL ON FUNCTION "public"."club_preview"("code" "text") TO "service_role";
+GRANT ALL ON FUNCTION "public"."club_preview"("p_slug" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."club_preview"("p_slug" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."club_preview"("p_slug" "text") TO "service_role";
 
 
 
@@ -2008,8 +2004,8 @@ GRANT ALL ON FUNCTION "public"."is_public_club"("cid" integer) TO "service_role"
 
 
 
-GRANT ALL ON FUNCTION "public"."join_club"("code" "text", "claim_player_id" integer, "display_name" "text") TO "authenticated";
-GRANT ALL ON FUNCTION "public"."join_club"("code" "text", "claim_player_id" integer, "display_name" "text") TO "service_role";
+GRANT ALL ON FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") TO "service_role";
 
 
 

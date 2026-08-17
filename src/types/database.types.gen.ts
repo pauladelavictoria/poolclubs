@@ -84,7 +84,6 @@ export type Database = {
           created_at: string | null
           id: number
           is_public: boolean
-          join_code: string
           lat: number | null
           logo_url: string | null
           lon: number | null
@@ -101,7 +100,6 @@ export type Database = {
           created_at?: string | null
           id?: number
           is_public?: boolean
-          join_code?: string
           lat?: number | null
           logo_url?: string | null
           lon?: number | null
@@ -118,7 +116,6 @@ export type Database = {
           created_at?: string | null
           id?: number
           is_public?: boolean
-          join_code?: string
           lat?: number | null
           logo_url?: string | null
           lon?: number | null
@@ -782,7 +779,7 @@ export type Database = {
       can_touch_plan: { Args: { pid: number }; Returns: boolean }
       can_touch_player: { Args: { pid: number }; Returns: boolean }
       club_preview: {
-        Args: { code: string }
+        Args: { p_slug: string }
         Returns: {
           claimable: boolean
           club_id: number
@@ -799,8 +796,28 @@ export type Database = {
       is_own_player: { Args: { pid: number }; Returns: boolean }
       is_public_club: { Args: { cid: number }; Returns: boolean }
       join_club: {
-        Args: { claim_player_id?: number; code: string; display_name?: string }
+        Args: {
+          claim_player_id?: number
+          display_name?: string
+          p_slug: string
+        }
         Returns: number
+      }
+      operator_clubs: {
+        Args: never
+        Returns: {
+          created_at: string
+          games_30d: number
+          games_7d: number
+          games_total: number
+          id: number
+          is_public: boolean
+          last_game_at: string
+          member_count: number
+          name: string
+          pending_count: number
+          slug: string
+        }[]
       }
       person_in_public_club: { Args: { pid: number }; Returns: boolean }
       person_is_admins_guest: { Args: { pid: number }; Returns: boolean }

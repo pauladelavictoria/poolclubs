@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/Button";
 import { useT } from "@/i18n";
 
 /**
- * What a signed-in user with no club sees. Two ways in: start one, or paste the
- * code a friend sent. The code box just navigates to /join/:code so there is
- * one join implementation, not two.
+ * What a signed-in user with no club sees. Two ways in: start one, or type the
+ * slug a friend sent. The box just navigates to /join/:slug so there is one
+ * join implementation, not two.
  */
 export default function ClubOnboardingPage() {
   const { t } = useT();
@@ -26,7 +26,7 @@ export default function ClubOnboardingPage() {
   const { createClub } = useJoinOrCreateClub();
 
   const [name, setName] = useState("");
-  const [code, setCode] = useState("");
+  const [slug, setSlug] = useState("");
 
   const pending = memberships.filter((m) => m.status === "pending");
   // Where "never mind" goes. Only somebody already in a club has one: for a
@@ -102,27 +102,31 @@ export default function ClubOnboardingPage() {
             className="space-y-3 p-5"
             onSubmit={(e) => {
               e.preventDefault();
-              const clean = code.trim().toLowerCase();
-              if (clean) navigate({ to: "/app/join/$code", params: { code: clean } });
+              // The invite link is the club's own address now, so most people
+              // paste the whole https://…/app/join/<slug> rather than typing
+              // just the slug — take whatever comes after the last "/".
+              const raw = slug.trim().toLowerCase();
+              const clean = raw.slice(raw.lastIndexOf("/") + 1);
+              if (clean) navigate({ to: "/app/join/$slug", params: { slug: clean } });
             }}
           >
             <div className="space-y-1.5">
-              <Label htmlFor="join-code">{t("club.code")}</Label>
+              <Label htmlFor="join-slug">{t("club.code")}</Label>
               <Input
-                id="join-code"
-                value={code}
+                id="join-slug"
+                value={slug}
                 autoCapitalize="none"
                 spellCheck={false}
                 className="font-mono"
                 placeholder={t("club.codePlaceholder")}
-                onChange={(e) => setCode(e.target.value)}
+                onChange={(e) => setSlug(e.target.value)}
               />
             </div>
             <Button
               type="submit"
               variant="secondary"
               className="w-full"
-              disabled={!code.trim()}
+              disabled={!slug.trim()}
             >
               {t("club.join")}
             </Button>

@@ -27,7 +27,7 @@ import type {
  *      permission error. The three *_COLS constants below are the granted lists.
  *   2. What comes back is narrower than the app's own Club/Player/Drill, so the
  *      Public* types are Picks rather than the full rows. A page that wants
- *      join_code or user_id is a page that should not exist out here.
+ *      user_id is a page that should not exist out here.
  *
  * getSupabase() rather than the browser client: these run in route loaders, so
  * on the server they must read through the request's cookies. A signed-in

@@ -13,9 +13,10 @@ import { useT } from "@/i18n";
  *
  * This is the distribution story. A club owner cannot forward a link to forty
  * members he only sees on Thursdays, but he can print one sheet, and a phone
- * camera does the rest. The `pending` approval gate is what makes a code on a
- * public wall safe — scanning it asks to join, it does not join — and the
- * "change code" action on the club page is what makes it revocable.
+ * camera does the rest. The `pending` approval gate is what makes a link on a
+ * public wall safe — scanning it asks to join, it does not join. The link
+ * itself is the club's own slug, the same one that already addresses its
+ * public page, so it never goes stale and there is nothing to revoke.
  *
  * It is an advert, not instructions. Somebody walking past a wall reads one
  * thing, so the sheet is two blocks rather than a document: a dark hero that
@@ -51,7 +52,7 @@ export default function InvitePrintPage() {
   const { activeClub } = useAuth();
   const { origin } = getRouteApi("__root__").useRouteContext();
 
-  const link = `${origin}/app/join/${activeClub.join_code}`;
+  const link = `${origin}/app/join/${activeClub.slug}`;
   const host = origin.replace(/^https?:\/\//, "");
 
   // A four-module quiet zone, which is what the QR spec requires — uqr's default
@@ -240,7 +241,7 @@ export default function InvitePrintPage() {
               <p className="font-mono break-all">
                 {host}/app/join/
                 <span className="font-semibold" style={{ color: YELLOW }}>
-                  {activeClub.join_code}
+                  {activeClub.slug}
                 </span>
               </p>
             </div>

@@ -18,18 +18,18 @@ export type ClubPreview = {
  * Reaches a club you are not in yet, so it goes through a SECURITY DEFINER RPC
  * rather than a table read — see club_preview in sql/schema.sql.
  */
-export const clubPreviewQuery = (code: string) =>
+export const clubPreviewQuery = (slug: string) =>
   queryOptions({
-    queryKey: keys.clubPreview.for(code),
+    queryKey: keys.clubPreview.for(slug),
     retry: false,
     queryFn: async () => {
       const supabase = getSupabase();
       const { data } = await supabase
-        .rpc("club_preview", { code })
+        .rpc("club_preview", { p_slug: slug })
         .throwOnError();
 
       const rows = (data ?? []) as ClubPreview[];
-      if (rows.length === 0) throw new Error("unknown join code");
+      if (rows.length === 0) throw new Error("unknown club");
 
       // The RPC LEFT JOINs, so an empty club comes back as one row of nulls.
       const players = rows.filter((r) => r.player_id !== null);
