@@ -26,6 +26,9 @@ type Opponent = {
   id: number;
   slug: string;
   name: string;
+  /** Carried through from the roster row: the face pile up here is the only
+   *  picture of the rival on this page, and the roster already has it. */
+  avatar_url: string | null;
   wins: number;
   losses: number;
 };
@@ -91,6 +94,7 @@ export default function PublicPlayerPage() {
         id,
         slug: player.slug,
         name: player.name,
+        avatar_url: player.avatar_url,
         wins: 0,
         losses: 0,
       };
@@ -182,6 +186,7 @@ export default function PublicPlayerPage() {
                     >
                       <Avatar
                         name={opponent.name}
+                        url={opponent.avatar_url}
                         seed={opponent.id}
                         className="h-14 w-14"
                       />
