@@ -6,6 +6,7 @@ import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { useAddGame } from "@/hooks/useAddGame";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import PageTitle from "@/components/layout/PageTitle";
+import CancelLink from "@/components/layout/CancelLink";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -219,9 +220,15 @@ export default function AddGamePage() {
               </p>
             )}
 
-            <Button type="submit" className="w-full" disabled={addDisabled}>
-              {isPending ? t("common.saving") : t("games.add")}
-            </Button>
+            {/* Leaving is a real outcome of this screen — a challenge you
+                opened by mistake, a score you decided not to record — so it
+                sits beside the commit, not only in the crumb above the title. */}
+            <div className="flex gap-3">
+              <CancelLink />
+              <Button type="submit" className="flex-1" disabled={addDisabled}>
+                {isPending ? t("common.saving") : t("games.add")}
+              </Button>
+            </div>
           </form>
         </Card>
       </div>

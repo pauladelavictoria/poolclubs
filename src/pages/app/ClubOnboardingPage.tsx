@@ -5,6 +5,7 @@ import { LuUsers } from "react-icons/lu";
 import { useSession } from "@/hooks/useAuth";
 import { useJoinOrCreateClub } from "@/hooks/useClub";
 import PageTitle from "@/components/layout/PageTitle";
+import CancelLink from "@/components/layout/CancelLink";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -28,6 +29,10 @@ export default function ClubOnboardingPage() {
   const [code, setCode] = useState("");
 
   const pending = memberships.filter((m) => m.status === "pending");
+  // Where "never mind" goes. Only somebody already in a club has one: for a
+  // brand new account this page is the start of the app, with nothing behind
+  // it, and the route sits outside $clubSlug so there is no crumb either.
+  const home = memberships.find((m) => m.status === "active")?.club?.slug;
 
   const submitCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,6 +128,12 @@ export default function ClubOnboardingPage() {
             </Button>
           </form>
         </Card>
+
+        {home && (
+          <div className="flex justify-center">
+            <CancelLink to="/app/$clubSlug" params={{ clubSlug: home }} />
+          </div>
+        )}
       </div>
     </>
   );

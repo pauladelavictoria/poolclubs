@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { LuMoveRight, LuTrash2, LuUndo2 } from "react-icons/lu";
 import PoolTableDiagram from "@/components/drills/PoolTableDiagram";
+import CancelLink from "@/components/layout/CancelLink";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { BallGlyph } from "@/components/ui/Ball";
@@ -661,6 +662,9 @@ export default function DrillForm({
             {t("common.delete")}
           </Button>
         )}
+        {/* Route-aware, unlike the rest of this form: it always means "back to
+            the drill this page hangs off", which the route already declares. */}
+        <CancelLink />
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? t("common.saving") : t("common.save")}
         </Button>
