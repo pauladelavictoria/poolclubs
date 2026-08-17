@@ -1,35 +1,17 @@
-import { supabase } from "@/supabaseClient";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { keys } from "@/libs/queryKeys";
+import { drillLogsQuery } from "@/queries/drills";
+import type { UseGetDrillLogsFilters } from "@/queries/drills";
 
-export type UseGetDrillLogsFilters = {
-  player_id?: number;
-  drill_id?: number;
-  /** Caps the rows fetched. Also what lets an unfiltered query run at all —
-   *  without it the whole table would come down. */
-  limit?: number;
-};
+export type { UseGetDrillLogsFilters };
 
 export const useGetDrillLogs = (filters?: UseGetDrillLogsFilters) => {
   const { player_id, drill_id, limit } = filters ?? {};
 
   return useQuery({
-    queryKey: keys.drillLogs.list({ player_id, drill_id, limit }),
+    ...drillLogsQuery({ player_id, drill_id, limit }),
+    // Without one of these the whole table would come down.
     enabled: !!player_id || !!drill_id || !!limit,
     // A wider limit is the same list plus more: keep showing it while it loads.
     placeholderData: keepPreviousData,
-    queryFn: async () => {
-      let query = supabase
-        .from("drill_logs")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (player_id) query = query.eq("player_id", player_id);
-      if (drill_id) query = query.eq("drill_id", drill_id);
-      if (limit) query = query.limit(limit);
-
-      const { data } = await query.throwOnError();
-      return data;
-    },
   });
 };

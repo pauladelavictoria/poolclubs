@@ -1,3 +1,5 @@
+import { segmentedShell, segmentedItem } from "@/components/ui/segmentedStyles";
+
 /**
  * Segmented control. Used by both ranking views, so it lives here rather than
  * as a duplicated utility string in each page.
@@ -17,7 +19,7 @@ export function Segmented<T extends string>({
     <div
       role="tablist"
       aria-label={label}
-      className="inline-flex rounded-control border border-hairline bg-pocket p-0.5"
+      className={segmentedShell}
     >
       {options.map((option) => {
         const selected = option.value === value;
@@ -28,13 +30,7 @@ export function Segmented<T extends string>({
             role="tab"
             aria-selected={selected}
             onClick={() => onChange(option.value)}
-            className={[
-              "inline-flex h-8 items-center gap-1.5 rounded-[7px] px-3 text-caption font-medium",
-              "transition-[background-color,color] duration-150 ease-[var(--ease-out)]",
-              selected
-                ? "bg-rail text-ink"
-                : "text-ink-faint hover:text-ink-soft",
-            ].join(" ")}
+            className={segmentedItem(selected)}
           >
             {option.icon}
             {option.label}

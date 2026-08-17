@@ -1,39 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
-import type { BallColor, Player } from "@/types";
+import { SESSION_KEY, sessionQuery } from "@/queries/session";
+import { clubPreviewQuery } from "@/queries/club";
+import { clubMembersQuery } from "@/queries/players";
+import type { Place } from "@/libs/geocode";
+import type { BallColor } from "@/types";
 
-export type ClubPreview = {
-  club_id: number;
-  club_name: string;
-  player_id: number | null;
-  player_name: string | null;
-  /** Nobody has claimed this player row yet, so a new member may take it. */
-  claimable: boolean | null;
-};
+export type { ClubPreview } from "@/queries/club";
 
 /** Everyone in the active club, pending requests included — unlike
  *  useGetPlayers, which is the roster and hides them. */
 export const useClubMembers = () => {
   const { activeClubId } = useAuth();
-
-  return useQuery({
-    queryKey: keys.clubMembers.in(activeClubId),
-    enabled: !!activeClubId,
-    queryFn: async () => {
-      if (!activeClubId) throw new Error("no active club");
-
-      const { data } = await supabase
-        .from("players")
-        .select("*")
-        .eq("club_id", activeClubId)
-        .order("name")
-        .throwOnError();
-
-      return data as Player[];
-    },
-  });
+  return useQuery(clubMembersQuery(activeClubId));
 };
 
 export const useManageClub = () => {
@@ -72,8 +54,9 @@ export const useManageClub = () => {
       onSuccess,
     }),
 
-    // Name, logo and accent colour are one settings form with one Guardar
-    // button, so they land in a single update rather than three round trips.
+    // Name, logo, accent colour and location are one settings form with one
+    // Guardar button, so they land in a single update rather than four round
+    // trips.
     // logoUrl is already a data URI by the time it gets here — see
     // libs/logoImage.ts, the same shrink-in-the-browser approach avatars use.
     updateClub: useMutation({
@@ -81,6 +64,11 @@ export const useManageClub = () => {
         name?: string;
         logoUrl?: string | null;
         themeColor?: BallColor;
+        /** Listed in the public club directory at /clubs. */
+        isPublic?: boolean;
+        /** All five columns or none: a picked suggestion, or null to forget
+         *  it. Never a hand-typed address without coordinates. */
+        location?: Place | null;
       }) => {
         if (!activeClubId) throw new Error("no active club");
 
@@ -88,11 +76,26 @@ export const useManageClub = () => {
           name?: string;
           logo_url?: string | null;
           theme_color?: BallColor;
+          is_public?: boolean;
+          address?: string | null;
+          city?: string | null;
+          country?: string | null;
+          lat?: number | null;
+          lon?: number | null;
         } = {};
         if (updates.name !== undefined) patch.name = updates.name.trim();
         if (updates.logoUrl !== undefined) patch.logo_url = updates.logoUrl;
         if (updates.themeColor !== undefined)
           patch.theme_color = updates.themeColor;
+        if (updates.isPublic !== undefined) patch.is_public = updates.isPublic;
+        if (updates.location !== undefined) {
+          const place = updates.location;
+          patch.address = place?.address || null;
+          patch.city = place?.city || null;
+          patch.country = place?.country || null;
+          patch.lat = place?.lat ?? null;
+          patch.lon = place?.lon ?? null;
+        }
 
         await supabase
           .from("clubs")
@@ -105,15 +108,41 @@ export const useManageClub = () => {
   };
 };
 
-/** Creating and joining reach clubs you are not in yet, so they go through
- *  SECURITY DEFINER RPCs rather than table writes — see
- *  the create_club / join_club definitions in sql/schema.sql. */
+/**
+ * Creating and joining reach clubs you are not in yet, so they go through
+ * SECURITY DEFINER RPCs rather than table writes — see the create_club /
+ * join_club definitions in sql/schema.sql.
+ *
+ * Deliberately does not use `useAuth`: both callers run outside a club —
+ * /app/clubs/new and the invite link — where there is no club context to read.
+ */
 export const useJoinOrCreateClub = () => {
-  const { refreshMemberships, setActiveClub } = useAuth();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const navigate = useNavigate();
 
+  /**
+   * Re-read the session, then go to the club if we can address it.
+   *
+   * A club you just created is yours and active, so it has a slug you can
+   * navigate to. One you just *asked* to join is pending, and RLS lets you see
+   * your own player row before it lets you see the club it belongs to — so
+   * there is no slug yet and /app is as specific as this can be.
+   */
   const settle = async (clubId: number) => {
-    await refreshMemberships();
-    setActiveClub(clubId);
+    await queryClient.invalidateQueries({ queryKey: SESSION_KEY });
+    const session = await queryClient.fetchQuery(sessionQuery());
+    await router.invalidate();
+
+    const slug = session?.memberships.find((m) => m.club_id === clubId)?.club
+      ?.slug;
+
+    await navigate(
+      slug
+        ? { to: "/app/$clubSlug", params: { clubSlug: slug } }
+        : { to: "/app" },
+    );
+
     return clubId;
   };
 
@@ -157,39 +186,5 @@ export const useJoinOrCreateClub = () => {
   };
 };
 
-/** What the join link shows before you commit: club name, plus the unclaimed
- *  players so a regular who predates accounts can pick themselves. */
 export const useClubPreview = (code: string | undefined) =>
-  useQuery({
-    queryKey: keys.clubPreview.for(code),
-    enabled: !!code,
-    retry: false,
-    queryFn: async () => {
-      if (!code) throw new Error("no join code");
-
-      const { data } = await supabase
-        .rpc("club_preview", { code })
-        .throwOnError();
-
-      const rows = (data ?? []) as ClubPreview[];
-      if (rows.length === 0) throw new Error("unknown join code");
-
-      // The RPC LEFT JOINs, so an empty club comes back as one row of nulls.
-      const players = rows.filter((r) => r.player_id !== null);
-
-      return {
-        clubId: rows[0].club_id,
-        clubName: rows[0].club_name,
-        unclaimed: players
-          .filter((r) => r.claimable)
-          .map((r) => ({
-            id: r.player_id as number,
-            name: r.player_name as string,
-          })),
-        /** Lowercased and trimmed, to match the name check in join_club(). */
-        takenNames: new Set(
-          players.map((r) => (r.player_name as string).trim().toLowerCase()),
-        ),
-      };
-    },
-  });
+  useQuery({ ...clubPreviewQuery(code ?? ""), enabled: !!code });

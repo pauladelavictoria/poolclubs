@@ -3,12 +3,16 @@ import type { Game, Player, DailyRankingEntry, Category } from "@/types";
 
 const INITIAL_RATING = 500;
 
+/** Only three fields are read, so the parameter asks for three: the public club
+ *  page ranks a redacted roster that is not a full Player. */
+type Ranked = Pick<Player, "id" | "name" | "category">;
+
 export const useEloRanking = ({
     games,
     players,
 }: {
     games?: Game[];
-    players?: Player[];
+    players?: Ranked[];
 }): DailyRankingEntry[] | null => {
     return useMemo(() => {
         if (!players || !games || games.length === 0) return null;

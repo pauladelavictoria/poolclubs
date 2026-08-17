@@ -103,10 +103,17 @@ const nextPowerOfTwo = (n: number) => {
  * A knockout bracket. `playerIds` must already be in seed order (strongest
  * first). The field is padded to a power of two with byes, which are advanced
  * for you — including byes that cascade into the losers bracket.
+ *
+ * `singleFrom` is how far the double elimination goes: the number of players
+ * left when the two brackets merge into one single-elimination stage. 2 is the
+ * grand final, which is a full double-elimination draw and the default; 16 is
+ * the shape a lot of pool events actually run — two lives until the last 16,
+ * one after it. Anything at or above the padded field size is single
+ * elimination from the first ball, the same as `doubleElim: false`.
  */
 export function buildKnockout(
   playerIds: number[],
-  opts: { doubleElim: boolean },
+  opts: { doubleElim: boolean; singleFrom?: number },
   newId: () => string = uuid,
 ): PlannedMatch[] {
   if (playerIds.length < 2) return [];
@@ -123,9 +130,26 @@ export function buildKnockout(
     return resolveBracket([only]);
   }
 
+  /**
+   * Where the merge happens, in players left. Rounded up to a power of two and
+   * clamped to the field, so a cutoff bigger than the entry list is not an
+   * error — it just means the whole draw is single elimination, which is what
+   * "single elimination from the last 16" says about a field of twelve.
+   */
+  const merge = Math.min(
+    Math.max(2, nextPowerOfTwo(opts.singleFrom ?? 2)),
+    size,
+  );
+  const singleElim = !opts.doubleElim || merge >= size;
+
+  // How many winners rounds are played before the merge. The two brackets each
+  // arrive at it with size/2^cut survivors, and those are the merge/2 + merge/2
+  // players the single-elimination stage is drawn for.
+  const cut = singleElim ? rounds : rounds - Math.log2(merge) + 1;
+
   // --- winners bracket -----------------------------------------------------
   const wb: PlannedMatch[][] = [];
-  for (let r = 1; r <= rounds; r++) {
+  for (let r = 1; r <= cut; r++) {
     const count = size / 2 ** r;
     wb.push(
       Array.from({ length: count }, (_, slot) =>
@@ -137,24 +161,26 @@ export function buildKnockout(
     wb[0][slot].p1_id = seats[slot * 2];
     wb[0][slot].p2_id = seats[slot * 2 + 1];
   }
-  for (let r = 0; r < rounds - 1; r++) {
+  for (let r = 0; r < cut - 1; r++) {
     wb[r].forEach((match, slot) => {
       match.winner_to = wb[r + 1][slot >> 1].id;
       match.winner_to_slot = (slot % 2) + 1;
     });
   }
 
-  if (!opts.doubleElim) {
+  if (singleElim) {
     // The last winners round is a single match, and it is the final.
-    wb[rounds - 1][0].bracket = "final";
+    wb[cut - 1][0].bracket = "final";
     return resolveBracket(wb.flat());
   }
 
   // --- losers bracket ------------------------------------------------------
-  // 2·rounds − 2 rounds, alternating: odd rounds pair losers-bracket survivors
+  // 2·cut − 2 rounds, alternating: odd rounds pair losers-bracket survivors
   // against each other, even rounds feed in that round's winners-bracket
-  // casualties.
-  const lbRounds = 2 * rounds - 2;
+  // casualties. The last one is a drop-in round holding the players knocked out
+  // of the final winners round, which is why nobody leaves on one loss before
+  // the merge.
+  const lbRounds = 2 * cut - 2;
   const lbSize = (i: number) => size / 2 ** (Math.ceil(i / 2) + 1);
 
   const lb: PlannedMatch[][] = [];
@@ -174,7 +200,7 @@ export function buildKnockout(
   // ponytail: winners-bracket casualties drop straight down, same slot order.
   // A club bracket does not need the cross-over that stops early rematches;
   // reverse this round's order if it ever matters.
-  for (let r = 2; r <= rounds; r++) {
+  for (let r = 2; r <= cut; r++) {
     const target = lb[2 * (r - 1) - 1];
     wb[r - 1].forEach((match, slot) => {
       match.loser_to = target[slot].id;
@@ -196,17 +222,48 @@ export function buildKnockout(
     });
   }
 
-  // --- grand final ---------------------------------------------------------
+  // --- the merged stage ----------------------------------------------------
+  // One single-elimination draw of `merge` players: the winners-bracket
+  // survivors in seat 1, the losers-bracket survivors in seat 2. Its rounds
+  // carry on the winners numbering, because that is what they are from here —
+  // one loss and you are out.
+  //
   // ponytail: one final, no bracket reset — whoever came up through the losers
-  // bracket has to win it once. To add the reset, emit a second `final` round 2
-  // match and show it only when round 1's winner arrived from `losers`.
-  const final = blank("final", 1, 0, newId());
-  wb[rounds - 1][0].winner_to = final.id;
-  wb[rounds - 1][0].winner_to_slot = 1;
-  lb[lbRounds - 1][0].winner_to = final.id;
-  lb[lbRounds - 1][0].winner_to_slot = 2;
+  // bracket has to win it once. To add the reset, emit a second `final` round
+  // and show it only when the first one's winner arrived from `losers`.
+  const stage: PlannedMatch[][] = [];
+  for (let r = 1; r <= Math.log2(merge); r++) {
+    const count = merge / 2 ** r;
+    stage.push(
+      Array.from({ length: count }, (_, slot) =>
+        blank("winners", cut + r, slot, newId()),
+      ),
+    );
+  }
+  const last = stage[stage.length - 1][0];
+  last.bracket = "final";
 
-  return resolveBracket([...wb.flat(), ...lb.flat(), final]);
+  const wbLast = wb[cut - 1];
+  const lbLast = lb[lbRounds - 1];
+  wbLast.forEach((match, slot) => {
+    match.winner_to = stage[0][slot].id;
+    match.winner_to_slot = 1;
+  });
+  // Reversed, so the player knocked out of a winners match does not meet that
+  // same opponent again the moment they win their way back.
+  lbLast.forEach((match, slot) => {
+    match.winner_to = stage[0][lbLast.length - 1 - slot].id;
+    match.winner_to_slot = 2;
+  });
+
+  for (let r = 0; r < stage.length - 1; r++) {
+    stage[r].forEach((match, slot) => {
+      match.winner_to = stage[r + 1][slot >> 1].id;
+      match.winner_to_slot = (slot % 2) + 1;
+    });
+  }
+
+  return resolveBracket([...wb.flat(), ...lb.flat(), ...stage.flat()]);
 }
 
 /**
@@ -318,8 +375,10 @@ export function resolveBracket<T extends MatchLike>(matches: T[]): T[] {
   // has produced its output, an empty seat means "not yet", not "nobody".
   const fed = new Set<string>();
   for (const m of out) {
-    if (m.winner_to && m.winner_to_slot) fed.add(key(m.winner_to, m.winner_to_slot));
-    if (m.loser_to && m.loser_to_slot) fed.add(key(m.loser_to, m.loser_to_slot));
+    if (m.winner_to && m.winner_to_slot)
+      fed.add(key(m.winner_to, m.winner_to_slot));
+    if (m.loser_to && m.loser_to_slot)
+      fed.add(key(m.loser_to, m.loser_to_slot));
   }
 
   const delivered = new Set<string>();
@@ -477,9 +536,11 @@ export type Races = {
  * final, which are the two matches that put someone into the grand final.
  * A league or a group has no closing stage, so everything is the base race.
  */
-export function raceFor<
-  T extends { bracket: BracketSide; round: number },
->(match: T, races: Races, all: T[]): number {
+export function raceFor<T extends { bracket: BracketSide; round: number }>(
+  match: T,
+  races: Races,
+  all: T[],
+): number {
   if (match.bracket === "final") return races.race_final ?? races.race_to;
   if (match.bracket !== "winners" && match.bracket !== "losers") {
     return races.race_to;
@@ -506,10 +567,12 @@ export type Places = {
  * Who finished where, read off the match graph rather than off a table: in a
  * knockout the podium is a matter of who lost to whom, not of who won most.
  *
- * Third place is where the two formats differ. Double elimination has already
- * played it — the losers final decides it — while a single-elimination draw
- * never puts its two beaten semi-finalists in a room together, so they share
- * the step.
+ * Third place is decided by what feeds the final, which is the one question all
+ * three shapes answer differently. A full double-elimination draw sends the
+ * losers final into it, and that match has already played third place off. A
+ * single-elimination draw — and the single-elimination stage a hybrid ends with
+ * — sends two semi-finals into it, and those two beaten semi-finalists never
+ * meet, so they share the step.
  */
 export function placings<
   T extends MatchLike & { bracket: BracketSide; round: number },
@@ -522,20 +585,19 @@ export function placings<
   const loserOf = (m: T) => (m.p1_id === m.winner_id ? m.p2_id : m.p1_id);
   const notNull = (id: number | null): id is number => id !== null;
 
-  const decided = (side: BracketSide) =>
-    matches.filter((m) => m.bracket === side && m.winner_id !== null);
+  const feeders = matches.filter(
+    (m) => m.winner_to === final.id && m.winner_id !== null,
+  );
+  const fromLosers = feeders.filter((m) => m.bracket === "losers");
 
-  // The losers final if there was one, otherwise the semi-finals.
-  const beaten = decided("losers").length ? decided("losers") : decided("winners");
-  const last = beaten.length ? Math.max(...beaten.map((m) => m.round)) : 0;
+  // Whoever lost the losers final is third. Where nothing arrives from that
+  // side, both semi-finals do, and both of their losers are.
+  const beaten = fromLosers.length ? fromLosers : feeders;
 
   return {
     first: final.winner_id,
     second: loserOf(final),
-    third: beaten
-      .filter((m) => m.round === last)
-      .map(loserOf)
-      .filter(notNull),
+    third: beaten.map(loserOf).filter(notNull),
   };
 }
 
@@ -543,4 +605,5 @@ export function placings<
 export const eligible = <T extends { category: Category }>(
   players: T[],
   category: Category | null,
-) => (category === null ? players : players.filter((p) => p.category === category));
+) =>
+  category === null ? players : players.filter((p) => p.category === category);

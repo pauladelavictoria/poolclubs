@@ -1,13 +1,18 @@
 // Extension is explicit so `optimistic.check.ts` runs under bare node.
-import { queryClient } from "./queryClient.ts";
+import type { QueryClient } from "@tanstack/react-query";
 
 /**
  * The snapshot / patch / rollback trio every optimistic list mutation repeats.
  * Spread the result into useMutation.
  *
  * `patch` must return a new array — it is the cache, not a copy.
+ *
+ * The client is passed in rather than imported: there is one per request under
+ * SSR (see libs/queryClient.ts), so callers hand over the one from
+ * `useQueryClient()`.
  */
 export function optimisticList<TVars, TRow>(
+  queryClient: QueryClient,
   queryKey: readonly unknown[],
   patch: (rows: TRow[], vars: TVars) => TRow[],
 ) {

@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { CrumbLink } from "@/libs/routeMeta";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetChallenges } from "@/hooks/useChallenges";
 import {
@@ -28,7 +29,9 @@ export type AppNotification = {
   /** Something is waiting on you, not just informing you. */
   needsAction: boolean;
   message: string;
-  to: string;
+  /** Where tapping it goes: a route pattern plus its parameters, so the bell's
+   *  links are checked like every other link in the app. */
+  link: CrumbLink;
 };
 
 const STORAGE_PREFIX = "notifications-seen:";
@@ -58,6 +61,13 @@ function loadHistory(playerId: number | undefined) {
   };
 }
 
+/** Nothing read yet — what the server renders, since it has no localStorage. */
+const emptyHistory = (playerId: number | undefined) => ({
+  playerId,
+  seen: new Set<string>(),
+  dismissed: new Set<string>(),
+});
+
 /**
  * A notification feed derived entirely from data the app already fetches —
  * there is no notifications table. "Unread" is tracked client-side, keyed by
@@ -76,8 +86,21 @@ export const useNotifications = () => {
   const { data: drills } = useGetDrills();
   const { data: myDrillLogs } = useGetDrillLogs({ player_id: player?.id });
 
-  const [history, setHistory] = useState(() => loadHistory(player?.id));
-  if (history.playerId !== player?.id) setHistory(loadHistory(player?.id));
+  // Which notifications have been read is per-device UI state in localStorage,
+  // which the server cannot read — so the first render is "nothing read yet" on
+  // both sides and the real sets arrive just after hydration. Reading storage
+  // during render, as this used to, renders different HTML on the server than
+  // the client and React throws the whole tree away.
+  const [history, setHistory] = useState(() => emptyHistory(player?.id));
+
+  useEffect(() => {
+    // A deliberate post-hydration correction, not a cascade: the server rendered
+    // "nothing read yet" because it cannot see localStorage, and this is the
+    // first moment the real sets are readable. One extra render, once per player.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHistory(loadHistory(player?.id));
+  }, [player?.id]);
+
   const { seen, dismissed } = history;
 
   const allItems = useMemo<AppNotification[]>(() => {
@@ -93,7 +116,10 @@ export const useNotifications = () => {
         message: t("notifications.tournamentAction", {
           name: match.tournament.name,
         }),
-        to: `/app/tournaments/${match.tournament_id}`,
+        link: {
+          to: "/app/$clubSlug/tournaments/$tournamentId",
+          params: { tournamentId: String(match.tournament_id) },
+        },
       });
     }
 
@@ -106,7 +132,7 @@ export const useNotifications = () => {
           message: t("notifications.challengeReceived", {
             name: nameOf(c.from_player_id),
           }),
-          to: "/app/challenges",
+          link: { to: "/app/$clubSlug/challenges" },
         });
         continue;
       }
@@ -125,7 +151,7 @@ export const useNotifications = () => {
             : "notifications.challengeDeclined",
           { name: nameOf(c.to_player_id) },
         ),
-        to: "/app/challenges",
+        link: { to: "/app/$clubSlug/challenges" },
       });
     }
 
@@ -139,7 +165,10 @@ export const useNotifications = () => {
         kind: "tournamentOpen",
         needsAction: false,
         message: t("notifications.tournamentOpen", { name: tour.name }),
-        to: `/app/tournaments/${tour.id}`,
+        link: {
+          to: "/app/$clubSlug/tournaments/$tournamentId",
+          params: { tournamentId: String(tour.id) },
+        },
       });
     }
 
@@ -154,7 +183,10 @@ export const useNotifications = () => {
         kind: "drillAdded",
         needsAction: false,
         message: t("notifications.drillAdded", { name: drill.name }),
-        to: `/app/drills/${drill.id}`,
+        link: {
+          to: "/app/$clubSlug/drills/$drillId",
+          params: { drillId: String(drill.id) },
+        },
       });
     }
 

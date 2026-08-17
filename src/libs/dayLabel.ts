@@ -26,8 +26,20 @@ export const daysAgo = (date: Date) =>
     (midnight(new Date()).getTime() - midnight(date).getTime()) / 86_400_000,
   );
 
-/** "Today" / "Yesterday" / "Monday, 3 March" — the header a list of results
- *  groups under. Shared so the feed and the games list agree. */
+/**
+ * "Today" / "Yesterday" / "Monday, 3 March" — the header a list of results
+ * groups under. Shared so the feed and the games list agree.
+ *
+ * `daysAgo` compares against `new Date()` in the local timezone, and the server's
+ * is not the reader's — so for a few hours either side of midnight the server can
+ * render "Yesterday" where the browser says "Today". The two call sites carry
+ * suppressHydrationWarning for exactly that, and the client's answer wins on the
+ * first render.
+ *
+ * ponytail: the honest fix is passing the reader's timezone down from a loader,
+ * or rendering the rules client-only. Neither is worth it for a label that is
+ * wrong for one hour a day and self-corrects immediately.
+ */
 export const dayLabel = (
   date: Date,
   t: (key: Key) => string,

@@ -15,6 +15,53 @@ import { useT } from "@/i18n";
  * that drags a 9 onto a table are showing the same object, and they should not
  * be able to drift apart.
  */
+/**
+ * Sphere shading, shared by every ball on the page.
+ *
+ * The gradients carry no colour of their own — a white bloom and a black rim
+ * falloff painted over whatever fill the ball already has — so one pair of
+ * defs serves all sixteen balls instead of a gradient per hue. Duplicate ids
+ * across svgs are harmless because every copy is identical.
+ */
+export function BallShadingDefs() {
+  return (
+    <>
+      <radialGradient id="ball-gloss" cx="0.34" cy="0.3" r="0.62">
+        <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.55" />
+        <stop offset="40%" stopColor="#FFFFFF" stopOpacity="0.1" />
+        <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+      </radialGradient>
+      <radialGradient id="ball-shade" cx="0.36" cy="0.32" r="0.78">
+        <stop offset="50%" stopColor="#000000" stopOpacity="0" />
+        <stop offset="85%" stopColor="#000000" stopOpacity="0.28" />
+        <stop offset="100%" stopColor="#000000" stopOpacity="0.6" />
+      </radialGradient>
+    </>
+  );
+}
+
+/**
+ * Drawn over the ball's fill, under its number. Light comes from the upper
+ * left, so on a turned table this belongs inside the upright group — a
+ * highlight that rotates with the felt reads as a lamp lying on its side.
+ */
+export function BallShading({ r = BALL_RADIUS }: { r?: number }) {
+  return (
+    <>
+      <circle r={r} fill="url(#ball-shade)" />
+      <circle r={r} fill="url(#ball-gloss)" />
+      <ellipse
+        cx={-r * 0.34}
+        cy={-r * 0.4}
+        rx={r * 0.24}
+        ry={r * 0.16}
+        fill="#FFFFFF"
+        opacity={0.7}
+      />
+    </>
+  );
+}
+
 export function BallGlyph({
   color,
   label,
@@ -33,6 +80,9 @@ export function BallGlyph({
 
   return (
     <svg viewBox="-2 -2 4 4" className={className} aria-hidden>
+      <defs>
+        <BallShadingDefs />
+      </defs>
       <circle r={BALL_RADIUS} fill={striped ? "#FFFFFF" : fill} />
       {striped && (
         <>
@@ -108,6 +158,12 @@ const BALL: Record<number, { bg: string; fg: string }> = {
   3: { bg: "bg-ball-3", fg: "text-white" },
 };
 
+/** The same fill and text pair, for anything that wears a rank's colour without
+ *  being a circle — the podium paints its whole step with it. */
+// eslint-disable-next-line react-refresh/only-export-components
+export const ballTone = (rank: number) =>
+  BALL[rank] ?? { bg: "bg-ball-cue", fg: "text-ink-soft" };
+
 /** `lg` is for the one hero rank per page; lists always use `sm`. */
 const SIZE = {
   sm: "h-7 w-7 text-caption",
@@ -123,14 +179,15 @@ export function BallBadge({
   size?: keyof typeof SIZE;
   className?: string;
 }) {
-  const ball = BALL[rank];
+  const ball = ballTone(rank);
   return (
     <span
       className={[
         "inline-flex shrink-0 items-center justify-center rounded-full",
         "font-mono font-semibold tabular-nums",
         SIZE[size],
-        ball ? `${ball.bg} ${ball.fg}` : "bg-ball-cue text-ink-soft",
+        ball.bg,
+        ball.fg,
         className,
       ].join(" ")}
     >

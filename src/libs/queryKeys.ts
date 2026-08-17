@@ -1,6 +1,14 @@
-import type { UseGetGamesFilters } from "@/hooks/useGetGames";
-import type { UseGetDrillLogsFilters } from "@/hooks/useGetDrillLogs";
-import type { UseGetDrillsFilters } from "@/hooks/useGetDrills";
+import type { UseGetGamesFilters } from "@/queries/games";
+import type {
+  UseGetDrillLogsFilters,
+  UseGetDrillsFilters,
+} from "@/queries/drills";
+import type {
+  PublicClubsFilters,
+  PublicDrillsFilters,
+  PublicPlayersFilters,
+  PublicTournamentsFilters,
+} from "@/queries/public";
 
 /**
  * Every cache key in one place.
@@ -27,6 +35,12 @@ export const keys = {
 
   clubPreview: {
     for: (code?: string) => ["club-preview", code] as const,
+  },
+
+  /** Address suggestions from Photon. Its own root and nothing invalidates it:
+   *  the answer to "Calle Mayor 12" does not change while a form is open. */
+  places: {
+    for: (q: string) => ["places", q] as const,
   },
 
   games: {
@@ -104,6 +118,50 @@ export const keys = {
   trainingPlan: {
     all: ["training_plan"] as const,
     of: (playerId?: number) => ["training_plan", playerId] as const,
+  },
+
+  /**
+   * The public site. Its own root because these read different columns than the
+   * club-scoped keys above — a signed-in visitor who also has a membership must
+   * not be served the public, redacted copy of a row from the same cache entry.
+   */
+  public: {
+    all: ["public"] as const,
+    clubs: (f: PublicClubsFilters) =>
+      // The box joined into one string rather than spread as four numbers: it
+      // is one filter, and this keeps "no box" a single readable slot in the
+      // devtools rather than four undefineds.
+      ["public", "clubs", f.q, f.sort, f.page ?? 1, f.bbox?.join()] as const,
+    club: (slug?: string) => ["public", "club", slug] as const,
+    clubPins: () => ["public", "club-pins"] as const,
+    players: (f: PublicPlayersFilters) =>
+      [
+        "public",
+        "players",
+        f.q,
+        f.clubId,
+        f.category,
+        f.sort,
+        f.page ?? 1,
+      ] as const,
+    /** Keyed on the person's slug, which is what the public URL carries. */
+    person: (slug?: string) => ["public", "person", slug] as const,
+    tournaments: (f: PublicTournamentsFilters) =>
+      [
+        "public",
+        "tournaments",
+        f.q,
+        f.status,
+        f.format,
+        f.discipline,
+        f.clubId,
+        f.page ?? 1,
+      ] as const,
+    tournament: (id?: number) => ["public", "tournament", id] as const,
+    drills: (f: PublicDrillsFilters) =>
+      ["public", "drills", f.q, f.difficulty, f.skill_type] as const,
+    drill: (id?: number) => ["public", "drill", id] as const,
+    search: (q?: string) => ["public", "search", q] as const,
   },
 };
 

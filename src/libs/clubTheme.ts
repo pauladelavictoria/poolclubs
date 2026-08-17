@@ -1,6 +1,4 @@
-import { useLayoutEffect } from "react";
-import { useTheme } from "@/libs/theme";
-import type { BallColor, Club } from "@/types";
+import type { BallColor } from "@/types";
 
 /**
  * One club, one accent. Whatever solid ball its admin picked on the club
@@ -22,11 +20,24 @@ import type { BallColor, Club } from "@/types";
  * mode — dark mode's felt is #171c22, light mode's is #ffffff — the same bar
  * the yellow default was already held to.
  */
-type Shades = {
+export type Shades = {
   base: string;
   light: string;
   deep: string;
   tint: string;
+};
+
+/** The rack number for the ball a club picked as its colour — same numbering
+ *  the theme picker itself uses: 1-7 solids, 8 the black. */
+export const CLUB_BALL_LABEL: Record<BallColor, string> = {
+  yellow: "1",
+  blue: "2",
+  red: "3",
+  purple: "4",
+  orange: "5",
+  green: "6",
+  maroon: "7",
+  black: "8",
 };
 
 export const CLUB_THEME_PALETTE: Record<
@@ -151,38 +162,3 @@ export const CLUB_THEME_PALETTE: Record<
     },
   },
 };
-
-const VARS = [
-  "--color-strike",
-  "--color-strike-light",
-  "--color-strike-deep",
-  "--color-strike-tint",
-] as const;
-
-/**
- * Applies the active club's colour to the document root. Called once, high up
- * (see pages/Layout.tsx), so it repaints ahead of anything below it — a
- * layout effect rather than an effect, so switching clubs or toggling light/
- * dark doesn't flash the previous accent for a frame.
- */
-export function useClubTheme(club: Club | null | undefined) {
-  const mode = useTheme();
-  const color = club?.theme_color;
-
-  useLayoutEffect(() => {
-    const root = document.documentElement.style;
-
-    // No club, or the default ball: the stylesheet's own yellow already is
-    // this, so clearing the override is enough.
-    if (!color || color === "yellow") {
-      VARS.forEach((v) => root.removeProperty(v));
-      return;
-    }
-
-    const shades = CLUB_THEME_PALETTE[color][mode];
-    root.setProperty("--color-strike", shades.base);
-    root.setProperty("--color-strike-light", shades.light);
-    root.setProperty("--color-strike-deep", shades.deep);
-    root.setProperty("--color-strike-tint", shades.tint);
-  }, [color, mode]);
-}

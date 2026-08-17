@@ -29,6 +29,17 @@
   --text-h1: 2rem; /* 32 */
   --text-display: 3rem; /* 48 */
 
+  /* The width at which the nav stops being something you open and becomes the
+     app's left column. The column is 19rem and the content is 64rem at most;
+     below the two of them plus their gutters the nav would be taking room off
+     the pages it leads to.
+     It is a breakpoint rather than a matchMedia call because the server has
+     neither a viewport nor matchMedia: anything JS decides here is decided
+     wrongly first and corrected on hydration, which on a desktop was the whole
+     column and 19rem of padding appearing under the cursor. CSS just renders it
+     right the first time. */
+  --breakpoint-pinned: 85rem; /* 1360 */
+
   /* Surfaces — one hue, lightness only. pocket < felt < raised < rail */
   --color-pocket: #090b0e; /* page canvas, and input fill (inputs are inset) */
   --color-felt: #171c22; /* cards, app bar */
@@ -66,6 +77,16 @@
   --lamp: color-mix(in srgb, var(--color-strike) 6%, transparent);
   --lamp-strong: color-mix(in srgb, var(--color-strike) 13%, transparent);
 
+  /* The club's own colour, as a token separate from the accent.
+     --color-strike means "act": buttons, links, the current tab. --color-club
+     means "whose": which club a card belongs to, which skill a tile is for,
+     which player a face stands in for. Keeping them apart is what lets a
+     directory of thirty differently-coloured cards still have one yellow
+     primary button on every one of them.
+     Defaults to the accent, so anything unclaimed by a club looks exactly as it
+     did before; [data-ball] (see components/ClubThemeStyle) overrides it. */
+  --color-club: var(--color-strike);
+
   /* Chalk blue — focus rings only, so focus never reads as "action" */
   --color-chalk: #5b9dd9;
 
@@ -90,6 +111,12 @@
   /* Red stopped being the accent when yellow took over, so this holds a real
      red: it is what error text is written in, and nothing else. */
   --color-accent-red: #e23744;
+
+  /* Off by default. `none` cannot be the off value: box-shadow composes as a
+     comma list and `none` inside a list invalidates the whole declaration. A
+     fully transparent shadow composes fine and costs nothing. */
+  --lift: 0 0 #0000;
+  --lift-strong: 0 0 #0000;
 }
 
 /*
@@ -141,11 +168,94 @@
   color-scheme: dark;
 }
 
+/*
+  Public skin. The authed tool is a dim pool room seen from the inside; the
+  public surface is the cloth itself — low-chroma blue surfaces stepping by
+  lightness only, chunkier radii, a real display step, real tinted lift.
+
+  Tournament blue, not the classic green: blue is what competition cloth is
+  actually woven in and what a modern hall is fitted with, and green reads
+  period. It collides with exactly one of the eight ball colours, and blue clubs
+  run #6f95f5 / #2f52c8 — far lighter and far more saturated than anything here,
+  so a blue club reads as a lit ball on cloth rather than as camouflage. The
+  point of the whole skin is that the club's colour stays the most saturated
+  thing in frame.
+
+  It is bluer *and* more saturated than the app's near-neutral #090b0e, which is
+  what keeps the two surfaces from reading as the same product in two tabs.
+
+  `--color-strike*` is never redefined here. Out here it means one thing only,
+  "act", and it is the app's yellow on every public page — a club's identity
+  rides on --color-club instead, so a card can be any of eight colours while the
+  button inside it stays the one colour a button is ever allowed to be.
+*/
+html:has([data-public]) {
+  --color-pocket: #071120; /* canvas */
+  --color-felt: #0e1d31; /* cards */
+  --color-felt-raised: #152a44;
+  --color-rail: #1f3a5a;
+
+  --color-hairline: rgba(214, 234, 255, 0.1);
+  --color-hairline-strong: rgba(214, 234, 255, 0.2);
+
+  /* Ratios against --color-felt, the worst case, same bar the app holds:
+     ink 15:1, soft 9.5:1, faint 5.7:1, ghost intentionally sub-AA. */
+  --color-ink: #eff5fb;
+  --color-ink-soft: #b4c4d6;
+  --color-ink-faint: #8697aa;
+  --color-ink-ghost: #58697c;
+
+  /* Still control < card < sheet, still locked. Just a chunkier lock out here,
+     where a card is a poster and not a row. Interactive chips stay rounded-full;
+     that is the one documented exception to the scale. */
+  --radius-control: 14px;
+  --radius-card: 28px;
+  --radius-sheet: 36px;
+
+  /* One step up from the app's fixed 48, and pinned to the landing page's own
+     headline (text-4xl → text-6xl) so / and /clubs open at the same size. */
+  --text-h1: clamp(1.75rem, 4vw, 2.25rem); /* 28 → 36 */
+  --text-display: clamp(2.25rem, 5vw, 3.75rem); /* 36 → 60 */
+
+  --lift: 0 1px 2px rgb(0 0 0 / 0.45), 0 10px 30px -12px rgb(0 0 0 / 0.6);
+  --lift-strong:
+    0 2px 4px rgb(0 0 0 / 0.5), 0 24px 46px -16px rgb(0 0 0 / 0.72);
+
+  --lamp: color-mix(in srgb, var(--color-strike) 10%, transparent);
+  --lamp-strong: color-mix(in srgb, var(--color-strike) 20%, transparent);
+}
+
+/* Light mode is chalk, not paper: a pale blue-white canvas with pure white cards
+   floating on it, and a real shadow, which light mode can afford and dark never
+   could. The canvas is deliberately not white — that gap is what buys the lift
+   its job — and it is more saturated than the app's cool grey #f3f5f9, so the
+   two light modes are not the same screen. Shadows tinted with the canvas's own
+   blue, never neutral grey. */
+html[data-theme="light"]:has([data-public]) {
+  --color-pocket: #e4eef8;
+  --color-felt: #ffffff;
+  --color-felt-raised: #d6e6f4;
+  --color-rail: #bfd7ec;
+
+  --color-hairline: rgba(6, 24, 45, 0.1);
+  --color-hairline-strong: rgba(6, 24, 45, 0.2);
+
+  --color-ink: #0c1722;
+  --color-ink-soft: #435363;
+  --color-ink-faint: #64768a;
+  --color-ink-ghost: #9aa9b8;
+
+  --lift:
+    0 1px 2px rgb(10 30 55 / 0.07), 0 12px 28px -14px rgb(10 30 55 / 0.24);
+  --lift-strong:
+    0 2px 6px rgb(10 30 55 / 0.09), 0 26px 50px -18px rgb(10 30 55 / 0.32);
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overscroll-behavior: none;
+    overscroll-behavior-y: none;
   }
 
   /* Under /app the shell owns the scrolling, so the window must not scroll as
@@ -172,7 +282,13 @@
       var(--lamp) 0%,
       transparent 60%
     );
-    background-attachment: fixed;
+    /* Scrolls away with the page: the lamp belongs to the top of the document,
+       not to the viewport. The size is pinned to one screen because body
+       backgrounds propagate to the canvas, where a percentage would resolve
+       against the whole document height and stretch the cone down the page. */
+    background-attachment: scroll;
+    background-size: 100% 100dvh;
+    background-repeat: no-repeat;
   }
 
   h1,
@@ -186,6 +302,15 @@
   p,
   li {
     text-wrap: pretty;
+  }
+
+  /* ui/SearchInput draws its own clear button inside the field, positioned and
+     themed with our tokens. WebKit's native one would sit next to it — two
+     crosses, one of them the wrong colour. */
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   /* Every dynamic number holds its column */
@@ -343,28 +468,263 @@ dialog.sheet[open]::backdrop {
   );
 }
 
+/* Depth as an opt-in class, so /app and the public side share one <Card>.
+   Outside [data-public] --lift is transparent, so this is a no-op there. */
+.lift {
+  box-shadow: var(--lift);
+  transition:
+    box-shadow 220ms var(--ease-out),
+    translate 220ms var(--ease-out),
+    scale 150ms var(--ease-out),
+    border-color 150ms var(--ease-out);
+}
+a.lift:hover,
+button.lift:hover {
+  box-shadow: var(--lift-strong);
+  translate: 0 -3px;
+}
+/* Press feedback, matching what buttonClasses already does at 0.97. */
+a.lift:active,
+button.lift:active {
+  scale: 0.985;
+}
+
+/* Entrance stagger. --i is the card index. The cap is the point: 24 cards at
+   45ms each is a page and a half of waiting, so the tail arrives together.
+   An inline animation-delay still wins, so LandingPage's hero delays keep working. */
+.rise {
+  animation-delay: calc(min(var(--i, 0), 8) * 45ms);
+}
+
+/* Cards arrive with a little scale as well as a rise, so a grid assembles and
+   the eye lands on the first card rather than on all twenty-four at once.
+   .rise stays for the landing page's hero, which is tuned to it. */
+@keyframes pop {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+    scale: 0.96;
+  }
+}
+
+.pop {
+  animation: pop 620ms var(--ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 8) * 45ms);
+}
+
+/* The same, scroll-linked, for everything below the fold. Compositor-driven, no
+   listener. Browsers without view() simply show the content. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .pop-in {
+      animation: pop linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 24%;
+    }
+  }
+}
+
+/* The club's colour as a solid panel rather than a tint. Eight clubs in a grid
+   are eight solid blocks of colour, which is the whole per-creator-colour move
+   and the loudest thing available to us for free.
+
+   The colour/background pair is fixed together on purpose: --color-club draws
+   from the same AA-checked palette as the accent, so this is the same pairing
+   buttonStyles ships as `primary`. Never split it — the club shades are *bright*
+   in dark mode and *deep* in light mode, and no single ink token survives both. */
+.flood {
+  background-color: var(--color-club);
+  color: var(--color-pocket);
+}
+
+/* The gradient version, for where a flood would be too much weight: card art
+   bands, hero backdrops. --color-club is whatever [data-ball] on the card set it
+   to, so eight clubs in a grid are eight different cards. --wash tunes
+   strength; a wash has to read as the club's colour from across the room, not
+   as a tint you notice on inspection. */
+.wash {
+  background-color: var(--color-felt-raised);
+  background-image:
+    radial-gradient(
+      90% 120% at 12% 0%,
+      color-mix(in srgb, var(--color-club) var(--wash, 55%), transparent) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 90% at 92% 8%,
+      color-mix(
+          in srgb,
+          var(--color-strike) calc(var(--wash, 55%) / 2),
+          transparent
+        )
+        0%,
+      transparent 62%
+    );
+}
+/* Light mode's strike is a deep shade rather than a bright one, so the same
+   percentage lands much heavier. 26 is where it is unmistakably the club's
+   colour and still carries ink at AA. */
+:root[data-theme="light"] .wash {
+  --wash: 26%;
+}
+
+/* Card art is loud; a band with a headline on it has to be quiet. Full-strength
+   wash puts a bright club colour directly under --color-ink, which no ink token
+   survives across eight hues and two modes. Pair with .wash wherever text sits
+   *on* the wash rather than below it. */
+.wash-soft {
+  --wash: 20%;
+}
+:root[data-theme="light"] .wash-soft {
+  --wash: 10%;
+}
+
+/* A photo has to fade into the card it sits in, not stop at it. */
+.scrim {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-felt) 55%, transparent) 55%,
+    var(--color-felt) 100%
+  );
+}
+
+/* Chalk dust on the cloth. Texture for a hero band, one line, no asset. */
+.dotfield {
+  background-image: radial-gradient(
+    var(--color-hairline-strong) 1px,
+    transparent 1px
+  );
+  background-size: 18px 18px;
+}
+
+/* The bar is part of the page until the page moves under it. At rest it has no
+   surface, no blur and no edge — it simply floats over the canvas the hero sits
+   on. As soon as anything scrolls beneath it, it takes all three, which is the
+   one moment any of them is doing a job.
+
+   The surface and its blur live on a pseudo-element that fades in, rather than
+   on the bar itself. `backdrop-filter` applies the moment it is declared, even
+   over a fully transparent background, and blurring the body's own lamp gradient
+   resolves slightly differently from the gradient beneath it — which drew a faint
+   seam along the bar's bottom edge, a visible block in exactly the place there is
+   meant to be nothing. At `opacity: 0` a pseudo-element contributes nothing at
+   all, so at rest the bar really is absent rather than merely invisible.
+
+   Scroll-driven, so there is no listener and no React state: the compositor reads
+   document scroll directly. Without support the bar stays transparent, which is
+   its resting state anyway. Degraded, never broken. */
+@keyframes nav-settle {
+  to {
+    border-bottom-color: var(--color-hairline);
+  }
+}
+
+@keyframes nav-veil {
+  to {
+    opacity: 1;
+  }
+}
+
+.nav-settle {
+  border-bottom: 1px solid transparent;
+}
+
+/* z-index -1 keeps it behind the nav's own content but inside the bar's stacking
+   context, which `sticky` + `z-30` already established. */
+.nav-settle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background-color: color-mix(in srgb, var(--color-pocket) 80%, transparent);
+  /* Standard property only. Hand-writing the -webkit- alias alongside it made
+     Lightning CSS collapse the pair down to the prefixed one and drop the
+     standard, which loses Firefox. Prefixing is the build's job. */
+  backdrop-filter: blur(24px);
+}
+
+@supports (animation-timeline: scroll()) {
+  .nav-settle {
+    animation: nav-settle linear both;
+    animation-timeline: scroll();
+    animation-range: 0 56px;
+  }
+
+  .nav-settle::before {
+    animation: nav-veil linear both;
+    animation-timeline: scroll();
+    animation-range: 0 56px;
+  }
+}
+
+/* The one thing on the public side happening right now. */
+@keyframes live-pulse {
+  50% {
+    opacity: 0.3;
+    scale: 0.7;
+  }
+}
+.live-dot {
+  animation: live-pulse 1.7s var(--ease-out) infinite;
+}
+
+/* Marquee. Track duplicated in markup, translated half its own width, so the
+   loop is seamless without measuring anything in JS. */
+@keyframes marquee {
+  to {
+    translate: -50% 0;
+  }
+}
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee var(--marquee, 48s) linear infinite;
+}
+.marquee-hold:hover .marquee,
+.marquee-hold:focus-within .marquee {
+  animation-play-state: paused;
+}
+
+.no-bar {
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.no-bar::-webkit-scrollbar {
+  display: none;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 180ms;
   animation-timing-function: var(--ease-out);
 }
 
-::-webkit-scrollbar {
+/* Opt-in only. The window scroll — app shell and public alike — keeps the
+   browser's own bar, which knows the platform's overlay/gutter rules better
+   than we do. Put `thin-scroll` on an inner scroller if it needs to match. */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-rail) var(--color-pocket);
+}
+
+.thin-scroll::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
-::-webkit-scrollbar-track {
+.thin-scroll::-webkit-scrollbar-track {
   background: var(--color-pocket);
 }
 
-::-webkit-scrollbar-thumb {
+.thin-scroll::-webkit-scrollbar-thumb {
   background: var(--color-rail);
   border-radius: 999px;
   border: 3px solid var(--color-pocket);
 }
 
-::-webkit-scrollbar-thumb:hover {
+.thin-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--color-ink-ghost);
 }
 
@@ -398,4 +758,100 @@ dialog.sheet[open]::backdrop {
   ::view-transition-new(*) {
     animation: none !important;
   }
+
+  /* The blanket rule would run this to its final frame in 0.01ms and park the
+     track at -50%, i.e. half the logos missing. Must be killed by name. */
+  .marquee {
+    animation: none !important;
+    translate: none !important;
+  }
+
+  /* Less motion than a scroll-position readout, but the blanket rule would
+     collapse it to a guess. Park it settled: a bar with a surface and an edge is
+     the safe end of the range, since content has to stay legible under it. */
+  .nav-settle {
+    animation: none !important;
+    border-bottom-color: var(--color-hairline);
+  }
+
+  /* Opaque, not the 80% mix. This rule runs unconditionally, and a color-mix()
+     here compiles a static fallback resolved from :root — which is the *app's*
+     canvas, wrong on every public page. The base rule can afford the mix because
+     it only becomes visible under a scroll timeline, and nothing new enough to
+     have those lacks color-mix. */
+  .nav-settle::before {
+    animation: none !important;
+    opacity: 1;
+    background-color: var(--color-pocket);
+  }
+
+  /* The blanket rule shortens the duration but not the delay, and both keyframes
+     fill `backwards` — so the tail of a staggered grid would sit invisible for
+     up to 360ms before snapping in. Zero the stagger instead. */
+  .rise,
+  .pop {
+    animation-delay: 0ms !important;
+  }
+
+  /* Keep the shadow change on hover (that is feedback, not motion), drop the lift. */
+  a.lift:hover,
+  button.lift:hover {
+    translate: none !important;
+  }
+}
+
+/* MapLibre's popup is a white bubble with a white arrow, which is a hole in the
+   page on either theme. Passed as Popup({ className: "map-popup" }) from
+   components/MapView.tsx.
+
+   The tip is hidden rather than recoloured: it is a CSS triangle whose visible
+   side is set per anchor, so tinting it means one rule for each of the eight
+   positions MapLibre can place a popup in. The card carries an offset instead,
+   which reads the same and is one line. */
+.map-popup .maplibregl-popup-content {
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-control);
+  background: var(--color-felt);
+  color: var(--color-ink);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+.map-popup .maplibregl-popup-tip {
+  display: none;
+}
+
+/* It is a label following the cursor, not a target. Clicking through it lands on
+   the marker underneath, which is what opens the club. The z-index is for the
+   part of the card that leaves the map (see below), so it sits over whatever it
+   is next to rather than under it — but still below the site header, at z-30. */
+.map-popup {
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* A pin near the edge of the map has its card cut in half, because MapLibre
+   draws popups inside `.maplibregl-map` and that clips. Letting it out is the
+   only fix that holds for a pin anywhere: shrinking the card or nudging the
+   anchor only moves the pin position at which it happens.
+
+   The clip moves inwards rather than away, because the two things that need to
+   escape and stay put live in different elements: a popup is created in
+   `.maplibregl-map`, a marker in `.maplibregl-canvas-container` inside it. So
+   the card is free and a pin is still cut off at the edge of the map, the way
+   it is on every other map.
+
+   The container is a bare div with no box of its own — the canvas and the
+   markers inside it are absolutely positioned against `.maplibregl-map`, which
+   is `position: relative`. Giving it that same box changes nothing about where
+   any of them land, and it is what there is to clip and round. */
+.map-frame .maplibregl-map {
+  overflow: visible;
+}
+
+.map-frame .maplibregl-canvas-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--radius-control);
 }

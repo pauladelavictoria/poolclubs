@@ -1,0 +1,13 @@
+# The app is server-rendered now, so there is no SPA fallback to configure —
+# @netlify/vite-plugin-tanstack-start (see vite.config.ts) emits the function that
+# serves every route. public/_redirects, which used to rewrite everything to
+# index.html, is gone with it.
+
+[build]
+  command = "npm run build"
+  publish = "dist/client"
+
+# VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY have to be set in the Netlify UI
+# (Site configuration → Environment variables). Both are public by design — the
+# anon key is what RLS is for — but the build needs them present, and the server
+# reads the same two names it always did.
