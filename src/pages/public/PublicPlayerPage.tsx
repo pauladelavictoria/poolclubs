@@ -119,7 +119,7 @@ export default function PublicPlayerPage() {
       racksLost += against;
       const playerWon = forMe > against;
       if (playerWon) won++;
-      results.push({ at: game.created_at, won: playerWon });
+      results.push({ at: game.played_at, won: playerWon });
 
       if (inTeam1) {
         addOpponent(game.player_2_id, playerWon);
@@ -153,7 +153,7 @@ export default function PublicPlayerPage() {
   // Newest first across every club, which is not what concatenating the
   // per-club lists gives.
   const history = useMemo(
-    () => [...games].sort((a, b) => b.created_at.localeCompare(a.created_at)),
+    () => [...games].sort((a, b) => b.played_at.localeCompare(a.played_at)),
     [games],
   );
 

@@ -75,6 +75,7 @@
   "dashboard.noGamesRecorded": "Aún no se ha registrado ningún partido.",
   "games.title": "Partidos",
   "games.add": "Añadir resultado",
+  "games.playedAt": "Fecha jugada",
   "games.mode": "Modalidad",
   "games.single": "Individual",
   "games.doubles": "Parejas",

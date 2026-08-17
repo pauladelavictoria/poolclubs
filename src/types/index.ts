@@ -254,7 +254,7 @@ export type TournamentMatch = Omit<Row<"tournament_matches">, "bracket"> & {
    *  event until somebody turns up. */
   game?: Pick<
     Game,
-    "player_1_id" | "player_1_score" | "player_2_score" | "created_at"
+    "player_1_id" | "player_1_score" | "player_2_score" | "played_at"
   > | null;
 };
 

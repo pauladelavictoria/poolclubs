@@ -797,7 +797,8 @@ CREATE TABLE IF NOT EXISTS "public"."games" (
     "player_1b_id" bigint,
     "player_2b_id" bigint,
     "club_id" integer NOT NULL,
-    "discipline" "public"."Discipline" DEFAULT '9ball'::"public"."Discipline" NOT NULL
+    "discipline" "public"."Discipline" DEFAULT '9ball'::"public"."Discipline" NOT NULL,
+    "played_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
 
@@ -1166,7 +1167,7 @@ CREATE INDEX "comments_log_idx" ON "public"."comments" USING "btree" ("drill_log
 
 
 
-CREATE INDEX "games_club_idx" ON "public"."games" USING "btree" ("club_id", "created_at" DESC);
+CREATE INDEX "games_club_played_idx" ON "public"."games" USING "btree" ("club_id", "played_at" DESC);
 
 
 

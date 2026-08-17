@@ -32,7 +32,7 @@ const fixture = (
         player_1_id: p1,
         player_1_score: result.racks[0],
         player_2_score: result.racks[1],
-        created_at: `2026-01-01T00:00:${String(seq).padStart(2, "0")}Z`,
+        played_at: `2026-01-01T00:00:${String(seq).padStart(2, "0")}Z`,
       }
     : null,
 });
@@ -85,7 +85,7 @@ const fixture = (
     player_1_id: 2,
     player_1_score: 6,
     player_2_score: 1,
-    created_at: "2026-01-01T00:00:00Z",
+    played_at: "2026-01-01T00:00:00Z",
   };
   const table = standings([1, 2], [match]);
   assert.equal(table[0].playerId, 2);

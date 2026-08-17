@@ -297,6 +297,7 @@ export type Database = {
           discipline: Database["public"]["Enums"]["Discipline"]
           id: string
           mode: Database["public"]["Enums"]["GameMode"]
+          played_at: string
           player_1_id: number
           player_1_score: number
           player_1b_id: number | null
@@ -310,6 +311,7 @@ export type Database = {
           discipline?: Database["public"]["Enums"]["Discipline"]
           id?: string
           mode?: Database["public"]["Enums"]["GameMode"]
+          played_at?: string
           player_1_id: number
           player_1_score: number
           player_1b_id?: number | null
@@ -323,6 +325,7 @@ export type Database = {
           discipline?: Database["public"]["Enums"]["Discipline"]
           id?: string
           mode?: Database["public"]["Enums"]["GameMode"]
+          played_at?: string
           player_1_id?: number
           player_1_score?: number
           player_1b_id?: number | null

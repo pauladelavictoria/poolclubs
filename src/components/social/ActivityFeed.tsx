@@ -310,10 +310,10 @@ function MatchCard({
           {isDoubles ? t("games.doubles") : t("games.single")}
         </p>
         <time
-          dateTime={game.created_at}
+          dateTime={game.played_at}
           className="shrink-0 font-mono text-caption tabular-nums text-ink-ghost"
         >
-          {timeOf(new Date(game.created_at), locale)}
+          {timeOf(new Date(game.played_at), locale)}
         </time>
       </div>
 
@@ -454,10 +454,10 @@ function TournamentGamesCard({
               </div>
               <div className="mt-1 flex items-center gap-2">
                 <time
-                  dateTime={game.created_at}
+                  dateTime={game.played_at}
                   className="shrink-0 pl-1 font-mono text-caption tabular-nums text-ink-ghost"
                 >
-                  {timeOf(new Date(game.created_at), locale)}
+                  {timeOf(new Date(game.played_at), locale)}
                 </time>
                 <div className="min-w-0 flex-1">
                   <SocialBar target={{ gameId: game.id }} preview />
@@ -523,12 +523,12 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
     games
       .filter((g) => gameTournaments?.get(g.id)?.id === tournament.id)
       .reduce(
-        (latest, g) => (g.created_at > latest ? g.created_at : latest),
+        (latest, g) => (g.played_at > latest ? g.played_at : latest),
         "",
       ) || tournament.created_at;
 
   const merged: FeedItem[] = [
-    ...games.map((game) => ({ at: game.created_at, games: [game] })),
+    ...games.map((game) => ({ at: game.played_at, games: [game] })),
     ...(logs ?? [])
       .filter((log) => roster.has(log.player_id))
       .map((log) => ({ at: log.created_at, log })),

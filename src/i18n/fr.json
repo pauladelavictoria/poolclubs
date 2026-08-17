@@ -75,6 +75,7 @@
   "dashboard.noGamesRecorded": "Aucun match n'a encore été enregistré.",
   "games.title": "Matchs",
   "games.add": "Ajouter un résultat",
+  "games.playedAt": "Date de la partie",
   "games.mode": "Format",
   "games.single": "Simple",
   "games.doubles": "Double",

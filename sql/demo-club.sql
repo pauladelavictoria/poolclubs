@@ -172,8 +172,9 @@ BEGIN
   END LOOP;
 
   -- 4. ~200 casual games over the last 90 days. mode/discipline/scores are
-  -- randomised; created_at is what the app sorts and computes Elo by (there
-  -- is no played_at yet — that is A5).
+  -- randomised; played_at (A5) is what the app sorts and computes Elo by —
+  -- created_at is left at its insert-time default, same as a real backdated
+  -- entry would be: typed in tonight, dated last month.
   --
   -- Picks by indexing v_player_ids with random(), not `unnest(...) ORDER BY
   -- random() LIMIT n` — the latter looks idiomatic but for n>1 Postgres
@@ -215,7 +216,7 @@ BEGIN
 
     INSERT INTO games (
       club_id, player_1_id, player_2_id, player_1b_id, player_2b_id,
-      player_1_score, player_2_score, mode, discipline, created_at
+      player_1_score, player_2_score, mode, discipline, played_at
     ) VALUES (
       v_club_id, v_p1, v_p2, v_p1b, v_p2b,
       v_s1, v_s2,
@@ -248,7 +249,7 @@ BEGIN
   FOR i IN REVERSE 14..1 LOOP
     INSERT INTO games (
       club_id, player_1_id, player_2_id, player_1_score, player_2_score,
-      mode, discipline, created_at
+      mode, discipline, played_at
     ) VALUES (
       v_club_id, v_player_ids[v_p1seed[i]], v_player_ids[v_p2seed[i]],
       CASE WHEN v_p1seed[i] = v_winseed[i] THEN v_racev[i] ELSE v_losescore[i] END,

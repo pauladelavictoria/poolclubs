@@ -14,10 +14,9 @@
 -- curates the shared drill library. One operator, one seat. When that becomes a
 -- role (B6 co-admins), both move together.
 --
--- ponytail: "matches this week" is counted off games.created_at, because that is
--- the only timestamp games has. Once played_at lands (A5 in docs/marketing-plan.md)
--- these three counts and last_game_at should move to it — a match recorded on
--- Tuesday for a game played last month currently reads as activity this week.
+-- "matches this week"/"last activity" read games.played_at (A5), not
+-- created_at: a match recorded on Tuesday for a game actually played last
+-- month is last month's activity, not this week's.
 
 CREATE OR REPLACE FUNCTION public.operator_clubs()
 RETURNS TABLE (
@@ -45,10 +44,10 @@ AS $$
       WHERE p.club_id = c.id AND p.status = 'pending')::integer,
     (SELECT count(*) FROM games g WHERE g.club_id = c.id),
     (SELECT count(*) FROM games g
-      WHERE g.club_id = c.id AND g.created_at >= now() - interval '7 days'),
+      WHERE g.club_id = c.id AND g.played_at >= now() - interval '7 days'),
     (SELECT count(*) FROM games g
-      WHERE g.club_id = c.id AND g.created_at >= now() - interval '30 days'),
-    (SELECT max(g.created_at) FROM games g WHERE g.club_id = c.id),
+      WHERE g.club_id = c.id AND g.played_at >= now() - interval '30 days'),
+    (SELECT max(g.played_at) FROM games g WHERE g.club_id = c.id),
     c.created_at
   FROM clubs c
   WHERE public.is_drill_admin()

@@ -170,7 +170,7 @@ export default function TournamentPage() {
   const playedMatches = matches
     .filter((m) => m.winner_id !== null)
     .sort((a, b) =>
-      (b.game?.created_at ?? "").localeCompare(a.game?.created_at ?? ""),
+      (b.game?.played_at ?? "").localeCompare(a.game?.played_at ?? ""),
     );
   const pendingMatches = matches.filter((m) => m.winner_id === null);
 
