@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
+import { FilterBar } from "@/components/ui/FilterBar";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -53,47 +54,47 @@ export default function DrillsPage() {
         {/* The filters are their own control strip. The drills below are cards
             in their own right, so wrapping the grid in another card would put
             a border around a field of borders — and a second card up here made
-            the top of the page look like every other page in the app. */}
-        <div className="rounded-control border border-hairline bg-felt p-2">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Select
-              className="flex-1"
-              aria-label={t("drills.filterDifficulty")}
-              value={difficulty ?? ""}
-              onChange={(e) =>
-                setFilter({
-                  difficulty:
-                    (e.target.value as DrillDifficulty) || undefined,
-                })
-              }
-            >
-              <option value="">{t("drills.allDifficulties")}</option>
-              {DIFFICULTIES.map((key) => (
-                <option key={key} value={key}>
-                  {t(`difficulty.${key}`)}
-                </option>
-              ))}
-            </Select>
+            the top of the page look like every other page in the app.
+            Same <FilterBar> the games tape wears: these are facets on a list,
+            not fields on a form, so they are sized to their labels rather than
+            stretched to half the page each. */}
+        <FilterBar>
+          <Select
+            size="sm"
+            aria-label={t("drills.filterDifficulty")}
+            value={difficulty ?? ""}
+            onChange={(e) =>
+              setFilter({
+                difficulty: (e.target.value as DrillDifficulty) || undefined,
+              })
+            }
+          >
+            <option value="">{t("drills.allDifficulties")}</option>
+            {DIFFICULTIES.map((key) => (
+              <option key={key} value={key}>
+                {t(`difficulty.${key}`)}
+              </option>
+            ))}
+          </Select>
 
-            <Select
-              className="flex-1"
-              aria-label={t("drills.filterSkill")}
-              value={skill ?? ""}
-              onChange={(e) =>
-                setFilter({
-                  skill: (e.target.value as DrillSkillType) || undefined,
-                })
-              }
-            >
-              <option value="">{t("drills.allSkills")}</option>
-              {SKILL_TYPES.map((key) => (
-                <option key={key} value={key}>
-                  {t(`skill.${key}`)}
-                </option>
-              ))}
-            </Select>
-          </div>
-        </div>
+          <Select
+            size="sm"
+            aria-label={t("drills.filterSkill")}
+            value={skill ?? ""}
+            onChange={(e) =>
+              setFilter({
+                skill: (e.target.value as DrillSkillType) || undefined,
+              })
+            }
+          >
+            <option value="">{t("drills.allSkills")}</option>
+            {SKILL_TYPES.map((key) => (
+              <option key={key} value={key}>
+                {t(`skill.${key}`)}
+              </option>
+            ))}
+          </Select>
+        </FilterBar>
 
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
