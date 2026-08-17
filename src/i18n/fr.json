@@ -46,6 +46,7 @@
   "theme.dark": "Sombre",
   "auth.signIn": "Se connecter",
   "auth.signInShort": "Connexion",
+  "auth.openApp": "Aller à l'app",
   "auth.signOut": "Se déconnecter",
   "auth.continueWithGoogle": "Continuer avec Google",
   "auth.tagline": "Connecte-toi pour enregistrer des matchs et suivre ton entraînement.",

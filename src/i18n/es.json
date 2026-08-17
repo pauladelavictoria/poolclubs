@@ -46,6 +46,7 @@
   "theme.dark": "Oscuro",
   "auth.signIn": "Iniciar sesión",
   "auth.signInShort": "Entrar",
+  "auth.openApp": "Ir a la app",
   "auth.signOut": "Cerrar sesión",
   "auth.continueWithGoogle": "Continuar con Google",
   "auth.tagline": "Entra para registrar partidos y seguir tu entrenamiento.",

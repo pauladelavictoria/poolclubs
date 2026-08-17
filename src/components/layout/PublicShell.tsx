@@ -4,6 +4,7 @@ import { LuMenu, LuSearch, LuX } from "react-icons/lu";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useDialog } from "@/libs/useDialog";
+import { useSession } from "@/hooks/useAuth";
 import { LANGS, useT } from "@/i18n";
 import type { Key } from "@/i18n";
 
@@ -41,8 +42,16 @@ export default function PublicShell({ children }: { children: ReactNode }) {
 
 export function PublicNav() {
   const { t } = useT();
+  const { user } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useDialog(menuOpen);
+
+  // Same destination either way — /app sends you on to your club or to the
+  // login — but the label has to match what actually happens: telling someone
+  // who is already signed in to "sign in" reads as if the session was lost.
+  // The session comes off the root context, resolved on the server, so this is
+  // right in the first paint rather than flipping after hydration.
+  const enterKey: Key = user ? "auth.openApp" : "auth.signInShort";
 
   return (
     <header className="nav-settle sticky top-0 z-30 pt-[env(safe-area-inset-top)]">
@@ -102,7 +111,7 @@ export function PublicNav() {
             to="/app"
             className={buttonClasses({ size: "sm", className: "shrink-0" })}
           >
-            {t("auth.signInShort")}
+            {t(enterKey)}
           </Link>
         </div>
       </nav>
@@ -162,7 +171,7 @@ export function PublicNav() {
               onClick={() => setMenuOpen(false)}
               className={buttonClasses({ className: "w-full" })}
             >
-              {t("auth.signInShort")}
+              {t(enterKey)}
             </Link>
           </div>
         </div>

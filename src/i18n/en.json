@@ -46,6 +46,7 @@
   "theme.dark": "Dark",
   "auth.signIn": "Sign in",
   "auth.signInShort": "Sign in",
+  "auth.openApp": "Go to the app",
   "auth.signOut": "Sign out",
   "auth.continueWithGoogle": "Continue with Google",
   "auth.tagline": "Sign in to record matches and follow your training.",

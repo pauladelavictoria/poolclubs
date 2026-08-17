@@ -12,10 +12,12 @@ import {
 } from "react-icons/lu";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Shot } from "@/components/ui/Shot";
+import { useSession } from "@/hooks/useAuth";
 import { useT, type Key } from "@/i18n";
 
 export default function LandingPage() {
   const { t } = useT();
+  const { user } = useSession();
 
   useEffect(() => {
     document.documentElement.dataset.smooth = "";
@@ -118,15 +120,21 @@ export default function LandingPage() {
                     aria-hidden
                   />
                 </Link>
-                <Link
-                  to="/app/login"
-                  className={buttonClasses({
-                    variant: "secondary",
-                    className: "px-5",
-                  })}
-                >
-                  {t("landing.signIn")}
-                </Link>
+                {/* Nothing to offer someone who is already signed in: the
+                    primary button above already takes them into the app, and a
+                    second one pointing at the login only invites them to sign
+                    in again. */}
+                {!user && (
+                  <Link
+                    to="/app/login"
+                    className={buttonClasses({
+                      variant: "secondary",
+                      className: "px-5",
+                    })}
+                  >
+                    {t("landing.signIn")}
+                  </Link>
+                )}
               </div>
             </div>
 

@@ -10,6 +10,7 @@ import { SectionHead } from "@/components/ui/SectionHead";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useTablePortrait } from "@/libs/useMedia";
 import { publicDrillsQuery } from "@/queries/public";
+import { useSession } from "@/hooks/useAuth";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/_public/drills/$drillId");
@@ -29,6 +30,7 @@ const RELATED_COUNT = 4;
  */
 export default function PublicDrillPage() {
   const { t } = useT();
+  const { user } = useSession();
   const portrait = useTablePortrait();
   const { drill, origin } = route.useLoaderData();
 
@@ -133,7 +135,7 @@ export default function PublicDrillPage() {
               to="/app"
               className={buttonClasses({ size: "sm", className: "shrink-0" })}
             >
-              {t("public.cta.signIn")}
+              {t(user ? "auth.openApp" : "public.cta.signIn")}
             </Link>
           </Card>
 
