@@ -38,6 +38,7 @@ const game = (
   player_2_score: s2,
   player_1b_id: null,
   player_2b_id: null,
+  played_at: at,
   created_at: at,
   mode: "single",
   discipline: "9ball",

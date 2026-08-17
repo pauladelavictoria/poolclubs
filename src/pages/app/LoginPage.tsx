@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getRouteApi } from "@tanstack/react-router";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -214,6 +214,28 @@ export default function LoginPage() {
         >
           {t(mode === "signin" ? "auth.needAccount" : "auth.haveAccount")}
         </button>
+
+        {/* GDPR art. 13 wants the policy reachable where the data is collected,
+            and this screen is that point for every account. Composed out of a
+            lead-in plus two links rather than one sentence with placeholders:
+            a placeholder that has to become an anchor is a string every
+            translator can break. */}
+        <p className="mt-6 border-t border-hairline pt-4 text-caption text-ink-faint">
+          {t("auth.legalPre")}{" "}
+          <Link
+            to="/legal/terms"
+            className="text-ink-soft underline underline-offset-2 transition-colors duration-150 hover:text-ink"
+          >
+            {t("public.footer.terms")}
+          </Link>
+          {" · "}
+          <Link
+            to="/legal/privacy"
+            className="text-ink-soft underline underline-offset-2 transition-colors duration-150 hover:text-ink"
+          >
+            {t("public.footer.privacy")}
+          </Link>
+        </p>
       </Card>
     </div>
   );

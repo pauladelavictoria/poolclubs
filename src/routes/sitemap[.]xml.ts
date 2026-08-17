@@ -65,6 +65,14 @@ export const Route = createFileRoute("/sitemap.xml")({
           "/players",
           "/tournaments",
           "/drills",
+          // The prose pages. Static, so they need no query — but they do need
+          // listing: /pricing is the page a club owner looks for by name.
+          "/pricing",
+          "/about",
+          "/contact",
+          "/legal/privacy",
+          "/legal/terms",
+          "/legal/aviso-legal",
           ...(clubs.data ?? []).map((c) => `/clubs/${c.slug}`),
           ...(people.data ?? []).map((p) => `/players/${p.slug}`),
           ...(tournaments.data ?? []).map((x) => `/tournaments/${x.id}`),

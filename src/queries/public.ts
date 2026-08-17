@@ -468,7 +468,7 @@ export const publicTournamentQuery = (id: number) =>
       const { data } = await supabase
         .from("tournaments")
         .select(
-          `*, club:clubs!inner(${CLUB_COLS}), tournament_players(player_id), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, created_at))`,
+          `*, club:clubs!inner(${CLUB_COLS}), tournament_players(player_id), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, played_at))`,
         )
         .eq("id", id)
         .eq("club.is_public", true)

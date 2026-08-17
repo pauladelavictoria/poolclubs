@@ -37,6 +37,11 @@ export const keys = {
     for: (code?: string) => ["club-preview", code] as const,
   },
 
+  /** The cross-club operator dashboard. Not club-scoped — it is every club. */
+  operator: {
+    clubs: ["operator-clubs"] as const,
+  },
+
   /** Address suggestions from Photon. Its own root and nothing invalidates it:
    *  the answer to "Calle Mayor 12" does not change while a form is open. */
   places: {

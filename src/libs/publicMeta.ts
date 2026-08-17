@@ -15,9 +15,17 @@
 /** Fallback card art per section, for entities with no image of their own. Real
  *  1200×630 files still to be added — until they are, these 404 and the crawler
  *  falls back to no image, which is the same as omitting the tag. */
-export type OgFallback = "clubs" | "players" | "tournaments" | "drills";
+export type OgFallback =
+  | "default"
+  | "clubs"
+  | "players"
+  | "tournaments"
+  | "drills";
 
 const FALLBACK_IMAGE: Record<OgFallback, string> = {
+  /** The pages that are not a section of the directory: the landing page and the
+   *  prose pages (pricing, about, contact, legal). */
+  default: "/og/default.png",
   clubs: "/og/clubs.png",
   players: "/og/players.png",
   tournaments: "/og/tournaments.png",

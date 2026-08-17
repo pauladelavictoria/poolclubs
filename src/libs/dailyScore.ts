@@ -46,7 +46,7 @@ export function tallyDaily(
   // the form string is documented most-recent-first, so the order results
   // arrive in decides which ten of them get shown.
   const newestFirst = [...games].sort((a, b) =>
-    b.created_at.localeCompare(a.created_at),
+    b.played_at.localeCompare(a.played_at),
   );
 
   for (const game of newestFirst) {

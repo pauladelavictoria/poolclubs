@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { LuCheck, LuCopy, LuUserMinus, LuPencil, LuPlus } from "react-icons/lu";
+import {
+  LuCheck,
+  LuCopy,
+  LuPrinter,
+  LuRefreshCw,
+  LuUserMinus,
+  LuPencil,
+  LuPlus,
+} from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubMembers, useManageClub } from "@/hooks/useClub";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
@@ -13,6 +21,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button, IconButton } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Toggle } from "@/components/ui/Toggle";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/libs/useDialog";
@@ -35,7 +44,8 @@ export default function ClubPage() {
   // down from the root route instead.
   const { origin } = getRouteApi("__root__").useRouteContext();
   const { data: members, isLoading } = useClubMembers();
-  const { approveMember, removeMember, updateClub } = useManageClub();
+  const { approveMember, removeMember, rotateJoinCode, updateClub } =
+    useManageClub();
   const { createPlayer, updatePlayer } = useManagePlayers();
 
   const [name, setName] = useState("");
@@ -247,6 +257,36 @@ export default function ClubPage() {
                 {copied ? t("club.copied") : t("club.copy")}
               </Button>
             </div>
+
+            {/* The poster and the rotation belong together: printing a code onto
+                a wall is what makes being able to revoke it necessary. */}
+            <div className="flex flex-wrap items-center gap-2 border-t border-hairline pt-4">
+              <AppLink
+                to="/app/$clubSlug/invite/print"
+                className={buttonClasses({ variant: "secondary", size: "sm" })}
+              >
+                <LuPrinter className="h-4 w-4" aria-hidden />
+                {t("club.poster")}
+              </AppLink>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={rotateJoinCode.isPending}
+                onClick={() => {
+                  if (!confirm(t("club.rotateConfirm"))) return;
+                  rotateJoinCode.mutate(undefined, {
+                    onSuccess: () => toast.success(t("club.rotated")),
+                    onError: () => toast.error(t("club.rotateError")),
+                  });
+                }}
+              >
+                <LuRefreshCw className="h-4 w-4" aria-hidden />
+                {t("club.rotate")}
+              </Button>
+            </div>
+            <p className="text-caption text-ink-faint">
+              {t("club.rotateHint")}
+            </p>
           </div>
         </Card>
 

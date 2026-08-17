@@ -51,7 +51,7 @@ export const useEloRanking = ({
 
         // Sort games chronologically to ensure correct ELO evolution
         const sortedGames = [...games].sort(
-            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            (a, b) => new Date(a.played_at).getTime() - new Date(b.played_at).getTime()
         );
 
         for (const game of sortedGames) {

@@ -46,7 +46,7 @@ export const tournamentQuery = (id: number) =>
       const { data } = await supabase
         .from("tournaments")
         .select(
-          "*, tournament_players(player_id), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, created_at))",
+          "*, tournament_players(player_id), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, played_at))",
         )
         .eq("id", id)
         .single()
