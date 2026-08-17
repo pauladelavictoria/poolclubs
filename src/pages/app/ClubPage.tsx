@@ -43,7 +43,7 @@ export default function ClubPage() {
   // down from the root route instead.
   const { origin } = getRouteApi("__root__").useRouteContext();
   const { data: members, isLoading } = useClubMembers();
-  const { approveMember, removeMember, updateClub } = useManageClub();
+  const { removeMember, updateClub } = useManageClub();
   const { createPlayer, updatePlayer } = useManagePlayers();
 
   const [name, setName] = useState("");
@@ -74,7 +74,6 @@ export default function ClubPage() {
       : null;
 
   const link = `${origin}/app/join/${activeClub.slug}`;
-  const pending = (members ?? []).filter((m) => m.status === "pending");
   const active = (members ?? []).filter((m) => m.status === "active");
 
   const copy = async () => {
@@ -268,43 +267,9 @@ export default function ClubPage() {
           </div>
         </Card>
 
-        {pending.length > 0 && (
-          <Card className="overflow-hidden">
-            <CardHeader title={t("club.pendingTitle")} />
-            <ul className="divide-y divide-hairline">
-              {pending.map((m) => (
-                <li key={m.id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="min-w-0 flex-1 truncate text-body text-ink">
-                    {m.name}
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      approveMember.mutate(m.id, {
-                        onError: () => toast.error(t("common.error")),
-                      })
-                    }
-                  >
-                    {t("club.approve")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      removeMember.mutate(m.id, {
-                        onError: () => toast.error(t("common.error")),
-                      })
-                    }
-                  >
-                    {t("club.reject")}
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
-
-        {/* The roster lives here rather than on its own page: adding a guest
+        {/* Pending join requests surface globally now, see JoinRequestBanner —
+            an admin shouldn't have to be on this page to see one.
+            The roster lives here rather than on its own page: adding a guest
             player and approving a member are the same job. */}
         <Card className="overflow-hidden">
           <CardHeader

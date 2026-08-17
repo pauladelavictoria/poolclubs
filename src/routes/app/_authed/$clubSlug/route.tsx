@@ -6,6 +6,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import AppHeader from "@/components/layout/AppHeader";
+import JoinRequestBanner from "@/components/layout/JoinRequestBanner";
 import NavDrawer from "@/components/layout/NavDrawer";
 import NavRail from "@/components/layout/NavRail";
 import { PageSkeleton } from "@/components/ui/Skeleton";
@@ -137,6 +138,7 @@ function ClubLayout() {
           ref={scroller}
           className="flex-1 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 pinned:pt-2"
         >
+          <JoinRequestBanner />
           <Suspense fallback={<PageSkeleton />}>
             <Outlet />
           </Suspense>
