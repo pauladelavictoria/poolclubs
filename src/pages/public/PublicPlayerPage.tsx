@@ -26,6 +26,9 @@ type Opponent = {
   id: number;
   slug: string;
   name: string;
+  /** Carried through from the roster row: the face pile up here is the only
+   *  picture of the rival on this page, and the roster already has it. */
+  avatar_url: string | null;
   wins: number;
   losses: number;
 };
@@ -91,6 +94,7 @@ export default function PublicPlayerPage() {
         id,
         slug: player.slug,
         name: player.name,
+        avatar_url: player.avatar_url,
         wins: 0,
         losses: 0,
       };
@@ -115,7 +119,7 @@ export default function PublicPlayerPage() {
       racksLost += against;
       const playerWon = forMe > against;
       if (playerWon) won++;
-      results.push({ at: game.created_at, won: playerWon });
+      results.push({ at: game.played_at, won: playerWon });
 
       if (inTeam1) {
         addOpponent(game.player_2_id, playerWon);
@@ -149,7 +153,7 @@ export default function PublicPlayerPage() {
   // Newest first across every club, which is not what concatenating the
   // per-club lists gives.
   const history = useMemo(
-    () => [...games].sort((a, b) => b.created_at.localeCompare(a.created_at)),
+    () => [...games].sort((a, b) => b.played_at.localeCompare(a.played_at)),
     [games],
   );
 
@@ -182,6 +186,7 @@ export default function PublicPlayerPage() {
                     >
                       <Avatar
                         name={opponent.name}
+                        url={opponent.avatar_url}
                         seed={opponent.id}
                         className="h-14 w-14"
                       />

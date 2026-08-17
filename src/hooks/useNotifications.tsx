@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 import type { CrumbLink } from "@/libs/routeMeta";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetChallenges } from "@/hooks/useChallenges";
@@ -34,8 +39,15 @@ export type AppNotification = {
   link: CrumbLink;
 };
 
-const STORAGE_PREFIX = "notifications-seen:";
+const SEEN_PREFIX = "notifications-seen:";
 const DISMISSED_PREFIX = "notifications-dismissed:";
+
+/** Both sets plus the player they belong to, so a switch is one comparison. */
+type History = {
+  playerId: number | undefined;
+  seen: Set<string>;
+  dismissed: Set<string>;
+};
 
 function loadIds(prefix: string, playerId: number): Set<string> {
   try {
@@ -47,26 +59,101 @@ function loadIds(prefix: string, playerId: number): Set<string> {
 }
 
 function saveIds(prefix: string, playerId: number, ids: Set<string>) {
-  localStorage.setItem(prefix + playerId, JSON.stringify([...ids]));
+  try {
+    localStorage.setItem(prefix + playerId, JSON.stringify([...ids]));
+  } catch {
+    // A private window refuses the write. Forgetting the history is survivable;
+    // throwing out of the click that cleared the list is not.
+  }
 }
 
-/** Both sets plus the player they belong to, so a switch is one comparison. */
-function loadHistory(playerId: number | undefined) {
+function loadHistory(playerId: number | undefined): History {
   return {
     playerId,
-    seen: playerId ? loadIds(STORAGE_PREFIX, playerId) : new Set<string>(),
+    seen: playerId ? loadIds(SEEN_PREFIX, playerId) : new Set<string>(),
     dismissed: playerId
       ? loadIds(DISMISSED_PREFIX, playerId)
       : new Set<string>(),
   };
 }
 
-/** Nothing read yet — what the server renders, since it has no localStorage. */
-const emptyHistory = (playerId: number | undefined) => ({
-  playerId,
-  seen: new Set<string>(),
-  dismissed: new Set<string>(),
-});
+/** Nothing read yet — what the server renders, since it has no localStorage,
+ *  and so what the client's first pass has to render as well. */
+const EMPTY_HISTORY: History = {
+  playerId: undefined,
+  seen: new Set(),
+  dismissed: new Set(),
+};
+
+/**
+ * One history per tab, rather than one per call of the hook.
+ *
+ * Two bells are mounted the whole time — the app bar's and the pinned column's,
+ * each hiding itself outside its own width — and every tab open on the same
+ * player writes the same two keys. While this was `useState` each of those
+ * copies was a snapshot taken at mount: clearing in one left the other still
+ * believing nothing had been dismissed, and the next write from that stale copy
+ * saved its own set over the good one. That is what brought a cleared list back
+ * — the bell you cleared had it right, the one beside it never heard, and
+ * whichever wrote last won.
+ *
+ * A module-level store read through useSyncExternalStore hands every bell in the
+ * tab the same object, and the `storage` event carries a write to the other tabs.
+ */
+let history: History = EMPTY_HISTORY;
+const listeners = new Set<() => void>();
+
+const emit = () => {
+  for (const listener of listeners) listener();
+};
+
+const isOurKey = (key: string | null, playerId: number) =>
+  // A null key is another tab calling localStorage.clear().
+  key === null ||
+  key === SEEN_PREFIX + playerId ||
+  key === DISMISSED_PREFIX + playerId;
+
+function onStorage(event: StorageEvent) {
+  const { playerId } = history;
+  if (playerId === undefined || !isOurKey(event.key, playerId)) return;
+  history = loadHistory(playerId);
+  emit();
+}
+
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  if (listeners.size === 1) window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(onChange);
+    if (listeners.size === 0) window.removeEventListener("storage", onStorage);
+  };
+}
+
+const getSnapshot = () => history;
+const getServerSnapshot = () => EMPTY_HISTORY;
+
+/** Read this player's history in. A no-op for the second bell to ask, and the
+ *  way a club switch or a sign-out swaps one player's sets for another's. */
+function ensureLoaded(playerId: number | undefined) {
+  if (history.playerId === playerId) return;
+  history = loadHistory(playerId);
+  emit();
+}
+
+/** Add to one of the two sets and persist it. Nothing new means nothing at all:
+ *  no write and no render, so opening the bell twice costs one update. */
+function remember(kind: "seen" | "dismissed", ids: readonly string[]) {
+  const { playerId } = history;
+  if (playerId === undefined) return;
+
+  const next = new Set(history[kind]);
+  for (const id of ids) next.add(id);
+  if (next.size === history[kind].size) return;
+
+  history = { ...history, [kind]: next };
+  saveIds(kind === "seen" ? SEEN_PREFIX : DISMISSED_PREFIX, playerId, next);
+  emit();
+}
 
 /**
  * A notification feed derived entirely from data the app already fetches —
@@ -91,17 +178,19 @@ export const useNotifications = () => {
   // both sides and the real sets arrive just after hydration. Reading storage
   // during render, as this used to, renders different HTML on the server than
   // the client and React throws the whole tree away.
-  const [history, setHistory] = useState(() => emptyHistory(player?.id));
+  const { seen, dismissed } = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
   useEffect(() => {
     // A deliberate post-hydration correction, not a cascade: the server rendered
     // "nothing read yet" because it cannot see localStorage, and this is the
-    // first moment the real sets are readable. One extra render, once per player.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHistory(loadHistory(player?.id));
+    // first moment the real sets are readable. Shared, so only the first bell to
+    // reach here reads, and every other one is handed the same two sets.
+    ensureLoaded(player?.id);
   }, [player?.id]);
-
-  const { seen, dismissed } = history;
 
   const allItems = useMemo<AppNotification[]>(() => {
     if (!player) return [];
@@ -214,24 +303,18 @@ export const useNotifications = () => {
   const unreadCount = items.filter((i) => !seen.has(i.id)).length;
 
   const markAllSeen = useCallback(() => {
-    if (!player || items.length === 0) return;
-    setHistory((prev) => {
-      const next = new Set(prev.seen);
-      for (const i of items) next.add(i.id);
-      saveIds(STORAGE_PREFIX, player.id, next);
-      return { ...prev, seen: next };
-    });
-  }, [player, items]);
+    remember(
+      "seen",
+      items.map((i) => i.id),
+    );
+  }, [items]);
 
   const clearAll = useCallback(() => {
-    if (!player || items.length === 0) return;
-    setHistory((prev) => {
-      const next = new Set(prev.dismissed);
-      for (const i of items) next.add(i.id);
-      saveIds(DISMISSED_PREFIX, player.id, next);
-      return { ...prev, dismissed: next };
-    });
-  }, [player, items]);
+    remember(
+      "dismissed",
+      items.map((i) => i.id),
+    );
+  }, [items]);
 
   return { items, unreadCount, seen, markAllSeen, clearAll };
 };

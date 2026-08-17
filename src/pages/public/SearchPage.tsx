@@ -202,6 +202,7 @@ export default function SearchPage() {
                         <Avatar
                           name={person.name}
                           url={person.avatar_url}
+                          seed={person.id}
                           className="h-9 w-9"
                         />
                         <span className="min-w-0 flex-1 truncate text-body text-ink">

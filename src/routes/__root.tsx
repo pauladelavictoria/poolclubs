@@ -10,7 +10,6 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
 import { I18nProvider, detectLang } from "@/i18n";
 import type { Lang } from "@/i18n";
-import { useTheme } from "@/libs/theme";
 import { THEME_COOKIE, readOrigin, readPref } from "@/libs/prefs";
 import { startRealtime } from "@/libs/realtime";
 import { sessionQuery } from "@/queries/session";
@@ -169,17 +168,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Toasts are the one surface not built from our tokens, so they get told which
- *  way round the page is. */
+/** Toasts arrive with react-toastify's own stylesheet, but everything it draws
+ *  reads a custom property and index.css points those at our tokens — so the
+ *  surface turns over with [data-theme] on its own and there is no `theme` prop
+ *  here to keep in step with it. */
 function Toasts() {
-  const theme = useTheme();
   return (
-    <ToastContainer
-      theme={theme}
-      position="bottom-center"
-      autoClose={2600}
-      hideProgressBar
-    />
+    <ToastContainer position="bottom-center" autoClose={2600} hideProgressBar />
   );
 }
 

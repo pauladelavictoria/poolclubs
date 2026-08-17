@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
+import { FilterBar } from "@/components/ui/FilterBar";
 import { Stat } from "@/components/ui/Stat";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -21,9 +22,7 @@ import { fmt, startsNewDay, timeOf } from "@/libs/dayLabel";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 
-const route = getRouteApi(
-  "/app/_authed/$clubSlug/players/$playerId/training/",
-);
+const route = getRouteApi("/app/_authed/$clubSlug/players/$playerId/training/");
 
 export default function TrainingProgressPage() {
   const { t, locale } = useT();
@@ -119,13 +118,10 @@ export default function TrainingProgressPage() {
   return (
     <>
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        <PageTitle
-          title={t("training.progressTitle")}
-          crumbs={[]}
-        />
+        <PageTitle title={t("training.progressTitle")} crumbs={[]} />
 
         {allLogs && allLogs.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <FilterBar>
             <Select
               size="sm"
               value={difficulty}
@@ -147,6 +143,7 @@ export default function TrainingProgressPage() {
             <Select
               size="sm"
               value={drillId}
+              className="max-w-[16rem]"
               onChange={(e) =>
                 setDrillId(e.target.value ? Number(e.target.value) : "")
               }
@@ -159,7 +156,7 @@ export default function TrainingProgressPage() {
                 </option>
               ))}
             </Select>
-          </div>
+          </FilterBar>
         )}
 
         {isLoading ? (

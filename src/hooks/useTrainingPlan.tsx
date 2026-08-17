@@ -120,6 +120,15 @@ export const useTrainingPlan = (playerId?: number) => {
     enabled: !!playerId,
   });
 
+  /**
+   * Every plan in the cache, not just this hook's own player: a plan is
+   * advanced from the drill page, which reaches for this hook before it knows
+   * whose plan sent it there. Invalidating `of(undefined)` matched no key at
+   * all, so a logged result only appeared on the plan after a reload.
+   */
+  const invalidatePlans = () =>
+    queryClient.invalidateQueries({ queryKey: keys.trainingPlan.all });
+
   // Generate a new plan
   const generatePlan = useMutation({
     mutationFn: async ({
@@ -182,11 +191,7 @@ export const useTrainingPlan = (playerId?: number) => {
 
       return newPlan as TrainingPlan;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: keys.trainingPlan.of(playerId),
-      });
-    },
+    onSuccess: invalidatePlans,
   });
 
   // Complete a step (link it to a drill log)
@@ -204,11 +209,7 @@ export const useTrainingPlan = (playerId?: number) => {
         .eq("id", stepId)
         .throwOnError();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: keys.trainingPlan.of(playerId),
-      });
-    },
+    onSuccess: invalidatePlans,
   });
 
   // Skip a step
@@ -220,11 +221,7 @@ export const useTrainingPlan = (playerId?: number) => {
         .eq("id", stepId)
         .throwOnError();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: keys.trainingPlan.of(playerId),
-      });
-    },
+    onSuccess: invalidatePlans,
   });
 
   return {

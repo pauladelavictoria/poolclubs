@@ -45,14 +45,14 @@ export default function NotificationBell() {
 
   if (!player) return null;
 
+  // Read off `open` rather than from inside a setOpen updater: React runs an
+  // updater during render, and marking things read now updates a store the other
+  // bell is subscribed to as well — which is not something a render may do.
   const toggle = () => {
-    setOpen((wasOpen) => {
-      const nextOpen = !wasOpen;
-      // Opening it is what "reading" it means here — there's no per-item
-      // dismissal, just this feed's whole unread set.
-      if (nextOpen) markAllSeen();
-      return nextOpen;
-    });
+    setOpen(!open);
+    // Opening it is what "reading" it means here — there's no per-item
+    // dismissal, just this feed's whole unread set.
+    if (!open) markAllSeen();
   };
 
   return (

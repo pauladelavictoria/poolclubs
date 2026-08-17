@@ -5,6 +5,7 @@ import { useGetPlayers } from "@/hooks/useGetPlayers";
 import PageTitle from "@/components/layout/PageTitle";
 import GamesList from "@/components/games/GamesList";
 import { Select } from "@/components/ui/Select";
+import { FilterBar } from "@/components/ui/FilterBar";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { SkeletonRows } from "@/components/ui/Skeleton";
@@ -63,44 +64,38 @@ export default function GamesPage() {
             It is a bar on the canvas rather than a card header, because the
             tape below is not inside anything — a card around it would also
             kill the sticky day rules, which need no clipping ancestor. */}
-        <div className="rounded-control border border-hairline bg-felt">
-          <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
-            <Select
-              size="sm"
-              value={playerId ?? FILTER_ALL}
-              onChange={(e) =>
-                setFilter({ playerId: Number(e.target.value) || undefined })
-              }
-              className="max-w-[12rem]"
-              aria-label={t("games.filterByPlayer")}
-            >
-              <option value={FILTER_ALL}>{t("games.allPlayers")}</option>
-              {players?.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {player.name}
-                </option>
-              ))}
-            </Select>
+        <FilterBar trailing={t("games.count", { n: totalCount })}>
+          <Select
+            size="sm"
+            value={playerId ?? FILTER_ALL}
+            onChange={(e) =>
+              setFilter({ playerId: Number(e.target.value) || undefined })
+            }
+            className="max-w-[12rem]"
+            aria-label={t("games.filterByPlayer")}
+          >
+            <option value={FILTER_ALL}>{t("games.allPlayers")}</option>
+            {players?.map((player) => (
+              <option key={player.id} value={player.id}>
+                {player.name}
+              </option>
+            ))}
+          </Select>
 
-            <Select
-              size="sm"
-              value={category ?? FILTER_ALL}
-              onChange={(e) =>
-                setFilter({ category: Number(e.target.value) || undefined })
-              }
-              aria-label={t("games.filterByCategory")}
-            >
-              <option value={FILTER_ALL}>{t("games.allCategories")}</option>
-              <option value="1">{t("category.1")}</option>
-              <option value="2">{t("category.2")}</option>
-              <option value="3">{t("category.3")}</option>
-            </Select>
-
-            <span className="ml-auto hidden font-mono text-caption tabular-nums text-ink-faint sm:block">
-              {t("games.count", { n: totalCount })}
-            </span>
-          </div>
-        </div>
+          <Select
+            size="sm"
+            value={category ?? FILTER_ALL}
+            onChange={(e) =>
+              setFilter({ category: Number(e.target.value) || undefined })
+            }
+            aria-label={t("games.filterByCategory")}
+          >
+            <option value={FILTER_ALL}>{t("games.allCategories")}</option>
+            <option value="1">{t("category.1")}</option>
+            <option value="2">{t("category.2")}</option>
+            <option value="3">{t("category.3")}</option>
+          </Select>
+        </FilterBar>
 
         <div className="mt-4">
           {gamesLoading ? (

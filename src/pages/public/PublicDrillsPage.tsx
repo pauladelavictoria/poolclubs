@@ -93,7 +93,9 @@ export default function PublicDrillsPage() {
             and the colour is what makes it scannable. Not in the hero — it is a
             filter, and it belongs next to the other one. */}
         <section className="mt-8">
-          <div className="no-bar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+          {/* py-2 rather than pb-1: the scroller clips vertically as soon as it
+              scrolls horizontally, and .lift rises 3px with a shadow under it. */}
+          <div className="no-bar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 py-2 sm:-mx-6 sm:px-6">
             {SKILL_TYPES.map((skill) => {
               const active = search.skill === skill;
               return (
@@ -107,16 +109,36 @@ export default function PublicDrillsPage() {
                       search: { ...search, skill: active ? undefined : skill },
                     })
                   }
-                  className={`wash flex shrink-0 snap-start flex-col items-start gap-1.5 rounded-card border px-4 py-3 text-left transition-colors duration-150 ${
+                  // One line, pill height: eight of these are a facet row, not
+                  // eight cards, and at this size the rail reads in a glance
+                  // instead of eating the fold. wash-soft, not bare wash: the
+                  // label sits *on* the colour, and a full-strength wash of
+                  // eight hues carries no ink token at AA. .lift is what the
+                  // other public rails wear and brings its own transition.
+                  className={`wash wash-soft lift flex shrink-0 snap-start items-center gap-2 rounded-full border px-3 py-1.5 whitespace-nowrap ${
                     active
                       ? "border-strike"
                       : "border-hairline hover:border-hairline-strong"
                   }`}
                 >
-                  <span className="text-body font-semibold text-ink">
+                  {/* The skill's colour, said out loud. A wash this small is a
+                      hint at best; the dot is what makes the rail scannable,
+                      and it takes --color-club straight from data-ball. */}
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full bg-club"
+                    aria-hidden
+                  />
+                  <span className="text-caption font-medium text-ink">
                     {t(`skill.${skill}`)}
                   </span>
-                  <span className="font-mono text-caption tabular-nums text-ink-faint">
+                  {/* Yellow when on: out here --color-strike means "current",
+                      and ink-soft rather than ink-faint because faint does not
+                      clear AA on a wash in light mode. */}
+                  <span
+                    className={`font-mono text-caption tabular-nums ${
+                      active ? "text-strike" : "text-ink-soft"
+                    }`}
+                  >
                     {bySkill(skill).length}
                   </span>
                 </button>

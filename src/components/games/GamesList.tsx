@@ -151,7 +151,7 @@ export default function GamesList({
           player_1b_id,
           player_2b_id,
           mode,
-          created_at,
+          played_at,
         } = game;
 
         const isDoubles = mode === "doubles";
@@ -175,10 +175,10 @@ export default function GamesList({
           }
         }
 
-        const date = new Date(created_at);
+        const date = new Date(played_at);
         const newDate = startsNewDay(
           date,
-          index > 0 ? new Date(games[index - 1].created_at) : undefined,
+          index > 0 ? new Date(games[index - 1].played_at) : undefined,
         );
 
         const side = (won: boolean) =>
@@ -207,7 +207,7 @@ export default function GamesList({
               className={`flex items-center gap-3 rounded-control border bg-pocket px-3 py-2 transition-colors duration-150 hover:bg-felt-raised ${accent}`}
             >
               <time
-                dateTime={created_at}
+                dateTime={played_at}
                 className="hidden w-12 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
               >
                 {timeOf(date, locale)}

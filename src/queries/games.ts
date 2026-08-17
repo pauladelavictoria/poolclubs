@@ -58,7 +58,7 @@ export const gamesQuery = (clubId: number, filters: UseGetGamesFilters = {}) => 
         .select("*", { count: "exact" })
         // Every list in the app is one club's, and RLS allows more than one.
         .eq("club_id", clubId)
-        .order("created_at", { ascending: false });
+        .order("played_at", { ascending: false });
 
       if (mode) {
         query = query.eq("mode", mode);
@@ -66,8 +66,8 @@ export const gamesQuery = (clubId: number, filters: UseGetGamesFilters = {}) => 
 
       if (date) {
         const { from, to } = getDateRange(date);
-        query = query.gte("created_at", from);
-        query = query.lte("created_at", to);
+        query = query.gte("played_at", from);
+        query = query.lte("played_at", to);
       }
 
       if (playerId) {

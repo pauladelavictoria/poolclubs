@@ -87,7 +87,7 @@ export default function PlayerDetailPage({ playerId }: { playerId: number }) {
 
       return {
         gameIndex: index + 1,
-        date: new Date(game.created_at).toLocaleString(locale),
+        date: new Date(game.played_at).toLocaleString(locale),
         gameWinRate: parseFloat(gameWinRate.toFixed(1)),
         rackWinRate: parseFloat(rackWinRate.toFixed(1)),
         gamesWon,

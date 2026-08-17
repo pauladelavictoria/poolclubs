@@ -6,6 +6,7 @@ import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { useAddGame } from "@/hooks/useAddGame";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import PageTitle from "@/components/layout/PageTitle";
+import CancelLink from "@/components/layout/CancelLink";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -20,12 +21,37 @@ const route = getRouteApi("/app/_authed/$clubSlug/games/new");
 
 const SIDES = [1, 2] as const;
 
+/** Today, in the reader's own timezone — an ISO date would give the server's
+ *  or UTC's, which is the wrong day for whoever is west of it come evening. */
+const todayLocal = () => {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+/** The date input hands back "YYYY-MM-DD"; combined with the current time of
+ *  day rather than midnight, so today's games keep sorting exactly as they
+ *  did before this field existed, and a backdated one still lands after
+ *  whatever else was recorded that same evening. */
+const toPlayedAt = (dateStr: string) => {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const now = new Date();
+  return new Date(
+    y,
+    m - 1,
+    d,
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds(),
+  ).toISOString();
+};
+
 export default function AddGamePage() {
   const { t } = useT();
   const { register, handleSubmit, reset, control, setValue } = useForm<Game>({
     // 9-ball is what the club plays, and what every game recorded
     // before the column existed was backfilled to.
-    defaultValues: { mode: "single", discipline: "9ball" },
+    defaultValues: { mode: "single", discipline: "9ball", played_at: todayLocal() },
   });
 
   const { data: players, isLoading: playersLoading } = useGetPlayers();
@@ -55,6 +81,7 @@ export default function AddGamePage() {
     player_2_score,
     mode,
     discipline,
+    played_at,
   } = useWatch({ control });
 
   const isDoubles = mode === "doubles";
@@ -98,6 +125,7 @@ export default function AddGamePage() {
     handleAddGame(
       {
         ...game,
+        played_at: toPlayedAt(game.played_at),
         // An unpicked partner select submits "", which is not a bigint.
         player_1b_id: game.player_1b_id || null,
         player_2b_id: game.player_2b_id || null,
@@ -112,7 +140,10 @@ export default function AddGamePage() {
               gameId: saved.id,
             });
           }
-          reset({ discipline, mode: game.mode });
+          // The date carries over rather than snapping back to today: loading
+          // a notebook of last season's results means entering many games
+          // against the same handful of dates in one sitting.
+          reset({ discipline, mode: game.mode, played_at: game.played_at });
         },
         onError: () => toast.error(t("common.error")),
       },
@@ -150,7 +181,7 @@ export default function AddGamePage() {
               label={t("games.mode")}
               value={isDoubles ? "doubles" : "single"}
               onChange={(next) => {
-                reset({ discipline, mode: next });
+                reset({ discipline, mode: next, played_at });
               }}
               options={[
                 { value: "single", label: t("games.single") },
@@ -160,6 +191,15 @@ export default function AddGamePage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <fieldset className="space-y-1.5">
+              <Label>{t("games.playedAt")}</Label>
+              <Input
+                type="date"
+                max={todayLocal()}
+                {...register("played_at", { required: true })}
+              />
+            </fieldset>
+
             <div className="grid grid-cols-2 gap-3">
               {SIDES.map((n) => {
                 const side = isDoubles
@@ -219,9 +259,15 @@ export default function AddGamePage() {
               </p>
             )}
 
-            <Button type="submit" className="w-full" disabled={addDisabled}>
-              {isPending ? t("common.saving") : t("games.add")}
-            </Button>
+            {/* Leaving is a real outcome of this screen — a challenge you
+                opened by mistake, a score you decided not to record — so it
+                sits beside the commit, not only in the crumb above the title. */}
+            <div className="flex gap-3">
+              <CancelLink />
+              <Button type="submit" className="flex-1" disabled={addDisabled}>
+                {isPending ? t("common.saving") : t("games.add")}
+              </Button>
+            </div>
           </form>
         </Card>
       </div>
