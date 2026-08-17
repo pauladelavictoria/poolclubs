@@ -59,7 +59,9 @@ export default function PublicDrillPage() {
               ballPositions={drill.ball_positions}
               shotPaths={drill.shot_paths}
               portrait={portrait}
-              className="rounded-[14px]"
+              // Below lg the sticky top nav is the only fixed bar, so an
+              // upright table only has that (and its own margin) to clear.
+              className="max-h-[calc(100dvh-4rem-2rem-env(safe-area-inset-top))] rounded-[14px] lg:max-h-none"
             />
           </div>
         </div>
