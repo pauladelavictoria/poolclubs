@@ -40,13 +40,25 @@ export default function DrillDetailPage() {
 
   const { data: drillLogs } = useGetDrillLogs({ drill_id: drillId });
   const { nameOf } = usePlayerLookup();
-  const { completeStep } = useTrainingPlan(undefined);
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, player } = useAuth();
+  // Own plan, whichever page this was opened from: the log below is always
+  // filed under the signed-in player, and a plan only ever belongs to them.
+  const { data: planData, completeStep } = useTrainingPlan(player.id);
   const canEdit = canEditDrill(drill?.created_by, user?.id, isAdmin);
   const { deleteDrill } = useManageDrills();
 
   const handleLogSuccess = (drillLogId: number) => {
-    if (planId && stepId) completeStep.mutate({ stepId, drillLogId });
+    // The step the drill was opened for — or, when it was opened straight from
+    // the library, whichever step of the active plan is still waiting on this
+    // drill. Doing the drill is doing the drill; the plan should tick either
+    // way. A skipped step counts: the list offers to resume it.
+    const targetStepId =
+      (planId && stepId ? stepId : undefined) ??
+      planData?.steps.find(
+        (s) => s.drill_id === drillId && s.status !== "completed",
+      )?.id;
+
+    if (targetStepId) completeStep.mutate({ stepId: targetStepId, drillLogId });
   };
 
   const handleDelete = () => {
