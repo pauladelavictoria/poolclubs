@@ -1101,3 +1101,36 @@ button.lift:active {
   overflow: hidden;
   border-radius: var(--radius-control);
 }
+
+/* Printing.
+
+   The only page in this app meant for paper is the invite poster, and it opens
+   inside the app shell: a fixed-height dark column with a nav rail above it and
+   a pinned drawer beside it. On paper the navs are noise and the fixed height is
+   a guillotine — everything past the first viewport is simply not printed.
+
+   Done here rather than with `print:` utilities on each chrome component,
+   because the shell already marks itself with data-app-shell and the fix is
+   about the column, not about the poster. Anything a page wants dropped from the
+   print gets `print:hidden` on the element itself. */
+@media print {
+  body {
+    background: #fff;
+  }
+
+  [data-app-shell] {
+    height: auto;
+    overflow: visible;
+    padding-left: 0;
+  }
+
+  /* The nav rail and the app bar's wrapper. `main` is the page. */
+  [data-app-shell] > *:not(main) {
+    display: none;
+  }
+
+  [data-app-shell] main {
+    overflow: visible;
+    padding: 0;
+  }
+}

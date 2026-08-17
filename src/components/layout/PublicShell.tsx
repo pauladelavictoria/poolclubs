@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, type LinkProps } from "@tanstack/react-router";
 import { LuMenu, LuSearch, LuX } from "react-icons/lu";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { buttonClasses } from "@/components/ui/buttonStyles";
@@ -210,12 +210,74 @@ export function CtaBand() {
   );
 }
 
+/**
+ * The footer's three columns of links, declared rather than spelled out: the
+ * legal column is the one that has to be reachable from every page, and a list
+ * is harder to forget a page in than three blocks of markup.
+ */
+const FOOTER_COLUMNS: {
+  headingKey: Key;
+  links: { to: LinkProps["to"]; labelKey: Key }[];
+}[] = [
+  {
+    headingKey: "public.footer.exploreHeading",
+    links: [
+      { to: "/clubs", labelKey: "nav.publicClubs" },
+      { to: "/players", labelKey: "nav.publicPlayers" },
+      { to: "/tournaments", labelKey: "nav.publicTournaments" },
+      { to: "/drills", labelKey: "nav.publicDrills" },
+    ],
+  },
+  {
+    headingKey: "public.footer.productHeading",
+    links: [
+      { to: "/pricing", labelKey: "public.footer.pricing" },
+      { to: "/about", labelKey: "public.footer.about" },
+      { to: "/contact", labelKey: "public.footer.contact" },
+    ],
+  },
+  {
+    headingKey: "public.footer.legalHeading",
+    links: [
+      { to: "/legal/privacy", labelKey: "public.footer.privacy" },
+      { to: "/legal/terms", labelKey: "public.footer.terms" },
+      { to: "/legal/aviso-legal", labelKey: "public.footer.avisoLegal" },
+    ],
+  },
+];
+
 export function PublicFooter() {
   const { t, lang, setLang } = useT();
 
   return (
     <footer className="mt-20 border-t border-hairline">
-      <div className="px-4 py-6 sm:px-6 lg:px-10">
+      <div className="grid gap-8 px-4 py-10 sm:grid-cols-[1.5fr_repeat(3,1fr)] sm:px-6 lg:px-10">
+        <p className="max-w-[28ch] text-body text-ink-soft">
+          {t("public.footer.tagline")}
+        </p>
+        {FOOTER_COLUMNS.map((column) => (
+          <nav key={column.headingKey} aria-label={t(column.headingKey)}>
+            <h2 className="text-caption font-medium text-ink">
+              {t(column.headingKey)}
+            </h2>
+            <ul className="mt-2 space-y-1.5">
+              {column.links.map((link) => (
+                <li key={String(link.to)}>
+                  <Link
+                    to={link.to}
+                    className="text-caption text-ink-faint transition-colors duration-150 hover:text-ink"
+                    activeProps={{ className: "text-ink" }}
+                  >
+                    {t(link.labelKey)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))}
+      </div>
+
+      <div className="border-t border-hairline px-4 py-6 sm:px-6 lg:px-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-caption text-ink-faint">
             {t("public.footer.bottom")}

@@ -18,7 +18,13 @@ What is missing is not product. It is everything around the product: the pitch, 
 ## The gap list
 
 ### Pages that do not exist
-`/pricing` · `/about` · `/contact` · `/legal/privacy` · `/legal/terms` · `/legal/aviso-legal` · `/changelog` · a printable invite/QR poster · an operator dashboard across clubs.
+~~`/pricing` · `/about` · `/contact` · `/legal/privacy` · `/legal/terms` · `/legal/aviso-legal` · a printable invite/QR poster · an operator dashboard across clubs.~~ · `/changelog` — **dropped, not wanted.**
+
+**Shipped 2026-08-17.** Copy lives in `src/content/{pages,legal}.ts` (three languages each), rendered by `src/pages/public/ProsePage.tsx`; the poster is `/app/$clubSlug/invite/print` and ships with join-code rotation (A4 closed); the operator dashboard is `/app/ops`, gated by `is_drill_admin()`.
+
+Two things are still open on them:
+- **`OPERATOR` in `src/content/legal.ts` is placeholders** — real name, NIF and postal address. The aviso legal is not lawful until they are filled, and `CONTACT_EMAIL` (`hola@poolclubs.app`) must be a mailbox somebody reads.
+- **`sql/operator-dashboard.sql` has not been applied.** `npm run db:sql sql/operator-dashboard.sql`, then `npm run db:dump && npm run db:types`; until then `/app/ops` shows its "has the SQL been applied?" state, and the narrow `rpc` cast in `src/queries/operator.ts` can come out afterwards.
 
 ### Features that do not exist
 Password reset · match backdating (`played_at`) · co-admins / ownership transfer / delete-club / leave-club · data export (CSV) · account deletion · transactional & digest email · analytics of any kind · error monitoring · in-app feedback · payments · dynamic OG images · JSON-LD structured data · venue fields (phone, website, hours, description) · invite-code rotation · onboarding checklist.
@@ -81,7 +87,7 @@ Cheapest-learning-first. B5 is the big one and is deliberately not first.
 | B9 | **Storage bucket for avatars/logos** — currently base64 in TEXT, loaded on every list query, and `publicMeta.ts` skips `data:` URIs entirely. | M | Prerequisite for B10. |
 | B10 | **Dynamic OG images** per club/player/tournament. | M | A club sharing its finished bracket into WhatsApp with a real card is free, compounding distribution among exactly the right people. |
 | B11 | **Search indexes** — `pg_trgm` GIN on `people.name`, `clubs.name/city`, drill titles. | S | Ship when `/search` feels slow, not before. |
-| B12 | **Changelog** | S | Visible proof the thing is alive and their complaint landed. Retention tool, not marketing. Skip the blog. |
+| B12 | ~~**Changelog**~~ | — | Dropped 2026-08-17. Built and removed the same day: the retention argument does not outweigh a page somebody has to keep writing. Skip the blog too. |
 | B13 | **Harvest social proof** — club logos on the landing, one quoted owner, live club/match counts. Add as beta clubs land. | S | The single biggest empty lever on the current landing page. |
 
 ---

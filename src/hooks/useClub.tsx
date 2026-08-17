@@ -3,6 +3,7 @@ import { supabase } from "@/supabaseClient";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
+import { newJoinCode } from "@/libs/joinCode";
 import { SESSION_KEY, sessionQuery } from "@/queries/session";
 import { clubPreviewQuery } from "@/queries/club";
 import { clubMembersQuery } from "@/queries/players";
@@ -102,6 +103,36 @@ export const useManageClub = () => {
           .update(patch)
           .eq("id", activeClubId)
           .throwOnError();
+      },
+      onSuccess,
+    }),
+
+    /**
+     * A new invite code, which revokes the old one.
+     *
+     * Ships with the printed QR poster and is what makes it safe: once a code is
+     * on a wall it is public, and the only answer to that is being able to
+     * replace it. Nothing else has to change — the join link is built from the
+     * code, so the old link and every printed poster stop working the moment
+     * this lands.
+     *
+     * The code itself comes from libs/joinCode.ts, generated in the browser
+     * rather than by the column default: PostgREST has no "set this back to the
+     * default" in an UPDATE.
+     */
+    rotateJoinCode: useMutation({
+      mutationFn: async () => {
+        if (!activeClubId) throw new Error("no active club");
+
+        const code = newJoinCode();
+
+        await supabase
+          .from("clubs")
+          .update({ join_code: code })
+          .eq("id", activeClubId)
+          .throwOnError();
+
+        return code;
       },
       onSuccess,
     }),
