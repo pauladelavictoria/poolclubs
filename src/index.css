@@ -539,6 +539,116 @@ dialog.sheet[open]::backdrop {
   }
 }
 
+/*
+  Toasts — "Enlace copiado", "No se pudo guardar" — are the app's third overlay,
+  and the only one that arrives wearing someone else's clothes: react-toastify
+  ships a stylesheet and appends it to <head> itself, from the container's own
+  render. That append lands after ours, so every selector below is one step
+  heavier than the vendor's (`:root:root`, `body .Toastify__…`) — at equal
+  specificity the later sheet wins the tie, and the later sheet is always theirs.
+
+  Everything the vendor draws reads a custom property first, so the toast can be
+  rebuilt out of the room's own tokens and then turns over with the theme like
+  every other surface, no `theme` prop involved. It is a popover, so it takes the
+  popover treatment: felt-raised, a strong hairline, the control radius and the
+  one shadow the app allows itself — the same three lines the select picker uses,
+  for the same reason (there is no surface above felt-raised to detach with).
+*/
+:root:root {
+  /* The vendor default is a fixed 320px that goes full-bleed under 480. Ours is
+     the narrower of a comfortable line and the viewport minus its gutters, so it
+     is inset at every width. */
+  --toastify-toast-width: min(24rem, calc(100vw - 2rem));
+  --toastify-toast-bd-radius: var(--radius-control);
+  --toastify-toast-padding: 12px 14px;
+  /* 64px of minimum height on a five-word confirmation is a card pretending to
+     be a message. One line of text is one line high. */
+  --toastify-toast-min-height: 0;
+  --toastify-font-family: var(--font-sans);
+  --toastify-toast-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+
+  /* Both vendor "themes" resolve to the same pair of tokens: which way round the
+     page is, is already answered by [data-theme] one level up. */
+  --toastify-color-light: var(--color-felt-raised);
+  --toastify-color-dark: var(--color-felt-raised);
+  --toastify-text-color-light: var(--color-ink);
+  --toastify-text-color-dark: var(--color-ink);
+
+  /* The icon is the only colour on a toast, and it says which of the four kinds
+     this is: potted green, the one real red, chalk for neutral news, and the
+     accent for a warning — the same four meanings they carry everywhere else. */
+  --toastify-icon-color-success: var(--color-pot);
+  --toastify-icon-color-error: var(--color-accent-red);
+  --toastify-icon-color-info: var(--color-chalk);
+  --toastify-icon-color-warning: var(--color-strike);
+  --toastify-spinner-color: var(--color-ink-faint);
+  --toastify-spinner-color-empty-area: var(--color-rail);
+}
+
+body .Toastify__toast {
+  border: 1px solid var(--color-hairline-strong);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  /* The close button is absolutely positioned in the corner; without this the
+     second line of a long message runs under it. */
+  padding-inline-end: 2rem;
+}
+
+/* Inherited from the container, which paints itself white for whatever it is
+   about to hold. Ours knows its own colour. */
+body .Toastify__toast-container {
+  color: var(--color-ink);
+}
+
+body .Toastify__close-button {
+  top: 8px;
+  right: 8px;
+  color: var(--color-ink-faint);
+  opacity: 1;
+  transition: color 150ms var(--ease-out);
+}
+
+body .Toastify__close-button:hover,
+body .Toastify__close-button:focus {
+  color: var(--color-ink);
+}
+
+/* Under 480 the vendor squares the corners off and pins the toast to both edges
+   and the bottom of the window — a full-bleed bar, which is the one shape a
+   phone reads as system chrome rather than as this app talking. Put it back to
+   being a card with room around it. */
+@media only screen and (max-width: 480px) {
+  body .Toastify__toast-container {
+    width: 100vw;
+    padding-inline: 1rem;
+  }
+
+  body .Toastify__toast {
+    --toastify-toast-width: 100%;
+    border-radius: var(--radius-control);
+    /* Zeroed alongside the corners, which stacked two messages into one slab. */
+    margin-bottom: 0.75rem;
+  }
+
+  /* The same block also pins the stack to the very bottom edge, ignoring the
+     offset below. Hand `bottom` back to the variable so both branches of the
+     next rule reach a phone this narrow too. */
+  body .Toastify__toast-container--bottom-center {
+    bottom: var(--toastify-toast-bottom);
+  }
+}
+
+/* On a phone the app shell parks a tab bar along the bottom edge, and a
+   bottom-centred toast lands on top of it. Clear it by the same 4.5rem the
+   scroller pads itself by, plus the home-indicator inset — but only where that
+   bar exists, which is inside the club shell below md. Public pages and the
+   login keep the plain 16px offset. */
+@media (max-width: 47.99rem) {
+  html:has([data-app-shell]) {
+    --toastify-toast-offset: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}
+
 /* Skeletons: a shimmer travelling across the placeholder, not a spinner */
 @keyframes sheen {
   to {
