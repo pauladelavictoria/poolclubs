@@ -4,6 +4,7 @@ import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
 import { newJoinCode } from "@/libs/joinCode";
+import { markJustJoinedClub } from "@/libs/installPrompt";
 import { SESSION_KEY, sessionQuery } from "@/queries/session";
 import { clubPreviewQuery } from "@/queries/club";
 import { clubMembersQuery } from "@/queries/players";
@@ -167,6 +168,11 @@ export const useJoinOrCreateClub = () => {
 
     const slug = session?.memberships.find((m) => m.club_id === clubId)?.club
       ?.slug;
+
+    // Read by the install banner on the page this navigates to — joining or
+    // creating a club is the first moment there's a reason to come back
+    // tomorrow, which is when "add to home screen" actually lands.
+    markJustJoinedClub();
 
     await navigate(
       slug
