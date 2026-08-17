@@ -4,13 +4,14 @@
  */
 import assert from "node:assert/strict";
 import { optimisticList, tempId } from "./optimistic.ts";
-import { queryClient } from "./queryClient.ts";
+import { makeQueryClient } from "./queryClient.ts";
 
 type Row = { id: number; body: string };
+const queryClient = makeQueryClient();
 const key = ["check-rows"];
 const seed = () => queryClient.setQueryData<Row[]>(key, [{ id: 1, body: "a" }]);
 
-const append = optimisticList<string, Row>(key, (rows, body) => [
+const append = optimisticList<string, Row>(queryClient, key, (rows, body) => [
   ...rows,
   { id: tempId(), body },
 ]);

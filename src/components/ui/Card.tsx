@@ -1,4 +1,5 @@
 import * as React from "react";
+import { cardClasses } from "@/components/ui/cardStyles";
 
 /**
  * The one container. Surface shift + hairline, never a shadow — depth strategy
@@ -8,12 +9,7 @@ export function Card({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={`rounded-card border border-hairline bg-felt ${className || ""}`}
-      {...props}
-    />
-  );
+  return <div className={cardClasses({ className })} {...props} />;
 }
 
 /** Card header: title left, actions right, hairline under. */

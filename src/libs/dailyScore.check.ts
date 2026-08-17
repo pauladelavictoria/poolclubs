@@ -12,8 +12,11 @@ const player = (id: number, category: 1 | 2 | 3): Player => ({
   category,
   club_id: 1,
   status: "active",
+  person_id: id,
+  slug: `p${id}`,
   user_id: null,
   avatar_url: null,
+  is_public: true,
 });
 
 /** Same division either side, so no margin is expected of anyone by default. */
@@ -31,16 +34,13 @@ const game = (
   club_id: 1,
   player_1_id: p1,
   player_2_id: p2,
-  player_1_name: `p${p1}`,
-  player_2_name: `p${p2}`,
   player_1_score: s1,
   player_2_score: s2,
   player_1b_id: null,
-  player_1b_name: null,
   player_2b_id: null,
-  player_2b_name: null,
   created_at: at,
   mode: "single",
+  discipline: "9ball",
 });
 
 const byId = (rows: ReturnType<typeof tallyDaily>, id: number) =>

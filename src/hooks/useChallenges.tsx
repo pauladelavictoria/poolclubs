@@ -1,31 +1,14 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import { optimisticList, tempId } from "@/libs/optimistic";
 import { keys } from "@/libs/queryKeys";
+import { challengesQuery } from "@/queries/challenges";
 import type { Challenge, ChallengeStatus } from "@/types";
 
-/** Every challenge in the active club. A club is small enough that filtering
- *  the list client-side beats three query keys that all invalidate together. */
 export const useGetChallenges = () => {
   const { activeClubId } = useAuth();
-
-  return useQuery({
-    queryKey: keys.challenges.in(activeClubId),
-    enabled: !!activeClubId,
-    queryFn: async () => {
-      if (!activeClubId) throw new Error("no active club");
-
-      const { data } = await supabase
-        .from("challenges")
-        .select("*")
-        .eq("club_id", activeClubId)
-        .order("created_at", { ascending: false })
-        .throwOnError();
-
-      return data as Challenge[];
-    },
-  });
+  return useQuery(challengesQuery(activeClubId));
 };
 
 /** Open challenges you are part of — pending or accepted, either direction. */
@@ -42,6 +25,7 @@ export const useMyChallenges = () => {
 
 export const useManageChallenges = () => {
   const { activeClubId, player } = useAuth();
+  const queryClient = useQueryClient();
   const key = keys.challenges.in(activeClubId);
 
   return {
@@ -69,11 +53,12 @@ export const useManageChallenges = () => {
       },
       // Prepended: useGetChallenges orders by created_at descending.
       ...optimisticList<{ toPlayerId: number; message?: string }, Challenge>(
+        queryClient,
         key,
         (rows, { toPlayerId, message }) => [
           {
             id: tempId(),
-            club_id: activeClubId!,
+            club_id: activeClubId,
             from_player_id: player!.id,
             to_player_id: toPlayerId,
             status: "pending",
@@ -105,7 +90,7 @@ export const useManageChallenges = () => {
       ...optimisticList<
         { id: number; status: ChallengeStatus; gameId?: string },
         Challenge
-      >(key, (rows, { id, status, gameId }) =>
+      >(queryClient, key, (rows, { id, status, gameId }) =>
         rows.map((c) =>
           c.id === id ? { ...c, status, game_id: gameId ?? c.game_id } : c,
         ),
@@ -116,7 +101,7 @@ export const useManageChallenges = () => {
       mutationFn: async (id: number) => {
         await supabase.from("challenges").delete().eq("id", id).throwOnError();
       },
-      ...optimisticList<number, Challenge>(key, (rows, id) =>
+      ...optimisticList<number, Challenge>(queryClient, key, (rows, id) =>
         rows.filter((c) => c.id !== id),
       ),
     }),

@@ -31,10 +31,41 @@ type Row<T extends keyof Database["public"]["Tables"]> =
  */
 type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
 
-export type Club = Stamped<Row<"clubs">>;
+/**
+ * `slug` is intersected in rather than read from the generated Row because the
+ * app is typed against it before `sql/club-slug.sql` has been applied and
+ * `npm run db:types` re-run. The intersection is harmless once the column is
+ * generated — it is the same `string` — so this line does not need removing,
+ * but it can go once the schema catches up.
+ *
+ * The location columns (address, city, country, lat, lon) are written together
+ * or not at all; see src/libs/geocode.ts for the `Place` they come from.
+ */
+export type Club = Stamped<Row<"clubs">> & { slug: string };
 
-/** A real Postgres enum, so this one comes through already narrowed. */
+/** The club's accent colour, keyed to a real Postgres enum so it stays in
+ *  lockstep with the palette in libs/clubTheme.ts. Ordered 1-8, the solids'
+ *  own rack order — the picker and any legend read in that order too. */
+export type BallColor = Database["public"]["Enums"]["BallColor"];
+
+export const CLUB_BALL_COLORS: BallColor[] = [
+  "yellow",
+  "blue",
+  "red",
+  "purple",
+  "orange",
+  "green",
+  "maroon",
+  "black",
+];
+
+/** Real Postgres enums, so these come through already narrowed. */
 export type GameMode = Database["public"]["Enums"]["GameMode"];
+
+/** Which game is on the table. Labels live in src/i18n as `discipline.${key}`. */
+export type Discipline = Database["public"]["Enums"]["Discipline"];
+
+export const DISCIPLINES: Discipline[] = ["8ball", "9ball", "10ball"];
 
 /** Scores are `bigint` columns: numbers, not strings. */
 export type Game = Stamped<Row<"games">>;
@@ -44,11 +75,26 @@ export type Category = 1 | 2 | 3;
 /** 'pending' until the club owner approves the join request. */
 export type PlayerStatus = "pending" | "active";
 
-/** A player row is also the membership row: one per (club, user). */
+/** The human. One row per person, however many clubs they play in — see
+ *  sql/people.sql. Name, face and public listing live here and nowhere else. */
+export type Person = Row<"people">;
+
+/**
+ * A membership: this person, in this club, at this division.
+ *
+ * The person's fields are spread onto it rather than left under `person`, so the
+ * ~18 places that render `player.name` and `player.avatar_url` did not have to
+ * change when people split out of players. The flattening happens once per query
+ * in src/queries/players.ts — see the note there.
+ */
 export type Player = Omit<Row<"players">, "category" | "status"> & {
   category: Category;
   status: PlayerStatus;
-};
+} & Pick<Person, "name" | "avatar_url" | "slug" | "is_public"> & {
+    /** Null out here on the public side, where anon is not granted the column.
+     *  Only ClubPage reads it, to mark which member owns the club. */
+    user_id: string | null;
+  };
 
 /** A Player joined to its club — what AuthContext lists for the switcher.
  *  `club` is null while the membership is still pending: RLS lets you see your
@@ -142,13 +188,16 @@ export const CATEGORY_TO_DIFFICULTY: Record<Category, DrillDifficulty> = {
 
 /* Display order for the filters and the editor. The labels themselves live in
    src/i18n as `difficulty.${key}` and `skill.${key}`. */
-export const DIFFICULTIES: DrillDifficulty[] = [
+/* `as const` so the literal types survive: the drills route builds its
+   ?difficulty validator straight from this list, and a plain
+   DrillDifficulty[] would widen the parsed value back to `string`. */
+export const DIFFICULTIES = [
   'beginner',
   'intermediate',
   'advanced',
-];
+] as const satisfies readonly DrillDifficulty[];
 
-export const SKILL_TYPES: DrillSkillType[] = [
+export const SKILL_TYPES = [
   'potting',
   'position',
   'safety',
@@ -157,7 +206,57 @@ export const SKILL_TYPES: DrillSkillType[] = [
   'kicks',
   'patterns',
   'specials',
-];
+] as const satisfies readonly DrillSkillType[];
+
+// Tournaments — see sql/tournaments.sql and libs/bracket.ts.
+
+export type TournamentFormat = "double_elim" | "league" | "group_knockout";
+
+/** 'groups' is a group_knockout waiting for its bracket to be cut: the group
+ *  phase is generated, the knockout half is not, because the qualifiers aren't
+ *  known until the last group match is played. */
+export type TournamentStatus = "open" | "groups" | "running" | "done";
+
+export type BracketSide = "group" | "winners" | "losers" | "final" | "league";
+
+/** The column is snake_case, the i18n keys are camelCase. Labels live in
+ *  src/i18n as `tournaments.${key}` and `tournaments.hint.${format}`. */
+export const FORMAT_KEY: Record<
+  TournamentFormat,
+  "doubleElim" | "league" | "groupKnockout"
+> = {
+  double_elim: "doubleElim",
+  league: "league",
+  group_knockout: "groupKnockout",
+};
+
+export type Tournament = Omit<
+  Row<"tournaments">,
+  "format" | "status" | "category" | "legs"
+> & {
+  /* discipline, race_to, race_semi and race_final come through as they are —
+     the enum is narrowed by Postgres and the races are plain numbers. */
+  format: TournamentFormat;
+  status: TournamentStatus;
+  /** null = combined, every division. */
+  category: Category | null;
+  /** Times each pair meets in a league or inside a group. */
+  legs: 1 | 2;
+};
+
+export type TournamentPlayer = Row<"tournament_players">;
+
+export type TournamentMatch = Omit<Row<"tournament_matches">, "bracket"> & {
+  bracket: BracketSide;
+  /** Joined by useGetTournament's select, not a column — the racks a league
+   *  table needs live on the game, not the match, and so does when it was
+   *  played: a match row has no time of its own because a fixture is not an
+   *  event until somebody turns up. */
+  game?: Pick<
+    Game,
+    "player_1_id" | "player_1_score" | "player_2_score" | "created_at"
+  > | null;
+};
 
 export type DailyRankingEntry = {
   playerId: number;
