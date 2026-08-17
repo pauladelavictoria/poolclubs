@@ -1318,22 +1318,22 @@ ALTER TABLE ONLY "public"."games"
 
 
 ALTER TABLE ONLY "public"."games"
-    ADD CONSTRAINT "games_player_1_id_fkey" FOREIGN KEY ("player_1_id") REFERENCES "public"."players"("id") ON UPDATE CASCADE;
+    ADD CONSTRAINT "games_player_1_id_fkey" FOREIGN KEY ("player_1_id") REFERENCES "public"."players"("id") ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."games"
-    ADD CONSTRAINT "games_player_1b_id_fkey" FOREIGN KEY ("player_1b_id") REFERENCES "public"."players"("id");
+    ADD CONSTRAINT "games_player_1b_id_fkey" FOREIGN KEY ("player_1b_id") REFERENCES "public"."players"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."games"
-    ADD CONSTRAINT "games_player_2_id_fkey" FOREIGN KEY ("player_2_id") REFERENCES "public"."players"("id") ON UPDATE CASCADE;
+    ADD CONSTRAINT "games_player_2_id_fkey" FOREIGN KEY ("player_2_id") REFERENCES "public"."players"("id") ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."games"
-    ADD CONSTRAINT "games_player_2b_id_fkey" FOREIGN KEY ("player_2b_id") REFERENCES "public"."players"("id");
+    ADD CONSTRAINT "games_player_2b_id_fkey" FOREIGN KEY ("player_2b_id") REFERENCES "public"."players"("id") ON DELETE CASCADE;
 
 
 
