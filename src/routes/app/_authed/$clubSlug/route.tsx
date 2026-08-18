@@ -61,7 +61,7 @@ export const Route = createFileRoute("/app/_authed/$clubSlug")({
 
 function ClubLayout() {
   const { activeClub, isMember } = Route.useRouteContext();
-  const { pathname } = useLocation();
+  const { href } = useLocation();
   const scroller = useRef<HTMLElement>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   // A drawer the pointer opened is one the pointer should be able to put away;
@@ -74,10 +74,12 @@ function ClubLayout() {
 
   // The page scrolls, the chrome does not — so the scrollbar lives inside the
   // content and taking or freeing it can't move the bar or the tabs. Router
-  // scroll restoration only knows about the window, so the reset is ours.
+  // scroll restoration only knows about the window, so the reset is ours. Keyed
+  // on the full href, not just the pathname: a link that only changes search
+  // params (a date, a filter) is still a new page as far as scroll is concerned.
   useEffect(() => {
     scroller.current?.scrollTo(0, 0);
-  }, [pathname]);
+  }, [href]);
 
   // Approved membership is what every club-scoped query waits on. Rather than
   // showing a wall of empty states, swap the whole thing for the way in — and
