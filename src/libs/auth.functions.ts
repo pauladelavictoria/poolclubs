@@ -121,6 +121,97 @@ export const signIn = createServerFn({ method: "POST" })
     return error ? { error: "badCredentials" } : null;
   });
 
+/**
+ * Pairing the tablet on the rail.
+ *
+ * Anonymous sign-in, then redeem the owner's code. Anonymous because the device
+ * must not carry anybody's credentials — a tablet left on a bar is signed in to
+ * whatever it holds, and this way what it holds is a member of the club that
+ * exists only to keep score.
+ *
+ * Both halves are here rather than in the browser so the session lands in the
+ * same httpOnly cookies every other sign-in uses, and so the server is what
+ * decides whether the code was good.
+ *
+ * Requires anonymous sign-ins to be enabled for the Supabase project. They are
+ * a project setting, not a migration, so `anonymousDisabled` is a real answer
+ * and the screen says so rather than showing "something went wrong".
+ */
+export type PairFailure = {
+  error: "badCode" | "alreadyPaired" | "anonymousDisabled" | "pairError";
+};
+
+export const pairDevice = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      code: z
+        .string()
+        .trim()
+        .regex(/^[A-Za-z0-9]{6}$/),
+    }),
+  )
+  .handler(
+    async ({
+      data,
+    }): Promise<PairFailure | { clubSlug: string; tableId: number }> => {
+    const supabase = getSupabaseServer();
+
+    const { error: signInError } = await supabase.auth.signInAnonymously();
+    if (signInError) {
+      // Logged, because the two ways this fails look identical from the tablet
+      // and only one of them is fixable from the app.
+      console.error("pairDevice: anonymous sign-in failed", signInError.message);
+      return {
+        error: /anonymous/i.test(signInError.message)
+          ? "anonymousDisabled"
+          : "pairError",
+      };
+    }
+
+    // A set-returning function, so one row: the club to open and the table this
+    // code was cut for.
+    //
+    // claim_device changed shape in sql/device-pairing.sql and the generated
+    // types still carry the old one. Narrow cast until that migration is
+    // applied and `npm run db:types` re-run — the same stand-in
+    // queries/operator.ts uses.
+    const rpc = supabase as unknown as {
+      rpc: (
+        fn: string,
+        args: Record<string, string>,
+      ) => PromiseLike<{
+        data: { club_slug: string; table_id: number }[] | null;
+        error: { message: string } | null;
+      }>;
+    };
+
+    const { data: rows, error } = await rpc.rpc("claim_device", {
+      p_code: data.code.toUpperCase(),
+    });
+
+    const claim = rows?.[0];
+    if (error || !claim) {
+      console.error("pairDevice: claim failed", error?.message);
+      // The anonymous user is left behind rather than cleaned up: deleting it
+      // needs the service role, which this app deliberately does not have, and
+      // an unpaired anonymous user can read nothing.
+      await supabase.auth.signOut();
+
+      // A tablet that has been paired before fails here for a completely
+      // different reason than a stale code, and telling somebody to get a new
+      // code when the code was fine is the kind of dead end that ends with the
+      // tablet in a drawer.
+      return {
+        error: /already paired/i.test(error?.message ?? "")
+          ? "alreadyPaired"
+          : "badCode",
+      };
+    }
+
+    return { clubSlug: claim.club_slug, tableId: claim.table_id };
+  },
+);
+
 export const signUp = createServerFn({ method: "POST" })
   .validator(
     credentials.extend({

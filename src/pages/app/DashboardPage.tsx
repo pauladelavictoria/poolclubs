@@ -1,4 +1,5 @@
 import ActivityFeed from "@/components/social/ActivityFeed";
+import TonightPanel from "@/components/live/TonightPanel";
 import { useGetTournaments } from "@/hooks/useTournaments";
 import { TournamentOpenCard } from "@/components/tournaments/TournamentFeedCard";
 import { Card } from "@/components/ui/Card";
@@ -15,6 +16,10 @@ export default function DashboardPage() {
       {/* What you can enter, then what everyone else has been doing. Your own
           standing and your challenges used to sit above this; they live on your
           profile and the challenges page, which the drawer's "Me" leads to. */}
+
+      {/* What is on the tables right now. Renders nothing when nothing is, so
+              the page is unchanged on a quiet afternoon. */}
+      <TonightPanel />
 
       {/* An invitation, not a record: the accent is here because this is the
           one block on the page asking for something back. */}

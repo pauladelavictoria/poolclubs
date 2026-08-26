@@ -110,6 +110,23 @@ END $$;
 ALTER FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text", "cat" double precision) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  -- is_own_player(NULL) is false, so the empty doubles seats need no guard.
+  SELECT is_club_admin(cid)
+      OR is_club_device(cid)
+      OR is_own_player(p1::integer)
+      OR is_own_player(p2::integer)
+      OR is_own_player(p1b::integer)
+      OR is_own_player(p2b::integer);
+$$;
+
+
+ALTER FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."can_touch_plan"("pid" integer) RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -135,6 +152,62 @@ $$;
 
 
 ALTER FUNCTION "public"."can_touch_player"("pid" integer) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."claim_device"("p_code" "text") RETURNS TABLE("club_slug" "text", "table_id" integer)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  cid integer;
+  tid integer;
+  table_label text;
+  pid bigint;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'a device has to be signed in before it can be paired';
+  END IF;
+
+  -- FOR UPDATE, so two tablets typing the same code in the same second cannot
+  -- both consume it.
+  SELECT c.club_id, c.table_id INTO cid, tid
+  FROM club_device_codes c
+  WHERE c.code = upper(btrim(p_code)) AND c.expires_at > now()
+  FOR UPDATE;
+
+  IF cid IS NULL THEN
+    RAISE EXCEPTION 'that code is not valid any more';
+  END IF;
+
+  -- Already paired, to this club or another: one device, one membership.
+  IF EXISTS (
+    SELECT 1 FROM players p JOIN people pe ON pe.id = p.person_id
+    WHERE pe.user_id = auth.uid()
+  ) THEN
+    RAISE EXCEPTION 'this device is already paired';
+  END IF;
+
+  SELECT label INTO table_label FROM club_tables WHERE id = tid;
+
+  -- Named after its table, so the owner's list of devices reads as the room.
+  -- is_public false and a name that is furniture rather than a person: it is
+  -- filtered out of the roster and both rankings by the client, and anywhere it
+  -- does surface it should be obvious that it is not somebody.
+  INSERT INTO people (name, user_id, is_public)
+  VALUES (table_label || ' · tablet', auth.uid(), false)
+  RETURNING id INTO pid;
+
+  INSERT INTO players (club_id, person_id, status, is_device, device_table_id)
+  VALUES (cid, pid, 'active', true, tid);
+
+  -- One shot. The tablet keeps its session; the code is spent.
+  DELETE FROM club_device_codes WHERE code = upper(btrim(p_code));
+
+  RETURN QUERY SELECT c.slug, tid FROM clubs c WHERE c.id = cid;
+END $$;
+
+
+ALTER FUNCTION "public"."claim_device"("p_code" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."club_preview"("p_slug" "text") RETURNS TABLE("club_id" integer, "club_name" "text", "player_id" integer, "player_name" "text", "claimable" boolean)
@@ -255,6 +328,61 @@ END $$;
 ALTER FUNCTION "public"."create_club"("club_name" "text") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."finish_live_match"("p_id" "uuid") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  m public.live_matches;
+  g uuid;
+  w bigint;
+BEGIN
+  SELECT * INTO m FROM live_matches WHERE id = p_id FOR UPDATE;
+  IF m.id IS NULL THEN
+    RAISE EXCEPTION 'this match is already finished';
+  END IF;
+
+  -- SECURITY DEFINER bypasses RLS, so the policy's predicate is restated here
+  -- by hand. Same function, so the two cannot drift.
+  IF NOT can_score_live_match(m.club_id, m.player_1_id, m.player_2_id,
+                              m.player_1b_id, m.player_2b_id) THEN
+    RAISE EXCEPTION 'only the players or the club can finish this match';
+  END IF;
+
+  -- The daily table discards a tie as bad data, so it must not be filed at all.
+  IF m.player_1_score = m.player_2_score THEN
+    RAISE EXCEPTION 'a finished match needs a winner';
+  END IF;
+
+  INSERT INTO games (club_id, mode, discipline, played_at,
+                     player_1_id, player_2_id, player_1b_id, player_2b_id,
+                     player_1_score, player_2_score)
+  VALUES (m.club_id, m.mode, m.discipline, now(),
+          m.player_1_id, m.player_2_id, m.player_1b_id, m.player_2b_id,
+          m.player_1_score, m.player_2_score)
+  RETURNING id INTO g;
+
+  IF m.challenge_id IS NOT NULL THEN
+    UPDATE challenges SET status = 'played', game_id = g WHERE id = m.challenge_id;
+  END IF;
+
+  IF m.tournament_match_id IS NOT NULL THEN
+    w := CASE WHEN m.player_1_score > m.player_2_score
+              THEN m.player_1_id ELSE m.player_2_id END;
+    -- tournament_match_guard still fires and permits exactly these two columns
+    -- for a non-admin, which is the validation this would otherwise repeat.
+    UPDATE tournament_matches SET game_id = g, winner_id = w
+    WHERE id = m.tournament_match_id;
+  END IF;
+
+  DELETE FROM live_matches WHERE id = p_id;
+  RETURN g;
+END $$;
+
+
+ALTER FUNCTION "public"."finish_live_match"("p_id" "uuid") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."is_club_admin"("cid" integer) RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -264,6 +392,22 @@ $$;
 
 
 ALTER FUNCTION "public"."is_club_admin"("cid" integer) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."is_club_device"("cid" integer) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM players p
+    JOIN people pe ON pe.id = p.person_id
+    WHERE p.club_id = cid AND pe.user_id = auth.uid()
+      AND p.status = 'active' AND p.is_device
+  );
+$$;
+
+
+ALTER FUNCTION "public"."is_club_device"("cid" integer) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."is_club_member"("cid" integer) RETURNS boolean
@@ -382,6 +526,84 @@ END $$;
 
 
 ALTER FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."live_match_guard"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.table_id IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM club_tables WHERE id = NEW.table_id AND club_id = NEW.club_id
+    ) THEN
+      RAISE EXCEPTION 'that table belongs to another club';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  -- The abandonment clock is the server's, not the client's.
+  NEW.updated_at := now();
+
+  IF NEW.club_id IS DISTINCT FROM OLD.club_id THEN
+    RAISE EXCEPTION 'a live match cannot change club';
+  END IF;
+
+  IF NEW.table_id IS DISTINCT FROM OLD.table_id AND NEW.table_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM club_tables WHERE id = NEW.table_id AND club_id = NEW.club_id
+     ) THEN
+    RAISE EXCEPTION 'that table belongs to another club';
+  END IF;
+
+  IF is_club_admin(OLD.club_id) OR is_club_device(OLD.club_id) THEN
+    RETURN NEW;
+  END IF;
+
+  IF ROW(NEW.id, NEW.player_1_id, NEW.player_2_id, NEW.player_1b_id,
+         NEW.player_2b_id, NEW.mode, NEW.challenge_id,
+         NEW.tournament_match_id, NEW.started_at)
+     IS DISTINCT FROM
+     ROW(OLD.id, OLD.player_1_id, OLD.player_2_id, OLD.player_1b_id,
+         OLD.player_2b_id, OLD.mode, OLD.challenge_id,
+         OLD.tournament_match_id, OLD.started_at)
+  THEN
+    RAISE EXCEPTION 'players may change the score, the table, the race and the discipline';
+  END IF;
+
+  RETURN NEW;
+END $$;
+
+
+ALTER FUNCTION "public"."live_match_guard"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."operator_clubs"() RETURNS TABLE("id" integer, "name" "text", "slug" "text", "is_public" boolean, "member_count" integer, "pending_count" integer, "games_total" bigint, "games_7d" bigint, "games_30d" bigint, "last_game_at" timestamp with time zone, "created_at" timestamp with time zone)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT
+    c.id,
+    c.name,
+    c.slug,
+    c.is_public,
+    c.member_count,
+    (SELECT count(*) FROM players p
+      WHERE p.club_id = c.id AND p.status = 'pending')::integer,
+    (SELECT count(*) FROM games g WHERE g.club_id = c.id),
+    (SELECT count(*) FROM games g
+      WHERE g.club_id = c.id AND g.played_at >= now() - interval '7 days'),
+    (SELECT count(*) FROM games g
+      WHERE g.club_id = c.id AND g.played_at >= now() - interval '30 days'),
+    (SELECT max(g.played_at) FROM games g WHERE g.club_id = c.id),
+    c.created_at
+  FROM clubs c
+  WHERE public.is_drill_admin()
+  ORDER BY c.created_at DESC;
+$$;
+
+
+ALTER FUNCTION "public"."operator_clubs"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."people_drop_orphan"() RETURNS "trigger"
@@ -503,15 +725,10 @@ BEGIN
     RAISE EXCEPTION 'only the club owner may move a player between clubs';
   END IF;
 
-  -- A membership never changes hands. Without this, "Members can update club
-  -- players" — which exists so the roster editor can set a division — would also
-  -- let a member point somebody else's membership at their own person.
   IF NEW.person_id IS DISTINCT FROM OLD.person_id THEN
     RAISE EXCEPTION 'a membership cannot be reassigned to another person';
   END IF;
 
-  -- The one status change that is not the owner's: claiming an unclaimed person
-  -- drops their memberships to 'pending'. join_club() relies on this.
   IF NEW.status IS DISTINCT FROM OLD.status
      AND NOT is_club_admin(OLD.club_id)
      AND NOT (
@@ -519,6 +736,19 @@ BEGIN
        AND EXISTS (SELECT 1 FROM people WHERE id = NEW.person_id AND user_id = auth.uid())
      ) THEN
     RAISE EXCEPTION 'only the club owner may change a member''s status';
+  END IF;
+
+  IF (NEW.is_device, NEW.device_table_id) IS DISTINCT FROM (OLD.is_device, OLD.device_table_id)
+     AND NOT is_club_admin(OLD.club_id) THEN
+    RAISE EXCEPTION 'only the club owner may designate a device account';
+  END IF;
+
+  IF (NEW.present_since, NEW.queued_table_id, NEW.queued_at)
+     IS DISTINCT FROM (OLD.present_since, OLD.queued_table_id, OLD.queued_at)
+     AND NOT (is_own_player(NEW.id::integer)
+              OR is_club_admin(OLD.club_id)
+              OR is_club_device(OLD.club_id)) THEN
+    RAISE EXCEPTION 'you can only check yourself in';
   END IF;
 
   RETURN NEW;
@@ -554,6 +784,48 @@ $$;
 
 
 ALTER FUNCTION "public"."slugify"("txt" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."start_device_pairing"("cid" integer, "tid" integer) RETURNS "text"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  -- No O/0, no I/1/L. This gets read off a phone and typed into a tablet by
+  -- somebody standing up, and those are the characters that get typed wrong.
+  alphabet CONSTANT text := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  new_code text := '';
+  i integer;
+BEGIN
+  IF NOT is_club_admin(cid) THEN
+    RAISE EXCEPTION 'only the club owner may pair a device';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM club_tables WHERE id = tid AND club_id = cid) THEN
+    RAISE EXCEPTION 'that table belongs to another club';
+  END IF;
+
+  -- One live code per table, not per club: a club fitting out six tables in an
+  -- afternoon wants six codes at once, and a code is only good for the tablet
+  -- standing at its own table anyway.
+  DELETE FROM club_device_codes WHERE table_id = tid;
+
+  FOR i IN 1..6 LOOP
+    new_code := new_code || substr(alphabet, 1 + floor(random() * length(alphabet))::int, 1);
+  END LOOP;
+
+  -- Expired codes anywhere are dead weight; this is the only moment anything
+  -- writes this table, so it is the only place they need sweeping.
+  DELETE FROM club_device_codes WHERE expires_at < now();
+
+  INSERT INTO club_device_codes (code, club_id, table_id, expires_at)
+  VALUES (new_code, cid, tid, now() + interval '10 minutes');
+
+  RETURN new_code;
+END $$;
+
+
+ALTER FUNCTION "public"."start_device_pairing"("cid" integer, "tid" integer) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."tournament_club"("tid" integer) RETURNS integer
@@ -644,6 +916,41 @@ ALTER SEQUENCE "public"."challenges_id_seq" OWNED BY "public"."challenges"."id";
 
 
 
+CREATE TABLE IF NOT EXISTS "public"."club_device_codes" (
+    "code" "text" NOT NULL,
+    "club_id" integer NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "expires_at" timestamp with time zone NOT NULL,
+    "table_id" integer NOT NULL
+);
+
+
+ALTER TABLE "public"."club_device_codes" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."club_tables" (
+    "id" integer NOT NULL,
+    "club_id" integer NOT NULL,
+    "label" "text" NOT NULL,
+    "sort_order" smallint DEFAULT 0 NOT NULL,
+    CONSTRAINT "club_tables_label_check" CHECK ((("char_length"("btrim"("label")) >= 1) AND ("char_length"("btrim"("label")) <= 24)))
+);
+
+
+ALTER TABLE "public"."club_tables" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."club_tables" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."club_tables_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
 CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "id" integer NOT NULL,
     "name" "text" NOT NULL,
@@ -659,6 +966,9 @@ CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "country" "text",
     "lat" double precision,
     "lon" double precision,
+    "phone" "text",
+    "description" "text",
+    "schedule" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     CONSTRAINT "clubs_country_shape" CHECK ((("country" IS NULL) OR ("country" ~ '^[A-Z]{2}$'::"text"))),
     CONSTRAINT "clubs_latlon_pair" CHECK (((("lat" IS NULL) = ("lon" IS NULL)) AND (("lat" IS NULL) OR ((("lat" >= ('-90'::integer)::double precision) AND ("lat" <= (90)::double precision)) AND (("lon" >= ('-180'::integer)::double precision) AND ("lon" <= (180)::double precision)))))),
     CONSTRAINT "clubs_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
@@ -804,6 +1114,36 @@ CREATE TABLE IF NOT EXISTS "public"."games" (
 ALTER TABLE "public"."games" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."live_matches" (
+    "id" "uuid" NOT NULL,
+    "club_id" integer NOT NULL,
+    "table_id" integer,
+    "player_1_id" bigint NOT NULL,
+    "player_2_id" bigint NOT NULL,
+    "player_1b_id" bigint,
+    "player_2b_id" bigint,
+    "mode" "public"."GameMode" DEFAULT 'single'::"public"."GameMode" NOT NULL,
+    "discipline" "public"."Discipline" DEFAULT '9ball'::"public"."Discipline" NOT NULL,
+    "player_1_score" smallint DEFAULT 0 NOT NULL,
+    "player_2_score" smallint DEFAULT 0 NOT NULL,
+    "race_to" smallint DEFAULT 5 NOT NULL,
+    "last_side" smallint,
+    "challenge_id" integer,
+    "tournament_match_id" "uuid",
+    "started_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "live_matches_doubles_check" CHECK ((("mode" = 'doubles'::"public"."GameMode") = (("player_1b_id" IS NOT NULL) AND ("player_2b_id" IS NOT NULL)))),
+    CONSTRAINT "live_matches_last_side_check" CHECK ((("last_side" IS NULL) OR ("last_side" = ANY (ARRAY[1, 2])))),
+    CONSTRAINT "live_matches_origin_check" CHECK (("num_nonnulls"("challenge_id", "tournament_match_id") <= 1)),
+    CONSTRAINT "live_matches_race_check" CHECK ((("race_to" >= 1) AND ("race_to" <= 50))),
+    CONSTRAINT "live_matches_scores_check" CHECK (((("player_1_score" >= 0) AND ("player_1_score" <= 200)) AND (("player_2_score" >= 0) AND ("player_2_score" <= 200)))),
+    CONSTRAINT "live_matches_seats_check" CHECK (("player_1_id" <> "player_2_id"))
+);
+
+
+ALTER TABLE "public"."live_matches" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."people" (
     "id" bigint NOT NULL,
     "slug" "text" NOT NULL,
@@ -836,6 +1176,12 @@ CREATE TABLE IF NOT EXISTS "public"."players" (
     "club_id" integer NOT NULL,
     "status" "text" DEFAULT 'pending'::"text" NOT NULL,
     "person_id" bigint NOT NULL,
+    "present_since" timestamp with time zone,
+    "queued_table_id" integer,
+    "queued_at" timestamp with time zone,
+    "is_device" boolean DEFAULT false NOT NULL,
+    "device_table_id" integer,
+    CONSTRAINT "players_queue_check" CHECK ((("queued_table_id" IS NULL) = ("queued_at" IS NULL))),
     CONSTRAINT "players_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text"])))
 );
 
@@ -1060,6 +1406,14 @@ ALTER TABLE ONLY "public"."challenges"
 
 
 
+ALTER TABLE ONLY "public"."club_device_codes"
+    ADD CONSTRAINT "club_device_codes_pkey" PRIMARY KEY ("code");
+
+
+
+ALTER TABLE ONLY "public"."club_tables"
+    ADD CONSTRAINT "club_tables_pkey" PRIMARY KEY ("id");
+
 
 
 ALTER TABLE ONLY "public"."clubs"
@@ -1084,6 +1438,11 @@ ALTER TABLE ONLY "public"."drills"
 
 ALTER TABLE ONLY "public"."games"
     ADD CONSTRAINT "games_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."live_matches"
+    ADD CONSTRAINT "live_matches_pkey" PRIMARY KEY ("id");
 
 
 
@@ -1151,6 +1510,18 @@ CREATE INDEX "challenges_club_idx" ON "public"."challenges" USING "btree" ("club
 
 
 
+CREATE INDEX "club_device_codes_club_idx" ON "public"."club_device_codes" USING "btree" ("club_id");
+
+
+
+CREATE INDEX "club_tables_club_idx" ON "public"."club_tables" USING "btree" ("club_id", "sort_order");
+
+
+
+CREATE UNIQUE INDEX "club_tables_label_key" ON "public"."club_tables" USING "btree" ("club_id", "lower"("btrim"("label")));
+
+
+
 CREATE UNIQUE INDEX "clubs_slug_key" ON "public"."clubs" USING "btree" ("slug");
 
 
@@ -1183,6 +1554,14 @@ CREATE INDEX "idx_training_plans_player" ON "public"."training_plans" USING "btr
 
 
 
+CREATE INDEX "live_matches_club_idx" ON "public"."live_matches" USING "btree" ("club_id", "updated_at" DESC);
+
+
+
+CREATE UNIQUE INDEX "live_matches_one_per_table" ON "public"."live_matches" USING "btree" ("table_id") WHERE ("table_id" IS NOT NULL);
+
+
+
 CREATE UNIQUE INDEX "people_slug_key" ON "public"."people" USING "btree" ("slug");
 
 
@@ -1191,7 +1570,15 @@ CREATE INDEX "players_club_idx" ON "public"."players" USING "btree" ("club_id", 
 
 
 
+CREATE INDEX "players_device_table_idx" ON "public"."players" USING "btree" ("device_table_id") WHERE ("device_table_id" IS NOT NULL);
+
+
+
 CREATE INDEX "players_person_idx" ON "public"."players" USING "btree" ("person_id");
+
+
+
+CREATE INDEX "players_queue_idx" ON "public"."players" USING "btree" ("queued_table_id", "queued_at") WHERE ("queued_table_id" IS NOT NULL);
 
 
 
@@ -1220,6 +1607,10 @@ CREATE INDEX "tournaments_club_idx" ON "public"."tournaments" USING "btree" ("cl
 
 
 CREATE OR REPLACE TRIGGER "clubs_set_slug" BEFORE INSERT ON "public"."clubs" FOR EACH ROW EXECUTE FUNCTION "public"."clubs_set_slug"();
+
+
+
+CREATE OR REPLACE TRIGGER "live_matches_guard" BEFORE INSERT OR UPDATE ON "public"."live_matches" FOR EACH ROW EXECUTE FUNCTION "public"."live_match_guard"();
 
 
 
@@ -1264,6 +1655,21 @@ ALTER TABLE ONLY "public"."challenges"
 
 ALTER TABLE ONLY "public"."challenges"
     ADD CONSTRAINT "challenges_to_player_id_fkey" FOREIGN KEY ("to_player_id") REFERENCES "public"."players"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."club_device_codes"
+    ADD CONSTRAINT "club_device_codes_club_id_fkey" FOREIGN KEY ("club_id") REFERENCES "public"."clubs"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."club_device_codes"
+    ADD CONSTRAINT "club_device_codes_table_id_fkey" FOREIGN KEY ("table_id") REFERENCES "public"."club_tables"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."club_tables"
+    ADD CONSTRAINT "club_tables_club_id_fkey" FOREIGN KEY ("club_id") REFERENCES "public"."clubs"("id") ON DELETE CASCADE;
 
 
 
@@ -1337,6 +1743,46 @@ ALTER TABLE ONLY "public"."games"
 
 
 
+ALTER TABLE ONLY "public"."live_matches"
+    ADD CONSTRAINT "live_matches_challenge_id_fkey" FOREIGN KEY ("challenge_id") REFERENCES "public"."challenges"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."live_matches"
+    ADD CONSTRAINT "live_matches_club_id_fkey" FOREIGN KEY ("club_id") REFERENCES "public"."clubs"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."live_matches"
+    ADD CONSTRAINT "live_matches_player_1_id_fkey" FOREIGN KEY ("player_1_id") REFERENCES "public"."players"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."live_matches"
+    ADD CONSTRAINT "live_matches_player_1b_id_fkey" FOREIGN KEY ("player_1b_id") REFERENCES "public"."players"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."live_matches"
+    ADD CONSTRAINT "live_matches_player_2_id_fkey" FOREIGN KEY ("player_2_id") REFERENCES "public"."players"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."live_matches"
+    ADD CONSTRAINT "live_matches_player_2b_id_fkey" FOREIGN KEY ("player_2b_id") REFERENCES "public"."players"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."live_matches"
+    ADD CONSTRAINT "live_matches_table_id_fkey" FOREIGN KEY ("table_id") REFERENCES "public"."club_tables"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."live_matches"
+    ADD CONSTRAINT "live_matches_tournament_match_id_fkey" FOREIGN KEY ("tournament_match_id") REFERENCES "public"."tournament_matches"("id") ON DELETE SET NULL;
+
+
+
 ALTER TABLE ONLY "public"."people"
     ADD CONSTRAINT "people_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
 
@@ -1348,7 +1794,17 @@ ALTER TABLE ONLY "public"."players"
 
 
 ALTER TABLE ONLY "public"."players"
+    ADD CONSTRAINT "players_device_table_id_fkey" FOREIGN KEY ("device_table_id") REFERENCES "public"."club_tables"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."players"
     ADD CONSTRAINT "players_person_id_fkey" FOREIGN KEY ("person_id") REFERENCES "public"."people"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."players"
+    ADD CONSTRAINT "players_queued_table_id_fkey" FOREIGN KEY ("queued_table_id") REFERENCES "public"."club_tables"("id") ON DELETE SET NULL;
 
 
 
@@ -1462,6 +1918,14 @@ CREATE POLICY "Admin can generate matches" ON "public"."tournament_matches" FOR 
 
 
 
+CREATE POLICY "Admin can manage device codes" ON "public"."club_device_codes" TO "authenticated" USING ("public"."is_club_admin"("club_id")) WITH CHECK ("public"."is_club_admin"("club_id"));
+
+
+
+CREATE POLICY "Admin can manage tables" ON "public"."club_tables" TO "authenticated" USING ("public"."is_club_admin"("club_id")) WITH CHECK ("public"."is_club_admin"("club_id"));
+
+
+
 CREATE POLICY "Admin can remove players" ON "public"."players" FOR DELETE TO "authenticated" USING ("public"."is_club_admin"("club_id"));
 
 
@@ -1514,11 +1978,19 @@ CREATE POLICY "Games of public clubs are readable by anyone" ON "public"."games"
 
 
 
+CREATE POLICY "Live matches of public clubs are readable by anyone" ON "public"."live_matches" FOR SELECT TO "anon" USING ("public"."is_public_club"("club_id"));
+
+
+
 CREATE POLICY "Matches of public tournaments are readable by anyone" ON "public"."tournament_matches" FOR SELECT TO "anon" USING ("public"."is_public_club"("public"."tournament_club"("tournament_id")));
 
 
 
 CREATE POLICY "Members can add club games" ON "public"."games" FOR INSERT TO "authenticated" WITH CHECK ("public"."is_club_member"("club_id"));
+
+
+
+CREATE POLICY "Members can clear an abandoned match" ON "public"."live_matches" FOR DELETE TO "authenticated" USING (("public"."is_club_member"("club_id") AND ("updated_at" < ("now"() - '03:00:00'::interval))));
 
 
 
@@ -1564,7 +2036,15 @@ CREATE POLICY "Members can record results" ON "public"."tournament_matches" FOR 
 
 
 
+CREATE POLICY "Members can see the club's tables" ON "public"."club_tables" FOR SELECT TO "authenticated" USING ("public"."is_club_member"("club_id"));
+
+
+
 CREATE POLICY "Members can send challenges" ON "public"."challenges" FOR INSERT TO "authenticated" WITH CHECK (("public"."is_club_member"("club_id") AND "public"."is_own_player"("from_player_id")));
+
+
+
+CREATE POLICY "Members can start a live match" ON "public"."live_matches" FOR INSERT TO "authenticated" WITH CHECK (("public"."is_club_member"("club_id") AND "public"."can_score_live_match"("club_id", "player_1_id", "player_2_id", "player_1b_id", "player_2b_id")));
 
 
 
@@ -1618,6 +2098,10 @@ CREATE POLICY "Members can view tournament matches" ON "public"."tournament_matc
 
 
 
+CREATE POLICY "Members can watch live matches" ON "public"."live_matches" FOR SELECT TO "authenticated" USING ("public"."is_club_member"("club_id"));
+
+
+
 CREATE POLICY "Members can write comments" ON "public"."comments" FOR INSERT TO "authenticated" WITH CHECK (("public"."is_club_member"("club_id") AND "public"."is_own_player"("author_player_id")));
 
 
@@ -1658,6 +2142,14 @@ CREATE POLICY "Owner can update club" ON "public"."clubs" FOR UPDATE TO "authent
 
 
 
+CREATE POLICY "Participants and the club can abandon" ON "public"."live_matches" FOR DELETE TO "authenticated" USING ("public"."can_score_live_match"("club_id", "player_1_id", "player_2_id", "player_1b_id", "player_2b_id"));
+
+
+
+CREATE POLICY "Participants and the club can score" ON "public"."live_matches" FOR UPDATE TO "authenticated" USING ("public"."can_score_live_match"("club_id", "player_1_id", "player_2_id", "player_1b_id", "player_2b_id")) WITH CHECK ("public"."can_score_live_match"("club_id", "player_1_id", "player_2_id", "player_1b_id", "player_2b_id"));
+
+
+
 CREATE POLICY "People of public clubs are readable by anyone" ON "public"."people" FOR SELECT TO "anon" USING ("public"."person_in_public_club"("id"));
 
 
@@ -1670,6 +2162,10 @@ CREATE POLICY "Public clubs are readable by anyone" ON "public"."clubs" FOR SELE
 
 
 
+CREATE POLICY "Tables of public clubs are readable by anyone" ON "public"."club_tables" FOR SELECT TO "anon" USING ("public"."is_public_club"("club_id"));
+
+
+
 CREATE POLICY "The shared drill catalog is readable by anyone" ON "public"."drills" FOR SELECT TO "anon" USING (("club_id" IS NULL));
 
 
@@ -1679,6 +2175,12 @@ CREATE POLICY "Tournaments of public clubs are readable by anyone" ON "public"."
 
 
 ALTER TABLE "public"."challenges" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."club_device_codes" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."club_tables" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."clubs" ENABLE ROW LEVEL SECURITY;
@@ -1694,6 +2196,9 @@ ALTER TABLE "public"."drills" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."games" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."live_matches" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."people" ENABLE ROW LEVEL SECURITY;
@@ -1733,6 +2238,10 @@ ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."challenges";
 
 
 
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."club_tables";
+
+
+
 ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."comments";
 
 
@@ -1742,6 +2251,10 @@ ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."drill_logs";
 
 
 ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."games";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."live_matches";
 
 
 
@@ -1933,6 +2446,12 @@ GRANT ALL ON FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text",
 
 
 
+GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "anon";
+GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."can_touch_plan"("pid" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."can_touch_plan"("pid" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."can_touch_plan"("pid" integer) TO "service_role";
@@ -1942,6 +2461,12 @@ GRANT ALL ON FUNCTION "public"."can_touch_plan"("pid" integer) TO "service_role"
 GRANT ALL ON FUNCTION "public"."can_touch_player"("pid" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."can_touch_player"("pid" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."can_touch_player"("pid" integer) TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."claim_device"("p_code" "text") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."claim_device"("p_code" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."claim_device"("p_code" "text") TO "service_role";
 
 
 
@@ -1974,9 +2499,21 @@ GRANT ALL ON FUNCTION "public"."create_club"("club_name" "text") TO "service_rol
 
 
 
+REVOKE ALL ON FUNCTION "public"."finish_live_match"("p_id" "uuid") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."finish_live_match"("p_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."finish_live_match"("p_id" "uuid") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."is_club_admin"("cid" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."is_club_admin"("cid" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_club_admin"("cid" integer) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."is_club_device"("cid" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."is_club_device"("cid" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."is_club_device"("cid" integer) TO "service_role";
 
 
 
@@ -2004,8 +2541,21 @@ GRANT ALL ON FUNCTION "public"."is_public_club"("cid" integer) TO "service_role"
 
 
 
+GRANT ALL ON FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."live_match_guard"() TO "anon";
+GRANT ALL ON FUNCTION "public"."live_match_guard"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."live_match_guard"() TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."operator_clubs"() FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."operator_clubs"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."operator_clubs"() TO "service_role";
 
 
 
@@ -2057,6 +2607,12 @@ GRANT ALL ON FUNCTION "public"."slugify"("txt" "text") TO "service_role";
 
 
 
+REVOKE ALL ON FUNCTION "public"."start_device_pairing"("cid" integer, "tid" integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."start_device_pairing"("cid" integer, "tid" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."start_device_pairing"("cid" integer, "tid" integer) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."tournament_club"("tid" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."tournament_club"("tid" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."tournament_club"("tid" integer) TO "service_role";
@@ -2093,6 +2649,24 @@ GRANT ALL ON TABLE "public"."challenges" TO "service_role";
 GRANT ALL ON SEQUENCE "public"."challenges_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."challenges_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."challenges_id_seq" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."club_device_codes" TO "anon";
+GRANT ALL ON TABLE "public"."club_device_codes" TO "authenticated";
+GRANT ALL ON TABLE "public"."club_device_codes" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."club_tables" TO "anon";
+GRANT ALL ON TABLE "public"."club_tables" TO "authenticated";
+GRANT ALL ON TABLE "public"."club_tables" TO "service_role";
+
+
+
+GRANT ALL ON SEQUENCE "public"."club_tables_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."club_tables_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."club_tables_id_seq" TO "service_role";
 
 
 
@@ -2247,6 +2821,12 @@ GRANT ALL ON SEQUENCE "public"."drills_id_seq" TO "service_role";
 GRANT ALL ON TABLE "public"."games" TO "anon";
 GRANT ALL ON TABLE "public"."games" TO "authenticated";
 GRANT ALL ON TABLE "public"."games" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."live_matches" TO "anon";
+GRANT ALL ON TABLE "public"."live_matches" TO "authenticated";
+GRANT ALL ON TABLE "public"."live_matches" TO "service_role";
 
 
 

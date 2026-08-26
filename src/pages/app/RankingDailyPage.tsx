@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
+import { useFullscreen } from "@/libs/useFullscreen";
 import { LuPlus, LuTv } from "react-icons/lu";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
@@ -30,19 +31,9 @@ export default function RankingDailyPage() {
   const navigate = route.useNavigate();
 
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
-  const tvRef = useRef<HTMLDivElement>(null);
-  const [isTv, setIsTv] = useState(false);
-
-  useEffect(() => {
-    const sync = () => setIsTv(document.fullscreenElement === tvRef.current);
-    document.addEventListener("fullscreenchange", sync);
-    return () => document.removeEventListener("fullscreenchange", sync);
-  }, []);
-
-  const toggleTv = () => {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else tvRef.current?.requestFullscreen();
-  };
+  // Shared with the scoreboard, which wants the same trick for the same reason.
+  const { ref: tvRef, isFullscreen: isTv, toggle: toggleTv } =
+    useFullscreen<HTMLDivElement>();
 
   const { data: gamesData, isLoading: gamesLoading } = useGetGames({
     date: selectedDate,

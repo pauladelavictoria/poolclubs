@@ -14,9 +14,16 @@ import { useT } from "@/i18n";
 export default function ChallengeButton({
   toPlayerId,
   size = "sm",
+  isHere = false,
 }: {
   toPlayerId: number;
   size?: "sm" | "md";
+  /** They are at the club right now. Same mutation either way — this only
+   *  changes what the button says, because "challenge" reads as a message to
+   *  answer later and the answer here is that they are stood by the table.
+   *  Passed in rather than looked up: this button appears once per row on a
+   *  roster, and a clock hook in each of them is a timer in each of them. */
+  isHere?: boolean;
 }) {
   const { t } = useT();
   const { player } = useAuth();
@@ -50,7 +57,7 @@ export default function ChallengeButton({
     return (
       <Button size={size} className="shrink-0" onClick={() => setOpen(true)}>
         <LuSwords className="h-4 w-4" aria-hidden />
-        {t("challenge.send")}
+        {t(isHere ? "challenge.playNow" : "challenge.send")}
       </Button>
     );
   }
@@ -64,7 +71,7 @@ export default function ChallengeButton({
           { toPlayerId, message },
           {
             onSuccess: () => {
-              toast.success(t("challenge.sent"));
+              toast.success(t(isHere ? "challenge.sentHere" : "challenge.sent"));
               setMessage("");
               setOpen(false);
             },

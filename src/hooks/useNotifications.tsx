@@ -23,7 +23,8 @@ export type NotificationKind =
   | "challengeDeclined"
   | "tournamentOpen"
   | "tournamentAction"
-  | "drillAdded";
+  | "drillAdded"
+;
 
 export type AppNotification = {
   /** Stable and unique per underlying event *and* its current state, so an

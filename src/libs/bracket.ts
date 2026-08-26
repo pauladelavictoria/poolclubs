@@ -1,3 +1,7 @@
+// Not crypto.randomUUID directly: it is secure-context only, so it is missing
+// on a tablet opening the app over plain http. See libs/uuid.ts.
+import { uuid } from "./uuid.ts";
+
 /**
  * Fixture generation. Pure — no React, no Supabase — so it can be checked with
  * `node src/libs/bracket.check.ts`.
@@ -40,8 +44,6 @@ export type MatchLike = {
   loser_to: string | null;
   loser_to_slot: number | null;
 };
-
-const uuid = () => crypto.randomUUID();
 
 const blank = (
   bracket: BracketSide,

@@ -3,22 +3,28 @@ import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { keys, type ClubScopedKeys } from "./queryKeys";
 import { removeRow, upsertRow } from "./realtimeRows";
-import type { Comment, Reaction } from "@/types";
+import type { Comment, LiveMatch, Reaction } from "@/types";
 
 /**
- * Social rows go straight into the cache instead of invalidating.
+ * These rows go straight into the cache instead of invalidating.
  *
  * One reaction from one member used to cost every other member a refetch of the
  * club's entire comment or reaction history. The row is already in the payload;
  * the round trip was buying nothing.
  *
- * Only for these two tables. Games and players feed the Elo ranking, which is
- * derived from the whole list, so there a refetch is the honest answer.
+ * Comments, reactions and live matches. Games and players feed the Elo ranking,
+ * which is derived from the whole list, so there a refetch is the honest
+ * answer; a score bump is the opposite case — the payload carries the whole new
+ * row, and thirteen refetches of the club feed per race is what invalidating
+ * would cost every open tab.
+ *
+ * `matchesOptimistic` is omitted for a table whose ids come from the client:
+ * there the pending row and the row the socket brings back already share an id.
  */
-function applySocialRow<T extends { id: number; club_id: number }>(
+function applyRow<T extends { id: string | number; club_id: number }>(
   queryClient: QueryClient,
   table: ClubScopedKeys,
-  matchesOptimistic: (candidate: T, incoming: T) => boolean,
+  matchesOptimistic?: (candidate: T, incoming: T) => boolean,
 ) {
   return (payload: RealtimePostgresChangesPayload<T>) => {
     if (payload.eventType === "DELETE") {
@@ -28,7 +34,12 @@ function applySocialRow<T extends { id: number; club_id: number }>(
       const { id } = payload.old;
       if (id === undefined) return;
       queryClient.setQueriesData<T[]>({ queryKey: table.all }, (rows) =>
-        rows && rows.some((r) => r.id === id) ? removeRow(rows, id) : rows,
+        // Array.isArray, not a truthiness check: `all` is a prefix, so a
+        // single-row cache entry filed under the same root would arrive here
+        // and be handed a list edit.
+        Array.isArray(rows) && rows.some((r) => r.id === id)
+          ? removeRow(rows, id)
+          : rows,
       );
       return;
     }
@@ -51,6 +62,31 @@ const sameTargetAndAuthor = (
   a.author_player_id === b.author_player_id &&
   a.game_id === b.game_id &&
   a.drill_log_id === b.drill_log_id;
+
+/**
+ * A live match lands in two caches: the club's list, and the scoreboard's own
+ * single-row query.
+ *
+ * The second one is why `liveMatch` has a root of its own — applyRow's list
+ * edits would otherwise be handed a single row. A delete is a match that has
+ * just been filed as a game, so the scoreboard is told the row is gone rather
+ * than being left to refetch a 404.
+ */
+function applyLiveMatch(queryClient: QueryClient) {
+  const toList = applyRow<LiveMatch>(queryClient, keys.liveMatches);
+
+  return (payload: RealtimePostgresChangesPayload<LiveMatch>) => {
+    toList(payload);
+
+    if (payload.eventType === "DELETE") {
+      const { id } = payload.old;
+      if (id !== undefined) queryClient.setQueryData(keys.liveMatch.one(id), null);
+      return;
+    }
+
+    queryClient.setQueryData(keys.liveMatch.one(payload.new.id), payload.new);
+  };
+}
 
 /** Drop everything cached for a table and let the screens refetch. */
 const invalidate =
@@ -127,11 +163,11 @@ export function startRealtime(queryClient: QueryClient) {
     )
     // Social tables: a conversation that needs a manual refresh is not one.
     // These two carry the row into the cache rather than invalidating — see
-    // applySocialRow above.
+    // applyRow above.
     .on(
       "postgres_changes",
       onTable("comments"),
-      applySocialRow<Comment>(
+      applyRow<Comment>(
         queryClient,
         keys.comments,
         (a, b) => sameTargetAndAuthor(a, b) && a.body === b.body,
@@ -140,7 +176,7 @@ export function startRealtime(queryClient: QueryClient) {
     .on(
       "postgres_changes",
       onTable("reactions"),
-      applySocialRow<Reaction>(
+      applyRow<Reaction>(
         queryClient,
         keys.reactions,
         (a, b) => sameTargetAndAuthor(a, b) && a.emoji === b.emoji,
@@ -151,11 +187,29 @@ export function startRealtime(queryClient: QueryClient) {
       onTable("challenges"),
       invalidate(queryClient, keys.challenges.all),
     )
+    // A scoreboard two people are both looking at. The row arrives whole, so it
+    // is patched in rather than refetched — see applyRow above. Finishing
+    // deletes the row, and a delete payload carries only the id, so the removal
+    // scans every club's list the way the social tables do.
+    .on("postgres_changes", onTable("live_matches"), applyLiveMatch(queryClient))
+    // The venue's tables change about once a year.
+    .on(
+      "postgres_changes",
+      onTable("club_tables"),
+      invalidate(queryClient, keys.clubTables.all),
+    )
     // A tournament page is derived from its whole fixture list — one result
     // moves the bracket and the tables — so these refetch rather than patch.
     // Both roots: the index shows status, the page shows everything.
     .on("postgres_changes", onTable("tournaments"), tournaments)
     .on("postgres_changes", onTable("tournament_players"), tournaments)
     .on("postgres_changes", onTable("tournament_matches"), tournaments)
-    .subscribe();
+    // Subscribing used to be fire-and-forget, which made the one failure that
+    // matters invisible: a channel that never joins, or joins and errors, looks
+    // exactly like a quiet club. Every screen then runs on whatever refetch it
+    // happens to have — 30 seconds on the wall display — and nothing says so.
+    .subscribe((status, err) => {
+      if (status === "SUBSCRIBED") return;
+      console.warn(`realtime: ${status}`, err ?? "");
+    });
 }

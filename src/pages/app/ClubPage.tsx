@@ -16,6 +16,7 @@ import PlayerForm from "@/components/players/PlayerForm";
 import ClubLogoUpload from "@/components/club/ClubLogoUpload";
 import ClubThemePicker from "@/components/club/ClubThemePicker";
 import ClubLocationPicker from "@/components/club/ClubLocationPicker";
+import ClubTablesCard from "@/components/club/ClubTablesCard";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -266,6 +267,10 @@ export default function ClubPage() {
             </div>
           </div>
         </Card>
+
+        {/* The room itself. Here rather than on its own settings page for the
+            same reason the roster is: it is a list the owner keeps. */}
+        <ClubTablesCard />
 
         {/* Pending join requests surface globally now, see JoinRequestBanner —
             an admin shouldn't have to be on this page to see one.
