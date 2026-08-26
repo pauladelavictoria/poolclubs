@@ -163,6 +163,7 @@ export type Database = {
           schedule: Json
           slug: string
           theme_color: Database["public"]["Enums"]["BallColor"]
+          timezone: string
         }
         Insert: {
           address?: string | null
@@ -182,6 +183,7 @@ export type Database = {
           schedule?: Json
           slug: string
           theme_color?: Database["public"]["Enums"]["BallColor"]
+          timezone?: string
         }
         Update: {
           address?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           schedule?: Json
           slug?: string
           theme_color?: Database["public"]["Enums"]["BallColor"]
+          timezone?: string
         }
         Relationships: []
       }

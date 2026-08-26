@@ -1,10 +1,17 @@
+import { useState } from "react";
 import { getRouteApi, Navigate, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { LuExpand, LuTrash2 } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatch, useManageLiveMatch } from "@/hooks/useLiveMatch";
+import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
 import { seatsOf } from "@/libs/night";
+import { Avatar } from "@/components/ui/Avatar";
+import { Card } from "@/components/ui/Card";
+import { readTodaySetup } from "@/libs/prefs";
+import { seatsNeeded } from "@/libs/today";
 import Scoreboard from "@/components/live/Scoreboard";
 import { AppLink, useAppNavigate } from "@/components/layout/AppLink";
 import { Button, IconButton } from "@/components/ui/Button";
@@ -36,11 +43,115 @@ export default function LiveMatchPage() {
   // Polled only there: the tablet on the rail is the one screen that finds out
   // the match is over by nobody telling it.
   const { data: match, isLoading } = useLiveMatch(liveId, { poll: pinned });
-  const { bump, unbump, finishMatch, abandonMatch } = useManageLiveMatch();
+  const { bump, unbump, startMatch, finishMatch, abandonMatch } =
+    useManageLiveMatch();
+  const { data: tables } = useClubTables();
+  /** The table this match was on and who was on it, held after the row is gone:
+   *  filing deletes it, and the next match wants the same table without the two
+   *  who just played it being offered straight back onto it. */
+  const [freed, setFreed] = useState<{ tableId: number; seats: number[] } | null>(
+    null,
+  );
+  // The club's setting as it stands. Read, not owned: /today is where it is
+  // changed, and a scoreboard arguing with it would be a second answer.
+  const setup = readTodaySetup();
+  const seats = seatsNeeded(setup);
+  const { groups, canStart } = useSuggestions({
+    setup,
+    maxGroups: 1,
+    exclude: freed?.seats,
+  });
   const { ref, isFullscreen, toggle } = useFullscreen<HTMLDivElement>();
   const appNavigate = useAppNavigate();
 
   if (isLoading) return <PageSkeleton />;
+
+  // Filed, and this table is free. Whoever the night says is next, on it — an
+  // offer and never an auto-start: a match that started itself while both
+  // players were at the bar is a ghost row holding a table.
+  if (freed !== null) {
+    const table = (tables ?? []).find((tbl) => tbl.id === freed.tableId);
+    const group = groups[0];
+
+    // Nobody waiting, or the table is gone: there is nothing to offer and this
+    // page has no match left to show.
+    if (!table || !group)
+      return pinned ? (
+        <Navigate
+          to="/app/$clubSlug/tables/$tableId"
+          params={{ clubSlug, tableId: String(freed.tableId) }}
+          replace
+        />
+      ) : (
+        <Navigate to="/app/$clubSlug" params={{ clubSlug }} replace />
+      );
+
+    return (
+      <div className="mx-auto max-w-md px-3 py-8">
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-caption font-medium uppercase tracking-wide text-ink-faint">
+              {t("live.nextTitle", { name: table.label })}
+            </p>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="flex shrink-0 -space-x-2">
+                {group.map((p) => (
+                  <Avatar
+                    key={p.id}
+                    name={p.name}
+                    url={p.avatar_url}
+                    className="h-9 w-9 ring-2 ring-felt"
+                  />
+                ))}
+              </div>
+              <p className="min-w-0 text-body font-medium text-ink">
+                {seats === 4
+                  ? `${group[0].name} & ${group[1].name} — ${group[2].name} & ${group[3].name}`
+                  : `${group[0].name} — ${group[1].name}`}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button
+              variant="secondary"
+              onClick={() =>
+                void navigate({ to: "/app/$clubSlug", params: { clubSlug } })
+              }
+            >
+              {t("live.notNow")}
+            </Button>
+            {canStart(group) && (
+              <Button
+                disabled={startMatch.isPending}
+                onClick={() =>
+                  startMatch.mutate(
+                    {
+                      ...seatsOfGroup(group, seats),
+                      tableId: table.id,
+                      discipline: setup.discipline,
+                      raceTo: setup.raceTo,
+                    },
+                    {
+                      onSuccess: (row) =>
+                        void navigate({
+                          to: "/app/$clubSlug/live/$liveId",
+                          params: { clubSlug, liveId: row.id },
+                        }),
+                      onError: (err) =>
+                        toast.error(t(liveWriteMessage(err, "startMatch"))),
+                    },
+                  )
+                }
+              >
+                {t("today.startOn", { name: table.label })}
+              </Button>
+            )}
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   // Finished while this tab was looking at it — the socket sets the row to null
   // rather than leaving the page to refetch a match that no longer exists.
@@ -88,6 +199,13 @@ export default function LiveMatchPage() {
     finishMatch.mutate(match.id, {
       onSuccess: () => {
         toast.success(t("games.added"));
+        // Hand the table straight on. A table that goes back to a home page
+        // after every result is a table somebody has to come and restart, and on
+        // a club night that is the difference between four matches and six.
+        if (match.table_id !== null) {
+          setFreed({ tableId: match.table_id, seats: seatsOf(match) });
+          return;
+        }
         void navigate({ to: "/app/$clubSlug", params: { clubSlug } });
       },
       // Usually the other phone pressed Finish half a second earlier, which is

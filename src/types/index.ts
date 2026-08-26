@@ -41,7 +41,13 @@ type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
  * The location columns (address, city, country, lat, lon) are written together
  * or not at all; see src/libs/geocode.ts for the `Place` they come from.
  */
-export type Club = Stamped<Row<"clubs">> & { slug: string };
+export type Club = Stamped<Row<"clubs">> & { slug: string } & {
+  /** The club's own clock, as an IANA zone: what 06:00 means when a night is
+   *  bucketed into a day. Intersected in rather than read from the generated Row
+   *  until sql/club-timezone.sql is applied and `npm run db:types` re-run;
+   *  harmless once it is. See libs/day.ts. */
+  timezone: string | null;
+};
 
 /** The club's accent colour, keyed to a real Postgres enum so it stays in
  *  lockstep with the palette in libs/clubTheme.ts. Ordered 1-8, the solids'

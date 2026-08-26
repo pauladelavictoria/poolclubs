@@ -70,6 +70,10 @@ export const useManageClub = () => {
         /** All five columns or none: a picked suggestion, or null to forget
          *  it. Never a hand-typed address without coordinates. */
         location?: Place | null;
+        /** The club's own clock, as an IANA zone. What decides which night a
+         *  result belongs to — see libs/day.ts. The database refuses a zone
+         *  Postgres does not know (sql/club-timezone.sql). */
+        timezone?: string;
       }) => {
         if (!activeClubId) throw new Error("no active club");
 
@@ -98,9 +102,18 @@ export const useManageClub = () => {
           patch.lon = place?.lon ?? null;
         }
 
+        // `timezone` is not in the generated Row until sql/club-timezone.sql is
+        // applied and `npm run db:types` re-run, so it is added here and the
+        // cast hides that one key rather than the whole patch — same temporary
+        // as players.device_table_id, and it goes away with the same regen.
+        const row =
+          updates.timezone === undefined
+            ? patch
+            : ({ ...patch, timezone: updates.timezone } as typeof patch);
+
         await supabase
           .from("clubs")
-          .update(patch)
+          .update(row)
           .eq("id", activeClubId)
           .throwOnError();
       },

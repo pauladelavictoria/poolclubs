@@ -302,6 +302,25 @@ $$;
 ALTER FUNCTION "public"."clubs_set_slug"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."clubs_timezone_guard"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'pg_catalog'
+    AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_timezone_names WHERE name = NEW.timezone
+  ) THEN
+    RAISE EXCEPTION 'unknown timezone: %', NEW.timezone;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."clubs_timezone_guard"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."create_club"("club_name" "text") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -969,6 +988,7 @@ CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "phone" "text",
     "description" "text",
     "schedule" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "timezone" "text" DEFAULT 'Europe/Madrid'::"text" NOT NULL,
     CONSTRAINT "clubs_country_shape" CHECK ((("country" IS NULL) OR ("country" ~ '^[A-Z]{2}$'::"text"))),
     CONSTRAINT "clubs_latlon_pair" CHECK (((("lat" IS NULL) = ("lon" IS NULL)) AND (("lat" IS NULL) OR ((("lat" >= ('-90'::integer)::double precision) AND ("lat" <= (90)::double precision)) AND (("lon" >= ('-180'::integer)::double precision) AND ("lon" <= (180)::double precision)))))),
     CONSTRAINT "clubs_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
@@ -1607,6 +1627,10 @@ CREATE INDEX "tournaments_club_idx" ON "public"."tournaments" USING "btree" ("cl
 
 
 CREATE OR REPLACE TRIGGER "clubs_set_slug" BEFORE INSERT ON "public"."clubs" FOR EACH ROW EXECUTE FUNCTION "public"."clubs_set_slug"();
+
+
+
+CREATE OR REPLACE TRIGGER "clubs_timezone_check" BEFORE INSERT OR UPDATE OF "timezone" ON "public"."clubs" FOR EACH ROW EXECUTE FUNCTION "public"."clubs_timezone_guard"();
 
 
 
@@ -2491,6 +2515,12 @@ GRANT ALL ON FUNCTION "public"."clubs_recount_members"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."clubs_set_slug"() TO "anon";
 GRANT ALL ON FUNCTION "public"."clubs_set_slug"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."clubs_set_slug"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."clubs_timezone_guard"() TO "anon";
+GRANT ALL ON FUNCTION "public"."clubs_timezone_guard"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."clubs_timezone_guard"() TO "service_role";
 
 
 

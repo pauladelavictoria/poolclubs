@@ -2,12 +2,12 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { LuMinus, LuPlus, LuTv } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { useCheckIn, useWhoIsHere } from "@/hooks/useNight";
-import { seatsOf, sideNames } from "@/libs/night";
+import { useSuggestions, seatsOfGroup } from "@/hooks/useSuggestions";
+import { sideNames } from "@/libs/night";
 import StartMatchForm from "@/components/live/StartMatchForm";
 import PageTitle from "@/components/layout/PageTitle";
 import { AppLink } from "@/components/layout/AppLink";
@@ -22,16 +22,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/libs/useDialog";
 import { readTodaySetup, writeTodaySetup } from "@/libs/prefs";
-import {
-  balanceDoubles,
-  clampRace,
-  pairKey,
-  seatsNeeded,
-  suggestGroups,
-  type DaySetup,
-} from "@/libs/today";
+import { clampRace, seatsNeeded, type DaySetup } from "@/libs/today";
 import { liveWriteMessage } from "@/libs/dbError";
-import { useNow } from "@/libs/useNow";
 import { useT } from "@/i18n";
 import { DISCIPLINES, type ClubTable, type Player } from "@/types";
 
@@ -55,11 +47,6 @@ export default function TodayPage() {
   const { startMatch } = useManageLiveMatch();
   const checkIn = useCheckIn();
   const here = useWhoIsHere();
-  // Today's filed results, for who has already had a table. Null until the
-  // browser knows the date — see libs/useNow.
-  const now = useNow();
-  const today = now === null ? null : new Date(now).toLocaleDateString("sv-SE");
-  const { data: gamesToday } = useGetGames({ date: today ?? undefined });
 
   // From the cookie, so the server renders the bar the club left it on — see
   // libs/today.ts.
@@ -80,91 +67,21 @@ export default function TodayPage() {
   const hereIds = new Set(here.map((p) => p.id));
   const canCheckOthers = isClubAdmin || player?.is_device === true;
 
-  // All four seats, so a doubles partner is not offered a table of their own.
-  const busy = new Set((live ?? []).flatMap(seatsOf));
   const seats = seatsNeeded(setup);
-  const freeTables = (tables ?? []).filter((tbl) => !matchOn(tbl.id));
-
-  // Today's results, twice over: how many each person has had, and who has
-  // already been on a table with whom. The first orders the waiting list, the
-  // second keeps it from pairing the same two again.
-  const playedToday = new Map<number, number>();
-  const metToday = new Set<string>();
-
-  for (const game of gamesToday?.games ?? []) {
-    const ids = [
-      game.player_1_id,
-      game.player_2_id,
-      game.player_1b_id,
-      game.player_2b_id,
-    ].filter((id): id is number => id !== null);
-
-    for (const id of ids) playedToday.set(id, (playedToday.get(id) ?? 0) + 1);
-    // Partners as well as opponents: they have had their game together either
-    // way, and in doubles a repeated partner is as stale as a repeated
-    // opponent.
-    for (let i = 0; i < ids.length; i++)
-      for (let j = i + 1; j < ids.length; j++)
-        metToday.add(pairKey(ids[i], ids[j]));
-  }
-
-  /**
-   * Here, and not at a table.
-   *
-   * Fewest games today first, then longest checked in. Whoever has been sitting
-   * with a drink all evening is the answer to "who should have this table", and
-   * the person who has just filed their third is not — but it is a sort and not
-   * a filter: by ten o'clock everybody has played, and a suggestion nobody is
-   * offered is worse than one that repeats a pairing.
-   *
-   * Arriving is the whole of the queue this replaced, which is the point: it is
-   * the one thing everybody does anyway.
-   *
-   * The club's own tablet checks in as a device and is not a player, so it never
-   * turns up in a suggestion.
-   */
-  const idle = here
-    .filter((p) => !busy.has(p.id) && p.is_device !== true)
-    .sort(
-      (a, b) =>
-        (playedToday.get(a.id) ?? 0) - (playedToday.get(b.id) ?? 0) ||
-        (a.present_since ?? "").localeCompare(b.present_since ?? ""),
-    );
-
-  // As many matches as there are tables to put them on, and no more: asking for
-  // what is wanted is what keeps a suggestion still while somebody checks in at
-  // the door. One is asked for when every table is busy, so "you two are next"
-  // is still said. Whole matches only — three people waiting for doubles is not
-  // a suggestion, it is three people waiting.
-  //
-  // Balanced as they are formed, so the names shown and the match started are
-  // the same match: the queue decides which four are together, the divisions
-  // decide who plays with whom — see suggestGroups and balanceDoubles in
-  // libs/today.ts.
-  const suggestions = suggestGroups(
-    idle,
-    seats,
-    (a, b) => metToday.has(pairKey(a, b)),
-    Math.max(freeTables.length, 1),
-  ).map((group) => (seats === 4 ? balanceDoubles(group) : group));
-
-  /** Mirrors can_score_live_match in sql/live-night.sql: the insert is refused
-   *  for anyone who is neither in the match nor the club's admin or tablet, so
-   *  the button is not offered rather than offered and failing. */
-  const canStart = (group: Player[]) =>
-    isClubAdmin ||
-    player?.is_device === true ||
-    group.some((p) => p.id === player?.id);
+  // Who could play whom, and on what. Shared with the scoreboard's "next on
+  // this table" offer so the two can never disagree — see hooks/useSuggestions.
+  const { groups: suggestions, freeTables, canStart } = useSuggestions({
+    setup,
+    maxGroups: Math.max(
+      (tables ?? []).filter((tbl) => !matchOn(tbl.id)).length,
+      1,
+    ),
+  });
 
   const startSuggested = (group: Player[], table: ClubTable) =>
     startMatch.mutate(
       {
-        // Side one is the first two, side two the last two — the order
-        // balanceDoubles put them in.
-        player1: group[0],
-        partner1: group[1] && seats === 4 ? group[1] : null,
-        player2: seats === 4 ? group[2] : group[1],
-        partner2: seats === 4 ? group[3] : null,
+        ...seatsOfGroup(group, seats),
         tableId: table.id,
         discipline: setup.discipline,
         raceTo: setup.raceTo,

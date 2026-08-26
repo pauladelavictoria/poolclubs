@@ -10,6 +10,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/Button";
 import { useFullscreen } from "@/libs/useFullscreen";
 import { useWakeLock } from "@/libs/useWakeLock";
+import { dayKeyOf, zoneOf } from "@/libs/day";
 import { useNow } from "@/libs/useNow";
 import { useT } from "@/i18n";
 
@@ -25,17 +26,20 @@ const gridFor = (n: number) =>
 export default function TvPage() {
   const { t, locale } = useT();
   const { activeClub } = useAuth();
+  const tz = zoneOf(activeClub);
   const { ref, isFullscreen, toggle } = useFullscreen<HTMLDivElement>();
 
   // A minute is the resolution of a clock on a wall, and it is what rolls the
   // date over. Null until the browser has it — see libs/useNow.
   const now = useNow(60_000);
-  const today = now === null ? null : new Date(now).toLocaleDateString("sv-SE");
+  // Rolls over at 06:00, not at midnight: the wall display must not blank the
+  // night's standings while the last two are still playing — see libs/day.ts.
+  const today = now === null ? null : dayKeyOf(now, tz);
 
   const { data: live } = useLiveMatches({ poll: true });
   const { data: players } = useGetPlayers();
   const { data: gamesData, isLoading: gamesLoading } = useGetGames(
-    { date: today ?? undefined, mode: "single" },
+    { date: today ?? undefined, mode: "single", tz },
     { poll: true },
   );
   const ranking = useDailyRanking({
