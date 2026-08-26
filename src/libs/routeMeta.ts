@@ -31,12 +31,14 @@ export type RouteMeta = {
   section?: SectionId;
   /** Ancestors, outermost first. */
   crumbs?: Crumb[];
+  fullBleed?: boolean;
 };
 
 declare module "@tanstack/react-router" {
   interface StaticDataRouteOption {
     section?: SectionId;
     crumbs?: Crumb[];
+    fullBleed?: boolean;
   }
 }
 
@@ -48,7 +50,11 @@ declare module "@tanstack/react-router" {
  * a given crumb needs is harmless, and it means a route declaring its trail does
  * not also have to restate where the ids come from.
  */
-export function useRouteMeta(): { section?: SectionId; crumbs: Crumb[] } {
+export function useRouteMeta(): {
+  section?: SectionId;
+  crumbs: Crumb[];
+  fullBleed: boolean;
+} {
   const matches = useMatches();
   const params = useParams({ strict: false });
 
@@ -59,6 +65,7 @@ export function useRouteMeta(): { section?: SectionId; crumbs: Crumb[] } {
 
   return {
     section: meta?.section,
+    fullBleed: meta?.fullBleed ?? false,
     crumbs: (meta?.crumbs ?? []).map((c) => ({
       ...c,
       params: c.params ?? params,

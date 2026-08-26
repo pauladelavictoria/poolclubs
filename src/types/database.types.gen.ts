@@ -76,12 +76,81 @@ export type Database = {
           },
         ]
       }
+      club_device_codes: {
+        Row: {
+          club_id: number
+          code: string
+          created_at: string
+          expires_at: string
+          table_id: number
+        }
+        Insert: {
+          club_id: number
+          code: string
+          created_at?: string
+          expires_at: string
+          table_id: number
+        }
+        Update: {
+          club_id?: number
+          code?: string
+          created_at?: string
+          expires_at?: string
+          table_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_device_codes_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_device_codes_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "club_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_tables: {
+        Row: {
+          club_id: number
+          id: number
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          club_id: number
+          id?: number
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          club_id?: number
+          id?: number
+          label?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_tables_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clubs: {
         Row: {
           address: string | null
           city: string | null
           country: string | null
           created_at: string | null
+          description: string | null
           id: number
           is_public: boolean
           lat: number | null
@@ -90,14 +159,18 @@ export type Database = {
           member_count: number
           name: string
           owner_id: string
+          phone: string | null
+          schedule: Json
           slug: string
           theme_color: Database["public"]["Enums"]["BallColor"]
+          timezone: string
         }
         Insert: {
           address?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
+          description?: string | null
           id?: number
           is_public?: boolean
           lat?: number | null
@@ -106,14 +179,18 @@ export type Database = {
           member_count?: number
           name: string
           owner_id: string
+          phone?: string | null
+          schedule?: Json
           slug: string
           theme_color?: Database["public"]["Enums"]["BallColor"]
+          timezone?: string
         }
         Update: {
           address?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
+          description?: string | null
           id?: number
           is_public?: boolean
           lat?: number | null
@@ -122,8 +199,11 @@ export type Database = {
           member_count?: number
           name?: string
           owner_id?: string
+          phone?: string | null
+          schedule?: Json
           slug?: string
           theme_color?: Database["public"]["Enums"]["BallColor"]
+          timezone?: string
         }
         Relationships: []
       }
@@ -368,6 +448,123 @@ export type Database = {
           },
         ]
       }
+      live_matches: {
+        Row: {
+          challenge_id: number | null
+          club_id: number
+          discipline: Database["public"]["Enums"]["Discipline"]
+          id: string
+          last_side: number | null
+          mode: Database["public"]["Enums"]["GameMode"]
+          player_1_id: number
+          player_1_score: number
+          player_1b_id: number | null
+          player_2_id: number
+          player_2_score: number
+          player_2b_id: number | null
+          race_to: number
+          started_at: string
+          table_id: number | null
+          tournament_match_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          challenge_id?: number | null
+          club_id: number
+          discipline?: Database["public"]["Enums"]["Discipline"]
+          id: string
+          last_side?: number | null
+          mode?: Database["public"]["Enums"]["GameMode"]
+          player_1_id: number
+          player_1_score?: number
+          player_1b_id?: number | null
+          player_2_id: number
+          player_2_score?: number
+          player_2b_id?: number | null
+          race_to?: number
+          started_at?: string
+          table_id?: number | null
+          tournament_match_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          challenge_id?: number | null
+          club_id?: number
+          discipline?: Database["public"]["Enums"]["Discipline"]
+          id?: string
+          last_side?: number | null
+          mode?: Database["public"]["Enums"]["GameMode"]
+          player_1_id?: number
+          player_1_score?: number
+          player_1b_id?: number | null
+          player_2_id?: number
+          player_2_score?: number
+          player_2b_id?: number | null
+          race_to?: number
+          started_at?: string
+          table_id?: number | null
+          tournament_match_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_matches_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_matches_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_matches_player_1_id_fkey"
+            columns: ["player_1_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_matches_player_1b_id_fkey"
+            columns: ["player_1b_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_matches_player_2_id_fkey"
+            columns: ["player_2_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_matches_player_2b_id_fkey"
+            columns: ["player_2b_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_matches_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "club_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_matches_tournament_match_id_fkey"
+            columns: ["tournament_match_id"]
+            isOneToOne: false
+            referencedRelation: "tournament_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       people: {
         Row: {
           avatar_url: string | null
@@ -399,22 +596,37 @@ export type Database = {
         Row: {
           category: number
           club_id: number
+          device_table_id: number | null
           id: number
+          is_device: boolean
           person_id: number
+          present_since: string | null
+          queued_at: string | null
+          queued_table_id: number | null
           status: string
         }
         Insert: {
           category?: number
           club_id: number
+          device_table_id?: number | null
           id?: number
+          is_device?: boolean
           person_id: number
+          present_since?: string | null
+          queued_at?: string | null
+          queued_table_id?: number | null
           status?: string
         }
         Update: {
           category?: number
           club_id?: number
+          device_table_id?: number | null
           id?: number
+          is_device?: boolean
           person_id?: number
+          present_since?: string | null
+          queued_at?: string | null
+          queued_table_id?: number | null
           status?: string
         }
         Relationships: [
@@ -426,10 +638,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "players_device_table_id_fkey"
+            columns: ["device_table_id"]
+            isOneToOne: false
+            referencedRelation: "club_tables"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "players_person_id_fkey"
             columns: ["person_id"]
             isOneToOne: false
             referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_queued_table_id_fkey"
+            columns: ["queued_table_id"]
+            isOneToOne: false
+            referencedRelation: "club_tables"
             referencedColumns: ["id"]
           },
         ]
@@ -776,8 +1002,19 @@ export type Database = {
         Args: { cat?: number; cid: number; pname: string }
         Returns: number
       }
+      can_score_live_match: {
+        Args: { cid: number; p1: number; p1b: number; p2: number; p2b: number }
+        Returns: boolean
+      }
       can_touch_plan: { Args: { pid: number }; Returns: boolean }
       can_touch_player: { Args: { pid: number }; Returns: boolean }
+      claim_device: {
+        Args: { p_code: string }
+        Returns: {
+          club_slug: string
+          table_id: number
+        }[]
+      }
       club_preview: {
         Args: { p_slug: string }
         Returns: {
@@ -790,7 +1027,9 @@ export type Database = {
       }
       club_slug_reserved: { Args: never; Returns: string[] }
       create_club: { Args: { club_name: string }; Returns: number }
+      finish_live_match: { Args: { p_id: string }; Returns: string }
       is_club_admin: { Args: { cid: number }; Returns: boolean }
+      is_club_device: { Args: { cid: number }; Returns: boolean }
       is_club_member: { Args: { cid: number }; Returns: boolean }
       is_drill_admin: { Args: never; Returns: boolean }
       is_own_player: { Args: { pid: number }; Returns: boolean }
@@ -823,6 +1062,10 @@ export type Database = {
       person_is_admins_guest: { Args: { pid: number }; Returns: boolean }
       person_shares_club: { Args: { pid: number }; Returns: boolean }
       slugify: { Args: { txt: string }; Returns: string }
+      start_device_pairing: {
+        Args: { cid: number; tid: number }
+        Returns: string
+      }
       tournament_club: { Args: { tid: number }; Returns: number }
     }
     Enums: {

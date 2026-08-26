@@ -3,6 +3,7 @@ import {
   Outlet,
   createFileRoute,
   notFound,
+  redirect,
   useLocation,
 } from "@tanstack/react-router";
 import AppHeader from "@/components/layout/AppHeader";
@@ -13,6 +14,9 @@ import { PageSkeleton } from "@/components/ui/Skeleton";
 import ClubOnboardingPage from "@/pages/app/ClubOnboardingPage";
 import ClubThemeStyle from "@/components/club/ClubThemeStyle";
 import { playersQuery } from "@/queries/players";
+import { useRouteMeta } from "@/libs/routeMeta";
+import { isKioskAllowed, readKioskTable } from "@/libs/kiosk";
+import KioskBar from "@/components/layout/KioskBar";
 
 /**
  * A club, and everything inside it.
@@ -26,13 +30,25 @@ import { playersQuery } from "@/queries/players";
  * it is pointing at.
  */
 export const Route = createFileRoute("/app/_authed/$clubSlug")({
-  beforeLoad: ({ context, params }) => {
+  beforeLoad: ({ context, params, location }) => {
     const membership = context.memberships.find(
       (m) => m.club?.slug === params.clubSlug,
     );
 
     // A club you are not in reads the same as a club that does not exist.
     if (!membership?.club) throw notFound();
+
+    // A tablet bolted to a table goes back to it. The cookie is readable on the
+    // server, so this happens before anything renders rather than as a flash of
+    // the wrong page — and it is what makes the device self-healing: a reload,
+    // a stray swipe, or the PWA booting to its start_url all land here.
+    const kioskTable = readKioskTable();
+    if (kioskTable !== null && !isKioskAllowed(location.pathname, params.clubSlug))
+      throw redirect({
+        to: "/app/$clubSlug/tables/$tableId",
+        params: { clubSlug: params.clubSlug, tableId: String(kioskTable) },
+        replace: true,
+      });
 
     return {
       player: membership,
@@ -61,6 +77,16 @@ export const Route = createFileRoute("/app/_authed/$clubSlug")({
 
 function ClubLayout() {
   const { activeClub, isMember } = Route.useRouteContext();
+  // A page that is the whole screen — the live scoreboard — keeps neither the
+  // tab bar nor the room reserved for it. See RouteMeta.fullBleed.
+  const { fullBleed } = useRouteMeta();
+  const kioskTable = readKioskTable();
+  // A tablet on a rail wants the browser's chrome gone as much as the app's.
+  // Element fullscreen, so it is the shell that fills the screen and not the
+  // document — the same mechanism the wall display and the scoreboard use.
+  // The shell fullscreen acts on. The bar owns the button; the ref has to be
+  // here, because this is what renders the element.
+  const kioskRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
   const scroller = useRef<HTMLElement>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -88,6 +114,29 @@ function ClubLayout() {
       <>
         {accent}
         <ClubOnboardingPage />
+      </>
+    );
+
+  // A pinned device shows one table and the match on it. No drawer, no tabs, no
+  // app bar: every one of them is a way to end up somewhere this device has no
+  // business being, and the page below carries its own name and its own way
+  // back out. The cookie is a guardrail against a stray swipe, not a boundary —
+  // see libs/kiosk.ts.
+  if (kioskTable !== null)
+    return (
+      <>
+        {accent}
+        <div ref={kioskRef} className="flex h-dvh flex-col overflow-hidden bg-pocket">
+          {/* The tablet's only chrome. The pages below render content and
+              nothing else — a second header on a scoreboard is a second header
+              on the one screen that wants the whole display. */}
+          <KioskBar tableId={kioskTable} containerRef={kioskRef} />
+          <main className="min-h-0 flex-1 overflow-hidden pb-[env(safe-area-inset-bottom)]">
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
+          </main>
+        </div>
       </>
     );
 
@@ -125,7 +174,7 @@ function ClubLayout() {
         data-app-shell
         className="flex h-dvh flex-col overflow-hidden pinned:pl-[19rem]"
       >
-        <NavRail onMore={() => setIsDrawerOpen(true)} />
+        {!fullBleed && <NavRail onMore={() => setIsDrawerOpen(true)} />}
         {/* The pinned column carries the club, the bell and the user across its
             own ends, so a bar here would be a second row of chrome repeating it. */}
         <div className="shrink-0 pinned:hidden">
@@ -136,9 +185,21 @@ function ClubLayout() {
             py-4 is all there is between the first heading and the window. */}
         <main
           ref={scroller}
-          className="flex-1 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 pinned:pt-2"
+          className={[
+            "flex-1 pinned:pt-2",
+            fullBleed
+              ? // Nothing under here scrolls, and a page sized to the viewport
+                // must not be able to produce a scrollbar of its own. The inset
+                // still has to be cleared — with the tab bar gone, the home
+                // indicator is what the bottom edge runs into.
+                "overflow-hidden pb-[env(safe-area-inset-bottom)]"
+              : "overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0",
+          ].join(" ")}
         >
-          <JoinRequestBanner />
+          {/* Pushed off a full-bleed page rather than pushing its content: the
+              banner is an admin's standing to-do, and it is still on every
+              other page in the club. */}
+          {!fullBleed && <JoinRequestBanner />}
           <Suspense fallback={<PageSkeleton />}>
             <Outlet />
           </Suspense>

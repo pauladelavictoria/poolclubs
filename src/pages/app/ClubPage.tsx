@@ -16,14 +16,17 @@ import PlayerForm from "@/components/players/PlayerForm";
 import ClubLogoUpload from "@/components/club/ClubLogoUpload";
 import ClubThemePicker from "@/components/club/ClubThemePicker";
 import ClubLocationPicker from "@/components/club/ClubLocationPicker";
+import ClubTablesCard from "@/components/club/ClubTablesCard";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { Select } from "@/components/ui/Select";
 import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Toggle } from "@/components/ui/Toggle";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/libs/useDialog";
+import { CLUB_TZ, DAY_START_HOUR, zoneOf } from "@/libs/day";
 import type { Place } from "@/libs/geocode";
 import type { Player, Category, BallColor } from "@/types";
 import { useT } from "@/i18n";
@@ -35,6 +38,16 @@ import { AppLink } from "@/components/layout/AppLink";
  * members get a "send invite" button in the nav drawer instead, since the
  * roster and settings here are theirs to manage, not to browse.
  */
+/**
+ * Every zone this browser knows, or the club's own if it knows none — the list
+ * is 400-odd names and Intl already has it, so shipping a table of them would be
+ * a copy that goes stale. Sorted, because it is a select somebody scrolls.
+ */
+const ZONES: string[] = (() => {
+  const supported = Intl.supportedValuesOf?.("timeZone") ?? [];
+  return supported.length > 0 ? [...supported].sort() : [CLUB_TZ];
+})();
+
 export default function ClubPage() {
   const { t } = useT();
   const { activeClub, player, user } = useAuth();
@@ -53,6 +66,7 @@ export default function ClubPage() {
   const [color, setColor] = useState<BallColor | undefined>(undefined);
   const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined);
   const [location, setLocation] = useState<Place | null | undefined>(undefined);
+  const [timezone, setTimezone] = useState<string | undefined>(undefined);
   const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -97,7 +111,8 @@ export default function ClubPage() {
     logoUrl !== undefined ||
     color !== undefined ||
     isPublic !== undefined ||
-    location !== undefined;
+    location !== undefined ||
+    timezone !== undefined;
 
   const saveSettings = () => {
     updateClub.mutate(
@@ -107,6 +122,7 @@ export default function ClubPage() {
         ...(color !== undefined && { themeColor: color }),
         ...(isPublic !== undefined && { isPublic }),
         ...(location !== undefined && { location }),
+        ...(timezone !== undefined && { timezone }),
       },
       {
         onSuccess: () => {
@@ -115,6 +131,7 @@ export default function ClubPage() {
           setColor(undefined);
           setIsPublic(undefined);
           setLocation(undefined);
+          setTimezone(undefined);
           toast.success(t("common.saved"));
         },
         onError: () => toast.error(t("common.error")),
@@ -203,6 +220,29 @@ export default function ClubPage() {
               />
             </div>
 
+            {/* The club's clock. Not derived from the location above: a country
+                is not a zone — Spain is two of them — and a night that rolls
+                over at the wrong hour files the last three races of it into the
+                wrong day. See libs/day.ts. */}
+            <div className="mt-5 space-y-3 border-t border-hairline pt-4">
+              <Label htmlFor="club-timezone">{t("club.timezone")}</Label>
+              <p className="text-body text-ink-soft">
+                {t("club.timezoneHint", { hour: DAY_START_HOUR })}
+              </p>
+              <Select
+                id="club-timezone"
+                value={timezone ?? zoneOf(activeClub)}
+                onChange={(e) => setTimezone(e.target.value)}
+                disabled={updateClub.isPending}
+              >
+                {ZONES.map((zone) => (
+                  <option key={zone} value={zone}>
+                    {zone}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
             <div className="mt-5 space-y-2 border-t border-hairline pt-4">
               <Toggle
                 checked={isPublic ?? activeClub.is_public}
@@ -266,6 +306,10 @@ export default function ClubPage() {
             </div>
           </div>
         </Card>
+
+        {/* The room itself. Here rather than on its own settings page for the
+            same reason the roster is: it is a list the owner keeps. */}
+        <ClubTablesCard />
 
         {/* Pending join requests surface globally now, see JoinRequestBanner —
             an admin shouldn't have to be on this page to see one.

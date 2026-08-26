@@ -9,6 +9,7 @@ import {
   LuHouse,
   LuClipboardList,
   LuChartColumn,
+  LuLayoutGrid,
 } from "react-icons/lu";
 import type { LinkProps } from "@tanstack/react-router";
 import type { Key } from "@/i18n";
@@ -98,6 +99,12 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         icon: LuHouse,
         section: "home",
         end: true,
+      },
+      {
+        to: "/app/$clubSlug/today",
+        labelKey: "nav.today",
+        icon: LuLayoutGrid,
+        section: "home",
       },
       {
         to: "/app/$clubSlug/players",

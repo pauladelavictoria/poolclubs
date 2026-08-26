@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
+import { CLUB_TZ, dayRange } from "@/libs/day";
 import type { Game, GameMode } from "@/types";
 
 export type UseGetGamesFilters = {
@@ -11,15 +12,18 @@ export type UseGetGamesFilters = {
   playerId?: number;
   category?: number; // filter games where either player belongs to this category
   mode?: GameMode;
+  /** The club's zone, for what `date` means. Part of the filters and so part of
+   *  the query key, which is right: the same date in two zones is two different
+   *  ranges. See libs/day.ts. */
+  tz?: string;
 };
 
-const getDateRange = (date: string) => {
-  const dateClean = date.split("T")[0];
-  return {
-    from: `${dateClean}T00:00:00.000Z`,
-    to: `${dateClean}T23:59:59.999Z`,
-  };
-};
+// A day is the club's night, 06:00 to 06:00, and the range comes from
+// libs/day.ts — where the zone lives and where the arithmetic is checked. It
+// used to be built here as UTC midnights around a locally-formatted date, which
+// dropped every result filed after 22:00 UTC out of its own night.
+const getDateRange = (date: string, tz?: string) =>
+  dayRange(date.split("T")[0], tz ?? CLUB_TZ);
 
 /** The four seats in a game. A row lists two ids for singles and four for
  *  doubles, so "was this player in it" is a question about all four columns. */
@@ -47,7 +51,7 @@ const playedInAny = (playerIds: number[]) =>
 // Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
 // for the app, rather than one per hook instance.
 export const gamesQuery = (clubId: number, filters: UseGetGamesFilters = {}) => {
-  const { date, page = 1, pageSize, playerId, category, mode } = filters;
+  const { date, page = 1, pageSize, playerId, category, mode, tz } = filters;
 
   return queryOptions({
     queryKey: keys.games.list(clubId, filters),
@@ -65,9 +69,11 @@ export const gamesQuery = (clubId: number, filters: UseGetGamesFilters = {}) => 
       }
 
       if (date) {
-        const { from, to } = getDateRange(date);
+        const { from, to } = getDateRange(date, tz);
+        // Half-open: the instant one night ends is the instant the next begins,
+        // so nothing can be counted twice or not at all.
         query = query.gte("played_at", from);
-        query = query.lte("played_at", to);
+        query = query.lt("played_at", to);
       }
 
       if (playerId) {

@@ -1,4 +1,4 @@
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import type { LinkProps } from "@tanstack/react-router";
 
 /**
@@ -36,4 +36,27 @@ export function AppLink({ params, ...rest }: AppLinkProps) {
   // `to` is checked, the parameter *object* cannot be without restating every
   // route's shape here.
   return <Link {...rest} params={merged as never} />;
+}
+
+/**
+ * The same idea for a navigation rather than a link: fills the club in, so a
+ * mutation's onSuccess can send the tablet to the match it just created without
+ * reading the slug off the URL to put it straight back.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAppNavigate() {
+  const { clubSlug } = useParams({ from: "/app/_authed/$clubSlug" });
+  const navigate = useNavigate();
+
+  return (
+    to: LinkProps["to"],
+    params: Record<string, string | number> = {},
+  ) => {
+    const merged: Record<string, string> = { clubSlug };
+    for (const [key, value] of Object.entries(params)) {
+      merged[key] = String(value);
+    }
+    // Same cast, same reason as above.
+    void navigate({ to, params: merged } as never);
+  };
 }

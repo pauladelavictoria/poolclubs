@@ -41,7 +41,13 @@ type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
  * The location columns (address, city, country, lat, lon) are written together
  * or not at all; see src/libs/geocode.ts for the `Place` they come from.
  */
-export type Club = Stamped<Row<"clubs">> & { slug: string };
+export type Club = Stamped<Row<"clubs">> & { slug: string } & {
+  /** The club's own clock, as an IANA zone: what 06:00 means when a night is
+   *  bucketed into a day. Intersected in rather than read from the generated Row
+   *  until sql/club-timezone.sql is applied and `npm run db:types` re-run;
+   *  harmless once it is. See libs/day.ts. */
+  timezone: string | null;
+};
 
 /** The club's accent colour, keyed to a real Postgres enum so it stays in
  *  lockstep with the palette in libs/clubTheme.ts. Ordered 1-8, the solids'
@@ -79,18 +85,38 @@ export type PlayerStatus = "pending" | "active";
  *  sql/people.sql. Name, face and public listing live here and nowhere else. */
 export type Person = Row<"people">;
 
+/** One of the venue's tables. `label` is what is painted on the wall — "3",
+ *  "Mesa 2", "Snooker" — so it is text and not a number. */
+export type ClubTable = Row<"club_tables">;
+
 /**
- * A membership: this person, in this club, at this division.
+ * A match being played right now.
  *
- * The person's fields are spread onto it rather than left under `person`, so the
- * ~18 places that render `player.name` and `player.avatar_url` did not have to
- * change when people split out of players. The flattening happens once per query
- * in src/queries/players.ts — see the note there.
+ * The row's existence is its status: live while it is here, finished once
+ * `finish_live_match` has turned it into a `games` row and deleted it,
+ * abandoned while it is here and nobody has touched it — see libs/night.ts.
+ * The four seats, `mode` and `discipline` are the same shape as a game, because
+ * finishing copies them straight across.
+ *
+ * `last_side` is a smallint holding 1 or 2 — narrowed here for the same reason
+ * the status columns below are: the CHECK is the real domain and the generated
+ * type is looser than what is ever stored.
  */
+export type LiveMatch = Omit<Row<"live_matches">, "last_side"> & {
+  /** Which side scored the last rack. What undo reads — two counters alone
+   *  cannot say, so undo on the other phone would guess. */
+  last_side: 1 | 2 | null;
+};
+
 export type Player = Omit<Row<"players">, "category" | "status"> & {
   category: Category;
   status: PlayerStatus;
-} & Pick<Person, "name" | "avatar_url" | "slug" | "is_public"> & {
+} & {
+    /** Which table this tablet is paired to, when it is one. Intersected in
+     *  rather than read from the generated Row until sql/device-pairing.sql is
+     *  applied and `npm run db:types` re-run; harmless once it is. */
+    device_table_id: number | null;
+  } & Pick<Person, "name" | "avatar_url" | "slug" | "is_public"> & {
     /** Null out here on the public side, where anon is not granted the column.
      *  Only ClubPage reads it, to mark which member owns the club. */
     user_id: string | null;
