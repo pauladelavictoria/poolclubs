@@ -1,6 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
+import { useFullscreen } from "@/libs/useFullscreen";
 import { LuPlus, LuTv } from "react-icons/lu";
+import { useAuth } from "@/hooks/useAuth";
 import { useGetGames } from "@/hooks/useGetGames";
+import { zoneOf } from "@/libs/day";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useDailyRanking } from "@/hooks/useDailyRanking";
 import PageTitle from "@/components/layout/PageTitle";
@@ -23,6 +26,7 @@ const route = getRouteApi("/app/_authed/$clubSlug/ranking/daily");
 
 export default function RankingDailyPage() {
   const { t } = useT();
+  const { activeClub } = useAuth();
   // The date is required in the URL and validated by the route, so there is no
   // "today" to compute during render — which is what used to make this page a
   // hydration mismatch waiting for midnight.
@@ -30,23 +34,16 @@ export default function RankingDailyPage() {
   const navigate = route.useNavigate();
 
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
-  const tvRef = useRef<HTMLDivElement>(null);
-  const [isTv, setIsTv] = useState(false);
+  // Shared with the scoreboard, which wants the same trick for the same reason.
+  const { ref: tvRef, isFullscreen: isTv, toggle: toggleTv } =
+    useFullscreen<HTMLDivElement>();
 
-  useEffect(() => {
-    const sync = () => setIsTv(document.fullscreenElement === tvRef.current);
-    document.addEventListener("fullscreenchange", sync);
-    return () => document.removeEventListener("fullscreenchange", sync);
-  }, []);
-
-  const toggleTv = () => {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else tvRef.current?.requestFullscreen();
-  };
-
+  // The club's zone decides what that date covers: a night runs 06:00 to 06:00
+  // of the club's own clock, not the calendar's — see libs/day.ts.
   const { data: gamesData, isLoading: gamesLoading } = useGetGames({
     date: selectedDate,
     mode: "single",
+    tz: zoneOf(activeClub),
   });
   const games = gamesData?.games ?? [];
 

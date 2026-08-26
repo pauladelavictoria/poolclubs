@@ -89,6 +89,26 @@ export const keys = {
     in: (clubId?: number | null) => ["challenges", clubId] as const,
   },
 
+  /** Matches being played right now. No key for check-in or the queue: those
+   *  are columns on the membership, so they arrive with the roster. */
+  liveMatches: {
+    all: ["live_matches"] as const,
+    in: (clubId?: number | null) => ["live_matches", clubId] as const,
+  },
+
+  /** One match has its own root, beside the club's list — the scoreboard is
+   *  often the first thing a tab loads, and the list operations realtime runs
+   *  over `liveMatches` are array edits that must not meet a single row. */
+  liveMatch: {
+    all: ["live_match"] as const,
+    one: (id?: string) => ["live_match", id] as const,
+  },
+
+  clubTables: {
+    all: ["club_tables"] as const,
+    in: (clubId?: number | null) => ["club_tables", clubId] as const,
+  },
+
   tournaments: {
     all: ["tournaments"] as const,
     in: (clubId?: number | null) => ["tournaments", clubId] as const,

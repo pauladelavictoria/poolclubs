@@ -3,7 +3,6 @@ import { supabase } from "@/supabaseClient";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
-import { newJoinCode } from "@/libs/joinCode";
 import { markJustJoinedClub } from "@/libs/installPrompt";
 import { SESSION_KEY, sessionQuery } from "@/queries/session";
 import { clubPreviewQuery } from "@/queries/club";
@@ -71,6 +70,10 @@ export const useManageClub = () => {
         /** All five columns or none: a picked suggestion, or null to forget
          *  it. Never a hand-typed address without coordinates. */
         location?: Place | null;
+        /** The club's own clock, as an IANA zone. What decides which night a
+         *  result belongs to — see libs/day.ts. The database refuses a zone
+         *  Postgres does not know (sql/club-timezone.sql). */
+        timezone?: string;
       }) => {
         if (!activeClubId) throw new Error("no active club");
 
@@ -99,41 +102,20 @@ export const useManageClub = () => {
           patch.lon = place?.lon ?? null;
         }
 
-        await supabase
-          .from("clubs")
-          .update(patch)
-          .eq("id", activeClubId)
-          .throwOnError();
-      },
-      onSuccess,
-    }),
-
-    /**
-     * A new invite code, which revokes the old one.
-     *
-     * Ships with the printed QR poster and is what makes it safe: once a code is
-     * on a wall it is public, and the only answer to that is being able to
-     * replace it. Nothing else has to change — the join link is built from the
-     * code, so the old link and every printed poster stop working the moment
-     * this lands.
-     *
-     * The code itself comes from libs/joinCode.ts, generated in the browser
-     * rather than by the column default: PostgREST has no "set this back to the
-     * default" in an UPDATE.
-     */
-    rotateJoinCode: useMutation({
-      mutationFn: async () => {
-        if (!activeClubId) throw new Error("no active club");
-
-        const code = newJoinCode();
+        // `timezone` is not in the generated Row until sql/club-timezone.sql is
+        // applied and `npm run db:types` re-run, so it is added here and the
+        // cast hides that one key rather than the whole patch — same temporary
+        // as players.device_table_id, and it goes away with the same regen.
+        const row =
+          updates.timezone === undefined
+            ? patch
+            : ({ ...patch, timezone: updates.timezone } as typeof patch);
 
         await supabase
           .from("clubs")
-          .update({ join_code: code })
+          .update(row)
           .eq("id", activeClubId)
           .throwOnError();
-
-        return code;
       },
       onSuccess,
     }),
@@ -196,11 +178,11 @@ export const useJoinOrCreateClub = () => {
 
     joinClub: useMutation({
       mutationFn: async ({
-        code,
+        slug,
         claimPlayerId,
         displayName,
       }: {
-        code: string;
+        slug: string;
         claimPlayerId?: number;
         /** Names are unique per club; this is how two real people sharing one
          *  disambiguate. NULL falls back to the OAuth full_name. */
@@ -208,7 +190,7 @@ export const useJoinOrCreateClub = () => {
       }) => {
         const { data } = await supabase
           .rpc("join_club", {
-            code,
+            p_slug: slug,
             // Both default to NULL in the function, so leaving a key out is
             // the same as passing null — and `undefined` is what the generated
             // argument types accept.
@@ -223,5 +205,5 @@ export const useJoinOrCreateClub = () => {
   };
 };
 
-export const useClubPreview = (code: string | undefined) =>
-  useQuery({ ...clubPreviewQuery(code ?? ""), enabled: !!code });
+export const useClubPreview = (slug: string | undefined) =>
+  useQuery({ ...clubPreviewQuery(slug ?? ""), enabled: !!slug });

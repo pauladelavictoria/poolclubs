@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { LuUsers } from "react-icons/lu";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useWhoIsHere } from "@/hooks/useNight";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import PageTitle from "@/components/layout/PageTitle";
@@ -16,7 +17,7 @@ import type { Category, Player } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 
-type SortMode = "name" | "category";
+type SortMode = "here" | "name" | "category";
 
 const CATEGORIES = [1, 2, 3] as const;
 
@@ -24,7 +25,15 @@ const CATEGORIES = [1, 2, 3] as const;
  *  rather than zero, so the card can say "no matches" instead of "0%". */
 type Record_ = { played: number; won: number };
 
-function PlayerCard({ player, record }: { player: Player; record?: Record_ }) {
+function PlayerCard({
+  player,
+  record,
+  isHere,
+}: {
+  player: Player;
+  record?: Record_;
+  isHere?: boolean;
+}) {
   const { t } = useT();
 
   return (
@@ -46,8 +55,11 @@ function PlayerCard({ player, record }: { player: Player; record?: Record_ }) {
           <h3 className="truncate text-body font-medium text-ink transition-colors duration-150 group-hover:text-strike">
             {player.name}
           </h3>
-          <p className="truncate text-caption text-ink-faint">
-            {t(`category.${player.category}`)}
+          <p className="flex items-center gap-1.5 truncate text-caption text-ink-faint">
+            {isHere && (
+              <span className="live-dot h-1.5 w-1.5 shrink-0 rounded-full bg-strike" />
+            )}
+            {isHere ? t("tonight.hereNow") : t(`category.${player.category}`)}
           </p>
         </div>
       </div>
@@ -87,6 +99,7 @@ function PlayerCard({ player, record }: { player: Player; record?: Record_ }) {
 export default function PlayersPage() {
   const { t } = useT();
   const [sort, setSort] = useState<SortMode>("name");
+  const here = useWhoIsHere();
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: players, isLoading: playersLoading } = useGetPlayers();
@@ -112,18 +125,35 @@ export default function PlayersPage() {
     return roster.filter((p) => p.name.toLowerCase().includes(q));
   }, [players, searchQuery]);
 
+  const hereIds = useMemo(() => new Set(here.map((p) => p.id)), [here]);
+
   // useGetPlayers already orders by name, so alphabetical is the list as it
-  // arrives; grouping is what the other mode adds.
+  // arrives; grouping is what the other modes add.
   const sections = useMemo(() => {
     const roster = filteredPlayers;
     if (sort === "name")
       return [{ key: "all", heading: null, players: roster }];
+
+    if (sort === "here")
+      return [
+        {
+          key: "here",
+          heading: t("tonight.hereNow"),
+          players: roster.filter((p) => hereIds.has(p.id)),
+        },
+        {
+          key: "away",
+          heading: t("tonight.notHere"),
+          players: roster.filter((p) => !hereIds.has(p.id)),
+        },
+      ].filter((section) => section.players.length > 0);
+
     return CATEGORIES.map((cat: Category) => ({
       key: String(cat),
       heading: t(`category.${cat}`),
       players: roster.filter((p) => p.category === cat),
     })).filter((section) => section.players.length > 0);
-  }, [filteredPlayers, sort, t]);
+  }, [filteredPlayers, sort, hereIds, t]);
 
   const isLoading = playersLoading || gamesLoading;
 
@@ -153,6 +183,7 @@ export default function PlayersPage() {
               onChange={setSort}
               options={[
                 { value: "name", label: t("players.alphabetical") },
+                { value: "here", label: t("tonight.hereNow") },
                 { value: "category", label: t("ranking.byCategory") },
               ]}
             />
@@ -216,6 +247,7 @@ export default function PlayersPage() {
                     key={player.id}
                     player={player}
                     record={records.get(player.id)}
+                    isHere={hereIds.has(player.id)}
                   />
                 ))}
               </div>

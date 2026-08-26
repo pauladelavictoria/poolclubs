@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import RankingDailyPage from "@/pages/app/RankingDailyPage";
 import { gamesQuery } from "@/queries/games";
+import { dayKeyOf, zoneOf } from "@/libs/day";
 
 /**
  * Today's ladder, for the day named in the URL.
@@ -24,21 +25,30 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/ranking/daily")({
       .optional(),
   }),
 
-  beforeLoad: ({ params, search }) => {
+  beforeLoad: ({ context, params, search }) => {
     if (!search.date) {
       throw redirect({
         to: "/app/$clubSlug/ranking/daily",
         params,
-        search: { date: new Date().toISOString().slice(0, 10) },
+        // The club's night, in the club's own zone — and resolved here rather
+        // than during render so the server and the browser cannot disagree
+        // about which one it is.
+        search: { date: dayKeyOf(Date.now(), zoneOf(context.activeClub)) },
         replace: true,
       });
     }
   },
 
   loaderDeps: ({ search }) => ({ date: search.date }),
+  // Same filters as the component's own hook, zone included, or the loader
+  // primes a key nothing reads.
   loader: ({ context, deps }) =>
     context.queryClient.ensureQueryData(
-      gamesQuery(context.activeClubId, { date: deps.date, mode: "single" }),
+      gamesQuery(context.activeClubId, {
+        date: deps.date,
+        mode: "single",
+        tz: zoneOf(context.activeClub),
+      }),
     ),
 
   component: RankingDailyPage,

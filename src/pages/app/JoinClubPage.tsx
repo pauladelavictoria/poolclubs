@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useT } from "@/i18n";
 
-const route = getRouteApi("/app/join/$code");
+const route = getRouteApi("/app/join/$slug");
 
 /**
  * The invite link. Signed out, the route bounces through login and comes back
@@ -26,14 +26,14 @@ const route = getRouteApi("/app/join/$code");
 export default function JoinClubPage() {
   const { t } = useT();
   const navigate = useNavigate();
-  const { code } = route.useParams();
+  const { slug } = route.useParams();
   // useSession rather than useAuth: this runs before there is a club.
   const { user, memberships } = useSession();
   const {
     data: preview,
     isLoading: previewLoading,
     isError,
-  } = useClubPreview(code);
+  } = useClubPreview(slug);
   const { joinClub } = useJoinOrCreateClub();
 
   const [claimId, setClaimId] = useState("");
@@ -50,7 +50,7 @@ export default function JoinClubPage() {
   const submit = () => {
     joinClub.mutate(
       {
-        code,
+        slug,
         claimPlayerId: claimId ? Number(claimId) : undefined,
         displayName: claimId ? undefined : name,
       },

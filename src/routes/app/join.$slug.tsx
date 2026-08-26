@@ -8,18 +8,18 @@ import { loginLink } from "@/libs/nextPath";
  * the club's name and its unclaimed players are what the link is for — but
  * joining needs an account, so this does its own bounce through login.
  */
-export const Route = createFileRoute("/app/join/$code")({
+export const Route = createFileRoute("/app/join/$slug")({
   beforeLoad: ({ context, params }) => {
     if (!context.session) {
-      throw redirect({ href: loginLink(`/app/join/${params.code}`) });
+      throw redirect({ href: loginLink(`/app/join/${params.slug}`) });
     }
   },
 
-  // Deliberately not awaited into a hard failure: a bad code is a state the page
-  // renders ("that link doesn't work"), not an error boundary.
+  // Deliberately not awaited into a hard failure: a bad slug is a state the
+  // page renders ("that link doesn't work"), not an error boundary.
   loader: ({ context, params }) => {
     void context.queryClient
-      .ensureQueryData(clubPreviewQuery(params.code))
+      .ensureQueryData(clubPreviewQuery(params.slug))
       .catch(() => null);
   },
 

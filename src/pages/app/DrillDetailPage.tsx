@@ -163,6 +163,10 @@ export default function DrillDetailPage() {
               ballPositions={drill.ball_positions}
               shotPaths={drill.shot_paths}
               portrait={portrait}
+              // Below lg the header and the tab bar are real fixed bars, not
+              // just chrome around a taller page, so an upright table has to
+              // stop short of them instead of pushing the page into a scroll.
+              className="max-h-[calc(100dvh-3.5rem-4.5rem-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] lg:max-h-none"
             />
           </div>
 

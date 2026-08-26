@@ -98,7 +98,7 @@ export default function NavDrawer({
   // a specific person on a phone. Falls back to the clipboard on desktop.
   const sendInvite = async () => {
     if (!activeClub) return;
-    const link = `${origin}/app/join/${activeClub.join_code}`;
+    const link = `${origin}/app/join/${activeClub.slug}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: activeClub.name, url: link });

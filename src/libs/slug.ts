@@ -23,9 +23,10 @@ const PLAIN = "aaaaaaaeeeeeiiiiiooooooouuuuuncyyz";
 
 /**
  * Path segments that are already routes under /app, so a club can never own
- * them: /app/login, /app/join/$code and /app/clubs/new are static siblings of
+ * them: /app/login, /app/join/$slug and /app/clubs/new are static siblings of
  * /app/$clubSlug, and a static segment wins. A club slugged "login" would be
- * permanently unreachable.
+ * permanently unreachable. "join" doubles as the invite route's own prefix,
+ * since a club's slug is now what addresses /app/join/<slug>.
  */
 export const RESERVED_SLUGS = [
   "login",
