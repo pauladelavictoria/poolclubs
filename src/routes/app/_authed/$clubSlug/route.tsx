@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-router";
 import AppHeader from "@/components/layout/AppHeader";
 import JoinRequestBanner from "@/components/layout/JoinRequestBanner";
-import PushConsentBanner from "@/components/layout/PushConsentBanner";
+import AppPrompts from "@/components/layout/AppPrompts";
 import NavDrawer from "@/components/layout/NavDrawer";
 import NavRail from "@/components/layout/NavRail";
 import { PageSkeleton } from "@/components/ui/Skeleton";
@@ -201,9 +201,10 @@ function ClubLayout() {
               banner is an admin's standing to-do, and it is still on every
               other page in the club. */}
           {!fullBleed && <JoinRequestBanner />}
-          {/* Same guard, same reason: a tablet on the rail has no player
-              to ask and nowhere to show a notification. */}
-          {!fullBleed && <PushConsentBanner />}
+          {/* Install and notifications, one at a time — see AppPrompts. Same
+              guard, same reason: a tablet on the rail has no player to ask and
+              nowhere to show a notification. */}
+          {!fullBleed && <AppPrompts />}
           <Suspense fallback={<PageSkeleton />}>
             <Outlet />
           </Suspense>

@@ -1,5 +1,4 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
-import InstallAppBanner from "@/components/layout/InstallAppBanner";
 
 /**
  * Signed in, or you don't get past here.
@@ -33,7 +32,6 @@ export const Route = createFileRoute("/app/_authed")({
   component: () => (
     <>
       <Outlet />
-      <InstallAppBanner />
     </>
   ),
 });

@@ -8,8 +8,8 @@ import { useT } from "@/i18n";
 /**
  * The switch for web push, per device.
  *
- * PushConsentBanner is the ask; this is where the decision lives afterwards,
- * including for whoever closed that banner for good. Its own card, outside the
+ * PushConsentModal is the ask; this is where the decision lives afterwards,
+ * including for whoever closed that modal for good. Its own card, outside the
  * name form, because flipping it takes effect immediately — there is nothing
  * here to save.
  *

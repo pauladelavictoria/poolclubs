@@ -318,6 +318,7 @@
   "installPrompt.body": "Retrouve ton club en un geste, sans barre du navigateur.",
   "installPrompt.iosBody": "Ouvre le menu Partager, puis touche Ajouter à l'écran d'accueil.",
   "installPrompt.install": "Installer",
+  "installPrompt.dontShowAgain": "Ne plus afficher",
   "club.membersTitle": "Membres",
   "club.membersCount": "{n} membres",
   "club.you": "(toi)",
