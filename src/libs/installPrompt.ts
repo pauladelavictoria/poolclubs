@@ -1,27 +1,52 @@
-const JUST_JOINED_KEY = "pc:justJoinedClub";
 const DISMISSED_KEY = "pc:installPromptDismissed";
 
 /**
- * Set right after joining or creating a club, so the install banner gets one
- * shot at the page that follows rather than nagging on every future visit.
+ * Whether the install prompt has been turned off for good.
+ *
+ * "For good" is the only persisted answer there is. Closing the modal is not
+ * recorded anywhere: the prompt is meant to reappear on the next app open, so
+ * somebody who shrugged it off in a hurry still gets the offer, and only an
+ * explicit "don't show again" ends it. Being asked once per launch is the price
+ * of the two features that need it — home-screen launch, and push on iOS, which
+ * does not exist at all until the app is installed.
+ *
+ * Reads localStorage, so call it from an effect and never during render: the
+ * server cannot see it, and a render that can would hydrate to different markup.
  */
-export function markJustJoinedClub() {
-  sessionStorage.setItem(JUST_JOINED_KEY, "1");
-}
-
-/** Read-and-clear: the flag is only ever good for the one render after it's set. */
-export function consumeJustJoinedClub(): boolean {
-  const flagged = sessionStorage.getItem(JUST_JOINED_KEY) === "1";
-  if (flagged) sessionStorage.removeItem(JUST_JOINED_KEY);
-  return flagged;
-}
-
 export function isInstallPromptDismissed(): boolean {
-  return localStorage.getItem(DISMISSED_KEY) === "1";
+  try {
+    return localStorage.getItem(DISMISSED_KEY) === "1";
+  } catch {
+    // A private window refuses to be read. Asking again is survivable.
+    return false;
+  }
 }
 
-/** Closing the banner once answers for every club joined afterwards too, not
- *  just this one — nobody wants to re-decline it each time they switch clubs. */
+/** Holds for every club joined afterwards too — nobody wants to re-decline this
+ *  each time they switch clubs. */
 export function dismissInstallPromptForever() {
-  localStorage.setItem(DISMISSED_KEY, "1");
+  try {
+    localStorage.setItem(DISMISSED_KEY, "1");
+  } catch {
+    // Forgetting the answer is survivable; throwing out of the click is not.
+  }
+}
+
+/**
+ * Is there an install to offer at all?
+ *
+ * Chrome/Edge on Android and desktop hand over a real prompt via
+ * `beforeinstallprompt`; iOS never fires it and only has Add to Home Screen
+ * behind the Share sheet, so there the modal is instructions. Anywhere else
+ * (desktop Safari, Firefox) there is nothing to offer and nothing to show.
+ *
+ * Shared with PushConsentModal, which has to know whether the install modal is
+ * about to appear so the two never stack.
+ */
+export function canOfferInstall(prompt: {
+  installed: boolean;
+  canPromptNative: boolean;
+  isIOS: boolean;
+}): boolean {
+  return !prompt.installed && (prompt.canPromptNative || prompt.isIOS);
 }

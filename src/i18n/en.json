@@ -318,6 +318,7 @@
   "installPrompt.body": "Get back to your club in one tap, no browser bar.",
   "installPrompt.iosBody": "Open the Share menu, then tap Add to Home Screen.",
   "installPrompt.install": "Install",
+  "installPrompt.dontShowAgain": "Don't show this again",
   "club.membersTitle": "Members",
   "club.membersCount": "{n} members",
   "club.you": "(you)",

@@ -318,6 +318,7 @@
   "installPrompt.body": "Entra a tu club de un toque, sin barra del navegador.",
   "installPrompt.iosBody": "Abre el menú Compartir y toca Añadir a pantalla de inicio.",
   "installPrompt.install": "Instalar",
+  "installPrompt.dontShowAgain": "No volver a mostrar",
   "club.membersTitle": "Miembros",
   "club.membersCount": "{n} miembros",
   "club.you": "(tú)",
