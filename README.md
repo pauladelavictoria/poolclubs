@@ -48,6 +48,11 @@ npm run check    # the .check.ts assertion scripts — no test runner in this pr
 `.env` needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Both are public by
 design; RLS is the security boundary, not the key.
 
+Web push adds `VITE_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` — `npx web-push
+generate-vapid-keys` makes a pair. Only the public half is prefixed, because
+Vite inlines every `VITE_*` into the client bundle and the signing key must not
+go there. Without them the feature switches itself off rather than breaking.
+
 ## 🧱 How it fits together
 
 **TanStack Start** (React + Vite, server-rendered) with **file-based routes** in

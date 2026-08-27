@@ -33,6 +33,7 @@
     "react-toastify": "^11.0.5",
     "recharts": "^3.7.0",
     "uqr": "^0.1.3",
+    "web-push": "^3.6.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -42,6 +43,7 @@
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
+    "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^10.8.1",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -53,7 +55,7 @@
     "typescript-eslint": "^8.54.0",
     "vite": "^8.2.1"
   },
-  "_comment": "optionalDependencies pin the linux x64 native binaries so the build works on CI/deploy hosts; they stay MISSING locally on macOS. Vite 8 bundles with rolldown, so esbuild/rollup/swc are no longer in the tree.",
+  "_comment": "optionalDependencies pin every native binary this build needs, one entry per platform: the linux x64 pair for CI and deploy, the darwin arm64 one for local work. They must be OPTIONAL, not devDependencies — npm fails an install outright (EBADPLATFORM) on a non-optional package whose os/cpu does not match the machine, so a mac-only binding listed as a devDependency breaks the linux build the moment the node_modules cache misses. Optional means npm skips the ones that do not apply. Vite 8 bundles with rolldown, so esbuild/rollup/swc are no longer in the tree.",
   "optionalDependencies": {
     "@rolldown/binding-darwin-arm64": "^1.2.3",
     "@rolldown/binding-linux-x64-gnu": "^1.2.3",

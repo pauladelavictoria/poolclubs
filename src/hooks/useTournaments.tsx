@@ -18,6 +18,7 @@ import {
   type PlannedMatch,
 } from "@/libs/bracket";
 import { groupStandings } from "@/libs/leagueTable";
+import { sendPush } from "@/libs/push.functions";
 import type {
   Category,
   Discipline,
@@ -171,7 +172,16 @@ export const useManageTournaments = () => {
 
         return data as Tournament;
       },
-      onSuccess: refresh,
+      // 'open' is the row's birth default, so creating a tournament and opening
+      // its entries are the same moment — there is no later transition to hook.
+      // Never awaited: whether the club heard about it is not the admin's
+      // problem, and push.functions.ts decides who is even eligible.
+      onSuccess: (tournament) => {
+        refresh();
+        void sendPush({
+          data: { kind: "tournamentOpen", id: tournament.id },
+        }).catch(() => {});
+      },
     }),
 
     updateTournament: useMutation({
