@@ -167,18 +167,31 @@ export const Route = createRootRouteWithContext<{
  */
 const THEME_BOOT = `(function(){try{
 var m=document.cookie.match(/(?:^|; )theme=([^;]*)/);
-document.documentElement.dataset.theme=m?decodeURIComponent(m[1]):
+var t=m?decodeURIComponent(m[1]):
 (matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");
+document.documentElement.dataset.theme=t;
+document.documentElement.style.colorScheme=t;
 }catch(e){}})();`;
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { theme, lang } = Route.useRouteContext();
 
   return (
-    // suppressHydrationWarning covers data-theme only: THEME_BOOT above may have
-    // corrected it between the server writing this and React hydrating it, which
-    // is the intended behaviour rather than a mismatch to fix.
-    <html lang={lang} data-theme={theme} suppressHydrationWarning>
+    // suppressHydrationWarning covers data-theme and the inline color-scheme:
+    // THEME_BOOT above may have corrected both between the server writing this
+    // and React hydrating it, which is the intended behaviour rather than a
+    // mismatch to fix.
+    // color-scheme is inline rather than left to index.css: the stylesheet is a
+    // separate request (and in dev Vite serves it as a script, so the <link>
+    // never applies at all), and until it lands the UA paints its own canvas —
+    // white, whatever data-theme says. The inline property is on the element in
+    // the first byte, so the canvas is dark before there is any CSS to be late.
+    <html
+      lang={lang}
+      data-theme={theme}
+      style={{ colorScheme: theme }}
+      suppressHydrationWarning
+    >
       <head>
         <HeadContent />
       </head>
