@@ -20,6 +20,7 @@ import type { Drill, DrillLog, Game, Tournament } from "@/types";
 import { useT } from "@/i18n";
 import type { LinkProps } from "@tanstack/react-router";
 import { AppLink } from "@/components/layout/AppLink";
+import { DRILLS_ENABLED } from "@/libs/features";
 
 /** One row of the club's history: a match, a logged drill, or one of the two
  *  things that get created rather than played — a drill or a tournament. */
@@ -529,12 +530,17 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
 
   const merged: FeedItem[] = [
     ...games.map((game) => ({ at: game.played_at, games: [game] })),
-    ...(logs ?? [])
+    // Both drill shapes drop out together while drills are hidden — a row that
+    // links to a 404 is worse than no row. See libs/features.
+    ...(DRILLS_ENABLED ? (logs ?? []) : [])
       .filter((log) => roster.has(log.player_id))
       .map((log) => ({ at: log.created_at, log })),
     // drills are shared across clubs, so every club sees a new one written.
     // The sort and the slice below keep the old library out of the way.
-    ...(drills ?? []).map((drill) => ({ at: drill.created_at, drill })),
+    ...(DRILLS_ENABLED ? (drills ?? []) : []).map((drill) => ({
+      at: drill.created_at,
+      drill,
+    })),
     ...(tournaments ?? [])
       .filter((x) => x.status !== "open")
       .map((tournament) => ({
@@ -596,8 +602,15 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
             options={[
               { value: "all", label: t("feed.all") },
               { value: "matches", label: t("feed.matchResults") },
-              { value: "newDrills", label: t("feed.newDrills") },
-              { value: "drillResults", label: t("feed.drillResults") },
+              ...(DRILLS_ENABLED
+                ? [
+                    { value: "newDrills" as const, label: t("feed.newDrills") },
+                    {
+                      value: "drillResults" as const,
+                      label: t("feed.drillResults"),
+                    },
+                  ]
+                : []),
               { value: "tournaments", label: t("feed.tournamentResults") },
             ]}
           />

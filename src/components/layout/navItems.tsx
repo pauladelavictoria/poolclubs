@@ -14,6 +14,7 @@ import {
 import type { LinkProps } from "@tanstack/react-router";
 import type { Key } from "@/i18n";
 import type { SectionId } from "@/libs/sections";
+import { DRILLS_ENABLED } from "@/libs/features";
 
 export type NavItem = {
   /**
@@ -69,12 +70,23 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: LuTrophy,
     section: "ranking",
   },
-  {
-    to: "/app/$clubSlug/drills",
-    labelKey: "nav.drills",
-    icon: LuTarget,
-    section: "drills",
-  },
+  // The fourth tab is drills when the library is showing and challenges when it
+  // is not — a phone has four thumb slots either way, and challenges is the one
+  // thing you are otherwise expected to find through the drawer.
+  DRILLS_ENABLED
+    ? {
+        to: "/app/$clubSlug/drills",
+        labelKey: "nav.drills",
+        icon: LuTarget,
+        section: "drills",
+      }
+    : {
+        to: "/app/$clubSlug/challenges",
+        labelKey: "nav.challenges",
+        icon: LuSwords,
+        section: "games",
+        end: true,
+      },
 ];
 
 /**
@@ -89,10 +101,14 @@ export const PRIMARY_NAV: NavItem[] = [
  * Club settings sit last, after the places, because administering the club is
  * not one of them. They only render for admins (see NavDrawer).
  */
+/** Drills and training plans are hidden for now — one predicate, so the drawer
+ *  and the "you" list drop their rows together. See libs/features. */
+const visible = (item: NavItem) => DRILLS_ENABLED || item.section !== "drills";
+
 export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
   {
     headingKey: "nav.club",
-    items: [
+    items: ([
       {
         to: "/app/$clubSlug",
         labelKey: "nav.home",
@@ -143,7 +159,7 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         section: "home",
         end: true,
       },
-    ],
+    ] as NavItem[]).filter(visible),
   },
 ];
 
@@ -151,7 +167,7 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
  * Your half of the drawer. The rows addressed by player id get it from the
  * drawer, which fills in one `params` for the whole list.
  */
-export const ME_NAV: NavItem[] = [
+export const ME_NAV: NavItem[] = ([
   {
     to: "/app/$clubSlug/me",
     labelKey: "nav.games",
@@ -186,4 +202,4 @@ export const ME_NAV: NavItem[] = [
     section: "home",
     end: true,
   },
-];
+] as NavItem[]).filter(visible);

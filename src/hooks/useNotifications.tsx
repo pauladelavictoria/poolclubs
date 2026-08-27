@@ -13,6 +13,7 @@ import {
   useMyTournamentIds,
 } from "@/hooks/useTournaments";
 import { useGetDrills } from "@/hooks/useGetDrills";
+import { DRILLS_ENABLED } from "@/libs/features";
 import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { usePlayerLookup } from "@/hooks/useGetPlayers";
 import { useT } from "@/i18n";
@@ -265,7 +266,9 @@ export const useNotifications = () => {
     const triedDrillIds = new Set(
       (myDrillLogs ?? []).map((log) => log.drill_id),
     );
-    for (const drill of drills ?? []) {
+    // Nothing points at a hidden feature: the drill routes 404 while the flag is
+    // off, so a "new drill" bell would only lead somewhere broken.
+    for (const drill of DRILLS_ENABLED ? (drills ?? []) : []) {
       if (triedDrillIds.has(drill.id)) continue;
 
       list.push({

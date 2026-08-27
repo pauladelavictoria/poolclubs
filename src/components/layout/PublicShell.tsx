@@ -7,6 +7,7 @@ import { useDialog } from "@/libs/useDialog";
 import { useSession } from "@/hooks/useAuth";
 import { LANGS, useT } from "@/i18n";
 import type { Key } from "@/i18n";
+import { DRILLS_ENABLED } from "@/libs/features";
 
 /**
  * The public side of the site: a bar with the product name and the public
@@ -27,7 +28,11 @@ const PUBLIC_NAV: {
   { to: "/clubs", labelKey: "nav.publicClubs" },
   { to: "/players", labelKey: "nav.publicPlayers" },
   { to: "/tournaments", labelKey: "nav.publicTournaments" },
-  { to: "/drills", labelKey: "nav.publicDrills" },
+  // The shared library is hidden for now (see libs/features), and so is the row
+  // that leads to it — the route itself 404s.
+  ...(DRILLS_ENABLED
+    ? ([{ to: "/drills", labelKey: "nav.publicDrills" }] as const)
+    : []),
 ];
 
 export default function PublicShell({ children }: { children: ReactNode }) {
@@ -225,7 +230,9 @@ const FOOTER_COLUMNS: {
       { to: "/clubs", labelKey: "nav.publicClubs" },
       { to: "/players", labelKey: "nav.publicPlayers" },
       { to: "/tournaments", labelKey: "nav.publicTournaments" },
-      { to: "/drills", labelKey: "nav.publicDrills" },
+      ...(DRILLS_ENABLED
+        ? [{ to: "/drills" as const, labelKey: "nav.publicDrills" as Key }]
+        : []),
     ],
   },
   {
