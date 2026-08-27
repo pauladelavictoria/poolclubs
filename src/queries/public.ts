@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
+import { DRILLS_ENABLED } from "@/libs/features";
 import { flattenPlayer } from "@/queries/players";
 import type {
   Club,
@@ -606,7 +607,9 @@ export const publicSearchQuery = (q: string) =>
         clubs: clubs.data as PublicClub[],
         people: people.data as unknown as PublicPersonWithClubs[],
         tournaments: tournaments.data as unknown as PublicTournamentListItem[],
-        drills: drills.data as unknown as Drill[],
+        // Hidden feature: the read still runs (one branch beats reshaping the
+        // Promise.all), the results simply do not reach the page.
+        drills: DRILLS_ENABLED ? (drills.data as unknown as Drill[]) : [],
       };
     },
     // A search is not worth refetching on every mount — the visitor is typing,

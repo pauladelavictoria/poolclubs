@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   createRootRouteWithContext,
+  notFound,
 } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import { I18nProvider, detectLang } from "@/i18n";
 import type { Lang } from "@/i18n";
 import { THEME_COOKIE, readOrigin, readPref } from "@/libs/prefs";
 import { startRealtime } from "@/libs/realtime";
+import { isHiddenPath } from "@/libs/features";
 import { sessionQuery } from "@/queries/session";
 import RouteError from "@/components/layout/RouteError";
 import { NotFound } from "@/components/layout/NotFound";
@@ -28,7 +30,12 @@ import indexCss from "../index.css?url";
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
-  beforeLoad: async ({ context }) => {
+  beforeLoad: async ({ context, location }) => {
+    // Hidden features are hidden from the URL bar too, not only from the nav:
+    // one test here beats a guard in each of the ten drill and training routes,
+    // and it also covers the public /drills pages a search engine already has.
+    if (isHiddenPath(location.pathname)) throw notFound();
+
     // ensureQueryData rather than calling the server function directly: root
     // beforeLoad runs on every navigation, and this way the session costs one
     // round trip per page load instead of one per link. Sign-in and sign-out
@@ -167,18 +174,31 @@ export const Route = createRootRouteWithContext<{
  */
 const THEME_BOOT = `(function(){try{
 var m=document.cookie.match(/(?:^|; )theme=([^;]*)/);
-document.documentElement.dataset.theme=m?decodeURIComponent(m[1]):
+var t=m?decodeURIComponent(m[1]):
 (matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");
+document.documentElement.dataset.theme=t;
+document.documentElement.style.colorScheme=t;
 }catch(e){}})();`;
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { theme, lang } = Route.useRouteContext();
 
   return (
-    // suppressHydrationWarning covers data-theme only: THEME_BOOT above may have
-    // corrected it between the server writing this and React hydrating it, which
-    // is the intended behaviour rather than a mismatch to fix.
-    <html lang={lang} data-theme={theme} suppressHydrationWarning>
+    // suppressHydrationWarning covers data-theme and the inline color-scheme:
+    // THEME_BOOT above may have corrected both between the server writing this
+    // and React hydrating it, which is the intended behaviour rather than a
+    // mismatch to fix.
+    // color-scheme is inline rather than left to index.css: the stylesheet is a
+    // separate request (and in dev Vite serves it as a script, so the <link>
+    // never applies at all), and until it lands the UA paints its own canvas —
+    // white, whatever data-theme says. The inline property is on the element in
+    // the first byte, so the canvas is dark before there is any CSS to be late.
+    <html
+      lang={lang}
+      data-theme={theme}
+      style={{ colorScheme: theme }}
+      suppressHydrationWarning
+    >
       <head>
         <HeadContent />
       </head>

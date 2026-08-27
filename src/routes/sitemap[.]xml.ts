@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseServer } from "@/libs/supabase.server";
+import { DRILLS_ENABLED } from "@/libs/features";
 
 /**
  * The sitemap, built per request from what is actually public.
@@ -64,7 +65,9 @@ export const Route = createFileRoute("/sitemap.xml")({
           "/clubs",
           "/players",
           "/tournaments",
-          "/drills",
+          // /drills and every drill page are hidden for now (libs/features), and
+          // the routes answer 404 — listing them would only earn crawl errors.
+          ...(DRILLS_ENABLED ? ["/drills"] : []),
           // The prose pages. Static, so they need no query — but they do need
           // listing: /pricing is the page a club owner looks for by name.
           "/pricing",
@@ -76,7 +79,9 @@ export const Route = createFileRoute("/sitemap.xml")({
           ...(clubs.data ?? []).map((c) => `/clubs/${c.slug}`),
           ...(people.data ?? []).map((p) => `/players/${p.slug}`),
           ...(tournaments.data ?? []).map((x) => `/tournaments/${x.id}`),
-          ...(drills.data ?? []).map((d) => `/drills/${d.id}`),
+          ...(DRILLS_ENABLED
+            ? (drills.data ?? []).map((d) => `/drills/${d.id}`)
+            : []),
         ];
 
         const body =

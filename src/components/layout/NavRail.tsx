@@ -23,7 +23,11 @@ import { useT } from "@/i18n";
  */
 const tab = ({ isActive }: { isActive: boolean }) =>
   [
-    "group relative flex flex-1 flex-col items-center justify-center gap-1 py-2",
+    // min-w-0 is what keeps the five cells equal: a flex item refuses to go
+    // below its content's min-content width by default, so a long label
+    // ("Challenges", "Ejercicios") widens its own tab and steals the space
+    // from its neighbours instead of truncating.
+    "group relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2",
     "transition-[color,transform] duration-150 ease-[var(--ease-out)] active:scale-[0.97]",
     isActive ? "text-strike font-medium" : "text-ink-faint hover:text-ink",
   ].join(" ");

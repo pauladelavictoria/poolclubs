@@ -22,6 +22,7 @@ import { BallGlyph, DisciplineBall } from "@/components/ui/Ball";
 import { CLUB_BALL_LABEL } from "@/libs/clubTheme";
 import type { BallColor } from "@/types";
 import { useT, type Key } from "@/i18n";
+import { DRILLS_ENABLED } from "@/libs/features";
 
 /**
  * The front door, written for a club rather than for a player.
@@ -353,10 +354,19 @@ export default function LandingPage() {
         </p>
 
         <div className="mt-12 grid gap-4 lg:grid-cols-12">
-          {FEATURES.map(({ icon: Icon, title, body, points, span, art }, i) => (
+          {/* The drills card leaves with the feature (libs/features). Dropping a
+              7-wide cell would leave the last one orphaned on its own row, so
+              whatever ends the list runs the full width instead. */}
+          {FEATURES.filter(
+            (feature) => DRILLS_ENABLED || feature.art !== "drill",
+          ).map(({ icon: Icon, title, body, points, span, art }, i, shown) => (
             <article
               key={title}
-              className={`pop-in flex flex-col overflow-hidden rounded-card border border-hairline bg-felt ${span}`}
+              className={`pop-in flex flex-col overflow-hidden rounded-card border border-hairline bg-felt ${
+                !DRILLS_ENABLED && i === shown.length - 1
+                  ? "lg:col-span-12"
+                  : span
+              }`}
               style={{ "--i": i } as CSSProperties}
             >
               <div className="p-6 sm:p-8">
