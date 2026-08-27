@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -660,6 +660,41 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          lang: string
+          p256dh: string
+          person_id: number
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          lang?: string
+          p256dh: string
+          person_id: number
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          lang?: string
+          p256dh?: string
+          person_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reactions: {
         Row: {
           author_player_id: number
@@ -1032,6 +1067,7 @@ export type Database = {
       is_club_device: { Args: { cid: number }; Returns: boolean }
       is_club_member: { Args: { cid: number }; Returns: boolean }
       is_drill_admin: { Args: never; Returns: boolean }
+      is_own_person: { Args: { pid: number }; Returns: boolean }
       is_own_player: { Args: { pid: number }; Returns: boolean }
       is_public_club: { Args: { cid: number }; Returns: boolean }
       join_club: {
@@ -1061,6 +1097,16 @@ export type Database = {
       person_in_public_club: { Args: { pid: number }; Returns: boolean }
       person_is_admins_guest: { Args: { pid: number }; Returns: boolean }
       person_shares_club: { Args: { pid: number }; Returns: boolean }
+      push_prune: { Args: { p_endpoints: string[] }; Returns: undefined }
+      push_targets: {
+        Args: { p_kind: string; p_ref: number }
+        Returns: {
+          auth: string
+          endpoint: string
+          lang: string
+          p256dh: string
+        }[]
+      }
       slugify: { Args: { txt: string }; Returns: string }
       start_device_pairing: {
         Args: { cid: number; tid: number }

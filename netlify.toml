@@ -11,3 +11,12 @@
 # (Site configuration → Environment variables). Both are public by design — the
 # anon key is what RLS is for — but the build needs them present, and the server
 # reads the same two names it always did.
+
+# Web push needs two more, same place:
+#   VITE_VAPID_PUBLIC_KEY  — handed to the browser as applicationServerKey, so
+#                            public by design like the anon key above.
+#   VAPID_PRIVATE_KEY      — the signing key. NOT VITE_-prefixed on purpose:
+#                            Vite inlines every VITE_* into the client bundle.
+#                            Server code reads it from process.env.
+# Generate a pair with `npx web-push generate-vapid-keys`. Rotating them
+# invalidates every existing subscription, so members would have to re-enable.

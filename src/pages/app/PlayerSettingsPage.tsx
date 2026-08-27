@@ -3,6 +3,7 @@ import { Link, getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import PageTitle from "@/components/layout/PageTitle";
 import AvatarUpload from "@/components/players/AvatarUpload";
+import PushToggle from "@/components/players/PushToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
@@ -145,6 +146,8 @@ export default function PlayerSettingsPage() {
             </div>
           </form>
         </Card>
+
+        <PushToggle />
       </div>
     </>
   );
