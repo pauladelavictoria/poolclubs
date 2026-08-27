@@ -44,20 +44,21 @@ export const sendPush = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<null> => {
     const privateKey = process.env.VAPID_PRIVATE_KEY;
     const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-    if (!privateKey || !publicKey) return null;
+    if (!privateKey || !publicKey) return log("no VAPID keys in this build", data);
 
     const supabase = getSupabaseServer();
 
     // What to say. Read under RLS, so a caller who cannot see the row gets
     // nothing — but this is not the permission check, push_targets is.
     const text = await describe(supabase, data.kind, data.id);
-    if (!text) return null;
+    if (!text) return log("row not visible to the caller, or wrong status", data);
 
-    const { data: targets } = await supabase.rpc("push_targets", {
+    const { data: targets, error } = await supabase.rpc("push_targets", {
       p_kind: data.kind,
       p_ref: data.id,
     });
-    if (!targets?.length) return null;
+    if (error) return log(`push_targets failed: ${error.message}`, data);
+    if (!targets?.length) return log("no eligible recipient is subscribed", data);
 
     // Dynamic import: createServerFn already strips this handler from the client
     // bundle, but web-push is CommonJS and Node-only, and one line buys
@@ -93,10 +94,37 @@ export const sendPush = createServerFn({ method: "POST" })
     );
     if (dead.length) await supabase.rpc("push_prune", { p_endpoints: dead });
 
+    // The one place this is worth a line even when it worked: everything above
+    // returns the same `null` on success and on every bail-out, so without the
+    // count the deploy logs cannot tell "sent to two devices" from "did nothing".
+    const failed = sent.filter((r) => r.status === "rejected");
+    log(
+      `sent ${sent.length - failed.length}/${sent.length}` +
+        (dead.length ? `, pruned ${dead.length} dead` : "") +
+        failed
+          .map((r) => `, failed ${r.reason?.statusCode ?? "?"} ${r.reason?.body ?? r.reason?.message ?? ""}`)
+          .join(""),
+      data,
+    );
+
     // Always null. The caller learns nothing about who was reached, and a push
     // that failed to send is never a reason to show anybody an error.
     return null;
   });
+
+/**
+ * One line to the deploy logs, returning null so every bail-out above can be
+ * written as `return log(...)`.
+ *
+ * Deliberately not a thrown error and deliberately not sent to the client: a
+ * push is a nudge, and the bell already carries the same event. But silence and
+ * success were indistinguishable from outside, which made the first failure in
+ * production impossible to diagnose from the logs alone.
+ */
+function log(reason: string, data: z.infer<typeof input>): null {
+  console.log(`[push] ${data.kind}#${data.id}: ${reason}`);
+  return null;
+}
 
 /** The translatable half of a notification: which string, with what filled in,
  *  and where tapping it goes. `title` is the club's own name, which needs no
