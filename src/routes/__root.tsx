@@ -60,7 +60,7 @@ export const Route = createRootRouteWithContext<{
     // read once here rather than per link, since both the manifest and the
     // touch icon below key off the same club.
     const clubSlug = (
-      matches.at(-1)?.params as { clubSlug?: string } | undefined
+      matches[matches.length - 1]?.params as { clubSlug?: string } | undefined
     )?.clubSlug;
 
     return {

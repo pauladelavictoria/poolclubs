@@ -37,7 +37,7 @@ export default function AppHeader({
   // The trail's last entry is what the chevron goes back to. It carries the
   // route's own pattern plus the parameters to fill it, so the link is checked
   // rather than string-built.
-  const back = crumbs.at(-1);
+  const back = crumbs[crumbs.length - 1];
 
   return (
     // pt clears the status bar: viewport-fit=cover puts the page under it, and
