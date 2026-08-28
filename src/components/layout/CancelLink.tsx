@@ -33,7 +33,7 @@ export default function CancelLink({ to, params, className }: Props) {
 
   // Crumbs come out of useRouteMeta with the current URL's parameters already
   // filled in, so the fallback needs nothing from the call site.
-  const target = to ? { to, params } : crumbs.at(-1);
+  const target = to ? { to, params } : crumbs[crumbs.length - 1];
   if (!target?.to) return null;
 
   // Ids are numbers by the time they reach a link; the router wants strings.

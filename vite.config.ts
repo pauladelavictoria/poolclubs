@@ -19,6 +19,12 @@ export default defineConfig(({ mode }) => {
 
   return {
     server: { port: 3000 },
+    // Vite's default is `baseline-widely-available` (~Chrome 107), which an old
+    // Android tablet on the club's rail does not meet. chrome87 is roughly
+    // ES2020: optional chaining, nullish coalescing and logical assignment still
+    // ship native, only newer syntax gets compiled down, so the cost to everyone
+    // else is small. Runtime *methods* are a separate problem — libs/polyfills.ts.
+    build: { target: "chrome87" },
     resolve: {
       // Vite 8 reads the `paths` in tsconfig.app.json directly, so the "@" alias
       // is declared once, in TypeScript, rather than here as well.

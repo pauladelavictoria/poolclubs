@@ -56,10 +56,14 @@ export default function LiveMatchPage() {
   // changed, and a scoreboard arguing with it would be a second answer.
   const setup = readTodaySetup();
   const seats = seatsNeeded(setup);
+  // Only once this match has been filed and its table is free. Mid-rack there
+  // is nothing on screen to offer, and every score tap re-renders this page —
+  // see the note on useSuggestions' `enabled`.
   const { groups, canStart } = useSuggestions({
     setup,
     maxGroups: 1,
     exclude: freed?.seats,
+    enabled: freed !== null,
   });
   const { ref, isFullscreen, toggle } = useFullscreen<HTMLDivElement>();
   const appNavigate = useAppNavigate();

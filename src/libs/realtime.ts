@@ -1,4 +1,7 @@
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import type {
+  RealtimeChannel,
+  RealtimePostgresChangesPayload,
+} from "@supabase/supabase-js";
 import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { keys, type ClubScopedKeys } from "./queryKeys";
@@ -101,7 +104,7 @@ const invalidateTournaments = (queryClient: QueryClient) => () => {
 };
 
 /**
- * One realtime channel for the whole app, opened once outside React.
+ * One realtime channel for the club being looked at, opened once outside React.
  *
  * This used to be a useEffect inside useGetPlayers/useGetGames, which meant one
  * channel per hook *instance* (a single page mounts several) and a subscribe +
@@ -109,27 +112,60 @@ const invalidateTournaments = (queryClient: QueryClient) => () => {
  * the channel while its socket was still handshaking, which is what produced
  * "WebSocket is closed before the connection is established".
  *
- * Both listeners are attached before subscribe(), which is the supported way to
+ * Every listener is attached before subscribe(), which is the supported way to
  * watch several tables on one channel.
  *
- * Now called from an effect in routes/__root.tsx rather than at module scope:
- * under SSR a module-scope call would try to open a websocket on the server.
- * The `started` guard still makes it once per tab — the channel is meant to
- * outlive any component, so there is nothing to tear down.
+ * Called from an effect in the club layout rather than at module scope: under
+ * SSR a module-scope call would try to open a websocket on the server, and the
+ * club id is not known any higher up. The guard is on the club and not a plain
+ * boolean, so StrictMode's double-mount is still a no-op while switching club
+ * — which is a navigation, not a reload — swaps the channel.
  */
-let started = false;
+let channel: RealtimeChannel | null = null;
+let channelClubId: number | null = null;
 
-export function startRealtime(queryClient: QueryClient) {
-  if (started) return;
-  started = true;
+export function startRealtime(queryClient: QueryClient, clubId: number) {
+  if (channel && channelClubId === clubId) return;
 
+  // Switching club. Not awaited: the new channel has a name of its own, so
+  // there is nothing for the old one's teardown to race with.
+  if (channel) void supabase.removeChannel(channel);
+
+  channelClubId = clubId;
+
+  /**
+   * Only this club's rows.
+   *
+   * Every tab used to receive every change in every club the database holds and
+   * throw away the ones RLS let through but the screen had no use for. On a
+   * tablet on a rail during a club night that is a socket message and a cache
+   * write per rack scored anywhere in the system.
+   */
   const onTable = (table: string) =>
+    ({
+      event: "*",
+      schema: "public",
+      table,
+      filter: `club_id=eq.${clubId}`,
+    }) as const;
+
+  /**
+   * The four tables with no club_id, which therefore cannot be filtered:
+   * `people` is one identity across every club, `drill_logs` hangs off a player
+   * and a drill, and the two tournament children hang off a tournament. They
+   * stay unfiltered rather than being dropped — a rename with no avatar update
+   * is exactly the kind of quiet staleness this channel exists to prevent.
+   *
+   * ponytail: none of them is a busy table. Add a club_id column and move them
+   * up to onTable if one ever becomes one.
+   */
+  const onSharedTable = (table: string) =>
     ({ event: "*", schema: "public", table }) as const;
 
   const tournaments = invalidateTournaments(queryClient);
 
-  supabase
-    .channel("db-changes")
+  channel = supabase
+    .channel(`db-changes:${clubId}`)
     .on(
       "postgres_changes",
       onTable("players"),
@@ -140,7 +176,7 @@ export function startRealtime(queryClient: QueryClient) {
     // rename or a new avatar would not reach the other members until a reload.
     .on(
       "postgres_changes",
-      onTable("people"),
+      onSharedTable("people"),
       invalidate(queryClient, keys.players.all),
     )
     .on(
@@ -151,14 +187,23 @@ export function startRealtime(queryClient: QueryClient) {
     // Drill logs share the home feed with games, so they refresh with them.
     .on(
       "postgres_changes",
-      onTable("drill_logs"),
+      onSharedTable("drill_logs"),
       invalidate(queryClient, keys.drillLogs.all),
     )
     // A new drill goes on the home feed and the notification bell for
     // everyone, so it needs to show up without a manual refresh too.
+    //
+    // Unfiltered even though drills has a club_id, because that column is
+    // nullable — a seeded drill belongs to the global library and to no club,
+    // and `club_id=eq.N` would never match one.
+    //
+    // Note this listener does not currently fire at all: `drills` is not in the
+    // supabase_realtime publication (grep ADD TABLE in sql/). Left in place
+    // because it is correct the day it is added, not because it does anything
+    // today.
     .on(
       "postgres_changes",
-      onTable("drills"),
+      onSharedTable("drills"),
       invalidate(queryClient, keys.drills.all),
     )
     // Social tables: a conversation that needs a manual refresh is not one.
@@ -202,8 +247,8 @@ export function startRealtime(queryClient: QueryClient) {
     // moves the bracket and the tables — so these refetch rather than patch.
     // Both roots: the index shows status, the page shows everything.
     .on("postgres_changes", onTable("tournaments"), tournaments)
-    .on("postgres_changes", onTable("tournament_players"), tournaments)
-    .on("postgres_changes", onTable("tournament_matches"), tournaments)
+    .on("postgres_changes", onSharedTable("tournament_players"), tournaments)
+    .on("postgres_changes", onSharedTable("tournament_matches"), tournaments)
     // Subscribing used to be fire-and-forget, which made the one failure that
     // matters invisible: a channel that never joins, or joins and errors, looks
     // exactly like a quiet club. Every screen then runs on whatever refetch it

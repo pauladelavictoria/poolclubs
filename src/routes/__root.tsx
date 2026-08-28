@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import {
   HeadContent,
   Outlet,
@@ -6,13 +5,11 @@ import {
   createRootRouteWithContext,
   notFound,
 } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
 import { I18nProvider, detectLang } from "@/i18n";
 import type { Lang } from "@/i18n";
 import { THEME_COOKIE, readOrigin, readPref } from "@/libs/prefs";
-import { startRealtime } from "@/libs/realtime";
 import { isHiddenPath } from "@/libs/features";
 import { sessionQuery } from "@/queries/session";
 import RouteError from "@/components/layout/RouteError";
@@ -60,7 +57,7 @@ export const Route = createRootRouteWithContext<{
     // read once here rather than per link, since both the manifest and the
     // touch icon below key off the same club.
     const clubSlug = (
-      matches.at(-1)?.params as { clubSlug?: string } | undefined
+      matches[matches.length - 1]?.params as { clubSlug?: string } | undefined
     )?.clubSlug;
 
     return {
@@ -207,7 +204,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           {children}
           <Toasts />
         </I18nProvider>
-        <Realtime />
         <Scripts />
       </body>
     </html>
@@ -224,15 +220,3 @@ function Toasts() {
   );
 }
 
-/**
- * One realtime channel for the whole app. In an effect rather than at module
- * scope, which is where it used to be: a module-scope call would try to open a
- * websocket while rendering on the server.
- */
-function Realtime() {
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    startRealtime(queryClient);
-  }, [queryClient]);
-  return null;
-}
