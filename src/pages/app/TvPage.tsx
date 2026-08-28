@@ -40,7 +40,10 @@ export default function TvPage() {
   const { data: players } = useGetPlayers();
   const { data: gamesData, isLoading: gamesLoading } = useGetGames(
     { date: today ?? undefined, mode: "single", tz },
-    { poll: true },
+    // Not until the day is known: without a date this is every single-player
+    // game the club has ever filed, and the wall display would spend its first
+    // render ranking the lot. See the note on useGetGames' `enabled`.
+    { poll: true, enabled: today !== null },
   );
   const ranking = useDailyRanking({
     games: gamesData?.games ?? [],
@@ -58,7 +61,9 @@ export default function TvPage() {
     <Ranking
       ranking={ranking}
       viewMode="combined"
-      isLoading={gamesLoading}
+      // A disabled query is not "loading", so the wall would flash its empty
+      // message in the tick before useNow knows what day it is.
+      isLoading={gamesLoading || today === null}
       emptyMessage={t("ranking.emptyDaily")}
     />
   );

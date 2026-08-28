@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useGetGames } from "@/hooks/useGetGames";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useClubTables } from "@/hooks/useClubTables";
@@ -28,10 +29,20 @@ import type { ClubTable, Player } from "@/types";
  * Everything it reads is already in the cache — the roster, the tables, the live
  * rows, today's results — so this costs no request of its own.
  */
+/** The default for `exclude`, hoisted so it is the same array every render: an
+ *  `= []` in the destructure is a new one each time, and the memo below has it
+ *  as a dependency. */
+const NO_SEATS: number[] = [];
+
+/** Likewise, so a disabled caller gets the same empty array every render rather
+ *  than a new one out of the memo. */
+const NO_GROUPS: Player[][] = [];
+
 export function useSuggestions({
   setup,
   maxGroups,
-  exclude = [],
+  exclude = NO_SEATS,
+  enabled = true,
 }: {
   /** What the club is playing. The page owns it, because the page can change
    *  it; see libs/today.ts. */
@@ -43,6 +54,13 @@ export function useSuggestions({
    *  read as idle with the game they just played not yet counted — and they have
    *  had the table either way. */
   exclude?: number[];
+  /** ponytail: for a caller that only wants an answer sometimes.
+   *
+   *  The scoreboard is the case. It needs a suggestion once, when a result has
+   *  just been filed and its table is free — but the hook sits at the top of the
+   *  component, so it was recomputing the night's whole pairing history on every
+   *  score tap and throwing it away. Cheaper than splitting the page in two. */
+  enabled?: boolean;
 }): {
   groups: Player[][];
   freeTables: ClubTable[];
@@ -60,74 +78,105 @@ export function useSuggestions({
   const now = useNow();
   const tz = zoneOf(activeClub);
   const today = now === null ? null : dayKeyOf(now, tz);
-  const { data: gamesToday } = useGetGames({ date: today ?? undefined, tz });
+  // Not until the day is known. Without a date this query is the club's entire
+  // game history — see the note on useGetGames' `enabled`.
+  //
+  // Gated on the day and not on `enabled`: a disabled caller still wants this
+  // warm. The scoreboard asks for a suggestion the instant a result is filed,
+  // and a query that started fetching at that moment would hand it an empty
+  // list — which that page reads as "nobody waiting" and navigates away on.
+  const { data: gamesToday } = useGetGames(
+    { date: today ?? undefined, tz },
+    { enabled: today !== null },
+  );
   // Only so the roster is warm for whoever renders the names; `here` is already
   // derived from it.
   useGetPlayers();
 
   const seats = seatsNeeded(setup);
-  const matchOn = (tableId: number) =>
-    (live ?? []).find((m) => m.table_id === tableId);
-  const freeTables = (tables ?? []).filter((tbl) => !matchOn(tbl.id));
 
-  // All four seats, so a doubles partner is not offered a table of their own.
-  const busy = new Set((live ?? []).flatMap(seatsOf));
-
-  // Tonight's results, twice over: how many games each person has had, and who
-  // has already been on a table with whom. The first orders the waiting list,
-  // the second keeps it from pairing the same two again.
-  const playedToday = new Map<number, number>();
-  const metToday = new Set<string>();
-
-  for (const game of gamesToday?.games ?? []) {
-    const ids = [
-      game.player_1_id,
-      game.player_2_id,
-      game.player_1b_id,
-      game.player_2b_id,
-    ].filter((id): id is number => id !== null);
-
-    for (const id of ids) playedToday.set(id, (playedToday.get(id) ?? 0) + 1);
-    // Partners as well as opponents: they have had their game together either
-    // way, and in doubles a repeated partner is as stale as a repeated one.
-    for (let i = 0; i < ids.length; i++)
-      for (let j = i + 1; j < ids.length; j++)
-        metToday.add(pairKey(ids[i], ids[j]));
-  }
+  const freeTables = useMemo(() => {
+    const matchOn = (tableId: number) =>
+      (live ?? []).find((m) => m.table_id === tableId);
+    return (tables ?? []).filter((tbl) => !matchOn(tbl.id));
+  }, [tables, live]);
 
   /**
-   * Here, and not at a table.
+   * The night's pairing, rebuilt only when something it reads has moved.
    *
-   * Fewest games tonight first, then longest checked in. Whoever has been
-   * sitting with a drink all evening is the answer to "who should have this
-   * table", and the person who has just filed their third is not — but it is a
-   * sort and not a filter: by ten o'clock everybody has played, and a
-   * suggestion nobody is offered is worse than one that repeats a pairing.
+   * Memoised because of where it is called from: the scoreboard subscribes to
+   * the club's live list, and every score tap writes that key twice — once
+   * optimistically and once when the socket echoes the row back. Unwrapped, a
+   * tap rebuilt the map, the set, the sorted queue and the groups, three times
+   * over, for an answer that screen only reads between matches.
    *
-   * Arriving is the whole of the queue this replaced, which is the point: it is
-   * the one thing everybody does anyway.
-   *
-   * The club's own tablet checks in as a device and is not a player, so it never
-   * turns up in a suggestion.
+   * `setup` is not a dependency: readTodaySetup() decodes a fresh object every
+   * render, so it never compares equal. `seats` is what this actually uses.
    */
-  const skip = new Set(exclude);
-  const idle = here
-    .filter((p) => !busy.has(p.id) && !skip.has(p.id) && p.is_device !== true)
-    .sort(
-      (a, b) =>
-        (playedToday.get(a.id) ?? 0) - (playedToday.get(b.id) ?? 0) ||
-        (a.present_since ?? "").localeCompare(b.present_since ?? ""),
-    );
+  const groups = useMemo(() => {
+    if (!enabled) return NO_GROUPS;
 
-  // The queue decides which people are together; the divisions decide who plays
-  // with whom. Balanced as the groups are formed, so the names shown and the
-  // match started are the same match.
-  const groups = suggestGroups(
-    idle,
-    seats,
-    (a, b) => metToday.has(pairKey(a, b)),
-    maxGroups,
-  ).map((group) => (seats === 4 ? balanceDoubles(group) : group));
+    // All four seats, so a doubles partner is not offered a table of their own.
+    const busy = new Set((live ?? []).flatMap(seatsOf));
+
+    // Tonight's results, twice over: how many games each person has had, and
+    // who has already been on a table with whom. The first orders the waiting
+    // list, the second keeps it from pairing the same two again.
+    const playedToday = new Map<number, number>();
+    const metToday = new Set<string>();
+
+    for (const game of gamesToday?.games ?? []) {
+      const ids = [
+        game.player_1_id,
+        game.player_2_id,
+        game.player_1b_id,
+        game.player_2b_id,
+      ].filter((id): id is number => id !== null);
+
+      for (const id of ids) playedToday.set(id, (playedToday.get(id) ?? 0) + 1);
+      // Partners as well as opponents: they have had their game together either
+      // way, and in doubles a repeated partner is as stale as a repeated one.
+      for (let i = 0; i < ids.length; i++)
+        for (let j = i + 1; j < ids.length; j++)
+          metToday.add(pairKey(ids[i], ids[j]));
+    }
+
+    /**
+     * Here, and not at a table.
+     *
+     * Fewest games tonight first, then longest checked in. Whoever has been
+     * sitting with a drink all evening is the answer to "who should have this
+     * table", and the person who has just filed their third is not — but it is
+     * a sort and not a filter: by ten o'clock everybody has played, and a
+     * suggestion nobody is offered is worse than one that repeats a pairing.
+     *
+     * Arriving is the whole of the queue this replaced, which is the point: it
+     * is the one thing everybody does anyway.
+     *
+     * The club's own tablet checks in as a device and is not a player, so it
+     * never turns up in a suggestion.
+     */
+    const skip = new Set(exclude);
+    const idle = here
+      .filter((p) => !busy.has(p.id) && !skip.has(p.id) && p.is_device !== true)
+      // A copy: filter already made one, but saying so keeps the sort off
+      // whatever `here` is memoised from.
+      .sort(
+        (a, b) =>
+          (playedToday.get(a.id) ?? 0) - (playedToday.get(b.id) ?? 0) ||
+          (a.present_since ?? "").localeCompare(b.present_since ?? ""),
+      );
+
+    // The queue decides which people are together; the divisions decide who
+    // plays with whom. Balanced as the groups are formed, so the names shown
+    // and the match started are the same match.
+    return suggestGroups(
+      idle,
+      seats,
+      (a, b) => metToday.has(pairKey(a, b)),
+      maxGroups,
+    ).map((group) => (seats === 4 ? balanceDoubles(group) : group));
+  }, [enabled, live, gamesToday, here, exclude, seats, maxGroups]);
 
   const canStart = (group: Player[]) =>
     isClubAdmin ||

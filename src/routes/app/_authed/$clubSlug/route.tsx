@@ -6,6 +6,8 @@ import {
   redirect,
   useLocation,
 } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { startRealtime } from "@/libs/realtime";
 import AppHeader from "@/components/layout/AppHeader";
 import JoinRequestBanner from "@/components/layout/JoinRequestBanner";
 import AppPrompts from "@/components/layout/AppPrompts";
@@ -77,7 +79,17 @@ export const Route = createFileRoute("/app/_authed/$clubSlug")({
 });
 
 function ClubLayout() {
-  const { activeClub, isMember } = Route.useRouteContext();
+  const { activeClub, activeClubId, isMember } = Route.useRouteContext();
+  const queryClient = useQueryClient();
+
+  // The app's one realtime channel, opened here rather than at the root because
+  // this is the highest place that knows which club to ask for — see
+  // libs/realtime.ts. Switching club is a navigation, so this component stays
+  // mounted and the effect re-runs with the new id.
+  useEffect(() => {
+    startRealtime(queryClient, activeClubId);
+  }, [queryClient, activeClubId]);
+
   // A page that is the whole screen — the live scoreboard — keeps neither the
   // tab bar nor the room reserved for it. See RouteMeta.fullBleed.
   const { fullBleed } = useRouteMeta();
