@@ -103,7 +103,9 @@ export const getSession = createServerFn({ method: "GET" }).handler(
  * tells a stranger the account exists. The component maps these onto the
  * existing translated, deliberately vague strings.
  */
-export type AuthFailure = { error: "badCredentials" | "signUpError" };
+export type AuthFailure = {
+  error: "badCredentials" | "signUpError" | "passwordChangeError";
+};
 
 const credentials = z.object({
   email: z.string().email().max(320),
@@ -235,11 +237,53 @@ export const signUp = createServerFn({ method: "POST" })
           data: { full_name: data.fullName },
         },
       });
-      if (error) return { error: "signUpError" };
+      // Logged because the screen deliberately says nothing useful: SMTP being
+      // misconfigured and an address already taken look identical from the form.
+      if (error) {
+        console.error("signUp failed", error.message);
+        return { error: "signUpError" };
+      }
       // Sign-up with email confirmation on returns a user but no session.
       return { needsConfirmation: !result.session };
     },
   );
+
+/**
+ * Forgotting a password, and then setting a new one.
+ *
+ * The request half never reports anything. Whether the address has an account
+ * is exactly what a stranger typing addresses into this form wants to learn, so
+ * the answer is the same either way and the real failure is logged instead.
+ *
+ * The recovery link lands on /auth/callback like every other email link, which
+ * verifies it and *signs the person in*; /app/update-password is behind the
+ * normal _authed guard from there. The window is the OTP expiry, same as the
+ * confirmation link.
+ */
+export const requestPasswordReset = createServerFn({ method: "POST" })
+  .validator(z.object({ email: z.string().email().max(320) }))
+  .handler(async ({ data }): Promise<null> => {
+    const supabase = getSupabaseServer();
+    const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+      redirectTo: callbackUrl("/app/update-password"),
+    });
+    if (error) console.error("requestPasswordReset failed", error.message);
+    return null;
+  });
+
+export const changePassword = createServerFn({ method: "POST" })
+  .validator(z.object({ password: z.string().min(6).max(200) }))
+  .handler(async ({ data }): Promise<AuthFailure | null> => {
+    const supabase = getSupabaseServer();
+    const { error } = await supabase.auth.updateUser({
+      password: data.password,
+    });
+    if (error) {
+      console.error("changePassword failed", error.message);
+      return { error: "passwordChangeError" };
+    }
+    return null;
+  });
 
 /**
  * Google sends the browser away and back, so the trip is started here to keep
@@ -275,6 +319,10 @@ export const signOut = createServerFn({ method: "POST" }).handler(async () => {
  */
 function callbackUrl(next?: string) {
   const url = new URL("/auth/callback", getRequestUrl());
-  if (isSafePath(next)) url.searchParams.set("next", next);
+  // Set unconditionally, even to the default. The confirmation template appends
+  // "&token_hash=…" to {{ .RedirectTo }}, and a RedirectTo with no query string
+  // of its own would swallow that "&" into the path — a dead link, in the most
+  // common case of all: signing up from the plain login page with no `next`.
+  url.searchParams.set("next", isSafePath(next) ? next : "/app");
   return url.toString();
 }

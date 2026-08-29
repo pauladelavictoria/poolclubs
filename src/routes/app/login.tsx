@@ -14,6 +14,11 @@ export const Route = createFileRoute("/app/login")({
     // Where to go afterwards. Checked again in the component and again on the
     // server before it is used — it comes off the URL, so it is never trusted.
     next: z.string().optional(),
+    // Set by /auth/callback when a confirmation or recovery link didn't work.
+    // `.catch` rather than a hard parse: this is on a URL a stranger can type,
+    // and junk should be ignored rather than turned into an error screen on the
+    // one page whose job is recovering from errors.
+    error: z.literal("link").optional().catch(undefined),
   }),
 
   beforeLoad: ({ context, search }) => {

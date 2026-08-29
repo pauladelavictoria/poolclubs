@@ -38,6 +38,7 @@ import { Route as AppAuthedIndexRouteImport } from './routes/app/_authed/index'
 import { Route as AppAuthedClubSlugRouteRouteImport } from './routes/app/_authed/$clubSlug/route'
 import { Route as AppAuthedOpsRouteImport } from './routes/app/_authed/ops'
 import { Route as AppAuthedSelectClubRouteImport } from './routes/app/_authed/select-club'
+import { Route as AppAuthedUpdatePasswordRouteImport } from './routes/app/_authed/update-password'
 import { Route as AppJoinSlugRouteImport } from './routes/app/join.$slug'
 import { Route as ApiClubsSlugLogoRouteImport } from './routes/api/clubs/$slug/logo'
 import { Route as AppAuthedClubSlugIndexRouteImport } from './routes/app/_authed/$clubSlug/index'
@@ -214,6 +215,11 @@ const AppAuthedOpsRoute = AppAuthedOpsRouteImport.update({
 const AppAuthedSelectClubRoute = AppAuthedSelectClubRouteImport.update({
   id: '/select-club',
   path: '/select-club',
+  getParentRoute: () => AppAuthedRouteRoute,
+} as any)
+const AppAuthedUpdatePasswordRoute = AppAuthedUpdatePasswordRouteImport.update({
+  id: '/update-password',
+  path: '/update-password',
   getParentRoute: () => AppAuthedRouteRoute,
 } as any)
 const AppJoinSlugRoute = AppJoinSlugRouteImport.update({
@@ -424,6 +430,7 @@ export interface FileRoutesByFullPath {
   '/app/$clubSlug/manifest.webmanifest': typeof AppClubSlugManifestDotwebmanifestRoute
   '/app/ops': typeof AppAuthedOpsRoute
   '/app/select-club': typeof AppAuthedSelectClubRoute
+  '/app/update-password': typeof AppAuthedUpdatePasswordRoute
   '/app/join/$slug': typeof AppJoinSlugRoute
   '/clubs/': typeof PublicClubsIndexRoute
   '/drills/': typeof PublicDrillsIndexRoute
@@ -484,6 +491,7 @@ export interface FileRoutesByTo {
   '/app/$clubSlug/manifest.webmanifest': typeof AppClubSlugManifestDotwebmanifestRoute
   '/app/ops': typeof AppAuthedOpsRoute
   '/app/select-club': typeof AppAuthedSelectClubRoute
+  '/app/update-password': typeof AppAuthedUpdatePasswordRoute
   '/app/join/$slug': typeof AppJoinSlugRoute
   '/clubs': typeof PublicClubsIndexRoute
   '/drills': typeof PublicDrillsIndexRoute
@@ -547,6 +555,7 @@ export interface FileRoutesById {
   '/app/$clubSlug/manifest.webmanifest': typeof AppClubSlugManifestDotwebmanifestRoute
   '/app/_authed/ops': typeof AppAuthedOpsRoute
   '/app/_authed/select-club': typeof AppAuthedSelectClubRoute
+  '/app/_authed/update-password': typeof AppAuthedUpdatePasswordRoute
   '/app/join/$slug': typeof AppJoinSlugRoute
   '/_public/clubs/': typeof PublicClubsIndexRoute
   '/_public/drills/': typeof PublicDrillsIndexRoute
@@ -610,6 +619,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/manifest.webmanifest'
     | '/app/ops'
     | '/app/select-club'
+    | '/app/update-password'
     | '/app/join/$slug'
     | '/clubs/'
     | '/drills/'
@@ -670,6 +680,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/manifest.webmanifest'
     | '/app/ops'
     | '/app/select-club'
+    | '/app/update-password'
     | '/app/join/$slug'
     | '/clubs'
     | '/drills'
@@ -732,6 +743,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/manifest.webmanifest'
     | '/app/_authed/ops'
     | '/app/_authed/select-club'
+    | '/app/_authed/update-password'
     | '/app/join/$slug'
     | '/_public/clubs/'
     | '/_public/drills/'
@@ -983,6 +995,13 @@ declare module '@tanstack/react-router' {
       path: '/select-club'
       fullPath: '/app/select-club'
       preLoaderRoute: typeof AppAuthedSelectClubRouteImport
+      parentRoute: typeof AppAuthedRouteRoute
+    }
+    '/app/_authed/update-password': {
+      id: '/app/_authed/update-password'
+      path: '/update-password'
+      fullPath: '/app/update-password'
+      preLoaderRoute: typeof AppAuthedUpdatePasswordRouteImport
       parentRoute: typeof AppAuthedRouteRoute
     }
     '/app/join/$slug': {
@@ -1337,6 +1356,7 @@ interface AppAuthedRouteRouteChildren {
   AppAuthedClubSlugRouteRoute: typeof AppAuthedClubSlugRouteRouteWithChildren
   AppAuthedOpsRoute: typeof AppAuthedOpsRoute
   AppAuthedSelectClubRoute: typeof AppAuthedSelectClubRoute
+  AppAuthedUpdatePasswordRoute: typeof AppAuthedUpdatePasswordRoute
   AppAuthedIndexRoute: typeof AppAuthedIndexRoute
   AppAuthedClubsNewRoute: typeof AppAuthedClubsNewRoute
 }
@@ -1345,6 +1365,7 @@ const AppAuthedRouteRouteChildren: AppAuthedRouteRouteChildren = {
   AppAuthedClubSlugRouteRoute: AppAuthedClubSlugRouteRouteWithChildren,
   AppAuthedOpsRoute: AppAuthedOpsRoute,
   AppAuthedSelectClubRoute: AppAuthedSelectClubRoute,
+  AppAuthedUpdatePasswordRoute: AppAuthedUpdatePasswordRoute,
   AppAuthedIndexRoute: AppAuthedIndexRoute,
   AppAuthedClubsNewRoute: AppAuthedClubsNewRoute,
 }
