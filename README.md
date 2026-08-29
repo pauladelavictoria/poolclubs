@@ -5,6 +5,10 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
+**Live:** [poolclubs.app](https://poolclubs.app)
+
+Forked from [aluzed/vite-react-ts-supabase](https://github.com/aluzed/vite-react-ts-supabase).
+
 ---
 
 ## 🌟 Overview
@@ -15,7 +19,7 @@
 
 ## ✨ Key Features
 
-### 🎯 Practice & Drills
+### 🎯 Practice & Drills *(built, currently hidden behind a feature flag — see `src/libs/features.ts`)*
 * **Drill Library:** Create, customize, and browse pool drills (position play, safety shots, cue ball control, and breaking).
 * **Track Results:** Log shot attempts, completion times, success percentages, and personal bests.
 * **Progress Analytics:** Monitor skill improvement over time with detailed performance stats.
@@ -26,16 +30,20 @@
 
 ### ⚔️ Match Challenges & Rankings
 * **Direct Challenges:** Challenge other players to matches (8-Ball, 9-Ball, 10-Ball, Straight Pool, etc.).
-* **Competitive Leaderboards:** Skill-based ranking system (ELO / handicap system) to see where you stand locally and globally.
+* **Competitive Leaderboards:** Skill-based ranking system (ELO / handicap system) to see where you stand within a club.
 * **Match Logging:** Track scores, match history, and head-to-head records.
 
 ### 💬 Social Feed & Interactions
-* **Activity Feed:** Share match results, drill achievements, and video/photo highlights of great runouts.
+* **Activity Feed:** Share match results and drill achievements with your club.
 * **Reactions & Comments:** Like, react, and comment on friend and club activity.
 
 ---
 
 ## 🛠 Running it
+
+Requires Node ≥ 22.6 (see `.nvmrc`) — the `check` script relies on native
+TypeScript stripping. Docker + the [Supabase CLI](https://supabase.com/docs/guides/cli)
+are needed for `db:dump` / `db:types` (see `sql/README.md`).
 
 ```bash
 npm install
@@ -45,8 +53,9 @@ npm run lint
 npm run check    # the .check.ts assertion scripts — no test runner in this project
 ```
 
-`.env` needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Both are public by
-design; RLS is the security boundary, not the key.
+Copy `.env.example` to `.env`. It needs `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY`. Both are public by design; RLS is the security
+boundary, not the key.
 
 Web push adds `VITE_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` — `npx web-push
 generate-vapid-keys` makes a pair. Only the public half is prefixed, because
@@ -65,7 +74,7 @@ A few things worth knowing before changing it:
   `/app/$clubSlug/…`, and the slug is resolved against the memberships the
   session already carries — a club you are not in reads as not-found. Links are
   written as route patterns (`to="/app/$clubSlug/players/$playerId"`), so a typo
-  is a build error. [`AppLink`](src/components/AppLink.tsx) fills the club in.
+  is a build error. [`AppLink`](src/components/layout/AppLink.tsx) fills the club in.
 * **Auth is server-side.** Sign-in, sign-up, sign-out and the Google round trip
   are server functions in [`src/libs/auth.functions.ts`](src/libs/auth.functions.ts);
   the session lives in httpOnly cookies that both the server and the browser

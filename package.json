@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "packageManager": "npm@10.9.8",
   "scripts": {
     "dev": "vite dev --host",
     "build": "vite build && tsc --noEmit -p tsconfig.app.json",
