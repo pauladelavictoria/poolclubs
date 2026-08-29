@@ -4,7 +4,12 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { signIn, signUp, startGoogleOAuth } from "@/libs/auth.functions";
+import {
+  requestPasswordReset,
+  signIn,
+  signUp,
+  startGoogleOAuth,
+} from "@/libs/auth.functions";
 import { useSessionRefresh } from "@/hooks/useAuth";
 import { isSafePath } from "@/libs/nextPath";
 import { useT } from "@/i18n";
@@ -34,8 +39,14 @@ export default function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [busy, setBusy] = useState(false);
   // One slot for both the error and the "check your inbox" note — only one of
-  // the two is ever on screen.
-  const [note, setNote] = useState<{ text: string; ok?: boolean } | null>(null);
+  // the two is ever on screen. Seeded from the URL so a dead confirmation link
+  // arrives here saying so, rather than dropping the person on a blank sign-in
+  // form that looks like the account was never created. An initialiser rather
+  // than an effect: the language comes from a cookie, so server and client
+  // agree, and there is no flash of the wrong thing.
+  const [note, setNote] = useState<{ text: string; ok?: boolean } | null>(
+    search.error ? { text: t("auth.badLink") } : null,
+  );
 
   /** The session cookies are set; make the router notice and move on. */
   const arrive = async () => {
@@ -54,6 +65,28 @@ export default function LoginPage() {
     }
     // A full page load, not a router navigation: the destination is Google.
     window.location.href = result.url;
+  };
+
+  /**
+   * The reset email goes to whatever is in the email field, so the field has to
+   * be filled and well-formed first. `reportValidity()` is the browser's own
+   * check and its own message, already in the reader's language — a string we
+   * would otherwise have to write and translate three times.
+   */
+  const forgotPassword = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    const field = e.currentTarget.form?.elements.namedItem("email");
+    if (!(field instanceof HTMLInputElement) || !field.reportValidity()) return;
+
+    setBusy(true);
+    setNote(null);
+    try {
+      await requestPasswordReset({ data: { email: field.value } });
+    } finally {
+      // Always the same answer, whatever happened: whether an address has an
+      // account is what a stranger typing addresses in here wants to find out.
+      setNote({ text: t("auth.resetSent"), ok: true });
+      setBusy(false);
+    }
   };
 
   const submitEmail = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -202,6 +235,19 @@ export default function LoginPage() {
           <Button type="submit" className="w-full" disabled={busy}>
             {t(mode === "signin" ? "auth.signIn" : "auth.signUp")}
           </Button>
+
+          {/* Only when signing in: offering it mid-sign-up would be asking
+              about a password that does not exist yet. */}
+          {mode === "signin" && (
+            <button
+              type="button"
+              onClick={forgotPassword}
+              disabled={busy}
+              className="w-full text-caption text-ink-faint underline underline-offset-2 transition-colors duration-150 hover:text-ink-soft disabled:opacity-60"
+            >
+              {t("auth.forgotPassword")}
+            </button>
+          )}
         </form>
 
         <button

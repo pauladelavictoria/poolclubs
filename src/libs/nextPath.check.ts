@@ -3,7 +3,7 @@
  *   node src/libs/nextPath.check.ts
  */
 import assert from "node:assert/strict";
-import { isSafePath, loginLink } from "./nextPath.ts";
+import { isSafePath, loginFailedLink, loginLink } from "./nextPath.ts";
 
 // Same-site paths are the only thing allowed through
 assert.equal(isSafePath("/drills/12"), true);
@@ -20,5 +20,10 @@ assert.equal(isSafePath(null), false);
 assert.equal(isSafePath(undefined), false);
 
 assert.equal(loginLink("/drills/12"), "/app/login?next=%2Fdrills%2F12");
+
+// What /auth/callback builds must parse back into what the login route reads.
+const failed = new URL(loginFailedLink("/app/join/el-nueve"), "https://x");
+assert.equal(failed.searchParams.get("next"), "/app/join/el-nueve");
+assert.equal(failed.searchParams.get("error"), "link");
 
 console.log("nextPath: ok");

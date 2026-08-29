@@ -25,3 +25,12 @@ export function isSafePath(path: string | null | undefined): path is string {
 /** The /login link that comes back to `path` afterwards. */
 export const loginLink = (path: string) =>
   `/app/login?next=${encodeURIComponent(path)}`;
+
+/**
+ * The same link, for when a confirmation or recovery link didn't work.
+ *
+ * Sending people to a bare sign-in form after a dead link is what made an
+ * expired email look like the account had never been created — the page has to
+ * say something. `loginLink` already emits ?next=…, so & is always right here.
+ */
+export const loginFailedLink = (path: string) => `${loginLink(path)}&error=link`;
