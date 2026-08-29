@@ -54,7 +54,7 @@ export default function LeagueTable({
           <tr
             key={row.playerId}
             className={[
-              "transition-colors duration-150 hover:bg-felt-raised",
+              "transition-colors duration-150 hover:bg-felt-raised has-[[data-highlight]]:bg-strike-tint",
               // The cut, drawn where it actually falls rather than as a badge
               // on each qualifying row. In the tournament's own colour: where
               // the line lands is a fact about the draw, not something anyone
