@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { toAvatarDataUrl } from "@/libs/browser/avatarImage";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 /**
@@ -44,8 +45,15 @@ export default function AvatarUpload({
       queryClient.invalidateQueries({ queryKey: keys.players.all });
       await refreshMemberships();
       toast.success(t("common.saved"));
-    } catch {
-      toast.error(t("players.avatarError"));
+    } catch (err) {
+      toast.error(
+        t(
+          dbErrorMessage(err, "avatarUpload", {
+            denied: "common.deniedError",
+            fallback: "players.avatarError",
+          }),
+        ),
+      );
     } finally {
       setBusy(false);
       // Same file picked twice in a row still fires a change event.

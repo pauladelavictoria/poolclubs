@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 /**
@@ -77,7 +78,14 @@ export default function ChallengeButton({
               setMessage("");
               setOpen(false);
             },
-            onError: () => toast.error(t("common.error")),
+            onError: (err) =>
+              toast.error(
+                t(
+                  dbErrorMessage(err, "sendChallenge", {
+                    denied: "common.deniedError",
+                  }),
+                ),
+              ),
           },
         );
       }}

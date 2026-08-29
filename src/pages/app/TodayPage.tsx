@@ -23,7 +23,7 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/hooks/useDialog";
 import { readTodaySetup, writeTodaySetup } from "@/libs/prefs";
 import { clampRace, seatsNeeded, type DaySetup } from "@/libs/algorithms/today";
-import { liveWriteMessage } from "@/libs/algorithms/dbError";
+import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 import { DISCIPLINES, type ClubTable, type Player } from "@/types";
 
@@ -91,7 +91,8 @@ export default function TodayPage() {
         raceTo: setup.raceTo,
       },
       {
-        onError: (err) => toast.error(t(liveWriteMessage(err, "startMatch"))),
+        onError: (err) =>
+          toast.error(t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS))),
       },
     );
 
@@ -347,7 +348,16 @@ export default function TodayPage() {
                     onClick={() =>
                       checkIn.mutate(
                         { here: !isHere, playerId: p.id },
-                        { onError: () => toast.error(t("common.error")) },
+                        {
+                          onError: (err) =>
+                            toast.error(
+                              t(
+                                dbErrorMessage(err, "checkIn", {
+                                  denied: "common.deniedError",
+                                }),
+                              ),
+                            ),
+                        },
                       )
                     }
                     className={[
@@ -423,7 +433,9 @@ export default function TodayPage() {
                   // live on its own, which is the confirmation.
                   onSuccess: close,
                   onError: (err) =>
-                    toast.error(t(liveWriteMessage(err, "startMatch"))),
+                    toast.error(
+                      t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                    ),
                 },
               )
             }

@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { useAppNavigate } from "@/components/layout/AppLink";
-import { liveWriteMessage } from "@/libs/algorithms/dbError";
+import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/Button";
 import ConfirmButton from "@/components/ui/ConfirmButton";
@@ -125,7 +125,9 @@ export default function KioskBar({
                     tableId,
                   }),
                 onError: (err) =>
-                  toast.error(t(liveWriteMessage(err, "abandonMatch"))),
+                  toast.error(
+                    t(dbErrorMessage(err, "abandonMatch", LIVE_MATCH_KEYS)),
+                  ),
               })
             }
             confirmLabel={t("live.abandonConfirm")}

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
 import { LuPlus, LuNetwork, LuUsers } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -8,6 +7,7 @@ import {
   useManageTournaments,
   type TournamentListItem,
 } from "@/hooks/useTournaments";
+import { runMutation } from "@/libs/browser/mutationToast";
 import PageTitle from "@/components/layout/PageTitle";
 import TournamentForm, {
   type TournamentValues,
@@ -52,14 +52,14 @@ export default function TournamentsPage() {
   const dialogRef = useDialog(isModalOpen);
 
   const create = async (values: TournamentValues) => {
-    try {
-      await createTournament.mutateAsync(values);
-      setIsModalOpen(false);
-      toast.success(t("tournaments.created"));
-    } catch {
-      // Logged by the mutation cache; this is the part the user sees.
-      toast.error(t("common.error"));
-    }
+    const ok = await runMutation(
+      createTournament.mutateAsync(values),
+      t,
+      "tournaments.created",
+      "common.error",
+      { denied: "common.deniedError" },
+    );
+    if (ok) setIsModalOpen(false);
   };
 
   const all = tournaments ?? [];

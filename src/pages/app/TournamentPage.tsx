@@ -1,42 +1,38 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { toast } from "react-toastify";
+import { useMemo, useState } from "react";
 import {
-  LuChevronDown,
   LuGitFork,
   LuList,
-  LuPencil,
   LuPlus,
-  LuSettings,
-  LuTrash2,
   LuUserMinus,
   LuUserPlus,
 } from "react-icons/lu";
+import { runMutation } from "@/libs/browser/mutationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayers, usePlayerLookup } from "@/hooks/usePlayers";
 import { useGames } from "@/hooks/useGames";
 import { useEloRanking } from "@/hooks/useEloRanking";
-import {
-  useTournament,
-  useManageTournaments,
-  type TournamentDetail,
-} from "@/hooks/useTournaments";
+import { useTournament, useManageTournaments } from "@/hooks/useTournaments";
 import {
   bracketIndex,
-  eligible,
+  eligibleToAdd,
+  findOutstandingMatch,
   groupCount,
   minimumEntrants,
-  placings,
   raceFor,
   resolveBracket,
+  seedEntrants,
+  sortPlayedMatches,
+  tournamentPodium,
   type BracketIndex,
 } from "@/libs/algorithms/bracket";
-import { groupStandings, leaguePodium, standings } from "@/libs/algorithms/leagueTable";
+import { groupStandings, standings } from "@/libs/algorithms/leagueTable";
 import PageTitle from "@/components/layout/PageTitle";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
 import MatchCard from "@/components/games/MatchCard";
 import MatchList from "@/components/games/MatchList";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
+import TournamentAdminPanel from "@/components/tournaments/TournamentAdminPanel";
 import PlayGameForm from "@/components/games/PlayGameForm";
 import { PlayerHighlight } from "@/components/players/PlayerLink";
 import TournamentForm, {
@@ -93,17 +89,10 @@ export default function TournamentPage() {
     [tournament],
   );
 
-  /** Strongest first, so the bracket seeds itself off the club's own ranking.
-   *  Anyone with no games yet sits at the bottom, ordered by name. */
-  const seeded = useMemo(() => {
-    const rank = new Map((elo ?? []).map((e, i) => [e.playerId, i]));
-    return [...entrants].sort(
-      (a, b) =>
-        (rank.get(a) ?? Number.MAX_SAFE_INTEGER) -
-          (rank.get(b) ?? Number.MAX_SAFE_INTEGER) ||
-        nameOf(a).localeCompare(nameOf(b)),
-    );
-  }, [entrants, elo, nameOf]);
+  const seeded = useMemo(
+    () => seedEntrants(entrants, elo, nameOf),
+    [entrants, elo, nameOf],
+  );
 
   // The stored rows only hold the seats known at generation; this fills in the
   // rest from the results so far, and settles any walkover they created.
@@ -142,16 +131,11 @@ export default function TournamentPage() {
 
   /** Who the organiser can still put in: the club roster this tournament is
    *  open to, minus whoever is already entered. */
-  const addable = eligible(players ?? [], tournament.category).filter(
-    (p) => !entrants.includes(p.id),
-  );
+  const addable = eligibleToAdd(players ?? [], tournament.category, entrants);
 
   // A knockout's podium is who lost to whom; a league's is just the top of the
   // table, since there is no final to read it off.
-  const podium =
-    tournament.format === "league"
-      ? leaguePodium(standings(entrants, matches))
-      : placings(matches);
+  const podium = tournamentPodium(tournament.format, entrants, matches);
 
   const groupMatches = matches.filter((m) => m.bracket === "group");
   const groupsDone =
@@ -168,125 +152,19 @@ export default function TournamentPage() {
   /** Most recent first — a league is read as "what happened lately", not as a
    *  calendar. Fixtures generated at the same time have no order of their own,
    *  so an unplayed one falls back to its number. */
-  const playedMatches = matches
-    .filter((m) => m.winner_id !== null)
-    .sort((a, b) =>
-      (b.game?.played_at ?? "").localeCompare(a.game?.played_at ?? ""),
-    );
+  const playedMatches = sortPlayedMatches(
+    matches.filter((m) => m.winner_id !== null),
+  );
   const pendingMatches = matches.filter((m) => m.winner_id === null);
 
-  /** The outstanding fixture between two entrants. A pair with nothing left to
-   *  play has no match to file against, which is what stops a league turning
-   *  into whoever-plays-most. */
   const findMatch = (a: number, b: number) =>
-    matches.find(
-      (m) =>
-        m.winner_id === null &&
-        ((m.p1_id === a && m.p2_id === b) || (m.p1_id === b && m.p2_id === a)),
-    );
+    findOutstandingMatch(matches, a, b);
 
   const entrantPlayers = (players ?? []).filter((p) => entrants.includes(p.id));
 
   /** The race this fixture runs to, from how deep in the draw it sits. */
   const raceOf = (match: TournamentMatch) =>
     raceFor(match, tournament, matches);
-
-  const run = async (work: Promise<unknown>, ok: Parameters<typeof t>[0]) => {
-    try {
-      await work;
-      toast.success(t(ok));
-    } catch {
-      // Logged by the mutation cache; this is the part the user sees.
-      toast.error(t("common.error"));
-    }
-  };
-
-  /**
-   * Running the tournament, folded away. These were three more cards in a stack
-   * of eight that all looked alike, and they are the only ones most of the club
-   * can't use at all — so they go last, behind a dashed disclosure, which is the
-   * same "not the content" edge the feed already uses.
-   */
-  const adminBlock = !isClubAdmin ? null : tournament.status === "open" ? (
-    <ManagePanel title={t("tournaments.manage")}>
-      <p className="text-body text-ink-soft">
-        {entrants.length < minimum
-          ? t("tournaments.needMore", {
-              n: minimum - entrants.length,
-              min: minimum,
-            })
-          : t("tournaments.readyToStart", { n: entrants.length })}
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          disabled={entrants.length < minimum || startTournament.isPending}
-          onClick={() =>
-            run(
-              startTournament.mutateAsync({ tournament, seededIds: seeded }),
-              "tournaments.started",
-            )
-          }
-        >
-          {t("tournaments.start")}
-        </Button>
-        <Button variant="secondary" onClick={() => setIsEditOpen(true)}>
-          <LuPencil className="h-4 w-4" aria-hidden />
-          {t("common.edit")}
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={() => {
-            if (
-              !confirm(
-                t("tournaments.deleteConfirm", { name: tournament.name }),
-              )
-            )
-              return;
-            run(
-              deleteTournament.mutateAsync(tournamentId),
-              "tournaments.deleted",
-            );
-          }}
-        >
-          <LuTrash2 className="h-4 w-4" aria-hidden />
-          {t("common.delete")}
-        </Button>
-      </div>
-    </ManagePanel>
-  ) : tournament.status === "groups" ? (
-    <ManagePanel title={t("tournaments.manage")}>
-      <p className="text-body text-ink-soft">
-        {groupsDone
-          ? t("tournaments.groupsDone", { n: tournament.advance ?? 0 })
-          : t("tournaments.groupsPending")}
-      </p>
-      <Button
-        disabled={!groupsDone || generateKnockout.isPending}
-        onClick={() =>
-          run(
-            generateKnockout.mutateAsync(tournament as TournamentDetail),
-            "tournaments.knockoutReady",
-          )
-        }
-      >
-        {t("tournaments.generateKnockout")}
-      </Button>
-    </ManagePanel>
-  ) : tournament.status === "running" ? (
-    <ManagePanel title={t("tournaments.manage")}>
-      <Button
-        variant="secondary"
-        onClick={() =>
-          run(
-            updateTournament.mutateAsync({ id: tournamentId, status: "done" }),
-            "tournaments.closed",
-          )
-        }
-      >
-        {t("tournaments.close")}
-      </Button>
-    </ManagePanel>
-  ) : null;
 
   return (
     <PlayerHighlight>
@@ -388,11 +266,14 @@ export default function TournamentPage() {
                       joinTournament.isPending || leaveTournament.isPending
                     }
                     onClick={() =>
-                      run(
+                      runMutation(
                         entered
                           ? leaveTournament.mutateAsync({ tournamentId })
                           : joinTournament.mutateAsync({ tournamentId }),
+                        t,
                         entered ? "tournaments.left" : "tournaments.joined",
+                        "common.error",
+                        { denied: "common.deniedError" },
                       )
                     }
                   >
@@ -442,12 +323,15 @@ export default function TournamentPage() {
                         size="sm"
                         tone="danger"
                         onClick={() =>
-                          run(
+                          runMutation(
                             leaveTournament.mutateAsync({
                               tournamentId,
                               playerId,
                             }),
+                            t,
                             "tournaments.removed",
+                            "common.error",
+                            { denied: "common.deniedError" },
                           )
                         }
                       >
@@ -491,12 +375,15 @@ export default function TournamentPage() {
                       onClick={() => {
                         const playerId = Number(adding);
                         setAdding("");
-                        run(
+                        runMutation(
                           joinTournament.mutateAsync({
                             tournamentId,
                             playerId,
                           }),
+                          t,
                           "tournaments.added",
+                          "common.error",
+                          { denied: "common.deniedError" },
                         );
                       }}
                     >
@@ -586,11 +473,27 @@ export default function TournamentPage() {
           </>
         )}
 
-        {adminBlock && (
+        {isClubAdmin && tournament.status !== "done" && (
           // The seam between the tournament and the running of it. Everything
           // above is what a tournament is; everything below is a job, and only
           // one person on the page has it.
-          <div className="border-t border-hairline pt-4">{adminBlock}</div>
+          <div className="border-t border-hairline pt-4">
+            <TournamentAdminPanel
+              tournament={tournament}
+              tournamentId={tournamentId}
+              entrants={entrants}
+              seeded={seeded}
+              minimum={minimum}
+              groupsDone={groupsDone}
+              manage={{
+                startTournament,
+                deleteTournament,
+                generateKnockout,
+                updateTournament,
+              }}
+              onEdit={() => setIsEditOpen(true)}
+            />
+          </div>
         )}
       </div>
 
@@ -624,9 +527,12 @@ export default function TournamentPage() {
             onCancel={() => setIsEditOpen(false)}
             onSubmit={(values: TournamentValues) => {
               setIsEditOpen(false);
-              run(
+              runMutation(
                 updateTournament.mutateAsync({ id: tournamentId, ...values }),
+                t,
                 "common.saved",
+                "common.error",
+                { denied: "common.deniedError" },
               );
             }}
           />
@@ -653,47 +559,21 @@ export default function TournamentPage() {
             onCancel={() => setPlaying(null)}
             onSubmit={(values) => {
               setPlaying(null);
-              run(
+              runMutation(
                 recordResult.mutateAsync({
                   ...values,
                   discipline: tournament.discipline,
                 }),
+                t,
                 "tournaments.recorded",
+                "common.error",
+                { denied: "common.deniedError" },
               );
             }}
           />
         )}
       </dialog>
     </PlayerHighlight>
-  );
-}
-
-/**
- * The organiser's controls. A native <details> — click to open, Esc, no state
- * and no outside-click listener — with a dashed edge, so it reads as scaffolding
- * around the tournament rather than another part of it.
- */
-function ManagePanel({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <details className="group rounded-card border border-dashed border-hairline">
-      <summary className="flex h-11 cursor-pointer list-none items-center gap-2 px-4 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint transition-colors duration-150 hover:text-ink-soft [&::-webkit-details-marker]:hidden">
-        <LuSettings className="h-4 w-4" aria-hidden />
-        {title}
-        <LuChevronDown
-          className="ml-auto h-4 w-4 transition-transform duration-150 group-open:rotate-180"
-          aria-hidden
-        />
-      </summary>
-      <div className="space-y-3 border-t border-dashed border-hairline p-4">
-        {children}
-      </div>
-    </details>
   );
 }
 

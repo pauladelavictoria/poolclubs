@@ -6,6 +6,7 @@ import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { useManageDrills } from "@/hooks/useManageDrills";
 import { useAuth } from "@/hooks/useAuth";
 import { canEditDrill } from "@/libs/algorithms/drillPermissions";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import PageTitle from "@/components/layout/PageTitle";
 import PoolTableDiagram from "@/components/drills/PoolTableDiagram";
 import DrillLogForm from "@/components/drills/DrillLogForm";
@@ -70,7 +71,15 @@ export default function DrillDetailPage() {
     deleteDrill.mutate(drill.id, {
       onSuccess: () =>
         navigate({ to: "/app/$clubSlug/drills", params: { clubSlug } }),
-      onError: () => toast.error(t("drills.deleteError")),
+      onError: (err) =>
+        toast.error(
+          t(
+            dbErrorMessage(err, "deleteDrill", {
+              denied: "common.deniedError",
+              fallback: "drills.deleteError",
+            }),
+          ),
+        ),
     });
   };
 

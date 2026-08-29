@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useManageDrills, type DrillInput } from "@/hooks/useManageDrills";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 export default function DrillEditorPage() {
@@ -23,7 +24,15 @@ export default function DrillEditorPage() {
   const isSubmitting = createDrill.isPending || updateDrill.isPending;
 
   const handleSubmit = (values: DrillInput) => {
-    const onError = () => toast.error(t("drills.saveError"));
+    const onError = (err: unknown) =>
+      toast.error(
+        t(
+          dbErrorMessage(err, "saveDrill", {
+            denied: "common.deniedError",
+            fallback: "drills.saveError",
+          }),
+        ),
+      );
 
     if (drillId) {
       updateDrill.mutate(
@@ -58,7 +67,15 @@ export default function DrillEditorPage() {
           to: "/app/$clubSlug/drills",
           params: { clubSlug: clubSlug! },
         }),
-      onError: () => toast.error(t("drills.deleteError")),
+      onError: (err) =>
+        toast.error(
+          t(
+            dbErrorMessage(err, "deleteDrill", {
+              denied: "common.deniedError",
+              fallback: "drills.deleteError",
+            }),
+          ),
+        ),
     });
   };
 

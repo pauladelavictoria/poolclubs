@@ -15,7 +15,7 @@ import { dialogClasses } from "@/components/ui/cardStyles";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { useDialog } from "@/hooks/useDialog";
 import { pinKiosk, readKioskTable } from "@/libs/browser/kiosk";
-import { liveWriteMessage } from "@/libs/algorithms/dbError";
+import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/app/_authed/$clubSlug/tables/$tableId");
@@ -173,7 +173,9 @@ export default function TablePage() {
                     });
                   },
                   onError: (err) =>
-                    toast.error(t(liveWriteMessage(err, "startMatch"))),
+                    toast.error(
+                      t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                    ),
                 },
               )
             }

@@ -7,6 +7,7 @@ import PushToggle from "@/components/players/PushToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { changePassword } from "@/libs/server/auth.functions";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -60,7 +61,15 @@ export default function PlayerSettingsPage() {
         // No name-clash branch any more: names stopped being unique per club
         // when they moved to people. Two members can share one, and the slug
         // keeps their profiles apart.
-        onError: () => toast.error(t("players.updateError")),
+        onError: (err) =>
+          toast.error(
+            t(
+              dbErrorMessage(err, "updatePlayer", {
+                denied: "common.deniedError",
+                fallback: "players.updateError",
+              }),
+            ),
+          ),
       },
     );
   };
@@ -76,7 +85,17 @@ export default function PlayerSettingsPage() {
     if (!player) return;
     updatePlayer.mutate(
       { id: player.id, personId: player.person_id, is_public: next },
-      { onError: () => toast.error(t("players.updateError")) },
+      {
+        onError: (err) =>
+          toast.error(
+            t(
+              dbErrorMessage(err, "updatePlayer", {
+                denied: "common.deniedError",
+                fallback: "players.updateError",
+              }),
+            ),
+          ),
+      },
     );
   };
 

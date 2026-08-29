@@ -12,6 +12,8 @@
   "common.next": "Next",
   "common.clearFilters": "Clear filters",
   "common.error": "Something went wrong",
+  "common.duplicateError": "That already exists.",
+  "common.deniedError": "You're not allowed to do that.",
   "common.seeAll": "See all",
   "common.pts": "{n} pts",
   "common.clear": "Clear",

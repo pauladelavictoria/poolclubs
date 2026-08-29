@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { LuChevronRight } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useManageClub } from "@/hooks/useClub";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import ClubLogoUpload from "@/components/club/ClubLogoUpload";
 import ClubThemePicker from "@/components/club/ClubThemePicker";
 import ClubLocationPicker from "@/components/club/ClubLocationPicker";
@@ -145,7 +146,14 @@ export default function ClubInfoPage() {
           setTimezone(undefined);
           toast.success(t("common.saved"));
         },
-        onError: () => toast.error(t("common.error")),
+        onError: (err) =>
+          toast.error(
+            t(
+              dbErrorMessage(err, "updateClub", {
+                denied: "common.deniedError",
+              }),
+            ),
+          ),
       },
     );
   };

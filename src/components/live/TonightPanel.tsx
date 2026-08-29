@@ -4,6 +4,7 @@ import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { useCheckIn, useWhoIsHere } from "@/hooks/useNight";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { AppLink } from "@/components/layout/AppLink";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
@@ -115,7 +116,16 @@ export default function TonightPanel() {
           onClick={() =>
             checkIn.mutate(
               { here: !imHere },
-              { onError: () => toast.error(t("common.error")) },
+              {
+                onError: (err) =>
+                  toast.error(
+                    t(
+                      dbErrorMessage(err, "checkIn", {
+                        denied: "common.deniedError",
+                      }),
+                    ),
+                  ),
+              },
             )
           }
           disabled={checkIn.isPending || !player}

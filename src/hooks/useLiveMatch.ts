@@ -213,7 +213,9 @@ export const useManageLiveMatch = () => {
         const { data, error } = await supabase.rpc("finish_live_match", {
           p_id: id,
         });
-        if (error) throw new Error(error.message);
+        // Thrown rather than `.throwOnError()` so the PostgrestError itself
+        // reaches the caller — same reason as startMatch, above.
+        if (error) throw error;
         return data as string;
       },
       // The socket tells everyone else. This is so the tab that pressed the

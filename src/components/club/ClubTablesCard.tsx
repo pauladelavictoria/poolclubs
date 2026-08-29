@@ -10,6 +10,7 @@ import {
   LuUnlink,
 } from "react-icons/lu";
 import { supabase } from "@/libs/supabase/browser";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubTables, useManageClubTables } from "@/hooks/useClubTables";
 import { useClubMembers, useManageClub } from "@/hooks/useClub";
@@ -72,11 +73,21 @@ export default function ClubTablesCard() {
         cid: activeClubId,
         tid: tableId,
       });
-      if (error || !data) throw new Error(error?.message ?? "no code");
+      // Thrown rather than wrapped so the PostgrestError's own code reaches
+      // the caller, same reason as useLiveMatch's startMatch.
+      if (error) throw error;
+      if (!data) throw new Error("no code");
       return data;
     },
     onSuccess: (code, tableId) => setPairing({ tableId, code }),
-    onError: () => toast.error(t("common.error")),
+    onError: (err) =>
+      toast.error(
+        t(
+          dbErrorMessage(err, "startPairing", {
+            denied: "common.deniedError",
+          }),
+        ),
+      ),
   });
 
   const add = () => {
@@ -86,7 +97,16 @@ export default function ClubTablesCard() {
       onSuccess: () => setLabel(""),
       // Almost always the unique index: this club already has a table by that
       // name.
-      onError: () => toast.error(t("tables.duplicate")),
+      onError: (err) =>
+        toast.error(
+          t(
+            dbErrorMessage(err, "addTable", {
+              duplicate: "tables.duplicate",
+              denied: "common.deniedError",
+              fallback: "tables.duplicate",
+            }),
+          ),
+        ),
     });
   };
 

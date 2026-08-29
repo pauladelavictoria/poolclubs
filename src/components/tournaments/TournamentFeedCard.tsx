@@ -1,4 +1,3 @@
-import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayerLookup } from "@/hooks/usePlayers";
 import { useTournament, useManageTournaments } from "@/hooks/useTournaments";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { placings, resolveBracket } from "@/libs/algorithms/bracket";
 import { leaguePodium, standings } from "@/libs/algorithms/leagueTable";
+import { runMutation } from "@/libs/browser/mutationToast";
 import { FORMAT_KEY, type Tournament } from "@/types";
 import { useT, type Key } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -71,15 +71,15 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
 
   const toggle = async () => {
     const tournamentId = tournament.id;
-    try {
-      await (entered
+    await runMutation(
+      entered
         ? leaveTournament.mutateAsync({ tournamentId })
-        : joinTournament.mutateAsync({ tournamentId }));
-      toast.success(t(entered ? "tournaments.left" : "tournaments.joined"));
-    } catch {
-      // Logged by the mutation cache; this is the part the user sees.
-      toast.error(t("common.error"));
-    }
+        : joinTournament.mutateAsync({ tournamentId }),
+      t,
+      entered ? "tournaments.left" : "tournaments.joined",
+      "common.error",
+      { denied: "common.deniedError" },
+    );
   };
 
   return (

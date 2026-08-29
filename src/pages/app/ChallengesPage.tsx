@@ -6,6 +6,7 @@ import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
 import { useAuth } from "@/hooks/useAuth";
 import { useChallenges, useManageChallenges } from "@/hooks/useChallenges";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { usePlayers, usePlayerLookup } from "@/hooks/usePlayers";
 import { useWhoIsHere } from "@/hooks/useNight";
 import { useClubTables } from "@/hooks/useClubTables";
@@ -65,7 +66,14 @@ export default function ChallengesPage() {
   const appNavigate = useAppNavigate();
 
   const { nameOf } = usePlayerLookup();
-  const onError = () => toast.error(t("common.error"));
+  const onError = (err: unknown) =>
+    toast.error(
+      t(
+        dbErrorMessage(err, "challenge", {
+          denied: "common.deniedError",
+        }),
+      ),
+    );
 
   const open = (challenges ?? []).filter(
     (c) => c.status === "pending" || c.status === "accepted",

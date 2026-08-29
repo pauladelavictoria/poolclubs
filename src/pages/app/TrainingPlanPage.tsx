@@ -5,6 +5,7 @@ import PageTitle from "@/components/layout/PageTitle";
 import TrainingPlanStepList from "@/components/drills/TrainingPlanStepList";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { Card } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { Button } from "@/components/ui/Button";
@@ -51,7 +52,15 @@ export default function TrainingPlanPage() {
       { playerId: player.id, category: player.category },
       {
         onSuccess: () => toast.success(t("training.newPlanCreated")),
-        onError: () => toast.error(t("drills.planError")),
+        onError: (err) =>
+          toast.error(
+            t(
+              dbErrorMessage(err, "generatePlan", {
+                denied: "common.deniedError",
+                fallback: "drills.planError",
+              }),
+            ),
+          ),
       },
     );
   };

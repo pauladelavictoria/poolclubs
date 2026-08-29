@@ -4,6 +4,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { useChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { useAddGame } from "@/hooks/useAddGame";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { usePlayers } from "@/hooks/usePlayers";
 import PageTitle from "@/components/layout/PageTitle";
 import CancelLink from "@/components/layout/CancelLink";
@@ -149,7 +150,10 @@ export default function AddGamePage() {
           // against the same handful of dates in one sitting.
           reset({ discipline, mode: game.mode, played_at: game.played_at });
         },
-        onError: () => toast.error(t("common.error")),
+        onError: (err) =>
+          toast.error(
+            t(dbErrorMessage(err, "addGame", { denied: "common.deniedError" })),
+          ),
       },
     );
   };

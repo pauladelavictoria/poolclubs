@@ -12,6 +12,8 @@
   "common.next": "Suivant",
   "common.clearFilters": "Effacer les filtres",
   "common.error": "Une erreur est survenue",
+  "common.duplicateError": "Cela existe déjà.",
+  "common.deniedError": "Vous n'êtes pas autorisé à faire cela.",
   "common.seeAll": "Tout voir",
   "common.pts": "{n} pts",
   "common.clear": "Effacer",

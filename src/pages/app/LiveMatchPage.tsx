@@ -20,7 +20,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { useFullscreen } from "@/hooks/useFullscreen";
 import { readKioskTable } from "@/libs/browser/kiosk";
-import { liveWriteMessage } from "@/libs/algorithms/dbError";
+import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/app/_authed/$clubSlug/live/$liveId");
@@ -144,7 +144,9 @@ export default function LiveMatchPage() {
                           params: { clubSlug, liveId: row.id },
                         }),
                       onError: (err) =>
-                        toast.error(t(liveWriteMessage(err, "startMatch"))),
+                        toast.error(
+                          t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                        ),
                     },
                   )
                 }
@@ -236,7 +238,9 @@ export default function LiveMatchPage() {
               // The result is filed either way; only the next rack failed to
               // start, so this lands on the table's page rather than nowhere.
               onError: (err) => {
-                toast.error(t(liveWriteMessage(err, "startMatch")));
+                toast.error(
+                  t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                );
                 void navigate({ to: "/app/$clubSlug", params: { clubSlug } });
               },
             },
@@ -254,8 +258,18 @@ export default function LiveMatchPage() {
         void navigate({ to: "/app/$clubSlug", params: { clubSlug } });
       },
       // Usually the other phone pressed Finish half a second earlier, which is
-      // exactly what the row lock is there to make harmless.
-      onError: () => toast.error(t("live.finishError")),
+      // exactly what the row lock is there to make harmless — and exactly the
+      // kind of thing finish_live_match raises as its own P0001.
+      onError: (err) =>
+        toast.error(
+          t(
+            dbErrorMessage(err, "finishMatch", {
+              refused: "live.finishError",
+              denied: "common.deniedError",
+              fallback: "live.finishError",
+            }),
+          ),
+        ),
     });
 
   // Only reachable when the device is not pinned: a pinned tablet abandons from
@@ -264,7 +278,8 @@ export default function LiveMatchPage() {
     abandonMatch.mutate(match.id, {
       // The row is gone, so this page has nothing left to show.
       onSuccess: () => appNavigate("/app/$clubSlug"),
-      onError: (err) => toast.error(t(liveWriteMessage(err, "abandonMatch"))),
+      onError: (err) =>
+        toast.error(t(dbErrorMessage(err, "abandonMatch", LIVE_MATCH_KEYS))),
     });
 
   return (

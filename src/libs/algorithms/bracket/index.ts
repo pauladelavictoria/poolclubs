@@ -10,3 +10,4 @@ export * from "./generate";
 export * from "./resolve";
 export * from "./numbering";
 export * from "./podium";
+export * from "./view";
