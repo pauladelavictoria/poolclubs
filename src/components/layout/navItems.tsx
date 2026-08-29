@@ -157,7 +157,8 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         labelKey: "nav.clubSettings",
         icon: LuSettings,
         section: "home",
-        end: true,
+        // No `end`: club settings is three tabs under this path now, and the
+        // drawer row should stay lit on all of them.
       },
     ] as NavItem[]).filter(visible),
   },

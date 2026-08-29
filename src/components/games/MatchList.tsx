@@ -202,7 +202,11 @@ function Row({
 
   // Same split as the bracket: a played row is filled, one still to come is an
   // outline.
-  const surface = played ? "bg-felt-raised" : "bg-felt";
+  // A row holding a highlighted name lights up — that is the whole mechanism
+  // behind tapping a player: no state reaches here, only the marked child.
+  const surface = `has-[[data-highlight]]:bg-strike-tint ${
+    played ? "bg-felt-raised" : "bg-felt"
+  }`;
 
   if (!onRecord) return <div className={surface}>{content}</div>;
 

@@ -7,7 +7,8 @@ import PushToggle from "@/components/players/PushToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetPlayers } from "@/hooks/useGetPlayers";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
-import { Card } from "@/components/ui/Card";
+import { changePassword } from "@/libs/auth.functions";
+import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
@@ -22,7 +23,7 @@ export default function PlayerSettingsPage() {
   const { playerId } = route.useParams();
   const playerIdNum = Number(playerId);
 
-  const { refreshMemberships } = useAuth();
+  const { user, refreshMemberships } = useAuth();
   const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
   const player = players?.find((p) => p.id === playerIdNum);
   const { updatePlayer } = useManagePlayers();
@@ -30,32 +31,27 @@ export default function PlayerSettingsPage() {
   // Synced from `player` on load, then left alone — an in-flight edit
   // shouldn't be clobbered by a background refetch of the same row.
   const [name, setName] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
   const [syncedId, setSyncedId] = useState<number | null>(null);
   if (player && syncedId !== player.id) {
     setSyncedId(player.id);
     setName(player.name);
-    setIsPublic(player.is_public);
   }
+
+  const [password, setPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
 
   // These are private settings — only their owner can reach this page, which the
   // route's beforeLoad enforces before anything renders.
 
   const trimmed = name.trim();
-  const dirty =
-    !!player && (trimmed !== player.name || isPublic !== player.is_public);
+  const dirty = !!player && trimmed !== player.name;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const saveName = (e: React.FormEvent) => {
     e.preventDefault();
     if (!player || !trimmed || !dirty) return;
 
     updatePlayer.mutate(
-      {
-        id: player.id,
-        personId: player.person_id,
-        name: trimmed,
-        is_public: isPublic,
-      },
+      { id: player.id, personId: player.person_id, name: trimmed },
       {
         onSuccess: async () => {
           toast.success(t("players.updated"));
@@ -67,6 +63,41 @@ export default function PlayerSettingsPage() {
         onError: () => toast.error(t("players.updateError")),
       },
     );
+  };
+
+  /**
+   * Listed or not, saved the moment it is flipped.
+   *
+   * One boolean with nothing to review and nothing to get half-right, so it
+   * takes effect on change like the notifications switch above it rather than
+   * waiting behind a Save button that would be the only thing on this card.
+   */
+  const savePublic = (next: boolean) => {
+    if (!player) return;
+    updatePlayer.mutate(
+      { id: player.id, personId: player.person_id, is_public: next },
+      { onError: () => toast.error(t("players.updateError")) },
+    );
+  };
+
+  const savePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password) return;
+
+    setSavingPassword(true);
+    try {
+      const result = await changePassword({ data: { password } });
+      if (result?.error) {
+        toast.error(t("auth.passwordChangeError"));
+        return;
+      }
+      setPassword("");
+      toast.success(t("players.passwordUpdated"));
+    } catch {
+      toast.error(t("auth.passwordChangeError"));
+    } finally {
+      setSavingPassword(false);
+    }
   };
 
   // The middle crumb is the player, so it is named by the player once they
@@ -90,17 +121,22 @@ export default function PlayerSettingsPage() {
 
   if (!player) return null;
 
+  // A tablet bolted to a table is an anonymous Supabase user: no address to
+  // show and no password to change. The whole account card is for people.
+  const hasAccount = !!user?.email;
+
   return (
-    <>
-      <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        {title}
+    <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
+      {title}
 
-        <Card className="p-4">
+      <Card className="overflow-hidden">
+        <CardHeader title={t("players.profileTitle")} />
+        <div className="space-y-4 p-5">
+          {/* Saves itself the moment a file is picked — there is no version of
+              a cropped photo worth holding back behind a button. */}
           <AvatarUpload name={player.name} url={player.avatar_url} />
-        </Card>
 
-        <Card className="p-4">
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={saveName} className="space-y-3 border-t border-hairline pt-4">
             <div className="space-y-1.5">
               <Label htmlFor="player-name">{t("players.name")}</Label>
               <Input
@@ -114,28 +150,6 @@ export default function PlayerSettingsPage() {
               />
             </div>
 
-            {/* Said in full rather than as "public profile": the two halves of
-                what this does are easy to get wrong, and getting it wrong is
-                the difference between being findable and being hidden. */}
-            <div className="border-t border-hairline pt-3">
-              <Toggle
-                checked={isPublic}
-                onChange={setIsPublic}
-                label={t("players.publicProfile")}
-                hint={t("players.publicProfileHint")}
-                disabled={updatePlayer.isPending}
-              />
-              {isPublic && (
-                <Link
-                  to="/players/$playerSlug"
-                  params={{ playerSlug: player.slug }}
-                  className="mt-2 inline-block pl-7 text-caption font-medium text-strike transition-colors duration-150 hover:text-strike-light"
-                >
-                  {t("players.viewPublicProfile")}
-                </Link>
-              )}
-            </div>
-
             <div className="flex justify-end">
               <Button
                 type="submit"
@@ -145,10 +159,95 @@ export default function PlayerSettingsPage() {
               </Button>
             </div>
           </form>
-        </Card>
+        </div>
+      </Card>
 
-        <PushToggle />
-      </div>
-    </>
+      {hasAccount && (
+        <Card className="overflow-hidden">
+          <CardHeader title={t("players.accountTitle")} />
+          <div className="space-y-4 p-5">
+            {/* Text, not a disabled input: there is nothing to type here, and a
+                greyed-out field reads like something that ought to work. */}
+            <div className="space-y-1.5">
+              <Label>{t("players.email")}</Label>
+              <p className="text-body text-ink">{user.email}</p>
+            </div>
+
+            {/* Nothing to change when there is no password to change. Supabase
+                would happily take one and bolt an email identity onto a Google
+                account, which is how a single sign-in turns into two without
+                anyone deciding it should — so the field is not there to press.
+                See `hasPassword` in libs/auth.functions.ts. */}
+            {user.hasPassword ? (
+              // No current-password step, because there is nothing for one to
+              // defend: this only ever reaches the caller's own account, and
+              // whoever is here already holds the session that could change it
+              // from the recovery page anyway.
+              <form
+                onSubmit={savePassword}
+                className="space-y-3 border-t border-hairline pt-4"
+              >
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-password">
+                    {t("players.changePassword")}
+                  </Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    minLength={6}
+                    maxLength={200}
+                    autoComplete="new-password"
+                    placeholder={t("auth.newPassword")}
+                    disabled={savingPassword}
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    disabled={!password || savingPassword}
+                  >
+                    {savingPassword
+                      ? t("common.saving")
+                      : t("auth.savePassword")}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <p className="border-t border-hairline pt-4 text-body text-ink-soft">
+                {t("players.signedInWithGoogle")}
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
+
+      <PushToggle />
+
+      {/* Said in full rather than as "public profile": the two halves of what
+          this does are easy to get wrong, and getting it wrong is the
+          difference between being findable and being hidden. */}
+      <Card className="p-4">
+        <Toggle
+          checked={player.is_public}
+          onChange={savePublic}
+          label={t("players.publicProfile")}
+          hint={t("players.publicProfileHint")}
+          disabled={updatePlayer.isPending}
+        />
+        {player.is_public && (
+          <Link
+            to="/players/$playerSlug"
+            params={{ playerSlug: player.slug }}
+            className="mt-2 inline-block pl-7 text-caption font-medium text-strike transition-colors duration-150 hover:text-strike-light"
+          >
+            {t("players.viewPublicProfile")}
+          </Link>
+        )}
+      </Card>
+    </div>
   );
 }

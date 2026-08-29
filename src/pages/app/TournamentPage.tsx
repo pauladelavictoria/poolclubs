@@ -38,6 +38,7 @@ import MatchCard from "@/components/games/MatchCard";
 import MatchList from "@/components/games/MatchList";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import PlayGameForm from "@/components/games/PlayGameForm";
+import { PlayerHighlight } from "@/components/players/PlayerLink";
 import TournamentForm, {
   type TournamentValues,
 } from "@/components/tournaments/TournamentForm";
@@ -288,7 +289,7 @@ export default function TournamentPage() {
   ) : null;
 
   return (
-    <>
+    <PlayerHighlight>
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         <PageTitle title={tournament.name}>
           {tournament.category !== null && (
@@ -663,7 +664,7 @@ export default function TournamentPage() {
           />
         )}
       </dialog>
-    </>
+    </PlayerHighlight>
   );
 }
 

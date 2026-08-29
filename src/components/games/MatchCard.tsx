@@ -56,20 +56,19 @@ export default function MatchCard({
 
   const row = (playerId: number | null, slot: 1 | 2) => {
     const won = played && playerId === match.winner_id;
+    // Name and score are one line of the result, so they carry the same weight:
+    // the winner's score reads as the winner's, not as a number beside a name.
+    const tone =
+      playerId === null
+        ? "text-ink-ghost"
+        : won
+          ? "font-semibold text-ink"
+          : played
+            ? "text-ink-faint"
+            : "text-ink";
     return (
       <div className="flex items-center gap-2">
-        <span
-          className={[
-            "min-w-0 flex-1 truncate text-body",
-            playerId === null
-              ? "text-ink-ghost"
-              : won
-                ? "font-semibold text-ink"
-                : played
-                  ? "text-ink-faint"
-                  : "text-ink",
-          ].join(" ")}
-        >
+        <span className={`min-w-0 flex-1 truncate text-body ${tone}`}>
           {playerId === null ? (
             empty(slot)
           ) : (
@@ -83,7 +82,7 @@ export default function MatchCard({
             </PlayerLink>
           )}
         </span>
-        <span className="shrink-0 font-mono text-body tabular-nums text-ink-soft">
+        <span className={`shrink-0 font-mono text-body tabular-nums ${tone}`}>
           {racksFor(playerId) ?? (won ? t("tournaments.walkoverMark") : "")}
         </span>
       </div>
@@ -117,7 +116,7 @@ export default function MatchCard({
 
   // A played match has something in it, so it is the filled one; a fixture that
   // has not happened yet is an outline waiting to be filled in.
-  const surface = `w-full rounded-control border border-hairline px-3 py-2 ${
+  const surface = `w-full rounded-control border border-hairline px-3 py-2 has-[[data-highlight]]:border-strike/40 has-[[data-highlight]]:bg-strike-tint ${
     played ? "bg-felt-raised" : "bg-felt"
   }`;
 

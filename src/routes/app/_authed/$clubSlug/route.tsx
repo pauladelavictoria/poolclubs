@@ -18,6 +18,7 @@ import ClubOnboardingPage from "@/pages/app/ClubOnboardingPage";
 import ClubThemeStyle from "@/components/club/ClubThemeStyle";
 import { playersQuery } from "@/queries/players";
 import { useRouteMeta } from "@/libs/routeMeta";
+import { useAuth } from "@/hooks/useAuth";
 import { isKioskAllowed, readKioskTable } from "@/libs/kiosk";
 import KioskBar from "@/components/layout/KioskBar";
 
@@ -92,7 +93,12 @@ function ClubLayout() {
 
   // A page that is the whole screen — the live scoreboard — keeps neither the
   // tab bar nor the room reserved for it. See RouteMeta.fullBleed.
-  const { fullBleed } = useRouteMeta();
+  const { fullBleed, bareOnDevice } = useRouteMeta();
+  const { player } = useAuth();
+  // The club's own tablet, on a page that says it wants the display to itself.
+  // Not the same thing as a pinned kiosk, which is answered above and has its
+  // own bar: this is the tablet that was simply signed in as the club.
+  const bare = bareOnDevice && player?.is_device === true;
   const kioskTable = readKioskTable();
   // A tablet on a rail wants the browser's chrome gone as much as the app's.
   // Element fullscreen, so it is the shell that fills the screen and not the
@@ -190,9 +196,11 @@ function ClubLayout() {
         {!fullBleed && <NavRail onMore={() => setIsDrawerOpen(true)} />}
         {/* The pinned column carries the club, the bell and the user across its
             own ends, so a bar here would be a second row of chrome repeating it. */}
-        <div className="shrink-0 pinned:hidden">
-          <AppHeader onMenu={() => setIsDrawerOpen(true)} />
-        </div>
+        {!bare && (
+          <div className="shrink-0 pinned:hidden">
+            <AppHeader onMenu={() => setIsDrawerOpen(true)} />
+          </div>
+        )}
         {/* Clear the bottom tab bar on phones, including the home-indicator inset.
             The pt is for the pinned case: with no bar above it, the page's own
             py-4 is all there is between the first heading and the window. */}

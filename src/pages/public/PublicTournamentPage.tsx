@@ -7,6 +7,7 @@ import ShareButton from "@/components/social/ShareButton";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
 import MatchList from "@/components/games/MatchList";
+import { PlayerHighlight } from "@/components/players/PlayerLink";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -86,7 +87,7 @@ export default function PublicTournamentPage() {
   const url = `${origin}/tournaments/${tournament.id}`;
 
   return (
-    <>
+    <PlayerHighlight>
       <TournamentHero
         tournament={tournament}
         entrantIds={entrantIds}
@@ -260,7 +261,7 @@ export default function PublicTournamentPage() {
           </Link>
         )}
       </PublicShell>
-    </>
+    </PlayerHighlight>
   );
 }
 

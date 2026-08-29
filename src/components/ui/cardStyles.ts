@@ -31,7 +31,9 @@ export const cardClasses = ({
  *
  * `wide` is for forms that lay their content out in columns rather than a
  * stack: the same height budget buys twice as much when the form is not one
- * long list.
+ * long list. It grows again on a real screen, because 42rem was where the start
+ * form's three settings stopped fitting on one row — and a row that wraps in a
+ * short landscape window costs height, which is the dimension that is scarce.
  */
 export const dialogClasses = ({
   wide = false,
@@ -41,7 +43,9 @@ export const dialogClasses = ({
     "sheet m-0 mt-auto max-h-[92dvh] w-full max-w-none overflow-y-auto",
     "rounded-t-sheet border border-hairline bg-felt p-5 text-ink",
     "sm:m-auto sm:rounded-sheet",
-    wide ? "sm:max-w-2xl" : "sm:max-w-md",
+    // 92vw so the panel never reaches the bezel on the viewport widths just
+    // past the cap — a modal touching both edges is a page, not a dialog.
+    wide ? "sm:max-w-3xl lg:max-w-[min(64rem,92vw)]" : "sm:max-w-md",
     className,
   ]
     .filter(Boolean)

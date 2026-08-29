@@ -199,10 +199,50 @@ export default function LiveMatchPage() {
     player?.is_device === true ||
     (player !== undefined && seatsOf(match).includes(player.id));
 
-  const finish = () =>
+  /**
+   * File it, and optionally rack the same four straight back up.
+   *
+   * The rematch is a new row rather than a reset of this one: the game that was
+   * just played is a result in the feed, and a scoreboard that quietly reused
+   * the row would be filing one match and showing another under the same id.
+   * It carries no challenge or fixture id — that tie was settled by the match
+   * just filed, and a second one against it would close it twice.
+   */
+  const finish = (rematch = false) =>
     finishMatch.mutate(match.id, {
       onSuccess: () => {
         toast.success(t("games.added"));
+
+        const p1 = seat(match.player_1_id);
+        const p2 = seat(match.player_2_id);
+        if (rematch && p1 && p2) {
+          startMatch.mutate(
+            {
+              player1: p1,
+              player2: p2,
+              partner1: seat(match.player_1b_id),
+              partner2: seat(match.player_2b_id),
+              tableId: match.table_id,
+              discipline: match.discipline,
+              raceTo: match.race_to,
+            },
+            {
+              onSuccess: (row) =>
+                void navigate({
+                  to: "/app/$clubSlug/live/$liveId",
+                  params: { clubSlug, liveId: row.id },
+                }),
+              // The result is filed either way; only the next rack failed to
+              // start, so this lands on the table's page rather than nowhere.
+              onError: (err) => {
+                toast.error(t(liveWriteMessage(err, "startMatch")));
+                void navigate({ to: "/app/$clubSlug", params: { clubSlug } });
+              },
+            },
+          );
+          return;
+        }
+
         // Hand the table straight on. A table that goes back to a home page
         // after every result is a table somebody has to come and restart, and on
         // a club night that is the difference between four matches and six.
@@ -227,21 +267,25 @@ export default function LiveMatchPage() {
     });
 
   return (
-    <div ref={ref} className="flex h-full flex-col bg-felt">
-      {/* Nothing at all on a pinned tablet: the bar above it owns fullscreen
-          and now abandoning too, and a strip holding one button is a second
-          header on the one screen that wants the whole display. */}
+    <div ref={ref} className="relative h-full bg-felt">
+      {/* Over the board, not above it. A strip of its own took height off the
+          top of the screen, which pushed both numerals and both sets of
+          controls below the middle of the display and cut the spine short of
+          the top edge. The board is the page; these two are laid on it.
+
+          Nothing at all on a pinned tablet: the bar above it owns fullscreen
+          and abandoning too. */}
       {!pinned && (
-        <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-2">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 px-3 py-2">
           {/* Destructive and rarely wanted, so it is the quietest thing on the
-              screen — the scoreboard below is what this page is for. */}
+              screen — the scoreboard under it is what this page is for. */}
           {canScore ? (
             <ConfirmButton
               size="sm"
               variant="ghost"
               onConfirm={abandon}
               confirmLabel={t("live.abandonConfirm")}
-              className="text-ink-faint"
+              className="pointer-events-auto text-ink-faint"
             >
               <LuTrash2 className="h-4 w-4" aria-hidden />
               {t("live.abandon")}
@@ -252,26 +296,30 @@ export default function LiveMatchPage() {
           <IconButton
             label={isFullscreen ? t("common.close") : t("ranking.tvMode")}
             onClick={toggle}
+            className="pointer-events-auto"
           >
             <LuExpand className="h-5 w-5" aria-hidden />
           </IconButton>
         </div>
       )}
 
-      <div className="min-h-0 flex-1">
-        <Scoreboard
-          match={match}
-          p1={seat(match.player_1_id)}
-          p1b={seat(match.player_1b_id)}
-          p2={seat(match.player_2_id)}
-          p2b={seat(match.player_2b_id)}
-          variant={canScore ? "play" : "spectate"}
-          onBump={(side) => bump(match, side)}
-          onUnbump={(side) => unbump(match, side)}
-          onFinish={finish}
-          isFinishing={finishMatch.isPending}
-        />
-      </div>
+      <Scoreboard
+        match={match}
+        p1={seat(match.player_1_id)}
+        p1b={seat(match.player_1b_id)}
+        p2={seat(match.player_2_id)}
+        p2b={seat(match.player_2b_id)}
+        variant={canScore ? "play" : "spectate"}
+        onBump={(side) => bump(match, side)}
+        onUnbump={(side) => unbump(match, side)}
+        onFinish={() => finish()}
+        // A bracket fixture is played once; anything else, the same four
+        // usually want another rack and the club night is the whole point.
+        onFinishAndRematch={
+          match.tournament_match_id === null ? () => finish(true) : undefined
+        }
+        isFinishing={finishMatch.isPending || startMatch.isPending}
+      />
     </div>
   );
 }

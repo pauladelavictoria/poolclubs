@@ -1,5 +1,41 @@
 import { Link, useParams } from "@tanstack/react-router";
-import type { MouseEventHandler, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type MouseEventHandler,
+  type ReactNode,
+} from "react";
+
+const HighlightContext = createContext<{
+  active: number | null;
+  toggle: (playerId: number) => void;
+} | null>(null);
+
+/**
+ * Turns every player's name inside it from a link into a highlighter.
+ *
+ * On a tournament page a name is not a place you want to go — it is a thread
+ * you want to follow: tapping it marks every fixture that player is in, which
+ * is the question ("which of these are mine?") the page is actually asked.
+ */
+export function PlayerHighlight({ children }: { children: ReactNode }) {
+  const [active, setActive] = useState<number | null>(null);
+  const value = useMemo(
+    () => ({
+      active,
+      toggle: (playerId: number) =>
+        setActive((current) => (current === playerId ? null : playerId)),
+    }),
+    [active],
+  );
+  return (
+    <HighlightContext.Provider value={value}>
+      {children}
+    </HighlightContext.Provider>
+  );
+}
 
 /**
  * A player's name, linked to wherever the reader can actually see them.
@@ -36,6 +72,28 @@ export default function PlayerLink({
   children: ReactNode;
 }) {
   const { clubSlug } = useParams({ strict: false });
+  const highlight = useContext(HighlightContext);
+
+  // Inside a <PlayerHighlight>, the name marks the player's fixtures instead of
+  // navigating. `data-highlight` is what the rows around it key their own
+  // styling off, so nothing has to thread the active id down to them.
+  if (highlight) {
+    const on = highlight.active === playerId;
+    return (
+      <button
+        type="button"
+        data-highlight={on || undefined}
+        aria-pressed={on}
+        onClick={(e) => {
+          e.stopPropagation();
+          highlight.toggle(playerId);
+        }}
+        className={`${className ?? ""} ${on ? "text-strike" : ""}`}
+      >
+        {children}
+      </button>
+    );
+  }
 
   if (clubSlug) {
     return (
