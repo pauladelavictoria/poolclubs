@@ -789,6 +789,7 @@
   "live.wins": "{name} gagne",
   "live.keepPlaying": "Continuer",
   "live.file": "Enregistrer le résultat",
+  "live.fileAndRematch": "Enregistrer et revanche",
   "live.finishError": "Ce match a déjà été enregistré",
   "live.overTitle": "Ce match est terminé",
   "live.overHint": "Il est dans le fil du club avec le reste.",

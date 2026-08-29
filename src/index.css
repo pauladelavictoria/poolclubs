@@ -46,21 +46,21 @@
 
      Floors are real minimums: 44px of control (the hit-target floor), 14px of
      label (the app's caption floor — see --text-caption). */
-  --text-score: clamp(2rem, 30cqmin, 16rem);
-  --text-scoreboard-name: clamp(1rem, 8cqmin, 3rem);
+  --text-score: clamp(2rem, 46cqmin, 22rem);
+  --text-scoreboard-name: clamp(1rem, 7cqmin, 2.5rem);
   --text-scoreboard-label: clamp(0.875rem, 4cqmin, 1.5rem);
 
   /* The furniture grows with the type, or the number gets big while the buttons
      stay the same and the whole thing stops being one object. One token for
      both round things: a face and a ball at two different sizes read as two
      unrelated widgets. */
-  --scoreboard-control: clamp(3rem, 20cqmin, 6rem);
-  --scoreboard-face: clamp(1.75rem, 12cqmin, 4.5rem);
+  --scoreboard-control: clamp(2.75rem, 18cqmin, 6rem);
+  --scoreboard-face: clamp(1.5rem, 9cqmin, 4rem);
   --scoreboard-bead: clamp(0.5rem, 3cqmin, 1rem);
   /* The air between the groups and around them — one value, because the two
      that were here were tuned against each other and neither was the reason
      anything fit. */
-  --scoreboard-gap: clamp(0.5rem, 5cqmin, 2rem);
+  --scoreboard-gap: clamp(0.5rem, 3.5cqmin, 2rem);
 
   /* The width at which the nav stops being something you open and becomes the
      app's left column. The column is 19rem and the content is 64rem at most;
@@ -572,6 +572,29 @@ dialog.sheet[open]::backdrop {
   }
 }
 
+/* The finish dialog's veil. Heavier than the drawer's and blurred, because what
+   it covers is two numerals a foot tall — at 60% black the score behind it was
+   still the loudest thing on the screen and the dialog read as a sticker on it
+   rather than as the question it is. */
+dialog.finish::backdrop {
+  background: rgb(0 0 0 / 0);
+  backdrop-filter: blur(6px);
+  transition:
+    background 240ms var(--ease-out),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+
+dialog.finish[open]::backdrop {
+  background: rgb(0 0 0 / 0.78);
+}
+
+@starting-style {
+  dialog.finish[open]::backdrop {
+    background: rgb(0 0 0 / 0);
+  }
+}
+
 /*
   Toasts — "Enlace copiado", "No se pudo guardar" — are the app's third overlay,
   and the only one that arrives wearing someone else's clothes: react-toastify
@@ -1050,6 +1073,15 @@ button.lift:active {
   container-type: size;
   min-width: 0;
   min-height: 0;
+}
+
+/* A pair takes a row each, and stacked on a phone every one of these sizes is a
+   percentage of the same short side: the numeral, the wire, one name row per
+   player, the controls, and the air between them have to add up to less than
+   the half. The second row is the two lines that budget cannot afford, so the
+   numeral gives them back. */
+.scoreboard-half[data-pair="true"] {
+  --text-score: clamp(2rem, 34cqmin, 16rem);
 }
 
 /* The score, its wire and whose half it is — one block, whichever side the

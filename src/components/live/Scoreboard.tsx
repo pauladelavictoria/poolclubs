@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { LuMinus, LuPlus } from "react-icons/lu";
+import { LuMinus, LuPlus, LuX } from "react-icons/lu";
 import { Avatar } from "@/components/ui/Avatar";
 import { DisciplineBall } from "@/components/ui/Ball";
-import { Button } from "@/components/ui/Button";
+import { Button, IconButton } from "@/components/ui/Button";
 import { keys } from "@/libs/queryKeys";
 import { isMatchOver, leaderOf } from "@/libs/night";
+import { useDialog } from "@/libs/useDialog";
 import { useWakeLock } from "@/libs/useWakeLock";
 import type { LiveMatch, Player } from "@/types";
 import { useT } from "@/i18n";
@@ -41,6 +42,7 @@ export default function Scoreboard({
   onBump,
   onUnbump,
   onFinish,
+  onFinishAndRematch,
   isFinishing,
 }: {
   match: LiveMatch;
@@ -53,6 +55,9 @@ export default function Scoreboard({
   onBump?: (side: 1 | 2) => void;
   onUnbump?: (side: 1 | 2) => void;
   onFinish?: () => void;
+  /** File it and rack again with the same four. Absent when a rematch would be
+   *  the wrong thing to offer — a tournament fixture only happens once. */
+  onFinishAndRematch?: () => void;
   isFinishing?: boolean;
 }) {
   const { t } = useT();
@@ -78,7 +83,31 @@ export default function Scoreboard({
 
   const over = isMatchOver(match);
   const leader = leaderOf(match);
-  const winner = leader === 1 ? p1 : leader === 2 ? p2 : undefined;
+
+  // One player or a pair. The pair is the unit that wins the rack, so it is the
+  // unit a half is labelled with and the unit that wins the match.
+  const sideOf = (n: 1 | 2) =>
+    (n === 1 ? [p1, p1b] : [p2, p2b]).filter((p): p is Player => p !== undefined);
+  const nameOf = (n: 1 | 2) =>
+    sideOf(n)
+      .map((p) => p.name)
+      .join(" & ") || "—";
+
+  const finishDialog = useDialog(canScore && over);
+  /**
+   * Not filed, so the match is still on: the rack comes back off whoever
+   * reached the race. Refused mid-save — the row is already on its way out.
+   *
+   * `over` is what makes it idempotent, and it has to be: the X and the
+   * backdrop both call this and then close the dialog, whose close event calls
+   * it again. `leader` is no guard at all there — after one rack comes off, 5-0
+   * is 4-0 and somebody is still ahead — which is how closing at 5-0 filed a
+   * 3-0. Once it is not over, there is nothing to take back.
+   */
+  const keepPlaying = () => {
+    if (isFinishing || !over || !leader) return;
+    onUnbump?.(leader);
+  };
 
   /**
    * The bead wire. A pool room keeps score on a string of beads slid along a
@@ -122,25 +151,16 @@ export default function Scoreboard({
   };
 
   const half = (n: 1 | 2) => {
-    // One player or a pair. The pair is the unit that wins the rack, so it is
-    // the unit the half is labelled with.
-    const side = (n === 1 ? [p1, p1b] : [p2, p2b]).filter(
-      (p): p is Player => p !== undefined,
-    );
+    const side = sideOf(n);
     const score = n === 1 ? match.player_1_score : match.player_2_score;
-    const full = side.map((p) => p.name).join(" & ") || "—";
-    // ponytail: first names in doubles. Two full Spanish names across half a
-    // phone are unreadable at any size that fits, and "Juan & Paula" is what
-    // the room says anyway. The faces disambiguate, and the full names stay on
-    // the element for anything reading it aloud.
-    const name =
-      side.length > 1 ? side.map((p) => p.name.split(" ")[0]).join(" & ") : full;
+    const full = nameOf(n);
     const ahead = leader === n;
 
     return (
       <section
         aria-label={full}
         data-side={n}
+        data-pair={side.length > 1}
         className={[
           "scoreboard-half relative flex flex-col items-center justify-center gap-[var(--scoreboard-gap)] p-[var(--scoreboard-gap)]",
           // The pendant catching this end of the table.
@@ -177,35 +197,37 @@ export default function Scoreboard({
             {wire(n, score)}
           </div>
 
-          {/* Whose half this is. On one line, so it reads as a label on the
-              score above rather than a third stacked element — and a pair
-              overlaps its faces rather than taking a second line, which the
-              height there is does not have. */}
+          {/* Whose half this is. A row per player: two names on one line are
+              two names nobody reads from the far end of the table, and a pair
+              is two people rather than one long label. The numeral gives the
+              second row its height back — see [data-pair] in index.css. */}
           <div
-            className="flex min-w-0 max-w-full items-center gap-[max(0.5rem,2cqmin)]"
+            className="flex min-w-0 max-w-full flex-col items-center gap-[max(0.25rem,1cqmin)]"
             title={full}
           >
-            <div className="flex shrink-0 -space-x-2">
-              {side.map((p) => (
-                // No seed, so a face without a picture is a grey disc rather
-                // than a solid ball colour. The palette is for a roster grid;
-                // here one of the eight hues is the club's own accent, which is
-                // the + button — and the initial next to the score has no
-                // business being the loudest thing on the half.
+            {side.map((p) => (
+              <div
+                key={p.id}
+                className="flex min-w-0 max-w-full items-center gap-[max(0.5rem,2cqmin)]"
+              >
+                {/* No seed, so a face without a picture is a grey disc rather
+                    than a solid ball colour. The palette is for a roster grid;
+                    here one of the eight hues is the club's own accent, which
+                    is the + button — and the initial next to the score has no
+                    business being the loudest thing on the half. */}
                 <Avatar
-                  key={p.id}
                   name={p.name}
                   url={p.avatar_url}
                   className="h-[var(--scoreboard-face)] w-[var(--scoreboard-face)] shrink-0 ring-2 ring-felt"
                 />
-              ))}
-            </div>
-            <span
-              className="min-w-0 truncate font-semibold leading-tight text-ink"
-              style={{ fontSize: "var(--text-scoreboard-name)" }}
-            >
-              {name}
-            </span>
+                <span
+                  className="min-w-0 truncate font-semibold leading-tight text-ink"
+                  style={{ fontSize: "var(--text-scoreboard-name)" }}
+                >
+                  {p.name}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -277,39 +299,86 @@ export default function Scoreboard({
         {half(2)}
       </div>
 
-      {/* The outcome of the screen, over the screen — not a dialog interrupting
-          it. Reaching the race does not file anything: someone has to say so. */}
-      {canScore && over && (
-        <div className="absolute inset-x-0 bottom-0 z-10 space-y-4 rounded-t-sheet border-t border-hairline bg-felt-raised p-5">
-          <div>
-            <p className="text-caption font-medium uppercase tracking-wide text-ink-faint">
+      {/* The outcome of the screen, in front of it. Reaching the race does not
+          file anything: someone has to say so. In the middle rather than along
+          the bottom because it is the one moment the board stops being a score
+          and becomes a question — and because the answer is two buttons that
+          both matter, which a sheet under a thumb makes into one. */}
+      <dialog
+        ref={finishDialog}
+        aria-label={t("live.wins", { name: leader ? nameOf(leader) : "—" })}
+        className="finish m-auto w-[min(40rem,94vw)] rounded-sheet border border-hairline bg-felt p-6 text-ink sm:p-8"
+        // Esc, the backdrop and the X are all the same answer: nobody has filed
+        // anything, so the match is still on. It takes the rack back off
+        // whoever reached the race, which is also the recovery path for the one
+        // mis-press that cannot be walked back any other way.
+        onClose={keepPlaying}
+        // Mid-save Esc would close a dialog that nothing reopens, since `open`
+        // has not changed — so it does not get to close.
+        onCancel={(e) => {
+          if (isFinishing) e.preventDefault();
+        }}
+        onClick={(e) => {
+          if (e.target === finishDialog.current) keepPlaying();
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <DisciplineBall
+              discipline={match.discipline}
+              className="h-7 w-7 shrink-0"
+            />
+            <span className="truncate text-caption font-medium uppercase tracking-wide text-ink-faint">
               {t("live.raceTo", { n: match.race_to })}
-            </p>
-            <p className="mt-1 text-h2 font-semibold text-ink">
-              {t("live.wins", { name: winner?.name ?? "—" })}
-            </p>
-            <p className="font-mono text-h4 text-ink-soft tabular-nums">
-              {match.player_1_score} – {match.player_2_score}
-            </p>
+            </span>
           </div>
-          <div className="flex justify-end gap-3">
-            {/* The recovery path for the one mis-press that cannot be walked
-                back any other way: the one that reached the race. Takes the
-                rack off whoever got there, so it does not depend on the row
-                remembering which button was last pressed. */}
+          <IconButton
+            label={t("live.keepPlaying")}
+            size="sm"
+            onClick={keepPlaying}
+            disabled={isFinishing}
+            className="-mr-1 -mt-1 shrink-0"
+          >
+            <LuX className="h-4 w-4" aria-hidden />
+          </IconButton>
+        </div>
+
+        {/* The result is what the dialog is for, so it gets the room: the name
+            is its caption and the two numerals are the thing being confirmed,
+            sized off the viewport rather than the type scale for the same
+            reason the board behind it is. */}
+        <div className="mt-6 mb-8 text-center">
+          <p className="text-h3 font-semibold text-ink">
+            {t("live.wins", { name: leader ? nameOf(leader) : "—" })}
+          </p>
+          <p
+            className="mt-3 font-mono font-semibold leading-none text-ink tabular-nums"
+            style={{ fontSize: "clamp(3.5rem, 16vmin, 7rem)" }}
+          >
+            {match.player_1_score} – {match.player_2_score}
+          </p>
+        </div>
+
+        {/* One at each end: two answers that both matter, and a hand coming
+            from either side of a tablet on the rail meets the near one. */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {onFinishAndRematch && (
             <Button
               variant="secondary"
-              onClick={() => leader && onUnbump?.(leader)}
+              onClick={onFinishAndRematch}
               disabled={isFinishing}
             >
-              {t("live.keepPlaying")}
+              {t("live.fileAndRematch")}
             </Button>
-            <Button onClick={onFinish} disabled={isFinishing}>
-              {isFinishing ? t("common.saving") : t("live.file")}
-            </Button>
-          </div>
+          )}
+          {/* ms-auto and not the row's justification alone: without a rematch
+              this is the only child, and the main answer does not move to the
+              left because the other button is missing. */}
+          <Button className="ms-auto" onClick={onFinish} disabled={isFinishing}>
+            {isFinishing ? t("common.saving") : t("live.file")}
+          </Button>
         </div>
-      )}
+      </dialog>
     </div>
   );
 }

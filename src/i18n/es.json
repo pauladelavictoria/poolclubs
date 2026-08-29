@@ -789,6 +789,7 @@
   "live.wins": "Gana {name}",
   "live.keepPlaying": "Seguir jugando",
   "live.file": "Guardar resultado",
+  "live.fileAndRematch": "Guardar y revancha",
   "live.finishError": "Esta partida ya se ha guardado",
   "live.overTitle": "Esta partida ha terminado",
   "live.overHint": "Está en el muro del club con todo lo demás.",

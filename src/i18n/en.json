@@ -789,6 +789,7 @@
   "live.wins": "{name} wins",
   "live.keepPlaying": "Keep playing",
   "live.file": "File result",
+  "live.fileAndRematch": "Save & rematch",
   "live.finishError": "This match has already been filed",
   "live.overTitle": "This match is over",
   "live.overHint": "It is in the club feed with everything else.",
