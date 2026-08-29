@@ -13,7 +13,7 @@ const NAME_LINK = "transition-colors duration-150 hover:text-strike";
 /** What this list needs to turn a game's player id into a linked name. Games
  *  stopped carrying a copy of the name when names moved to people, so the
  *  roster is now an input rather than a convenience. */
-export type GamesListPlayer = Pick<Player, "id" | "name" | "slug">;
+type GamesListPlayer = Pick<Player, "id" | "name" | "slug">;
 
 /**
  * One player's name on the tape, as a tap to their page.

@@ -1,7 +1,5 @@
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 
-const log = (error: unknown) => console.error(error);
-
 /**
  * A fresh cache per call, not a module singleton.
  *
@@ -14,8 +12,16 @@ const log = (error: unknown) => console.error(error);
  */
 export const makeQueryClient = () =>
   new QueryClient({
-    queryCache: new QueryCache({ onError: log }),
-    mutationCache: new MutationCache({ onError: log }),
+    queryCache: new QueryCache({
+      onError: (error, query) => console.error(query.queryKey, error),
+    }),
+    mutationCache: new MutationCache({
+      onError: (error, _variables, _onMutateResult, mutation) =>
+        console.error(
+          mutation.options.mutationKey ?? mutation.mutationId,
+          error,
+        ),
+    }),
     defaultOptions: {
       queries: {
         staleTime: 5 * 60_000,

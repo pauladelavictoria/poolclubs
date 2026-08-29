@@ -68,20 +68,7 @@ export default function ClubTablesCard() {
     mutationFn: async (tableId: number): Promise<string> => {
       if (!activeClubId) throw new Error("no active club");
 
-      // start_device_pairing takes a table now, and the generated types still
-      // carry the one-argument version. Narrow cast until sql/device-pairing.sql
-      // is applied and `npm run db:types` re-run.
-      const rpc = supabase as unknown as {
-        rpc: (
-          fn: string,
-          args: Record<string, number>,
-        ) => PromiseLike<{
-          data: string | null;
-          error: { message: string } | null;
-        }>;
-      };
-
-      const { data, error } = await rpc.rpc("start_device_pairing", {
+      const { data, error } = await supabase.rpc("start_device_pairing", {
         cid: activeClubId,
         tid: tableId,
       });

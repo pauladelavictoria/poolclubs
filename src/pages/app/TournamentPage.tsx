@@ -30,7 +30,7 @@ import {
   resolveBracket,
   type BracketIndex,
 } from "@/libs/bracket";
-import { groupStandings, standings, type Standing } from "@/libs/leagueTable";
+import { groupStandings, leaguePodium, standings } from "@/libs/leagueTable";
 import PageTitle from "@/components/layout/PageTitle";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
@@ -696,14 +696,6 @@ function ManagePanel({
     </details>
   );
 }
-
-/** A league has no final to read a podium off, so the table is the podium.
- *  Only the places the table can actually fill. */
-const leaguePodium = (table: Standing[]) => ({
-  first: table[0]?.playerId ?? null,
-  second: table[1]?.playerId ?? null,
-  third: table[2] ? [table[2].playerId] : [],
-});
 
 /** Fixtures as cards. No matchday headings: a club league is played whenever
  *  two people are free, so the round a fixture was generated in means nothing

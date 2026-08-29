@@ -13,7 +13,7 @@ import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
 import { usePlayerLookup } from "@/hooks/useGetPlayers";
 import { useT } from "@/i18n";
 
-export type NotificationKind =
+type NotificationKind =
   | "challengeReceived"
   | "challengeAccepted"
   | "challengeDeclined"

@@ -53,7 +53,7 @@ export const useLiveMatch = (
     }),
   });
 
-export type NewLiveMatch = {
+type NewLiveMatch = {
   player1: Player;
   player2: Player;
   /** Both or neither. `mode` is derived from them rather than passed, because

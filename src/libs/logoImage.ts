@@ -12,7 +12,7 @@ import { squareCrop, MAX_FILE_BYTES } from "@/libs/avatarImage";
  * downscaling instead.
  */
 const SIZES = [256, 192, 144, 112];
-const MAX_OUT_BYTES = 80 * 1024;
+const MAX_LOGO_OUT_BYTES = 80 * 1024;
 
 export { MAX_FILE_BYTES };
 
@@ -37,7 +37,7 @@ export async function toLogoDataUrl(file: File): Promise<string> {
       ctx.clearRect(0, 0, size, size);
       ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, size, size);
       const url = canvas.toDataURL("image/png");
-      if (url.length <= MAX_OUT_BYTES) return url;
+      if (url.length <= MAX_LOGO_OUT_BYTES) return url;
     }
     throw new Error("image will not compress");
   } finally {

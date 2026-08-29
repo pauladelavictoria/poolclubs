@@ -4,7 +4,7 @@ import { startsNewDay } from "./dayLabel.ts";
 /** The shape the feed's grouping cares about: when it happened, and — for a
  *  match row — which fixtures it holds. Everything else on a feed row is passed
  *  through untouched. */
-export type GroupableRow<G> = {
+type GroupableRow<G> = {
   at: string;
   games?: G[];
 };

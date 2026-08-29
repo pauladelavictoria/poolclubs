@@ -12,18 +12,6 @@ export const useGetChallenges = () => {
   return useQuery(challengesQuery(activeClubId));
 };
 
-/** Open challenges you are part of — pending or accepted, either direction. */
-export const useMyChallenges = () => {
-  const { player } = useAuth();
-  const { data } = useGetChallenges();
-
-  return (data ?? []).filter(
-    (c) =>
-      (c.status === "pending" || c.status === "accepted") &&
-      (c.to_player_id === player?.id || c.from_player_id === player?.id),
-  );
-};
-
 export const useManageChallenges = () => {
   const { activeClubId, player } = useAuth();
   const queryClient = useQueryClient();

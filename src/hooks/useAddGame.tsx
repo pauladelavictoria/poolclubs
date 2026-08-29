@@ -6,7 +6,7 @@ import type { Game } from "@/types";
 /** club_id is stamped by the hook, id and created_at by the database.
  *  played_at is the caller's — the form defaults it to now, but it is exactly
  *  the field a backdated result overrides. */
-export type NewGame = Omit<Game, "id" | "created_at" | "club_id">;
+type NewGame = Omit<Game, "id" | "created_at" | "club_id">;
 
 export const useAddGame = () => {
   const { activeClubId } = useAuth();

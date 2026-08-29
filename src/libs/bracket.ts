@@ -34,7 +34,7 @@ export type PlannedMatch = {
 };
 
 /** The fields advancement needs. Both PlannedMatch and a stored row satisfy it. */
-export type MatchLike = {
+type MatchLike = {
   id: string;
   p1_id: number | null;
   p2_id: number | null;
@@ -456,7 +456,7 @@ const SIDE_ORDER: BracketSide[] = [
   "final",
 ];
 
-export type SeatSource = { number: number; kind: "winner" | "loser" };
+type SeatSource = { number: number; kind: "winner" | "loser" };
 
 export type BracketIndex = {
   /** The number this match is known by, the same in every view. */
@@ -519,7 +519,7 @@ export function bracketIndex<T extends Indexable>(matches: T[]): BracketIndex {
   };
 }
 
-export type Races = {
+type Races = {
   race_to: number;
   race_semi: number | null;
   race_final: number | null;

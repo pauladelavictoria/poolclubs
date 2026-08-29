@@ -13,13 +13,11 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Button } from "@/components/ui/Button";
-import type { Category, Player } from "@/types";
+import { CATEGORIES, type Category, type Player } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 
 type SortMode = "here" | "name" | "category";
-
-const CATEGORIES = [1, 2, 3] as const;
 
 /** Win rate and matches played, keyed by player. Anyone with no games is absent
  *  rather than zero, so the card can say "no matches" instead of "0%". */

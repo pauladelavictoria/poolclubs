@@ -18,7 +18,7 @@ import type { Player } from "@/types";
  */
 
 /** Every column of the person, embedded on the membership. */
-export const PLAYER_SELECT = "*, person:people(*)";
+const PLAYER_SELECT = "*, person:people(*)";
 
 type WithPerson = {
   person: {
@@ -85,11 +85,7 @@ export const playersQuery = (clubId: number) =>
 
       // The tablet's own account is a member so that RLS will let it score, but
       // it is not a player: leaving it in would put a face in the roster, a row
-      // in both rankings and a name in every opponent picker. Filtered here
-      // rather than in the query because the column arrives with
-      // sql/live-night.sql and this file is typed against it before that is
-      // applied — `undefined` reads as "not a device", which is the right
-      // answer for every club that has not set one up.
+      // in both rankings and a name in every opponent picker.
       return byName((data ?? []).map(flattenPlayer)).filter(
         (p) => !p.is_device,
       );

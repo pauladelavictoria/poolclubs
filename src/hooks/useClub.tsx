@@ -86,6 +86,7 @@ export const useManageClub = () => {
           country?: string | null;
           lat?: number | null;
           lon?: number | null;
+          timezone?: string;
         } = {};
         if (updates.name !== undefined) patch.name = updates.name.trim();
         if (updates.logoUrl !== undefined) patch.logo_url = updates.logoUrl;
@@ -100,19 +101,11 @@ export const useManageClub = () => {
           patch.lat = place?.lat ?? null;
           patch.lon = place?.lon ?? null;
         }
-
-        // `timezone` is not in the generated Row until sql/club-timezone.sql is
-        // applied and `npm run db:types` re-run, so it is added here and the
-        // cast hides that one key rather than the whole patch — same temporary
-        // as players.device_table_id, and it goes away with the same regen.
-        const row =
-          updates.timezone === undefined
-            ? patch
-            : ({ ...patch, timezone: updates.timezone } as typeof patch);
+        if (updates.timezone !== undefined) patch.timezone = updates.timezone;
 
         await supabase
           .from("clubs")
-          .update(row)
+          .update(patch)
           .eq("id", activeClubId)
           .throwOnError();
       },

@@ -39,6 +39,3 @@ export function liveWriteMessage(error: unknown, where: string): Key {
 
   return "common.error";
 }
-
-/** The guard's own sentence, for the message that shows it. */
-export const dbMessageOf = (error: unknown) => asDbError(error)?.message ?? "";

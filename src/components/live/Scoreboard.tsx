@@ -11,7 +11,7 @@ import { useWakeLock } from "@/libs/useWakeLock";
 import type { LiveMatch, Player } from "@/types";
 import { useT } from "@/i18n";
 
-export type ScoreboardVariant = "play" | "spectate" | "tv";
+type ScoreboardVariant = "play" | "spectate" | "tv";
 
 /** Past this a bead stops being countable at a glance and the ratio says it
  *  better — the same reason a real wire carries a dozen beads and not fifty. */

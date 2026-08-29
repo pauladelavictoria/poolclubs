@@ -2,7 +2,7 @@
  * Five score bands, one source of truth for both the DOM (inline style) and
  * recharts (which only takes colour values, never classes).
  */
-export type ScoreBand = {
+type ScoreBand = {
   /** Also the translation key: `score.${key}` */
   key: "low" | "midlow" | "mid" | "midhigh" | "high";
   color: string;
@@ -11,7 +11,7 @@ export type ScoreBand = {
 };
 
 // Ordered high to low: the first band whose `min` a score clears wins.
-export const SCORE_BANDS: ScoreBand[] = [
+const SCORE_BANDS: ScoreBand[] = [
   { key: "high", color: "#3fbf7f", min: 80 },
   { key: "midhigh", color: "#9ccc4a", min: 60 },
   { key: "mid", color: "#f2b705", min: 40 },

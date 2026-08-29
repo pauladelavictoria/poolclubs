@@ -17,7 +17,7 @@ import { THEME_COOKIE, readPref, writePref } from "./prefs";
  * Without one we follow the system, and keep following it, so a laptop that
  * turns dark in the evening takes the app with it.
  */
-export type Theme = "light" | "dark";
+type Theme = "light" | "dark";
 
 const EVENT = "themechange";
 

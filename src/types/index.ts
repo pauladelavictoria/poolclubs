@@ -32,22 +32,10 @@ type Row<T extends keyof Database["public"]["Tables"]> =
 type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
 
 /**
- * `slug` is intersected in rather than read from the generated Row because the
- * app is typed against it before `sql/club-slug.sql` has been applied and
- * `npm run db:types` re-run. The intersection is harmless once the column is
- * generated — it is the same `string` — so this line does not need removing,
- * but it can go once the schema catches up.
- *
  * The location columns (address, city, country, lat, lon) are written together
  * or not at all; see src/libs/geocode.ts for the `Place` they come from.
  */
-export type Club = Stamped<Row<"clubs">> & { slug: string } & {
-  /** The club's own clock, as an IANA zone: what 06:00 means when a night is
-   *  bucketed into a day. Intersected in rather than read from the generated Row
-   *  until sql/club-timezone.sql is applied and `npm run db:types` re-run;
-   *  harmless once it is. See libs/day.ts. */
-  timezone: string | null;
-};
+export type Club = Stamped<Row<"clubs">>;
 
 /** The club's accent colour, keyed to a real Postgres enum so it stays in
  *  lockstep with the palette in libs/clubTheme.ts. Ordered 1-8, the solids'
@@ -77,6 +65,8 @@ export const DISCIPLINES: Discipline[] = ["8ball", "9ball", "10ball"];
 export type Game = Stamped<Row<"games">>;
 
 export type Category = 1 | 2 | 3;
+
+export const CATEGORIES = [1, 2, 3] as const satisfies readonly Category[];
 
 /** 'pending' until the club owner approves the join request. */
 export type PlayerStatus = "pending" | "active";
@@ -111,11 +101,6 @@ export type LiveMatch = Omit<Row<"live_matches">, "last_side"> & {
 export type Player = Omit<Row<"players">, "category" | "status"> & {
   category: Category;
   status: PlayerStatus;
-} & {
-  /** Which table this tablet is paired to, when it is one. Intersected in
-   *  rather than read from the generated Row until sql/device-pairing.sql is
-   *  applied and `npm run db:types` re-run; harmless once it is. */
-  device_table_id: number | null;
 } & Pick<Person, "name" | "avatar_url" | "slug" | "is_public"> & {
     /** Null out here on the public side, where anon is not granted the column.
      *  Only ClubPage reads it, to mark which member owns the club. */

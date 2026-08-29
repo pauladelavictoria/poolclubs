@@ -23,7 +23,7 @@ import { pushText, type PushKey } from "@/libs/pushText";
 
 /** What sw.js reads out of event.data. Kept under ~3KB by construction; the
  *  practical web push ceiling is about 3000 bytes of encrypted payload. */
-export type PushPayload = {
+type PushPayload = {
   title: string;
   body: string;
   url: string;

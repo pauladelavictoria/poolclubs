@@ -44,7 +44,7 @@ export const KIOSK_COOKIE = "kiosk";
  * the server so /today's bar is right in the first byte; see libs/today.ts for
  * the shape and why it is not per club.
  */
-export const TODAY_COOKIE = "today";
+const TODAY_COOKIE = "today";
 
 /** The day's setup, as the page reads and writes it. Here rather than in
  *  libs/today.ts because that module is checked under bare node and this one

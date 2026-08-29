@@ -277,7 +277,7 @@ function Side({
   );
 }
 
-function MatchCard({
+function FeedMatchCard({
   game,
   tournament,
 }: {
@@ -689,7 +689,7 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
                 }
               >
                 {item.games ? (
-                  <MatchCard
+                  <FeedMatchCard
                     game={item.games[0]}
                     tournament={gameTournaments?.get(item.games[0].id)}
                   />

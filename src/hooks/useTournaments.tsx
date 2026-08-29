@@ -101,7 +101,7 @@ export const useMyTournamentIds = () => {
   });
 };
 
-export type PendingMatch = Pick<TournamentMatch, "id" | "tournament_id"> & {
+type PendingMatch = Pick<TournamentMatch, "id" | "tournament_id"> & {
   tournament: Pick<Tournament, "id" | "name">;
 };
 
@@ -133,7 +133,7 @@ export const useMyPendingMatches = () => {
   });
 };
 
-export type NewTournament = {
+type NewTournament = {
   name: string;
   format: TournamentFormat;
   category: Category | null;

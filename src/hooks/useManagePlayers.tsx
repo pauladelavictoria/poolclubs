@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
 import type { Category } from "@/types";
 
-export type CreatePlayerInput = {
+type CreatePlayerInput = {
   name: string;
   category: Category;
 };
@@ -16,7 +16,7 @@ export type CreatePlayerInput = {
  * on players, while name and is_public are yours and live on people. The caller
  * still passes one object; splitting it is this hook's job, not the form's.
  */
-export type UpdatePlayerInput = {
+type UpdatePlayerInput = {
   id: number;
   /** Needed to reach the person; every caller has the player row already. */
   personId: number;

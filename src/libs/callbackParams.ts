@@ -25,15 +25,15 @@
  * done. Unreachable until something calls updateUser({ email }); handle the
  * two-step then.
  */
-export const OTP_TYPES = ["email", "recovery", "email_change"] as const;
+const OTP_TYPES = ["email", "recovery", "email_change"] as const;
 
-export type OtpType = (typeof OTP_TYPES)[number];
+type OtpType = (typeof OTP_TYPES)[number];
 
 export const isOtpType = (value: string | null | undefined): value is OtpType =>
   !!value && (OTP_TYPES as readonly string[]).includes(value);
 
 /** Which of the two exchanges this request is asking for, if either. */
-export type Branch =
+type Branch =
   | { kind: "hash"; tokenHash: string; type: OtpType }
   | { kind: "code"; code: string }
   | { kind: "none" };

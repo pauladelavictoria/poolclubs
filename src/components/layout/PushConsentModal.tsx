@@ -5,6 +5,10 @@ import { Button, IconButton } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useDialog } from "@/libs/useDialog";
+import {
+  dismissPushPromptForever,
+  isPushPromptDismissed,
+} from "@/libs/pushConsent";
 import { useT } from "@/i18n";
 
 /**
@@ -21,10 +25,6 @@ import { useT } from "@/i18n";
  * permanent decision is how an app quietly loses a feature nobody ever actually
  * considered.
  */
-
-/** The only persisted answer. "Not now" is deliberately not recorded. */
-const DISMISSED_KEY = "pc:pushPromptDismissed";
-
 export default function PushConsentModal({
   /** The install modal is up; wait until it is closed. AppPrompts owns that
    *  order, because "wait your turn" has to mean until the other one is gone. */
@@ -41,13 +41,8 @@ export default function PushConsentModal({
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
-    try {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- deferring the storage read to after hydration is the point, see `dismissed` above
-      setDismissed(localStorage.getItem(DISMISSED_KEY) === "1");
-    } catch {
-      // A private window refuses to be read. Asking again is survivable.
-      setDismissed(false);
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deferring the storage read to after hydration is the point, see `dismissed` above
+    setDismissed(isPushPromptDismissed());
   }, []);
 
   // Always rendered; a closed <dialog> draws nothing. That keeps showModal()
@@ -59,13 +54,7 @@ export default function PushConsentModal({
 
   const dismiss = () => {
     setClosed(true);
-    if (never) {
-      try {
-        localStorage.setItem(DISMISSED_KEY, "1");
-      } catch {
-        // Forgetting the answer is survivable; throwing out of the click is not.
-      }
-    }
+    if (never) dismissPushPromptForever();
   };
 
   const turnOn = () => {

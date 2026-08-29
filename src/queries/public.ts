@@ -61,7 +61,7 @@ export type PublicClub = Pick<
   | "lon"
 > & { created_at: string | null };
 
-export type PublicPerson = Pick<
+type PublicPerson = Pick<
   Person,
   "id" | "slug" | "name" | "avatar_url" | "is_public"
 >;
@@ -90,7 +90,7 @@ export type PublicTournamentListItem = PublicTournament & {
   tournament_players: { count: number }[];
 };
 
-export type PublicTournamentDetail = PublicTournament & {
+type PublicTournamentDetail = PublicTournament & {
   tournament_players: { player_id: number }[];
   tournament_matches: TournamentMatch[];
 };
@@ -100,7 +100,7 @@ export type PublicTournamentDetail = PublicTournament & {
 export const PUBLIC_PAGE_SIZE = 24;
 
 /** How many of each kind /search shows before handing off to that section. */
-export const SEARCH_LIMIT = 5;
+const SEARCH_LIMIT = 5;
 
 /**
  * `%` and `_` are wildcards to LIKE, and a visitor typing either means the
@@ -209,7 +209,7 @@ export const publicClubsQuery = (filters: PublicClubsFilters = {}) => {
 
 /** A club as a dot on the map: logo and name to recognise it by, slug to open,
  *  coordinates to be at. */
-export type PublicClubPin = Pick<
+type PublicClubPin = Pick<
   Club,
   "id" | "name" | "slug" | "address" | "city" | "logo_url"
 > & {
@@ -302,7 +302,7 @@ export const publicClubRosterQuery = (clubId: number) =>
 // Players
 // ---------------------------------------------------------------------------
 
-export type PublicPlayerSort = "name" | "category";
+type PublicPlayerSort = "name" | "category";
 
 export type PublicPlayersFilters = {
   q?: string;
@@ -537,7 +537,7 @@ export const publicDrillQuery = (id: number) =>
 // Global search
 // ---------------------------------------------------------------------------
 
-export type PublicSearchResults = {
+type PublicSearchResults = {
   clubs: PublicClub[];
   people: PublicPersonWithClubs[];
   tournaments: PublicTournamentListItem[];

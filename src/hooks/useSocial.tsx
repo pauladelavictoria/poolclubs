@@ -8,7 +8,7 @@ import type { Comment, Reaction, SocialTarget } from "@/types";
 
 /** Turns a target into the column pair the tables use. Exactly one is set —
  *  enforced by a CHECK on both tables in sql/schema.sql. */
-export const targetColumns = (target: SocialTarget) =>
+const targetColumns = (target: SocialTarget) =>
   "gameId" in target
     ? { game_id: target.gameId, drill_log_id: null }
     : { game_id: null, drill_log_id: target.drillLogId };

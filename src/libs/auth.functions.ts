@@ -19,7 +19,7 @@ import type { Membership } from "@/types";
  */
 
 /** What the whole app knows about who is looking at it. */
-export type Session = {
+type Session = {
   user: {
     id: string;
     email: string | null;
@@ -126,7 +126,7 @@ export const getSession = createServerFn({ method: "GET" }).handler(
  * tells a stranger the account exists. The component maps these onto the
  * existing translated, deliberately vague strings.
  */
-export type AuthFailure = {
+type AuthFailure = {
   error: "badCredentials" | "signUpError" | "passwordChangeError";
 };
 
@@ -162,7 +162,7 @@ export const signIn = createServerFn({ method: "POST" })
  * a project setting, not a migration, so `anonymousDisabled` is a real answer
  * and the screen says so rather than showing "something went wrong".
  */
-export type PairFailure = {
+type PairFailure = {
   error: "badCode" | "alreadyPaired" | "anonymousDisabled" | "pairError";
 };
 
@@ -198,22 +198,7 @@ export const pairDevice = createServerFn({ method: "POST" })
 
       // A set-returning function, so one row: the club to open and the table this
       // code was cut for.
-      //
-      // claim_device changed shape in sql/device-pairing.sql and the generated
-      // types still carry the old one. Narrow cast until that migration is
-      // applied and `npm run db:types` re-run — the same stand-in
-      // queries/operator.ts uses.
-      const rpc = supabase as unknown as {
-        rpc: (
-          fn: string,
-          args: Record<string, string>,
-        ) => PromiseLike<{
-          data: { club_slug: string; table_id: number }[] | null;
-          error: { message: string } | null;
-        }>;
-      };
-
-      const { data: rows, error } = await rpc.rpc("claim_device", {
+      const { data: rows, error } = await supabase.rpc("claim_device", {
         p_code: data.code.toUpperCase(),
       });
 

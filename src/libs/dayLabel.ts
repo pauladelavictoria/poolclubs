@@ -55,7 +55,7 @@ export const dayLabel = (
   }).format(date);
 };
 
-export const sameDay = (a: Date, b: Date) =>
+const sameDay = (a: Date, b: Date) =>
   a.toDateString() === b.toDateString();
 
 export const startsNewDay = (date: Date, previous?: Date) =>

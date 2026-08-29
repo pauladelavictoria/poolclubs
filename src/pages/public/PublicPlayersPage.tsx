@@ -13,12 +13,10 @@ import { Segmented } from "@/components/ui/Segmented";
 import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
 import { PUBLIC_PAGE_SIZE, publicPlayersQuery } from "@/queries/public";
 import type { PublicPersonWithClubs } from "@/queries/public";
-import type { Category } from "@/types";
+import { CATEGORIES } from "@/types";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/_public/players/");
-
-const CATEGORIES: Category[] = [1, 2, 3];
 
 /** Cards are narrow enough to fit two or three across, so a page of thirty
  *  people is scanned rather than scrolled. */

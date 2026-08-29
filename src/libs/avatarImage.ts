@@ -14,7 +14,7 @@ const SIZE = 128;
 /** Refuse a source file this big before decoding it. */
 export const MAX_FILE_BYTES = 8 * 1024 * 1024;
 /** A data URI past this would bloat every players query. */
-const MAX_OUT_BYTES = 40 * 1024;
+const MAX_AVATAR_OUT_BYTES = 40 * 1024;
 
 /**
  * The source rectangle for a centre crop: the largest square that fits, taken
@@ -50,7 +50,7 @@ export async function toAvatarDataUrl(file: File): Promise<string> {
   // Noisy photos can still come out fat at 0.7. Step down rather than reject.
   for (const quality of [0.7, 0.5, 0.35]) {
     const url = canvas.toDataURL("image/jpeg", quality);
-    if (url.length <= MAX_OUT_BYTES) return url;
+    if (url.length <= MAX_AVATAR_OUT_BYTES) return url;
   }
   throw new Error("image will not compress");
 }

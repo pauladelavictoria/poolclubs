@@ -1,5 +1,3 @@
-import type { Key } from "@/i18n";
-
 /**
  * The four places the app is made of, plus the lobby.
  *
@@ -16,17 +14,3 @@ import type { Key } from "@/i18n";
  * `strike`, which is whatever ball the club picked (see libs/clubTheme).
  */
 export type SectionId = "home" | "tournaments" | "ranking" | "games" | "drills";
-
-export type Section = {
-  id: SectionId;
-  /** Reuses the nav labels, so a section is named the same everywhere. */
-  labelKey: Key;
-};
-
-export const SECTIONS: Record<SectionId, Section> = {
-  home: { id: "home", labelKey: "nav.home" },
-  tournaments: { id: "tournaments", labelKey: "nav.tournaments" },
-  ranking: { id: "ranking", labelKey: "nav.ranking" },
-  games: { id: "games", labelKey: "nav.games" },
-  drills: { id: "drills", labelKey: "nav.drills" },
-};
