@@ -46,7 +46,7 @@
 
      Floors are real minimums: 44px of control (the hit-target floor), 14px of
      label (the app's caption floor — see --text-caption). */
-  --text-score: clamp(2rem, 46cqmin, 22rem);
+  --text-score: clamp(2rem, 50cqmin, 30rem);
   --text-scoreboard-name: clamp(1rem, 7cqmin, 2.5rem);
   --text-scoreboard-label: clamp(0.875rem, 4cqmin, 1.5rem);
 
@@ -360,6 +360,34 @@ html[data-theme="light"]:has([data-public]) {
     border-radius: 2px;
   }
 
+  /*
+    A finger, on the tablet on the rail.
+
+    32px of pill is a mouse target. On the club's tablet — used standing up, at
+    arm's length, by someone holding a cue — it is a miss, and the misses were
+    the small ones: `sm` buttons, the language and theme pickers, the icon
+    buttons in a header. 44px is the floor every touch guideline agrees on.
+
+    A floor and not a size: `min-height` leaves the drawn height alone unless it
+    is under 44, so nothing in the app changes shape except the controls that
+    were too small. `pointer: coarse` keeps the density on a desktop, where a
+    cursor hits 32px fine and 44 everywhere would inflate every dense row in
+    the app for nobody's benefit.
+
+    :where() so the whole rule has zero specificity: any component that has a
+    reason to set its own min-height or min-width — a truncating cell, a
+    deliberately tiny chip — still wins without having to know this exists. The
+    `height` the size classes set is not min-height, so it does not fight this.
+    .tap is for the anchors: buttonClasses and pickerClasses both style links as
+    buttons, and a link is not a <button>.
+  */
+  @media (pointer: coarse) {
+    :where(button, select, summary, [role="button"], .tap) {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
   /* The fallback popup, for the browsers that still draw it themselves (see the
      base-select block below). `color-scheme` on the root is what actually does
      the work on macOS, where the list is an OS menu and ignores nearly
@@ -373,6 +401,26 @@ html[data-theme="light"]:has([data-public]) {
      current value, so the selected row has to say so some other way. */
   option:checked {
     font-weight: 500;
+  }
+}
+
+/*
+  The glyphs in those controls, at the same arm's length.
+
+  A 16px icon is the whole label on an icon button, and on the tablet it is the
+  part you aim at. A floor again, so an icon already drawn at 24 or 28 keeps its
+  size and only the small ones come up.
+
+  Unlayered on purpose, the same reason `.select-field` below is: the sizes come
+  from `h-4 w-4`, which is a Tailwind utility, and a utility in a layer beats a
+  rule in `@layer base` whatever its specificity. Outside the layers it wins on
+  origin instead — and `:where()` keeps the specificity at zero, so a component
+  that sets its own min-size still has the last word.
+*/
+@media (pointer: coarse) {
+  :where(button, select, [role="button"], .tap) svg {
+    min-width: 1.5rem;
+    min-height: 1.5rem;
   }
 }
 
@@ -1081,7 +1129,7 @@ button.lift:active {
    the half. The second row is the two lines that budget cannot afford, so the
    numeral gives them back. */
 .scoreboard-half[data-pair="true"] {
-  --text-score: clamp(2rem, 34cqmin, 16rem);
+  --text-score: clamp(2rem, 38cqmin, 22rem);
 }
 
 /* The score, its wire and whose half it is — one block, whichever side the
@@ -1162,6 +1210,25 @@ button.lift:active {
 @container board (aspect-ratio >= 1) {
   .scoreboard-half {
     flex-direction: row;
+
+    /* The controls moved out of the column, so the numeral can have the height
+       they were using. cqmin here is the half's width, and a landscape half is
+       taller than it is wide — there is more room above and below the number
+       than the percentage suggests.
+
+       Not higher than this: cqmin is the width the numeral has to fit across
+       too, and a race to ten or more puts two digits there. Two mono digits are
+       ~1.2em, the controls take 18% and the gutters another 14% — which is what
+       54% is: the largest number that still fits "10 – 10" without the grid's
+       overflow clipping it. */
+    --text-score: clamp(2rem, 54cqmin, 34rem);
+  }
+
+  /* Later than the [data-pair] rule above and at the same specificity, so this
+     is what a pair in a landscape half gets. Two name rows, and the numeral
+     still pays for the second one. */
+  .scoreboard-half[data-pair="true"] {
+    --text-score: clamp(2rem, 44cqmin, 26rem);
   }
 
   .scoreboard-half[data-side="1"] {

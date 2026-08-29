@@ -32,6 +32,16 @@ export type RouteMeta = {
   /** Ancestors, outermost first. */
   crumbs?: Crumb[];
   fullBleed?: boolean;
+  /**
+   * Drop the app bar too, but only for the club's own device.
+   *
+   * `fullBleed` is about the page; this is about who is looking at it. A tablet
+   * signed in as the club has no notifications to check and no profile to open,
+   * so the bar above the scoreboard is a strip of chrome for nobody — and it
+   * pushes the numerals off the middle of the display. A member on their own
+   * phone keeps it: that is how they get back out.
+   */
+  bareOnDevice?: boolean;
 };
 
 declare module "@tanstack/react-router" {
@@ -39,6 +49,7 @@ declare module "@tanstack/react-router" {
     section?: SectionId;
     crumbs?: Crumb[];
     fullBleed?: boolean;
+    bareOnDevice?: boolean;
   }
 }
 
@@ -54,6 +65,7 @@ export function useRouteMeta(): {
   section?: SectionId;
   crumbs: Crumb[];
   fullBleed: boolean;
+  bareOnDevice: boolean;
 } {
   const matches = useMatches();
   const params = useParams({ strict: false });
@@ -66,6 +78,7 @@ export function useRouteMeta(): {
   return {
     section: meta?.section,
     fullBleed: meta?.fullBleed ?? false,
+    bareOnDevice: meta?.bareOnDevice ?? false,
     crumbs: (meta?.crumbs ?? []).map((c) => ({
       ...c,
       params: c.params ?? params,

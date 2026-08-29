@@ -267,21 +267,25 @@ export default function LiveMatchPage() {
     });
 
   return (
-    <div ref={ref} className="flex h-full flex-col bg-felt">
-      {/* Nothing at all on a pinned tablet: the bar above it owns fullscreen
-          and now abandoning too, and a strip holding one button is a second
-          header on the one screen that wants the whole display. */}
+    <div ref={ref} className="relative h-full bg-felt">
+      {/* Over the board, not above it. A strip of its own took height off the
+          top of the screen, which pushed both numerals and both sets of
+          controls below the middle of the display and cut the spine short of
+          the top edge. The board is the page; these two are laid on it.
+
+          Nothing at all on a pinned tablet: the bar above it owns fullscreen
+          and abandoning too. */}
       {!pinned && (
-        <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-2">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 px-3 py-2">
           {/* Destructive and rarely wanted, so it is the quietest thing on the
-              screen — the scoreboard below is what this page is for. */}
+              screen — the scoreboard under it is what this page is for. */}
           {canScore ? (
             <ConfirmButton
               size="sm"
               variant="ghost"
               onConfirm={abandon}
               confirmLabel={t("live.abandonConfirm")}
-              className="text-ink-faint"
+              className="pointer-events-auto text-ink-faint"
             >
               <LuTrash2 className="h-4 w-4" aria-hidden />
               {t("live.abandon")}
@@ -292,31 +296,30 @@ export default function LiveMatchPage() {
           <IconButton
             label={isFullscreen ? t("common.close") : t("ranking.tvMode")}
             onClick={toggle}
+            className="pointer-events-auto"
           >
             <LuExpand className="h-5 w-5" aria-hidden />
           </IconButton>
         </div>
       )}
 
-      <div className="min-h-0 flex-1">
-        <Scoreboard
-          match={match}
-          p1={seat(match.player_1_id)}
-          p1b={seat(match.player_1b_id)}
-          p2={seat(match.player_2_id)}
-          p2b={seat(match.player_2b_id)}
-          variant={canScore ? "play" : "spectate"}
-          onBump={(side) => bump(match, side)}
-          onUnbump={(side) => unbump(match, side)}
-          onFinish={() => finish()}
-          // A bracket fixture is played once; anything else, the same four
-          // usually want another rack and the club night is the whole point.
-          onFinishAndRematch={
-            match.tournament_match_id === null ? () => finish(true) : undefined
-          }
-          isFinishing={finishMatch.isPending || startMatch.isPending}
-        />
-      </div>
+      <Scoreboard
+        match={match}
+        p1={seat(match.player_1_id)}
+        p1b={seat(match.player_1b_id)}
+        p2={seat(match.player_2_id)}
+        p2b={seat(match.player_2b_id)}
+        variant={canScore ? "play" : "spectate"}
+        onBump={(side) => bump(match, side)}
+        onUnbump={(side) => unbump(match, side)}
+        onFinish={() => finish()}
+        // A bracket fixture is played once; anything else, the same four
+        // usually want another rack and the club night is the whole point.
+        onFinishAndRematch={
+          match.tournament_match_id === null ? () => finish(true) : undefined
+        }
+        isFinishing={finishMatch.isPending || startMatch.isPending}
+      />
     </div>
   );
 }

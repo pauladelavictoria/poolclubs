@@ -172,13 +172,15 @@ export default function Scoreboard({
             : "",
         ].join(" ")}
       >
-        {/* Points, does not act: 2px, inset from the corners so it reads as a
-            rail under the half rather than a border on it. Along the bottom
-            edge, where the cushion is — and where a hand reaching for the
-            controls is not covering it. */}
+        {/* Points, does not act. Edge to edge and 6px: inset and hairline-thin
+            it read as a detail on the half, and at four metres a detail is not
+            read at all — the length is what makes it one half of the board
+            rather than a line under some text. Along the bottom edge, where the
+            cushion is, and where a hand reaching for the controls is not
+            covering it. */}
         <span
           className={[
-            "absolute inset-x-8 bottom-0 h-1 rounded-full transition-opacity duration-200 ease-[var(--ease-out)]",
+            "absolute inset-x-0 bottom-0 h-1.5 transition-opacity duration-200 ease-[var(--ease-out)]",
             ahead ? "bg-strike opacity-100" : "opacity-0",
           ].join(" ")}
           aria-hidden
