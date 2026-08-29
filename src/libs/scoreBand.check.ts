@@ -48,6 +48,13 @@ assert.equal(full[full.length - 1].color, "#e23744");
 assert.equal(full[full.length - 1].offset, 1);
 assert.equal(full.length, 2 + 2 * 4); // ends + one doubled stop per boundary
 // Offsets never leave 0–1 and never go backwards
-assert.ok(full.every((s, i) => s.offset >= 0 && s.offset <= 1 && (i === 0 || s.offset >= full[i - 1].offset)));
+assert.ok(
+  full.every(
+    (s, i) =>
+      s.offset >= 0 &&
+      s.offset <= 1 &&
+      (i === 0 || s.offset >= full[i - 1].offset),
+  ),
+);
 
 console.log("scoreBand: ok");

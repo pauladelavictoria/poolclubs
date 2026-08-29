@@ -100,7 +100,8 @@ export default function StartMatchForm({
   const forOthers = isDevice || isClubAdmin;
 
   /** An <option> cannot be styled, so presence is a mark in the text. */
-  const label = (p: Player) => (hereIds.has(p.id) ? `\u25CF ${p.name}` : p.name);
+  const label = (p: Player) =>
+    hereIds.has(p.id) ? `\u25CF ${p.name}` : p.name;
   const [opponentId, setOpponentId] = useState("");
   const [mode, setMode] = useState<GameMode>(defaults.mode);
   const [partner1Id, setPartner1Id] = useState("");
@@ -129,9 +130,13 @@ export default function StartMatchForm({
   // case narrows that list to nobody.
   const pool = lockedOpponent ? roster : opponents;
   const partner1 =
-    mode === "doubles" ? (pool.find((p) => String(p.id) === partner1Id) ?? null) : null;
+    mode === "doubles"
+      ? (pool.find((p) => String(p.id) === partner1Id) ?? null)
+      : null;
   const partner2 =
-    mode === "doubles" ? (pool.find((p) => String(p.id) === partner2Id) ?? null) : null;
+    mode === "doubles"
+      ? (pool.find((p) => String(p.id) === partner2Id) ?? null)
+      : null;
 
   const race = Number(raceTo);
   /** Clamped here rather than left to the input's min/max, which only the

@@ -16,11 +16,7 @@
  *  1200×630 files still to be added — until they are, these 404 and the crawler
  *  falls back to no image, which is the same as omitting the tag. */
 export type OgFallback =
-  | "default"
-  | "clubs"
-  | "players"
-  | "tournaments"
-  | "drills";
+  "default" | "clubs" | "players" | "tournaments" | "drills";
 
 const FALLBACK_IMAGE: Record<OgFallback, string> = {
   /** The pages that are not a section of the directory: the landing page and the

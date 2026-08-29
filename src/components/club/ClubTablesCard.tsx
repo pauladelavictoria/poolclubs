@@ -3,7 +3,12 @@ import { useMutation } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { renderSVG } from "uqr";
-import { LuMonitorSmartphone, LuPlus, LuTrash2, LuUnlink } from "react-icons/lu";
+import {
+  LuMonitorSmartphone,
+  LuPlus,
+  LuTrash2,
+  LuUnlink,
+} from "react-icons/lu";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubTables, useManageClubTables } from "@/hooks/useClubTables";
@@ -38,9 +43,10 @@ export default function ClubTablesCard() {
   const [label, setLabel] = useState("");
   /** The code just cut, and which table it was cut for. One at a time: it is
    *  read off this screen and typed into a tablet standing at that table. */
-  const [pairing, setPairing] = useState<{ tableId: number; code: string } | null>(
-    null,
-  );
+  const [pairing, setPairing] = useState<{
+    tableId: number;
+    code: string;
+  } | null>(null);
 
   /** The same link the tablet would reach by typing, with the code in it, as a
    *  symbol the tablet's camera can read. ecc M and a 4-module quiet zone for
@@ -49,7 +55,10 @@ export default function ClubTablesCard() {
   const pairQr = useMemo(() => {
     if (!pairing) return null;
     const link = `${origin}/app/pair?code=${pairing.code}`;
-    return { link, svg: renderSVG(link, { ecc: "M", border: 4, pixelSize: 1 }) };
+    return {
+      link,
+      svg: renderSVG(link, { ecc: "M", border: 4, pixelSize: 1 }),
+    };
   }, [origin, pairing]);
 
   const deviceOn = (tableId: number) =>

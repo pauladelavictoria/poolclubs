@@ -38,27 +38,53 @@ assert.deepEqual(
 // Redelivered event, or the refetch beat the socket: replace in place, no
 // duplicate and no reordering.
 assert.deepEqual(
-  upsertRow([mine(42), mine(43, "second")], { ...mine(42), body: "edited" }, same),
+  upsertRow(
+    [mine(42), mine(43, "second")],
+    { ...mine(42), body: "edited" },
+    same,
+  ),
   [{ ...mine(42), body: "edited" }, mine(43, "second")],
 );
 
 // Appended at the end, because useComments orders by created_at ascending
-assert.deepEqual(upsertRow([mine(1)], mine(2), same).map((r) => r.id), [1, 2]);
+assert.deepEqual(
+  upsertRow([mine(1)], mine(2), same).map((r) => r.id),
+  [1, 2],
+);
 
 // A real row never retires another real row, whatever the matcher says
-assert.deepEqual(upsertRow([mine(41)], mine(42), same).map((r) => r.id), [41, 42]);
+assert.deepEqual(
+  upsertRow([mine(41)], mine(42), same).map((r) => r.id),
+  [41, 42],
+);
 
-assert.deepEqual(removeRow([mine(1), mine(2)], 1).map((r) => r.id), [2]);
-assert.deepEqual(removeRow([mine(1)], 99).map((r) => r.id), [1]);
+assert.deepEqual(
+  removeRow([mine(1), mine(2)], 1).map((r) => r.id),
+  [2],
+);
+assert.deepEqual(
+  removeRow([mine(1)], 99).map((r) => r.id),
+  [1],
+);
 
 // Rows keyed by uuid — a live match, whose id is generated on the client. There
 // is no stand-in to retire, so no matcher is passed, and the row the socket
 // brings back replaces the one the tap put there because they share an id.
 type L = { id: string; club_id: number; player_1_score: number };
-const live = (id: string, score = 0): L => ({ id, club_id: 1, player_1_score: score });
+const live = (id: string, score = 0): L => ({
+  id,
+  club_id: 1,
+  player_1_score: score,
+});
 
 assert.deepEqual(upsertRow([live("a")], live("a", 3)), [live("a", 3)]);
-assert.deepEqual(upsertRow([live("a")], live("b")).map((r) => r.id), ["a", "b"]);
-assert.deepEqual(removeRow([live("a"), live("b")], "a").map((r) => r.id), ["b"]);
+assert.deepEqual(
+  upsertRow([live("a")], live("b")).map((r) => r.id),
+  ["a", "b"],
+);
+assert.deepEqual(
+  removeRow([live("a"), live("b")], "a").map((r) => r.id),
+  ["b"],
+);
 
 console.log("realtimeRows: ok");

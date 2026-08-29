@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import InstallAppModal from "@/components/layout/InstallAppModal";
 import PushConsentModal from "@/components/layout/PushConsentModal";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
-import { canOfferInstall, isInstallPromptDismissed } from "@/libs/installPrompt";
+import {
+  canOfferInstall,
+  isInstallPromptDismissed,
+} from "@/libs/installPrompt";
 
 /**
  * The two things the app asks for on the way in, one at a time.

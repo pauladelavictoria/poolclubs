@@ -24,12 +24,12 @@ npm run build
 ## Commit messages
 
 Conventional Commits (`fix:`, `feat:`, `refactor:`, `chore:`, …) with a
-description that says *why*, not just *what*.
+description that says _why_, not just _what_.
 
 ## Code style
 
 - TypeScript strict-plus (see `tsconfig.app.json`); avoid `any`.
 - `queryOptions` factories live in `src/queries/`, thin `useQuery` wrappers in
   `src/hooks/`. Don't call Supabase directly from a component.
-- Comments explain *why*, not *what* — see `vite.config.ts` for the standard
+- Comments explain _why_, not _what_ — see `vite.config.ts` for the standard
   this repo holds itself to.

@@ -56,7 +56,10 @@ for (const key in [1, 2, 3]) assert.notEqual(key, "at");
 assert.equal(Object.hasOwn({ a: 1 }, "a"), true);
 assert.equal(Object.hasOwn({ a: undefined }, "a"), true);
 assert.equal(Object.hasOwn({}, "toString"), false);
-assert.equal(Object.hasOwn(Object.assign(Object.create(null), { a: 1 }), "a"), true);
+assert.equal(
+  Object.hasOwn(Object.assign(Object.create(null), { a: 1 }), "a"),
+  true,
+);
 
 // structuredClone: a real copy, not the same reference
 const source = { a: 1, nested: { b: [1, 2] } };

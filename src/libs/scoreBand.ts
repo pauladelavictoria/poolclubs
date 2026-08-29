@@ -4,7 +4,7 @@
  */
 export type ScoreBand = {
   /** Also the translation key: `score.${key}` */
-  key: 'low' | 'midlow' | 'mid' | 'midhigh' | 'high';
+  key: "low" | "midlow" | "mid" | "midhigh" | "high";
   color: string;
   /** Inclusive lower bound, in percent */
   min: number;
@@ -12,16 +12,18 @@ export type ScoreBand = {
 
 // Ordered high to low: the first band whose `min` a score clears wins.
 export const SCORE_BANDS: ScoreBand[] = [
-  { key: 'high', color: '#3fbf7f', min: 80 },
-  { key: 'midhigh', color: '#9ccc4a', min: 60 },
-  { key: 'mid', color: '#f2b705', min: 40 },
-  { key: 'midlow', color: '#e8833a', min: 20 },
-  { key: 'low', color: '#e23744', min: 0 },
+  { key: "high", color: "#3fbf7f", min: 80 },
+  { key: "midhigh", color: "#9ccc4a", min: 60 },
+  { key: "mid", color: "#f2b705", min: 40 },
+  { key: "midlow", color: "#e8833a", min: 20 },
+  { key: "low", color: "#e23744", min: 0 },
 ];
 
 /** @param pct 0–100 */
 export function scoreBand(pct: number): ScoreBand {
-  return SCORE_BANDS.find((b) => pct >= b.min) ?? SCORE_BANDS[SCORE_BANDS.length - 1];
+  return (
+    SCORE_BANDS.find((b) => pct >= b.min) ?? SCORE_BANDS[SCORE_BANDS.length - 1]
+  );
 }
 
 export function scoreColor(pct: number): string {

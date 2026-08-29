@@ -49,9 +49,10 @@ export default function LiveMatchPage() {
   /** The table this match was on and who was on it, held after the row is gone:
    *  filing deletes it, and the next match wants the same table without the two
    *  who just played it being offered straight back onto it. */
-  const [freed, setFreed] = useState<{ tableId: number; seats: number[] } | null>(
-    null,
-  );
+  const [freed, setFreed] = useState<{
+    tableId: number;
+    seats: number[];
+  } | null>(null);
   // The club's setting as it stands. Read, not owned: /today is where it is
   // changed, and a scoreboard arguing with it would be a second answer.
   const setup = readTodaySetup();

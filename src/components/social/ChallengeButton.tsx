@@ -71,7 +71,9 @@ export default function ChallengeButton({
           { toPlayerId, message },
           {
             onSuccess: () => {
-              toast.success(t(isHere ? "challenge.sentHere" : "challenge.sent"));
+              toast.success(
+                t(isHere ? "challenge.sentHere" : "challenge.sent"),
+              );
               setMessage("");
               setOpen(false);
             },

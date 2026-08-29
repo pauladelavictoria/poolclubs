@@ -93,10 +93,10 @@ export default function TvPage() {
           <span className="font-mono text-h3 tabular-nums text-ink-soft">
             {now === null
               ? "--:--"
-              // The club's language, not the device's: a tablet bought in
-              // one country and hung on a wall in another was showing a
-              // Spanish room a 12-hour clock.
-              : new Date(now).toLocaleTimeString(locale, {
+              : // The club's language, not the device's: a tablet bought in
+                // one country and hung on a wall in another was showing a
+                // Spanish room a 12-hour clock.
+                new Date(now).toLocaleTimeString(locale, {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}

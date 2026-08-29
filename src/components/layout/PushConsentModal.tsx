@@ -54,11 +54,7 @@ export default function PushConsentModal({
   // from ever being called before the element exists — `supported` is false
   // until after hydration, so gating the render on it opened nothing at all.
   const open =
-    !closed &&
-    !dismissed &&
-    !blocked &&
-    supported &&
-    permission === "default";
+    !closed && !dismissed && !blocked && supported && permission === "default";
   const ref = useDialog(open);
 
   const dismiss = () => {

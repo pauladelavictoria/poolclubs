@@ -5,7 +5,8 @@
 import assert from "node:assert/strict";
 import { isOtpType, pickBranch } from "./callbackParams.ts";
 
-const at = (query: string) => new URL(`https://poolclubs.app/auth/callback${query}`);
+const at = (query: string) =>
+  new URL(`https://poolclubs.app/auth/callback${query}`);
 
 // The three kinds of link we send.
 assert.equal(isOtpType("email"), true);
@@ -37,7 +38,10 @@ assert.deepEqual(pickBranch(at("?code=xyz")), { kind: "code", code: "xyz" });
 
 // The email branch wins: it is the one that has to work on a device that has
 // never seen this site.
-assert.equal(pickBranch(at("?token_hash=abc&type=email&code=xyz")).kind, "hash");
+assert.equal(
+  pickBranch(at("?token_hash=abc&type=email&code=xyz")).kind,
+  "hash",
+);
 
 // A hash with a type we don't send is malformed, not an invitation to try PKCE.
 assert.equal(pickBranch(at("?token_hash=abc&type=signup")).kind, "none");

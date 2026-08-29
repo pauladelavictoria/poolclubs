@@ -70,7 +70,11 @@ export default function TodayPage() {
   const seats = seatsNeeded(setup);
   // Who could play whom, and on what. Shared with the scoreboard's "next on
   // this table" offer so the two can never disagree — see hooks/useSuggestions.
-  const { groups: suggestions, freeTables, canStart } = useSuggestions({
+  const {
+    groups: suggestions,
+    freeTables,
+    canStart,
+  } = useSuggestions({
     setup,
     maxGroups: Math.max(
       (tables ?? []).filter((tbl) => !matchOn(tbl.id)).length,

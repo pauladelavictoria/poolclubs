@@ -68,7 +68,10 @@ export const seatsNeeded = (setup: DaySetup) =>
 /** Clamped here rather than left to an input's min/max, which only the spinner
  *  and the browser's own validation honour. */
 export const clampRace = (n: number) =>
-  Math.min(RACE_MAX, Math.max(RACE_MIN, Number.isFinite(n) ? n : DEFAULT_SETUP.raceTo));
+  Math.min(
+    RACE_MAX,
+    Math.max(RACE_MIN, Number.isFinite(n) ? n : DEFAULT_SETUP.raceTo),
+  );
 
 /** One key per pair of people, whichever way round they are named. */
 export const pairKey = (a: number, b: number) =>
@@ -152,7 +155,9 @@ const SPLITS = [
  * seconds against a first and a third is a fairer game than the ranking knows
  * how to describe, and it is what this picks.
  */
-export function balanceDoubles<T extends { category: number }>(group: T[]): T[] {
+export function balanceDoubles<T extends { category: number }>(
+  group: T[],
+): T[] {
   if (group.length !== 4) return group;
 
   let best = group;
@@ -160,7 +165,10 @@ export function balanceDoubles<T extends { category: number }>(group: T[]): T[] 
 
   for (const [a, b, c, d] of SPLITS) {
     const gap = Math.abs(
-      group[a].category + group[b].category - group[c].category - group[d].category,
+      group[a].category +
+        group[b].category -
+        group[c].category -
+        group[d].category,
     );
     // Strictly closer, so a tie keeps the order the queue produced.
     if (gap < closest) {

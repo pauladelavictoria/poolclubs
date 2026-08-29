@@ -41,7 +41,10 @@ export const useLiveMatches = ({ poll = false }: { poll?: boolean } = {}) => {
  * is no longer anybody's. Everything else here gets that for free — see the
  * note on useLiveMatches.
  */
-export const useLiveMatch = (id: string, { poll = false }: { poll?: boolean } = {}) =>
+export const useLiveMatch = (
+  id: string,
+  { poll = false }: { poll?: boolean } = {},
+) =>
   useQuery({
     ...liveMatchQuery(id),
     ...(poll && {
@@ -110,7 +113,11 @@ export const useManageLiveMatch = () => {
       if (!next) return;
 
       patchLocal(match.id, next);
-      await supabase.from("live_matches").update(next).eq("id", match.id).throwOnError();
+      await supabase
+        .from("live_matches")
+        .update(next)
+        .eq("id", match.id)
+        .throwOnError();
     },
     // The optimistic patch was a guess about the row we were shown. Whatever
     // the server ends up holding is the truth and it arrives over the socket —
@@ -180,7 +187,8 @@ export const useManageLiveMatch = () => {
 
         return data as LiveMatch;
       },
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.liveMatches.all }),
+      onSuccess: () =>
+        queryClient.invalidateQueries({ queryKey: keys.liveMatches.all }),
     }),
 
     scoreMatch,
@@ -202,7 +210,9 @@ export const useManageLiveMatch = () => {
      */
     finishMatch: useMutation({
       mutationFn: async (id: string): Promise<string> => {
-        const { data, error } = await supabase.rpc("finish_live_match", { p_id: id });
+        const { data, error } = await supabase.rpc("finish_live_match", {
+          p_id: id,
+        });
         if (error) throw new Error(error.message);
         return data as string;
       },
@@ -220,9 +230,14 @@ export const useManageLiveMatch = () => {
     /** Walked away, or started by mistake. Deletes the row; nothing is filed. */
     abandonMatch: useMutation({
       mutationFn: async (id: string) => {
-        await supabase.from("live_matches").delete().eq("id", id).throwOnError();
+        await supabase
+          .from("live_matches")
+          .delete()
+          .eq("id", id)
+          .throwOnError();
       },
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.liveMatches.all }),
+      onSuccess: () =>
+        queryClient.invalidateQueries({ queryKey: keys.liveMatches.all }),
     }),
   };
 };

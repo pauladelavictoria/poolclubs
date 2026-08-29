@@ -47,7 +47,10 @@ export const Route = createFileRoute("/app/_authed/$clubSlug")({
     // the wrong page — and it is what makes the device self-healing: a reload,
     // a stray swipe, or the PWA booting to its start_url all land here.
     const kioskTable = readKioskTable();
-    if (kioskTable !== null && !isKioskAllowed(location.pathname, params.clubSlug))
+    if (
+      kioskTable !== null &&
+      !isKioskAllowed(location.pathname, params.clubSlug)
+    )
       throw redirect({
         to: "/app/$clubSlug/tables/$tableId",
         params: { clubSlug: params.clubSlug, tableId: String(kioskTable) },

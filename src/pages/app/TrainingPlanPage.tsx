@@ -12,7 +12,9 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useT } from "@/i18n";
 
-const route = getRouteApi("/app/_authed/$clubSlug/players/$playerId/training/plan");
+const route = getRouteApi(
+  "/app/_authed/$clubSlug/players/$playerId/training/plan",
+);
 
 export default function TrainingPlanPage() {
   const { t } = useT();
@@ -55,10 +57,7 @@ export default function TrainingPlanPage() {
   };
 
   const title = (
-    <PageTitle
-      title={t("training.planTitle")}
-      crumbs={[]}
-    >
+    <PageTitle title={t("training.planTitle")} crumbs={[]}>
       {player && <CategoryBadge category={player.category} full />}
     </PageTitle>
   );

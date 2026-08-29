@@ -66,7 +66,8 @@ export function standings(
     // The game stores its own sides, which need not match the fixture's.
     const p1Racks = game.player_1_score;
     const p2Racks = game.player_2_score;
-    const winnerRacks = game.player_1_id === winner.playerId ? p1Racks : p2Racks;
+    const winnerRacks =
+      game.player_1_id === winner.playerId ? p1Racks : p2Racks;
     const loserRacks = game.player_1_id === winner.playerId ? p2Racks : p1Racks;
 
     winner.racksWon += winnerRacks;

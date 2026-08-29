@@ -33,8 +33,11 @@ export default function DrillDetailPage() {
 
   // Set when the drill was opened from a training plan: which plan, which step,
   // and whose. Validated by the route, so these arrive as numbers or not at all.
-  const { plan: planId, step: stepId, playerId: planPlayerId } =
-    route.useSearch();
+  const {
+    plan: planId,
+    step: stepId,
+    playerId: planPlayerId,
+  } = route.useSearch();
 
   const { data: drill, isLoading } = useGetDrill(drillId);
 

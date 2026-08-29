@@ -9,7 +9,7 @@ npm run db:dump    # needs Docker running — pg_dump runs in a container
 npm run db:types   # and the TypeScript the app is typed from
 ```
 
-Run both together. `schema.sql` is what the database *is*; `src/types/database.types.gen.ts`
+Run both together. `schema.sql` is what the database _is_; `src/types/database.types.gen.ts`
 is what the app compiles against. They come from the same place and drift together.
 
 **`drills-seed-*.sql`** are hand-written data, not schema: the global drill

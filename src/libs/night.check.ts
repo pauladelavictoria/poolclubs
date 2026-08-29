@@ -63,13 +63,18 @@ const player = (over: Partial<Player> = {}): Player => ({
 
 assert.equal(isPresent(player(), NOW), false);
 assert.equal(
-  isPresent(player({ present_since: new Date(NOW - 60_000).toISOString() }), NOW),
+  isPresent(
+    player({ present_since: new Date(NOW - 60_000).toISOString() }),
+    NOW,
+  ),
   true,
 );
 // The window is what ends a check-in — nobody has to remember to check out.
 assert.equal(
   isPresent(
-    player({ present_since: new Date(NOW - PRESENT_WINDOW_MS - 1).toISOString() }),
+    player({
+      present_since: new Date(NOW - PRESENT_WINDOW_MS - 1).toISOString(),
+    }),
     NOW,
   ),
   false,
@@ -83,15 +88,24 @@ assert.equal(isAbandoned(match(), NOW), false);
 // and a row the client still calls live but cannot clear is the bug this pair
 // exists to prevent.
 assert.equal(
-  isAbandoned(match({ updated_at: new Date(NOW - ABANDON_AFTER_MS).toISOString() }), NOW),
+  isAbandoned(
+    match({ updated_at: new Date(NOW - ABANDON_AFTER_MS).toISOString() }),
+    NOW,
+  ),
   true,
 );
 
 // --- the race ---------------------------------------------------------------
 
-assert.equal(isMatchOver(match({ player_1_score: 4, player_2_score: 4 })), false);
+assert.equal(
+  isMatchOver(match({ player_1_score: 4, player_2_score: 4 })),
+  false,
+);
 // Won by getting there, not by being ahead at the end.
-assert.equal(isMatchOver(match({ player_1_score: 5, player_2_score: 4 })), true);
+assert.equal(
+  isMatchOver(match({ player_1_score: 5, player_2_score: 4 })),
+  true,
+);
 
 assert.equal(leaderOf(match({ player_1_score: 2, player_2_score: 2 })), null);
 assert.equal(leaderOf(match({ player_1_score: 2, player_2_score: 3 })), 2);
@@ -108,13 +122,16 @@ assert.equal(bump(match({ player_1_score: 5 }), 2), null);
 
 // --- unbump -----------------------------------------------------------------
 
-assert.deepEqual(unbump(match({ player_1_score: 4, player_2_score: 1, last_side: 2 }), 2), {
-  player_1_score: 4,
-  player_2_score: 0,
-  // The case this exists for: a corrected score has no last rack, so the next
-  // correction cannot take one off whoever happened to score before.
-  last_side: null,
-});
+assert.deepEqual(
+  unbump(match({ player_1_score: 4, player_2_score: 1, last_side: 2 }), 2),
+  {
+    player_1_score: 4,
+    player_2_score: 0,
+    // The case this exists for: a corrected score has no last rack, so the next
+    // correction cannot take one off whoever happened to score before.
+    last_side: null,
+  },
+);
 
 // Nothing to take off. A side on zero is the floor; the CHECK constraint says
 // the same thing in the database.

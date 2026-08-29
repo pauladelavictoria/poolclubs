@@ -33,7 +33,12 @@ export function upsertRow<T extends { id: string | number }>(
 
   return [
     ...rows.filter(
-      (r) => !(matchesOptimistic && isOptimistic(r) && matchesOptimistic(r, incoming)),
+      (r) =>
+        !(
+          matchesOptimistic &&
+          isOptimistic(r) &&
+          matchesOptimistic(r, incoming)
+        ),
     ),
     incoming,
   ];

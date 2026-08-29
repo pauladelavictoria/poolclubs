@@ -6,11 +6,13 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
  * <Navigate>: nothing mounts, nothing fetches, and the address bar only ever
  * shows the real page.
  */
-export const Route = createFileRoute("/app/_authed/$clubSlug/me/training/plan")({
-  beforeLoad: ({ context, params }) => {
-    throw redirect({
-      to: "/app/$clubSlug/players/$playerId/training/plan",
-      params: { ...params, playerId: String(context.player.id) },
-    });
+export const Route = createFileRoute("/app/_authed/$clubSlug/me/training/plan")(
+  {
+    beforeLoad: ({ context, params }) => {
+      throw redirect({
+        to: "/app/$clubSlug/players/$playerId/training/plan",
+        params: { ...params, playerId: String(context.player.id) },
+      });
+    },
   },
-});
+);

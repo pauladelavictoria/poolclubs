@@ -107,7 +107,8 @@ export default function ClubOnboardingPage() {
               // just the slug — take whatever comes after the last "/".
               const raw = slug.trim().toLowerCase();
               const clean = raw.slice(raw.lastIndexOf("/") + 1);
-              if (clean) navigate({ to: "/app/join/$slug", params: { slug: clean } });
+              if (clean)
+                navigate({ to: "/app/join/$slug", params: { slug: clean } });
             }}
           >
             <div className="space-y-1.5">

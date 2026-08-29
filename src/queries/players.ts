@@ -90,7 +90,9 @@ export const playersQuery = (clubId: number) =>
       // sql/live-night.sql and this file is typed against it before that is
       // applied — `undefined` reads as "not a device", which is the right
       // answer for every club that has not set one up.
-      return byName((data ?? []).map(flattenPlayer)).filter((p) => !p.is_device);
+      return byName((data ?? []).map(flattenPlayer)).filter(
+        (p) => !p.is_device,
+      );
     },
   });
 

@@ -63,7 +63,10 @@ assert.equal(
   toPlace({ geometry: { coordinates: [0, 91] }, properties: { name: "x" } }),
   null,
 );
-assert.equal(toPlace({ geometry: { coordinates: [0, 0] }, properties: {} }), null);
+assert.equal(
+  toPlace({ geometry: { coordinates: [0, 0] }, properties: {} }),
+  null,
+);
 
 // A malformed country code is dropped, not stored — the CHECK in
 // sql/club-location.sql would reject it anyway.

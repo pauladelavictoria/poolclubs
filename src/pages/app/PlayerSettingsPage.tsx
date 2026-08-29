@@ -102,12 +102,7 @@ export default function PlayerSettingsPage() {
 
   // The middle crumb is the player, so it is named by the player once they
   // have loaded rather than by the route's generic label.
-  const title = (
-    <PageTitle
-      title={t("players.accountSettings")}
-      crumbs={[]}
-    />
-  );
+  const title = <PageTitle title={t("players.accountSettings")} crumbs={[]} />;
 
   if (isLoadingPlayers) {
     return (
@@ -136,7 +131,10 @@ export default function PlayerSettingsPage() {
               a cropped photo worth holding back behind a button. */}
           <AvatarUpload name={player.name} url={player.avatar_url} />
 
-          <form onSubmit={saveName} className="space-y-3 border-t border-hairline pt-4">
+          <form
+            onSubmit={saveName}
+            className="space-y-3 border-t border-hairline pt-4"
+          >
             <div className="space-y-1.5">
               <Label htmlFor="player-name">{t("players.name")}</Label>
               <Input

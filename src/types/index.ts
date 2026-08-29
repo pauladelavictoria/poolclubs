@@ -112,11 +112,11 @@ export type Player = Omit<Row<"players">, "category" | "status"> & {
   category: Category;
   status: PlayerStatus;
 } & {
-    /** Which table this tablet is paired to, when it is one. Intersected in
-     *  rather than read from the generated Row until sql/device-pairing.sql is
-     *  applied and `npm run db:types` re-run; harmless once it is. */
-    device_table_id: number | null;
-  } & Pick<Person, "name" | "avatar_url" | "slug" | "is_public"> & {
+  /** Which table this tablet is paired to, when it is one. Intersected in
+   *  rather than read from the generated Row until sql/device-pairing.sql is
+   *  applied and `npm run db:types` re-run; harmless once it is. */
+  device_table_id: number | null;
+} & Pick<Person, "name" | "avatar_url" | "slug" | "is_public"> & {
     /** Null out here on the public side, where anon is not granted the column.
      *  Only ClubPage reads it, to mark which member owns the club. */
     user_id: string | null;
@@ -141,30 +141,30 @@ export type Comment = Stamped<Row<"comments">>;
 /** The picker's palette. The database accepts any emoji, so a row may carry
  *  one that is not on this list — render what is stored, not what is here. */
 export const REACTIONS = [
-  '👍',
-  '👏',
-  '🙌',
-  '🔥',
-  '🐐',
-  '😮',
-  '😂',
-  '🎱',
+  "👍",
+  "👏",
+  "🙌",
+  "🔥",
+  "🐐",
+  "😮",
+  "😂",
+  "🎱",
 ] as const;
 export type ReactionEmoji = (typeof REACTIONS)[number];
 
 export type Reaction = Stamped<Row<"reactions">>;
 
 // Training / Drills types
-export type DrillDifficulty = 'beginner' | 'intermediate' | 'advanced';
+export type DrillDifficulty = "beginner" | "intermediate" | "advanced";
 export type DrillSkillType =
-  | 'potting'
-  | 'position'
-  | 'safety'
-  | 'break'
-  | 'banks'
-  | 'kicks'
-  | 'patterns'
-  | 'specials';
+  | "potting"
+  | "position"
+  | "safety"
+  | "break"
+  | "banks"
+  | "kicks"
+  | "patterns"
+  | "specials";
 
 export type BallPosition = {
   x: number;
@@ -178,7 +178,7 @@ export type ShotPath = {
   y1: number;
   x2: number;
   y2: number;
-  type?: 'solid' | 'dashed';
+  type?: "solid" | "dashed";
 };
 
 /** ball_positions and shot_paths are jsonb — only the drill editor writes them,
@@ -195,7 +195,7 @@ export type Drill = Omit<
 
 export type DrillLog = Row<"drill_logs">;
 
-export type TrainingPlanStepStatus = 'pending' | 'completed' | 'skipped';
+export type TrainingPlanStepStatus = "pending" | "completed" | "skipped";
 
 export type TrainingPlan = Row<"training_plans">;
 
@@ -207,9 +207,9 @@ export type TrainingPlanStep = Omit<Row<"training_plan_steps">, "status"> & {
 
 /** Which drills a division is aimed at. Used to seed a training plan. */
 export const CATEGORY_TO_DIFFICULTY: Record<Category, DrillDifficulty> = {
-  1: 'advanced',
-  2: 'intermediate',
-  3: 'beginner',
+  1: "advanced",
+  2: "intermediate",
+  3: "beginner",
 };
 
 /* Display order for the filters and the editor. The labels themselves live in
@@ -218,20 +218,20 @@ export const CATEGORY_TO_DIFFICULTY: Record<Category, DrillDifficulty> = {
    ?difficulty validator straight from this list, and a plain
    DrillDifficulty[] would widen the parsed value back to `string`. */
 export const DIFFICULTIES = [
-  'beginner',
-  'intermediate',
-  'advanced',
+  "beginner",
+  "intermediate",
+  "advanced",
 ] as const satisfies readonly DrillDifficulty[];
 
 export const SKILL_TYPES = [
-  'potting',
-  'position',
-  'safety',
-  'break',
-  'banks',
-  'kicks',
-  'patterns',
-  'specials',
+  "potting",
+  "position",
+  "safety",
+  "break",
+  "banks",
+  "kicks",
+  "patterns",
+  "specials",
 ] as const satisfies readonly DrillSkillType[];
 
 // Tournaments — see sql/tournaments.sql and libs/bracket.ts.

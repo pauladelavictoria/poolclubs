@@ -54,7 +54,10 @@ export default function DrillEditorPage() {
     if (!confirm(t("drills.deleteConfirm"))) return;
     deleteDrill.mutate(drillId, {
       onSuccess: () =>
-        navigate({ to: "/app/$clubSlug/drills", params: { clubSlug: clubSlug! } }),
+        navigate({
+          to: "/app/$clubSlug/drills",
+          params: { clubSlug: clubSlug! },
+        }),
       onError: () => toast.error(t("drills.deleteError")),
     });
   };

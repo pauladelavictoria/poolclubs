@@ -87,7 +87,9 @@ export default function Scoreboard({
   // One player or a pair. The pair is the unit that wins the rack, so it is the
   // unit a half is labelled with and the unit that wins the match.
   const sideOf = (n: 1 | 2) =>
-    (n === 1 ? [p1, p1b] : [p2, p2b]).filter((p): p is Player => p !== undefined);
+    (n === 1 ? [p1, p1b] : [p2, p2b]).filter(
+      (p): p is Player => p !== undefined,
+    );
   const nameOf = (n: 1 | 2) =>
     sideOf(n)
       .map((p) => p.name)

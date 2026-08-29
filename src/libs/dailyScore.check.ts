@@ -121,7 +121,13 @@ assert.deepEqual(tallyDaily([game(1, 5, 99, 2)], PLAYERS), []);
 {
   // Twelve matches, oldest first in the input, player 1 winning only the last
   const many = Array.from({ length: 12 }, (_, i) =>
-    game(1, i === 11 ? 5 : 0, 2, i === 11 ? 0 : 5, `2026-04-${String(i + 1).padStart(2, "0")}T10:00:00.000Z`),
+    game(
+      1,
+      i === 11 ? 5 : 0,
+      2,
+      i === 11 ? 0 : 5,
+      `2026-04-${String(i + 1).padStart(2, "0")}T10:00:00.000Z`,
+    ),
   );
   const rows = tallyDaily(many, PLAYERS);
   const form = byId(rows, 1).last10Games;

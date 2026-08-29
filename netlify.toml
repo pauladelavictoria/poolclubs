@@ -7,6 +7,9 @@
   command = "npm run build"
   publish = "dist/client"
 
+[build.environment]
+  NODE_VERSION = "22.6.0"
+
 # VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY have to be set in the Netlify UI
 # (Site configuration → Environment variables). Both are public by design — the
 # anon key is what RLS is for — but the build needs them present, and the server

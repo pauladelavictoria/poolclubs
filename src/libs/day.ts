@@ -45,9 +45,7 @@ const isZone = (tz: string) => {
  * this runtime has never heard of all land on CLUB_TZ rather than on an
  * exception thrown from inside a range.
  */
-export const zoneOf = (
-  club?: { timezone?: string | null } | null,
-): string => {
+export const zoneOf = (club?: { timezone?: string | null } | null): string => {
   const tz = club?.timezone?.trim();
   return tz && isZone(tz) ? tz : CLUB_TZ;
 };

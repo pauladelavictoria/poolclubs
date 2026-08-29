@@ -44,21 +44,24 @@ export const sendPush = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<null> => {
     const privateKey = process.env.VAPID_PRIVATE_KEY;
     const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-    if (!privateKey || !publicKey) return log("no VAPID keys in this build", data);
+    if (!privateKey || !publicKey)
+      return log("no VAPID keys in this build", data);
 
     const supabase = getSupabaseServer();
 
     // What to say. Read under RLS, so a caller who cannot see the row gets
     // nothing — but this is not the permission check, push_targets is.
     const text = await describe(supabase, data.kind, data.id);
-    if (!text) return log("row not visible to the caller, or wrong status", data);
+    if (!text)
+      return log("row not visible to the caller, or wrong status", data);
 
     const { data: targets, error } = await supabase.rpc("push_targets", {
       p_kind: data.kind,
       p_ref: data.id,
     });
     if (error) return log(`push_targets failed: ${error.message}`, data);
-    if (!targets?.length) return log("no eligible recipient is subscribed", data);
+    if (!targets?.length)
+      return log("no eligible recipient is subscribed", data);
 
     // Dynamic import: createServerFn already strips this handler from the client
     // bundle, but web-push is CommonJS and Node-only, and one line buys
@@ -102,7 +105,10 @@ export const sendPush = createServerFn({ method: "POST" })
       `sent ${sent.length - failed.length}/${sent.length}` +
         (dead.length ? `, pruned ${dead.length} dead` : "") +
         failed
-          .map((r) => `, failed ${r.reason?.statusCode ?? "?"} ${r.reason?.body ?? r.reason?.message ?? ""}`)
+          .map(
+            (r) =>
+              `, failed ${r.reason?.statusCode ?? "?"} ${r.reason?.body ?? r.reason?.message ?? ""}`,
+          )
           .join(""),
       data,
     );

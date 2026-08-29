@@ -59,8 +59,16 @@ function applyRow<T extends { id: string | number; club_id: number }>(
 
 /** Same target, same author — the fields that survive an optimistic insert. */
 const sameTargetAndAuthor = (
-  a: { author_player_id: number; game_id: string | null; drill_log_id: number | null },
-  b: { author_player_id: number; game_id: string | null; drill_log_id: number | null },
+  a: {
+    author_player_id: number;
+    game_id: string | null;
+    drill_log_id: number | null;
+  },
+  b: {
+    author_player_id: number;
+    game_id: string | null;
+    drill_log_id: number | null;
+  },
 ) =>
   a.author_player_id === b.author_player_id &&
   a.game_id === b.game_id &&
@@ -83,7 +91,8 @@ function applyLiveMatch(queryClient: QueryClient) {
 
     if (payload.eventType === "DELETE") {
       const { id } = payload.old;
-      if (id !== undefined) queryClient.setQueryData(keys.liveMatch.one(id), null);
+      if (id !== undefined)
+        queryClient.setQueryData(keys.liveMatch.one(id), null);
       return;
     }
 
@@ -236,7 +245,11 @@ export function startRealtime(queryClient: QueryClient, clubId: number) {
     // is patched in rather than refetched — see applyRow above. Finishing
     // deletes the row, and a delete payload carries only the id, so the removal
     // scans every club's list the way the social tables do.
-    .on("postgres_changes", onTable("live_matches"), applyLiveMatch(queryClient))
+    .on(
+      "postgres_changes",
+      onTable("live_matches"),
+      applyLiveMatch(queryClient),
+    )
     // The venue's tables change about once a year.
     .on(
       "postgres_changes",

@@ -51,7 +51,11 @@ export default function AddGamePage() {
   const { register, handleSubmit, reset, control, setValue } = useForm<Game>({
     // 9-ball is what the club plays, and what every game recorded
     // before the column existed was backfilled to.
-    defaultValues: { mode: "single", discipline: "9ball", played_at: todayLocal() },
+    defaultValues: {
+      mode: "single",
+      discipline: "9ball",
+      played_at: todayLocal(),
+    },
   });
 
   const { data: players, isLoading: playersLoading } = useGetPlayers();

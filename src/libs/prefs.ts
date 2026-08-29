@@ -108,6 +108,4 @@ export const readPreferredLangs = createIsomorphicFn()
       .map((part) => part.split(";")[0].trim())
       .filter(Boolean),
   )
-  .client((): string[] => [
-    ...(navigator.languages ?? [navigator.language]),
-  ]);
+  .client((): string[] => [...(navigator.languages ?? [navigator.language])]);

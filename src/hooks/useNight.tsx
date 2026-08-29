@@ -22,7 +22,8 @@ export const useWhoIsHere = (): Player[] => {
   const { data: players } = useGetPlayers();
 
   return useMemo(
-    () => (now === null ? [] : (players ?? []).filter((p) => isPresent(p, now))),
+    () =>
+      now === null ? [] : (players ?? []).filter((p) => isPresent(p, now)),
     [players, now],
   );
 };
@@ -56,6 +57,7 @@ export const useCheckIn = () => {
         .eq("id", id)
         .throwOnError();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.players.all }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: keys.players.all }),
   });
 };

@@ -127,7 +127,9 @@ export default function LoginPage() {
       }
       await arrive();
     } catch {
-      setNote({ text: t(mode === "signin" ? "auth.badCredentials" : "auth.signUpError") });
+      setNote({
+        text: t(mode === "signin" ? "auth.badCredentials" : "auth.signUpError"),
+      });
     } finally {
       setBusy(false);
     }

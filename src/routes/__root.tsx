@@ -219,4 +219,3 @@ function Toasts() {
     <ToastContainer position="bottom-center" autoClose={2600} hideProgressBar />
   );
 }
-

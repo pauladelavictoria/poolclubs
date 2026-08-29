@@ -40,7 +40,8 @@ export function usePushNotifications() {
   const { player } = useAuth();
   const { lang } = useT();
   const [supported, setSupported] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission>("default");
+  const [permission, setPermission] =
+    useState<NotificationPermission>("default");
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
 

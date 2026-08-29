@@ -15,7 +15,11 @@ import {
 } from "./today.ts";
 
 // A round trip is what the cookie is for.
-const doubles = { mode: "doubles" as const, discipline: "8ball" as const, raceTo: 7 };
+const doubles = {
+  mode: "doubles" as const,
+  discipline: "8ball" as const,
+  raceTo: 7,
+};
 assert.equal(encodeSetup(doubles), "doubles:8ball:7");
 assert.deepEqual(decodeSetup(encodeSetup(doubles)), doubles);
 
@@ -55,7 +59,9 @@ assert.equal(pairKey(2, 1), pairKey(1, 2));
 // table rather than played against each other, and the next two arrivals fill
 // them: both of the long waits get a table.
 assert.deepEqual(
-  suggestGroups([p(1), p(2), p(3), p(4)], 2, met([])).map((g) => g.map((x) => x.id)),
+  suggestGroups([p(1), p(2), p(3), p(4)], 2, met([])).map((g) =>
+    g.map((x) => x.id),
+  ),
   [
     [1, 3],
     [2, 4],
@@ -104,7 +110,10 @@ assert.deepEqual(
   before.map((g) => g.map((x) => x.id)),
   after.map((g) => g.map((x) => x.id)),
 );
-assert.deepEqual(before[0].map((x) => x.id), [1, 2, 3, 4]);
+assert.deepEqual(
+  before[0].map((x) => x.id),
+  [1, 2, 3, 4],
+);
 
 // Asked for one, so one — however many are waiting.
 assert.equal(suggestGroups(queue, 2, met([]), 1).length, 1);
@@ -122,7 +131,10 @@ const sixth = suggestGroups(
 ).map((g) => g.map((x) => x.id));
 assert.equal(sixth.length, 3);
 for (const [a, b] of sixth)
-  assert.ok(!(a === 5 && b === 6) && !(a === 6 && b === 5), "5 and 6 rematched");
+  assert.ok(
+    !(a === 5 && b === 6) && !(a === 6 && b === 5),
+    "5 and 6 rematched",
+  );
 
 // --- levelling the pairs -----------------------------------------------------
 

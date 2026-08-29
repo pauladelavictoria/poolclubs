@@ -247,7 +247,10 @@ export default function PlayerDetailPage({ playerId }: { playerId: number }) {
               title={t("players.noGamesTitle")}
               hint={t("players.noGamesHint", { name: player.name })}
               action={
-                <AppLink to="/app/$clubSlug/games/new" className={buttonClasses({})}>
+                <AppLink
+                  to="/app/$clubSlug/games/new"
+                  className={buttonClasses({})}
+                >
                   {t("games.add")}
                 </AppLink>
               }

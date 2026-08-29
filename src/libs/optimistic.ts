@@ -25,8 +25,11 @@ export function optimisticList<TVars, TRow>(
       );
       return { prev };
     },
-    onError: (_err: unknown, _vars: TVars, ctx: { prev?: TRow[] } | undefined) =>
-      queryClient.setQueryData(queryKey, ctx?.prev),
+    onError: (
+      _err: unknown,
+      _vars: TVars,
+      ctx: { prev?: TRow[] } | undefined,
+    ) => queryClient.setQueryData(queryKey, ctx?.prev),
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   };
 }

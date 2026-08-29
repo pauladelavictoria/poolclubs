@@ -91,7 +91,7 @@ export const clampBall = (p: { x: number; y: number }) => ({
 export function pointToUnits(
   svg: SVGSVGElement,
   clientX: number,
-  clientY: number
+  clientY: number,
 ) {
   const rect = svg.getBoundingClientRect();
   const box = svg.viewBox.baseVal;
@@ -117,7 +117,7 @@ function distanceToSegment(
   ax: number,
   ay: number,
   bx: number,
-  by: number
+  by: number,
 ) {
   const dx = bx - ax;
   const dy = by - ay;
@@ -137,7 +137,7 @@ const PATH_HIT_RADIUS = 1;
 export function hitTest(
   balls: BallPosition[],
   paths: ShotPath[],
-  p: { x: number; y: number }
+  p: { x: number; y: number },
 ): Selection | null {
   for (let i = balls.length - 1; i >= 0; i--) {
     if (Math.hypot(p.x - balls[i].x, p.y - balls[i].y) <= BALL_RADIUS)

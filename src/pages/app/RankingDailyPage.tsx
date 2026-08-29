@@ -35,8 +35,11 @@ export default function RankingDailyPage() {
 
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
   // Shared with the scoreboard, which wants the same trick for the same reason.
-  const { ref: tvRef, isFullscreen: isTv, toggle: toggleTv } =
-    useFullscreen<HTMLDivElement>();
+  const {
+    ref: tvRef,
+    isFullscreen: isTv,
+    toggle: toggleTv,
+  } = useFullscreen<HTMLDivElement>();
 
   // The club's zone decides what that date covers: a night runs 06:00 to 06:00
   // of the club's own clock, not the calendar's — see libs/day.ts.

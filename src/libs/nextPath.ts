@@ -33,4 +33,5 @@ export const loginLink = (path: string) =>
  * expired email look like the account had never been created — the page has to
  * say something. `loginLink` already emits ?next=…, so & is always right here.
  */
-export const loginFailedLink = (path: string) => `${loginLink(path)}&error=link`;
+export const loginFailedLink = (path: string) =>
+  `${loginLink(path)}&error=link`;

@@ -179,63 +179,66 @@ export const pairDevice = createServerFn({ method: "POST" })
     async ({
       data,
     }): Promise<PairFailure | { clubSlug: string; tableId: number }> => {
-    const supabase = getSupabaseServer();
+      const supabase = getSupabaseServer();
 
-    const { error: signInError } = await supabase.auth.signInAnonymously();
-    if (signInError) {
-      // Logged, because the two ways this fails look identical from the tablet
-      // and only one of them is fixable from the app.
-      console.error("pairDevice: anonymous sign-in failed", signInError.message);
-      return {
-        error: /anonymous/i.test(signInError.message)
-          ? "anonymousDisabled"
-          : "pairError",
+      const { error: signInError } = await supabase.auth.signInAnonymously();
+      if (signInError) {
+        // Logged, because the two ways this fails look identical from the tablet
+        // and only one of them is fixable from the app.
+        console.error(
+          "pairDevice: anonymous sign-in failed",
+          signInError.message,
+        );
+        return {
+          error: /anonymous/i.test(signInError.message)
+            ? "anonymousDisabled"
+            : "pairError",
+        };
+      }
+
+      // A set-returning function, so one row: the club to open and the table this
+      // code was cut for.
+      //
+      // claim_device changed shape in sql/device-pairing.sql and the generated
+      // types still carry the old one. Narrow cast until that migration is
+      // applied and `npm run db:types` re-run — the same stand-in
+      // queries/operator.ts uses.
+      const rpc = supabase as unknown as {
+        rpc: (
+          fn: string,
+          args: Record<string, string>,
+        ) => PromiseLike<{
+          data: { club_slug: string; table_id: number }[] | null;
+          error: { message: string } | null;
+        }>;
       };
-    }
 
-    // A set-returning function, so one row: the club to open and the table this
-    // code was cut for.
-    //
-    // claim_device changed shape in sql/device-pairing.sql and the generated
-    // types still carry the old one. Narrow cast until that migration is
-    // applied and `npm run db:types` re-run — the same stand-in
-    // queries/operator.ts uses.
-    const rpc = supabase as unknown as {
-      rpc: (
-        fn: string,
-        args: Record<string, string>,
-      ) => PromiseLike<{
-        data: { club_slug: string; table_id: number }[] | null;
-        error: { message: string } | null;
-      }>;
-    };
+      const { data: rows, error } = await rpc.rpc("claim_device", {
+        p_code: data.code.toUpperCase(),
+      });
 
-    const { data: rows, error } = await rpc.rpc("claim_device", {
-      p_code: data.code.toUpperCase(),
-    });
+      const claim = rows?.[0];
+      if (error || !claim) {
+        console.error("pairDevice: claim failed", error?.message);
+        // The anonymous user is left behind rather than cleaned up: deleting it
+        // needs the service role, which this app deliberately does not have, and
+        // an unpaired anonymous user can read nothing.
+        await supabase.auth.signOut();
 
-    const claim = rows?.[0];
-    if (error || !claim) {
-      console.error("pairDevice: claim failed", error?.message);
-      // The anonymous user is left behind rather than cleaned up: deleting it
-      // needs the service role, which this app deliberately does not have, and
-      // an unpaired anonymous user can read nothing.
-      await supabase.auth.signOut();
+        // A tablet that has been paired before fails here for a completely
+        // different reason than a stale code, and telling somebody to get a new
+        // code when the code was fine is the kind of dead end that ends with the
+        // tablet in a drawer.
+        return {
+          error: /already paired/i.test(error?.message ?? "")
+            ? "alreadyPaired"
+            : "badCode",
+        };
+      }
 
-      // A tablet that has been paired before fails here for a completely
-      // different reason than a stale code, and telling somebody to get a new
-      // code when the code was fine is the kind of dead end that ends with the
-      // tablet in a drawer.
-      return {
-        error: /already paired/i.test(error?.message ?? "")
-          ? "alreadyPaired"
-          : "badCode",
-      };
-    }
-
-    return { clubSlug: claim.club_slug, tableId: claim.table_id };
-  },
-);
+      return { clubSlug: claim.club_slug, tableId: claim.table_id };
+    },
+  );
 
 export const signUp = createServerFn({ method: "POST" })
   .validator(
@@ -248,9 +251,7 @@ export const signUp = createServerFn({ method: "POST" })
     }),
   )
   .handler(
-    async ({
-      data,
-    }): Promise<AuthFailure | { needsConfirmation: boolean }> => {
+    async ({ data }): Promise<AuthFailure | { needsConfirmation: boolean }> => {
       const supabase = getSupabaseServer();
       const { data: result, error } = await supabase.auth.signUp({
         email: data.email,
@@ -319,7 +320,10 @@ export const startGoogleOAuth = createServerFn({ method: "POST" })
     const supabase = getSupabaseServer();
     const { data: result, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { skipBrowserRedirect: true, redirectTo: callbackUrl(data.next) },
+      options: {
+        skipBrowserRedirect: true,
+        redirectTo: callbackUrl(data.next),
+      },
     });
     if (error || !result.url) return { error: "badCredentials" as const };
     return { url: result.url };

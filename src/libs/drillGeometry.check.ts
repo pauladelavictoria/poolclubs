@@ -23,10 +23,7 @@ import {
 assert.equal(BALLS.length, 16);
 assert.deepEqual(
   BALLS.map((b) => b.label),
-  [
-    undefined,
-    ...Array.from({ length: 15 }, (_, i) => String(i + 1)),
-  ]
+  [undefined, ...Array.from({ length: 15 }, (_, i) => String(i + 1))],
 );
 assert.equal(isStriped("8"), false);
 assert.equal(isStriped("9"), true);
@@ -63,7 +60,7 @@ const fakeSvg = (w: number, h: number) =>
 const centre = pointToUnits(
   fakeSvg(TABLE_W, TABLE_H),
   10 + (FELT.x + UNIT_X * 50) * scale,
-  20 + (FELT.y + UNIT_Y * 25) * scale
+  20 + (FELT.y + UNIT_Y * 25) * scale,
 );
 assert.ok(Math.abs(centre.x - 50) < 1e-9, `x was ${centre.x}`);
 assert.ok(Math.abs(centre.y - 25) < 1e-9, `y was ${centre.y}`);
@@ -73,7 +70,7 @@ assert.ok(Math.abs(centre.y - 25) < 1e-9, `y was ${centre.y}`);
 const turned = pointToUnits(
   fakeSvg(TABLE_H, TABLE_W),
   10 + (FELT.y + UNIT_Y * 25) * scale,
-  20 + (TABLE_W - FELT.x - UNIT_X * 50) * scale
+  20 + (TABLE_W - FELT.x - UNIT_X * 50) * scale,
 );
 assert.ok(Math.abs(turned.x - 50) < 1e-9, `x was ${turned.x}`);
 assert.ok(Math.abs(turned.y - 25) < 1e-9, `y was ${turned.y}`);
@@ -83,7 +80,7 @@ assert.ok(Math.abs(turned.y - 25) < 1e-9, `y was ${turned.y}`);
 const headCorner = pointToUnits(
   fakeSvg(TABLE_H, TABLE_W),
   10 + FELT.y * scale,
-  20 + (TABLE_W - FELT.x) * scale
+  20 + (TABLE_W - FELT.x) * scale,
 );
 assert.ok(Math.abs(headCorner.x) < 1e-9, `x was ${headCorner.x}`);
 assert.ok(Math.abs(headCorner.y) < 1e-9, `y was ${headCorner.y}`);

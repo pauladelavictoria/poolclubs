@@ -136,7 +136,10 @@ const fixture = (
     ],
   );
   // Both winners are +2 and both losers −2, so racks won orders each pair.
-  assert.deepEqual(table.map((r) => r.playerId), [1, 3, 2, 4]);
+  assert.deepEqual(
+    table.map((r) => r.playerId),
+    [1, 3, 2, 4],
+  );
 }
 
 // Groups: each table only counts its own group's fixtures.

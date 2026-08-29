@@ -75,7 +75,10 @@ export default function JoinClubPage() {
               title={t("club.badCode")}
               hint={t("club.badCodeHint")}
               action={
-                <Button variant="secondary" onClick={() => navigate({ to: "/app" })}>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate({ to: "/app" })}
+                >
                   {t("common.back")}
                 </Button>
               }
@@ -91,7 +94,10 @@ export default function JoinClubPage() {
                   : t("club.awaitingHint")
               }
               action={
-                <Button variant="secondary" onClick={() => navigate({ to: "/app" })}>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate({ to: "/app" })}
+                >
                   {t("common.back")}
                 </Button>
               }

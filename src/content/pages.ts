@@ -85,8 +85,7 @@ const PRICING_ES: ContentDoc = {
 const PRICING_EN: ContentDoc = {
   title: "Pricing",
   lede: "Players never pay. Neither do the beta clubs — not now, not later.",
-  callout:
-    "Clubs that try PoolClubs during the beta keep it free, forever.",
+  callout: "Clubs that try PoolClubs during the beta keep it free, forever.",
   sections: [
     {
       heading: "Today",
@@ -325,7 +324,9 @@ const CONTACT_ES: ContentDoc = {
       ],
     },
   ],
-  links: [{ label: `Escribir a ${CONTACT_EMAIL}`, href: `mailto:${CONTACT_EMAIL}` }],
+  links: [
+    { label: `Escribir a ${CONTACT_EMAIL}`, href: `mailto:${CONTACT_EMAIL}` },
+  ],
 };
 
 const CONTACT_EN: ContentDoc = {
@@ -393,7 +394,9 @@ const CONTACT_FR: ContentDoc = {
       ],
     },
   ],
-  links: [{ label: `Écrire à ${CONTACT_EMAIL}`, href: `mailto:${CONTACT_EMAIL}` }],
+  links: [
+    { label: `Écrire à ${CONTACT_EMAIL}`, href: `mailto:${CONTACT_EMAIL}` },
+  ],
 };
 
 export const PRICING: Record<Lang, ContentDoc> = {

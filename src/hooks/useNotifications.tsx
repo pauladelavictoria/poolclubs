@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import type { CrumbLink } from "@/libs/routeMeta";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetChallenges } from "@/hooks/useChallenges";
@@ -24,8 +19,7 @@ export type NotificationKind =
   | "challengeDeclined"
   | "tournamentOpen"
   | "tournamentAction"
-  | "drillAdded"
-;
+  | "drillAdded";
 
 export type AppNotification = {
   /** Stable and unique per underlying event *and* its current state, so an

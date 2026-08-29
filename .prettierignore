@@ -1,0 +1,10 @@
+dist
+.output
+.nitro
+.tanstack
+src/routeTree.gen.ts
+src/types/database.types.gen.ts
+sql/schema.sql
+
+# Hand-tuned for cross-client rendering, not app source.
+supabase/templates/

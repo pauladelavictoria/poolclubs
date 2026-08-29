@@ -41,6 +41,9 @@ export const useGetGames = (
     placeholderData: keepPreviousData,
     // Slower than the live scores: a rack lands every few minutes and a result
     // every twenty, so this is the ladder catching up, not a scoreboard.
-    ...(poll && { refetchInterval: 15_000, refetchIntervalInBackground: false }),
+    ...(poll && {
+      refetchInterval: 15_000,
+      refetchIntervalInBackground: false,
+    }),
   });
 };

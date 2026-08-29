@@ -58,6 +58,5 @@ export const dayLabel = (
 export const sameDay = (a: Date, b: Date) =>
   a.toDateString() === b.toDateString();
 
-
 export const startsNewDay = (date: Date, previous?: Date) =>
   !previous || !sameDay(date, previous);

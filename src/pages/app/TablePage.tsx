@@ -172,7 +172,8 @@ export default function TablePage() {
                       liveId: row.id,
                     });
                   },
-                  onError: (err) => toast.error(t(liveWriteMessage(err, "startMatch"))),
+                  onError: (err) =>
+                    toast.error(t(liveWriteMessage(err, "startMatch"))),
                 },
               )
             }

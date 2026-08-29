@@ -41,8 +41,12 @@ export const isAbandoned = (match: LiveMatch, now: number) =>
  */
 export const seatsOfSide = (match: LiveMatch, side: 1 | 2): number[] =>
   side === 1
-    ? [match.player_1_id, match.player_1b_id].filter((id): id is number => id !== null)
-    : [match.player_2_id, match.player_2b_id].filter((id): id is number => id !== null);
+    ? [match.player_1_id, match.player_1b_id].filter(
+        (id): id is number => id !== null,
+      )
+    : [match.player_2_id, match.player_2b_id].filter(
+        (id): id is number => id !== null,
+      );
 
 /** Who a side is, as one string: a name, or a pair joined. Every list that
  *  summarises a live match needs this, and each of them writing its own is how

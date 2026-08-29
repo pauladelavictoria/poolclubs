@@ -50,7 +50,10 @@ const playedInAny = (playerIds: number[]) =>
 
 // Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
 // for the app, rather than one per hook instance.
-export const gamesQuery = (clubId: number, filters: UseGetGamesFilters = {}) => {
+export const gamesQuery = (
+  clubId: number,
+  filters: UseGetGamesFilters = {},
+) => {
   const { date, page = 1, pageSize, playerId, category, mode, tz } = filters;
 
   return queryOptions({
