@@ -45,16 +45,16 @@ Forked from [aluzed/vite-react-ts-supabase](https://github.com/aluzed/vite-react
 
 ## 🛠 Running it
 
-Requires Node ≥ 22.6 (see `.nvmrc`) — the `check` script relies on native
-TypeScript stripping. Docker + the [Supabase CLI](https://supabase.com/docs/guides/cli)
-are needed for `db:dump` / `db:types` (see `sql/README.md`).
+Requires Node ≥ 22.6 (see `.nvmrc`). Docker + the
+[Supabase CLI](https://supabase.com/docs/guides/cli) are needed for
+`db:dump` / `db:types` (see `sql/README.md`).
 
 ```bash
 npm install
 npm run dev      # SSR dev server on :3000
 npm run build    # vite build, then a typecheck
 npm run lint
-npm run check    # the .check.ts assertion scripts — no test runner in this project
+npm run test     # Vitest
 ```
 
 Copy `.env.example` to `.env`. It needs `VITE_SUPABASE_URL` and

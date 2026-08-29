@@ -8,7 +8,7 @@
  * opened on a phone after signing up on a laptop has no verifier to offer.
  *
  * Split out of the route handler so it can be asserted without a server. See
- * callbackParams.check.ts.
+ * callbackParams.test.ts.
  */
 
 /**

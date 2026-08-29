@@ -3,7 +3,7 @@
  * for every rack past the margin the divisions predicted. Beating someone two
  * divisions above you is worth more than beating your equal by the same score.
  *
- * Pure so it can be checked without a renderer — see dailyScore.check.ts.
+ * Pure so it can be checked without a renderer — see dailyScore.test.ts.
  * The all-time board is Elo instead, in hooks/useEloRanking.ts.
  */
 import type { Game, Player, DailyRankingEntry } from "@/types";

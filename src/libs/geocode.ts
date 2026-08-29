@@ -9,7 +9,7 @@
  * This file is the pure half: the shape of a Photon feature and how it folds
  * into the five columns `clubs` stores. The fetch lives in
  * geocode.functions.ts so it stays on the server, and so this half can be
- * checked with `node src/libs/geocode.check.ts`.
+ * checked without one — see geocode.test.ts.
  */
 
 /** What the club stores, and what one suggestion in the picker is. */

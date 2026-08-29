@@ -1,4 +1,3 @@
-// Extension is explicit so `optimistic.check.ts` runs under bare node.
 import type { QueryClient } from "@tanstack/react-query";
 
 /**

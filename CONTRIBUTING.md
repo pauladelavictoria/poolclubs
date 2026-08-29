@@ -2,7 +2,7 @@
 
 ## Setup
 
-1. Node ≥ 22.6 (native TypeScript stripping is required — see `.nvmrc`).
+1. Node ≥ 22.6 (see `.nvmrc`).
 2. `npm install` — npm is the package manager this repo uses; `bun.lock` is
    stale and untracked.
 3. Copy `.env.example` to `.env` and fill in the Supabase project's URL and
@@ -16,7 +16,7 @@
 
 ```bash
 npm run lint
-npm run check     # .check.ts assertion suite
+npm run test
 npx tsc --noEmit -p tsconfig.app.json
 npm run build
 ```

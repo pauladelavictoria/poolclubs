@@ -1,10 +1,10 @@
 // Not crypto.randomUUID directly: it is secure-context only, so it is missing
 // on a tablet opening the app over plain http. See libs/uuid.ts.
-import { uuid } from "./uuid.ts";
+import { uuid } from "./uuid";
 
 /**
- * Fixture generation. Pure — no React, no Supabase — so it can be checked with
- * `node src/libs/bracket.check.ts`.
+ * Fixture generation. Pure — no React, no Supabase — so it can be checked
+ * without either — see bracket.test.ts.
  *
  * The one idea worth knowing: a match does not store who will play in it, only
  * where its winner and loser go next. Round-one seats (and every league or

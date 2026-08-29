@@ -20,6 +20,7 @@ jobs:
 
       - run: npm run lint
 
-      - run: npm run check
+      - run: npm run test
 
       - run: npx tsc --noEmit -p tsconfig.app.json
+      - run: npx tsc --noEmit -p tsconfig.node.json

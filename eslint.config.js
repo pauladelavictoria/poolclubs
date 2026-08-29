@@ -34,4 +34,10 @@ export default tseslint.config(
     files: ["src/routes/**/*.{ts,tsx}"],
     rules: { "react-refresh/only-export-components": "off" },
   },
+  {
+    // Test helpers re-export testing-library's own named exports alongside a
+    // wrapped `render` — not a component file react-refresh needs to guard.
+    files: ["src/test/**/*.{ts,tsx}", "**/*.test.{ts,tsx}"],
+    rules: { "react-refresh/only-export-components": "off" },
+  },
 );

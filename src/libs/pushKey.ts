@@ -3,7 +3,7 @@
  *
  * `applicationServerKey` wants a BufferSource. Chrome will take the base64url
  * string as it comes; Safari will not, so convert once here rather than find out
- * per browser. Its own file so pushKey.check.ts can run it under bare node.
+ * per browser. Its own file so it can be tested in isolation — see pushKey.test.ts.
  */
 export function toKeyBytes(base64url: string): Uint8Array<ArrayBuffer> {
   // base64url drops the padding base64 requires, and swaps two characters.

@@ -1,9 +1,4 @@
-// Extension-free imports only where they are types: `today.check.ts` runs this
-// under bare node, so the one runtime import is the relative path node can
-// resolve on its own. The cookie glue lives in libs/prefs.ts for the same
-// reason — nothing checkable may import the server's request helpers.
-import { DISCIPLINES } from "../types/index.ts";
-import type { Discipline, GameMode } from "@/types";
+import { DISCIPLINES, type Discipline, type GameMode } from "@/types";
 
 /**
  * What the club is playing today: the format, the game, and to how many.

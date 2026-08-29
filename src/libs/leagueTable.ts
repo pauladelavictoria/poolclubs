@@ -7,7 +7,7 @@
  * in hooks/useEloRanking.ts and gets these games anyway, because a tournament
  * result is a normal `games` row.
  *
- * Pure — see leagueTable.check.ts.
+ * Pure — see leagueTable.test.ts.
  */
 import type { TournamentMatch } from "@/types";
 

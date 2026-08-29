@@ -9,7 +9,7 @@
  * This file exists so the app can predict and validate what the database will
  * produce. The two implementations have to agree character for character, so
  * the accent map and the reserved list below are the same ones the SQL uses.
- * src/libs/slug.check.ts is what keeps them honest.
+ * src/libs/slug.test.ts is what keeps them honest.
  */
 
 /**

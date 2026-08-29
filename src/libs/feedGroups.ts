@@ -1,5 +1,4 @@
-// Extension spelled out so `node src/libs/feedGroups.check.ts` can resolve it.
-import { startsNewDay } from "./dayLabel.ts";
+import { startsNewDay } from "./dayLabel";
 
 /** The shape the feed's grouping cares about: when it happened, and — for a
  *  match row — which fixtures it holds. Everything else on a feed row is passed

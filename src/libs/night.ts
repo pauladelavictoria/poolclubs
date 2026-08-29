@@ -1,11 +1,10 @@
-// Extension-free imports only: `night.check.ts` runs this under bare node.
 import type { LiveMatch, Player } from "@/types";
 
 /**
  * The club night's rules, as plain functions.
  *
  * Everything here is derived from a row and a clock, so it can be checked
- * without a renderer or a database — see night.check.ts.
+ * without a renderer or a database — see night.test.ts.
  */
 
 /**
