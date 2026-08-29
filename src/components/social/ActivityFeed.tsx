@@ -7,20 +7,20 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Segmented } from "@/components/ui/Segmented";
 import { SkeletonRows } from "@/components/ui/Skeleton";
-import { useGetGames } from "@/hooks/useGetGames";
-import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
-import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
-import { useGetDrills } from "@/hooks/useGetDrills";
-import { useGetTournaments, useGameTournaments } from "@/hooks/useTournaments";
+import { useGames } from "@/hooks/useGames";
+import { useDrillLogs } from "@/hooks/useDrillLogs";
+import { usePlayers, usePlayerLookup } from "@/hooks/usePlayers";
+import { useDrills } from "@/hooks/useDrills";
+import { useTournaments, useGameTournaments } from "@/hooks/useTournaments";
 import { TournamentResultCard } from "@/components/tournaments/TournamentFeedCard";
-import { scoreBand, scorePct } from "@/libs/scoreBand";
-import { dayLabel, startsNewDay, timeOf } from "@/libs/dayLabel";
-import { groupTournamentRuns } from "@/libs/feedGroups";
+import { scoreBand, scorePct } from "@/libs/algorithms/scoreBand";
+import { dayLabel, startsNewDay, timeOf } from "@/libs/algorithms/dayLabel";
+import { groupTournamentRuns } from "@/libs/algorithms/feedGroups";
 import type { Drill, DrillLog, Game, Tournament } from "@/types";
 import { useT } from "@/i18n";
 import type { LinkProps } from "@tanstack/react-router";
 import { AppLink } from "@/components/layout/AppLink";
-import { DRILLS_ENABLED } from "@/libs/features";
+import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 
 /** One row of the club's history: a match, a logged drill, or one of the two
  *  things that get created rather than played — a drill or a tournament. */
@@ -60,7 +60,7 @@ const kindOf = (item: FeedItem): Exclude<FeedKind, "all"> =>
 function DrillRow({ log }: { log: DrillLog }) {
   const { t, locale } = useT();
   const { byId } = usePlayerLookup();
-  const { data: drills } = useGetDrills();
+  const { data: drills } = useDrills();
 
   const pct = scorePct(log.score, log.max_score);
   const band = scoreBand(pct);
@@ -501,13 +501,13 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
     data: gamesData,
     isLoading,
     isFetching,
-  } = useGetGames({
+  } = useGames({
     pageSize: limit,
   });
-  const { data: logs } = useGetDrillLogs({ limit });
-  const { data: players } = useGetPlayers();
-  const { data: drills } = useGetDrills();
-  const { data: tournaments } = useGetTournaments();
+  const { data: logs } = useDrillLogs({ limit });
+  const { data: players } = usePlayers();
+  const { data: drills } = useDrills();
+  const { data: tournaments } = useTournaments();
 
   // drill_logs carries no club_id — someone in two clubs can read both sets, so
   // the club's own roster is what scopes them.

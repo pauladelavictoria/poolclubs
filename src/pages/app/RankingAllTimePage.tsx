@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useGetGames } from "@/hooks/useGetGames";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useGames } from "@/hooks/useGames";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import PageTitle from "@/components/layout/PageTitle";
 import RankingPeriodTabs from "@/components/ranking/RankingPeriodTabs";
@@ -12,10 +12,10 @@ export default function RankingAllTimePage() {
   const { t } = useT();
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
 
-  const { data: gamesData, isLoading: gamesLoading } = useGetGames({});
+  const { data: gamesData, isLoading: gamesLoading } = useGames({});
   const games = gamesData?.games ?? [];
 
-  const { data: players, isLoading: playersLoading } = useGetPlayers();
+  const { data: players, isLoading: playersLoading } = usePlayers();
 
   const ranking = useEloRanking({ games, players });
 

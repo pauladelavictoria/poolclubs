@@ -5,7 +5,7 @@ import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import {
   canOfferInstall,
   isInstallPromptDismissed,
-} from "@/libs/installPrompt";
+} from "@/libs/browser/installPrompt";
 
 /**
  * The two things the app asks for on the way in, one at a time.

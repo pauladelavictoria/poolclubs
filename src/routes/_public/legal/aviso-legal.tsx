@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import ProsePage from "@/pages/public/ProsePage";
-import { publicMeta, canonical } from "@/libs/publicMeta";
+import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 
 /**
  * LSSI-CE art. 10. Required of any information-society service offered from

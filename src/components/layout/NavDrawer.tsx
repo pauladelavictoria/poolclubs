@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { pickerClasses } from "@/components/ui/buttonStyles";
 import { useAuth } from "@/hooks/useAuth";
 import { useSignOut } from "@/hooks/useSignOut";
-import { useDialog } from "@/libs/useDialog";
+import { useDialog } from "@/hooks/useDialog";
 import { toast } from "react-toastify";
 import { NAV_SECTIONS, ME_NAV } from "@/components/layout/navItems";
 import ThemeToggle from "@/components/layout/ThemeToggle";

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getSupabaseServer } from "@/libs/supabase.server";
-import { CLUB_THEME_PALETTE } from "@/libs/clubTheme";
+import { getSupabaseServer } from "@/libs/supabase/server";
+import { CLUB_THEME_PALETTE } from "@/libs/theme/clubTheme";
 import type { BallColor } from "@/types";
 
 function pngDimensions(base64: string): string {

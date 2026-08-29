@@ -14,7 +14,7 @@ import {
 } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useWhoIsHere } from "@/hooks/useNight";
-import { DEFAULT_SETUP, type DaySetup } from "@/libs/today";
+import { DEFAULT_SETUP, type DaySetup } from "@/libs/algorithms/today";
 import { useT } from "@/i18n";
 
 /**
@@ -51,7 +51,7 @@ export default function StartMatchForm({
   table?: ClubTable;
   /** Offer a choice of these. Free tables only; the caller knows which. */
   tables?: ClubTable[];
-  /** What the club is playing today — see libs/today.ts. The form opens on
+  /** What the club is playing today — see libs/algorithms/today.ts. The form opens on
    *  these rather than on its own defaults, and they stay changeable: one match
    *  in an evening is a race to nine and should not need the day's setting
    *  changed and changed back. */

@@ -14,8 +14,8 @@ import { Label } from "@/components/ui/Label";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
-import { CLUB_TZ, DAY_START_HOUR, zoneOf } from "@/libs/day";
-import type { Place } from "@/libs/geocode";
+import { CLUB_TZ, DAY_START_HOUR, zoneOf } from "@/libs/algorithms/day";
+import type { Place } from "@/libs/algorithms/geocode";
 import { CLUB_BALL_COLORS, type BallColor } from "@/types";
 import { useT } from "@/i18n";
 
@@ -224,7 +224,7 @@ export default function ClubInfoPage() {
         {/* The club's clock. Not derived from the location above: a country
             is not a zone — Spain is two of them — and a night that rolls
             over at the wrong hour files the last three races of it into the
-            wrong day. See libs/day.ts. */}
+            wrong day. See libs/algorithms/day.ts. */}
         <Collapsible
           label={t("club.timezone")}
           hint={t("club.timezoneHint", { hour: DAY_START_HOUR })}

@@ -1,4 +1,4 @@
-import { CLUB_THEME_PALETTE, type Shades } from "@/libs/clubTheme";
+import { CLUB_THEME_PALETTE, type Shades } from "@/libs/theme/clubTheme";
 import { CLUB_BALL_COLORS, type BallColor } from "@/types";
 
 const decl = (shades: Shades) =>

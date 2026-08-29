@@ -15,13 +15,15 @@ import { FilterPills } from "@/components/ui/FilterPills";
 import { Pager } from "@/components/ui/Pager";
 import { SearchInput } from "@/components/ui/SearchInput";
 import MapView from "@/components/map/MapView";
-import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
+import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";
+import { PUBLIC_PAGE_SIZE } from "@/queries/public/shared";
 import {
-  PUBLIC_PAGE_SIZE,
   publicClubPinsQuery,
   publicClubsQuery,
-} from "@/queries/public";
-import type { Bbox, PublicClub, PublicClubSort } from "@/queries/public";
+  type Bbox,
+  type PublicClub,
+  type PublicClubSort,
+} from "@/queries/public/clubs";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/_public/clubs/");

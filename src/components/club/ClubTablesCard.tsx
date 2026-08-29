@@ -9,7 +9,7 @@ import {
   LuTrash2,
   LuUnlink,
 } from "react-icons/lu";
-import { supabase } from "@/supabaseClient";
+import { supabase } from "@/libs/supabase/browser";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubTables, useManageClubTables } from "@/hooks/useClubTables";
 import { useClubMembers, useManageClub } from "@/hooks/useClub";

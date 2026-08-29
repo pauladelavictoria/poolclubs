@@ -22,10 +22,10 @@ import {
   placings,
   raceFor,
   resolveBracket,
-} from "@/libs/bracket";
-import { groupStandings, leaguePodium, standings } from "@/libs/leagueTable";
-import { publicClubRosterQuery } from "@/queries/public";
-import type { PublicTournament } from "@/queries/public";
+} from "@/libs/algorithms/bracket";
+import { groupStandings, leaguePodium, standings } from "@/libs/algorithms/leagueTable";
+import { publicClubRosterQuery } from "@/queries/public/clubs";
+import type { PublicTournament } from "@/queries/public/tournaments";
 import { FORMAT_KEY, type Player, type TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
 

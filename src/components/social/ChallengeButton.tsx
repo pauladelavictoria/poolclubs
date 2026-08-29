@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { LuSwords } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
+import { useChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useT } from "@/i18n";
@@ -27,7 +27,7 @@ export default function ChallengeButton({
 }) {
   const { t } = useT();
   const { player } = useAuth();
-  const { data: challenges } = useGetChallenges();
+  const { data: challenges } = useChallenges();
   const { sendChallenge } = useManageChallenges();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");

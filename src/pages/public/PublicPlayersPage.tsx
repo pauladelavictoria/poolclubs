@@ -10,9 +10,12 @@ import { FilterPills } from "@/components/ui/FilterPills";
 import { Pager } from "@/components/ui/Pager";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Segmented } from "@/components/ui/Segmented";
-import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
-import { PUBLIC_PAGE_SIZE, publicPlayersQuery } from "@/queries/public";
-import type { PublicPersonWithClubs } from "@/queries/public";
+import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";
+import { PUBLIC_PAGE_SIZE } from "@/queries/public/shared";
+import {
+  publicPlayersQuery,
+  type PublicPersonWithClubs,
+} from "@/queries/public/players";
 import { CATEGORIES } from "@/types";
 import { useT } from "@/i18n";
 

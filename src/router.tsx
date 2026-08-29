@@ -1,6 +1,6 @@
 // First, and for side effects only: patches the runtime APIs an old tablet's
 // Chrome lacks before any dependency below gets a chance to call one.
-import "@/libs/polyfills";
+import "@/libs/browser/polyfills";
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { routeTree } from "./routeTree.gen";

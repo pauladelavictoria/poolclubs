@@ -1,24 +1,24 @@
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import { useGetDrill } from "@/hooks/useGetDrills";
-import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
+import { useDrill } from "@/hooks/useDrills";
+import { useDrillLogs } from "@/hooks/useDrillLogs";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { useManageDrills } from "@/hooks/useManageDrills";
 import { useAuth } from "@/hooks/useAuth";
-import { canEditDrill } from "@/libs/drillPermissions";
+import { canEditDrill } from "@/libs/algorithms/drillPermissions";
 import PageTitle from "@/components/layout/PageTitle";
 import PoolTableDiagram from "@/components/drills/PoolTableDiagram";
 import DrillLogForm from "@/components/drills/DrillLogForm";
 import SocialBar from "@/components/social/SocialBar";
-import { usePlayerLookup } from "@/hooks/useGetPlayers";
-import { scoreBand, scorePct } from "@/libs/scoreBand";
-import { fmt } from "@/libs/dayLabel";
+import { usePlayerLookup } from "@/hooks/usePlayers";
+import { scoreBand, scorePct } from "@/libs/algorithms/scoreBand";
+import { fmt } from "@/libs/algorithms/dayLabel";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { DifficultyTag } from "@/components/ui/DifficultyTag";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { useTablePortrait } from "@/libs/useMedia";
+import { useTablePortrait } from "@/hooks/useMedia";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 
@@ -39,9 +39,9 @@ export default function DrillDetailPage() {
     playerId: planPlayerId,
   } = route.useSearch();
 
-  const { data: drill, isLoading } = useGetDrill(drillId);
+  const { data: drill, isLoading } = useDrill(drillId);
 
-  const { data: drillLogs } = useGetDrillLogs({ drill_id: drillId });
+  const { data: drillLogs } = useDrillLogs({ drill_id: drillId });
   const { nameOf } = usePlayerLookup();
   const { user, isAdmin, player } = useAuth();
   // Own plan, whichever page this was opened from: the log below is always

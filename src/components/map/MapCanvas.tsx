@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 // `?worker&url` makes Vite emit the worker as its own bundled chunk and hands
 // back a URL that is actually there.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
-import { useTheme } from "@/libs/theme";
+import { useTheme } from "@/libs/theme/theme";
 import type { MapViewProps, Pin } from "./MapView";
 
 /**

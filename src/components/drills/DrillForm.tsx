@@ -21,7 +21,7 @@ import {
   pointToUnits,
   snap,
   type Selection,
-} from "@/libs/drillGeometry";
+} from "@/libs/algorithms/drillGeometry";
 import {
   DIFFICULTIES,
   SKILL_TYPES,
@@ -32,7 +32,7 @@ import {
   type ShotPath,
 } from "@/types";
 import type { DrillInput } from "@/hooks/useManageDrills";
-import { useTablePortrait } from "@/libs/useMedia";
+import { useTablePortrait } from "@/hooks/useMedia";
 import { useT } from "@/i18n";
 
 type BallEntry = (typeof BALLS)[number];

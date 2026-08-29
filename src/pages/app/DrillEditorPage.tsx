@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import { useGetDrill } from "@/hooks/useGetDrills";
+import { useDrill } from "@/hooks/useDrills";
 import PageTitle from "@/components/layout/PageTitle";
 import DrillForm from "@/components/drills/DrillForm";
 import { Card } from "@/components/ui/Card";
@@ -17,7 +17,7 @@ export default function DrillEditorPage() {
   const drillId = drillIdParam ? Number(drillIdParam) : undefined;
   const navigate = useNavigate();
 
-  const { data: drill, isLoading } = useGetDrill(drillId);
+  const { data: drill, isLoading } = useDrill(drillId);
 
   const { createDrill, updateDrill, deleteDrill } = useManageDrills();
   const isSubmitting = createDrill.isPending || updateDrill.isPending;

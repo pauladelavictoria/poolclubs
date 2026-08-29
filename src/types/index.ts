@@ -33,12 +33,12 @@ type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
 
 /**
  * The location columns (address, city, country, lat, lon) are written together
- * or not at all; see src/libs/geocode.ts for the `Place` they come from.
+ * or not at all; see src/libs/algorithms/geocode.ts for the `Place` they come from.
  */
 export type Club = Stamped<Row<"clubs">>;
 
 /** The club's accent colour, keyed to a real Postgres enum so it stays in
- *  lockstep with the palette in libs/clubTheme.ts. Ordered 1-8, the solids'
+ *  lockstep with the palette in libs/theme/clubTheme.ts. Ordered 1-8, the solids'
  *  own rack order — the picker and any legend read in that order too. */
 export type BallColor = Database["public"]["Enums"]["BallColor"];
 
@@ -84,7 +84,7 @@ export type ClubTable = Row<"club_tables">;
  *
  * The row's existence is its status: live while it is here, finished once
  * `finish_live_match` has turned it into a `games` row and deleted it,
- * abandoned while it is here and nobody has touched it — see libs/night.ts.
+ * abandoned while it is here and nobody has touched it — see libs/algorithms/night.ts.
  * The four seats, `mode` and `discipline` are the same shape as a game, because
  * finishing copies them straight across.
  *
@@ -219,7 +219,7 @@ export const SKILL_TYPES = [
   "specials",
 ] as const satisfies readonly DrillSkillType[];
 
-// Tournaments — see sql/tournaments.sql and libs/bracket.ts.
+// Tournaments — see sql/tournaments.sql and libs/algorithms/bracket/.
 
 export type TournamentFormat = "double_elim" | "league" | "group_knockout";
 
@@ -259,7 +259,7 @@ export type TournamentPlayer = Row<"tournament_players">;
 
 export type TournamentMatch = Omit<Row<"tournament_matches">, "bracket"> & {
   bracket: BracketSide;
-  /** Joined by useGetTournament's select, not a column — the racks a league
+  /** Joined by useTournament's select, not a column — the racks a league
    *  table needs live on the game, not the match, and so does when it was
    *  played: a match row has no time of its own because a fixture is not an
    *  event until somebody turns up. */

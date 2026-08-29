@@ -13,8 +13,8 @@ import {
 } from "react-icons/lu";
 import type { LinkProps } from "@tanstack/react-router";
 import type { Key } from "@/i18n";
-import type { SectionId } from "@/libs/sections";
-import { DRILLS_ENABLED } from "@/libs/features";
+import type { SectionId } from "@/libs/algorithms/sections";
+import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 
 type NavItem = {
   /**

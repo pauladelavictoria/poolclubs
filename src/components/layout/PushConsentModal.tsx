@@ -4,11 +4,11 @@ import { toast } from "react-toastify";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { useDialog } from "@/libs/useDialog";
+import { useDialog } from "@/hooks/useDialog";
 import {
   dismissPushPromptForever,
   isPushPromptDismissed,
-} from "@/libs/pushConsent";
+} from "@/libs/browser/pushConsent";
 import { useT } from "@/i18n";
 
 /**

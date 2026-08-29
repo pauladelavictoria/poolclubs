@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getSession } from "@/libs/auth.functions";
+import { getSession } from "@/libs/server/auth.functions";
 
 /**
  * Who is looking at the page, as a query rather than a bare call.

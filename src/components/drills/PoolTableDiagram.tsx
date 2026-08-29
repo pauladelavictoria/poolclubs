@@ -10,8 +10,8 @@ import {
   UNIT_Y,
   isStriped,
   type Selection,
-} from "@/libs/drillGeometry";
-import { useTheme } from "@/libs/theme";
+} from "@/libs/algorithms/drillGeometry";
+import { useTheme } from "@/libs/theme/theme";
 import { BallShading, BallShadingDefs } from "@/components/ui/Ball";
 
 interface PoolTableDiagramProps {

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getSupabaseServer } from "@/libs/supabase.server";
-import { DRILLS_ENABLED } from "@/libs/features";
+import { getSupabaseServer } from "@/libs/supabase/server";
+import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 
 /**
  * The sitemap, built per request from what is actually public.

@@ -1,5 +1,5 @@
 import { BallBadge } from "@/components/ui/Ball";
-import type { Standing } from "@/libs/leagueTable";
+import type { Standing } from "@/libs/algorithms/leagueTable";
 import { useT } from "@/i18n";
 import PlayerLink from "@/components/players/PlayerLink";
 

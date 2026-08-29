@@ -3,12 +3,9 @@ import PublicClubPage, {
   CLUB_GAMES_LIMIT,
 } from "@/pages/public/PublicClubPage";
 import { gamesQuery } from "@/queries/games";
-import {
-  publicClubQuery,
-  publicClubRosterQuery,
-  publicTournamentsQuery,
-} from "@/queries/public";
-import { publicMeta, canonical } from "@/libs/publicMeta";
+import { publicClubQuery, publicClubRosterQuery } from "@/queries/public/clubs";
+import { publicTournamentsQuery } from "@/queries/public/tournaments";
+import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 
 /**
  * A club's public profile.

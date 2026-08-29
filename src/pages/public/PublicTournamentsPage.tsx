@@ -11,9 +11,12 @@ import { FilterGroup, FilterMenu } from "@/components/ui/FilterMenu";
 import { FilterPills } from "@/components/ui/FilterPills";
 import { Pager } from "@/components/ui/Pager";
 import { SearchInput } from "@/components/ui/SearchInput";
-import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
-import { PUBLIC_PAGE_SIZE, publicTournamentsQuery } from "@/queries/public";
-import type { PublicTournamentListItem } from "@/queries/public";
+import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";
+import { PUBLIC_PAGE_SIZE } from "@/queries/public/shared";
+import {
+  publicTournamentsQuery,
+  type PublicTournamentListItem,
+} from "@/queries/public/tournaments";
 import {
   DISCIPLINES,
   FORMAT_KEY,

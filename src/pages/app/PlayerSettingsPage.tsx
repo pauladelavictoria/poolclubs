@@ -5,9 +5,9 @@ import PageTitle from "@/components/layout/PageTitle";
 import AvatarUpload from "@/components/players/AvatarUpload";
 import PushToggle from "@/components/players/PushToggle";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
-import { changePassword } from "@/libs/auth.functions";
+import { changePassword } from "@/libs/server/auth.functions";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -24,7 +24,7 @@ export default function PlayerSettingsPage() {
   const playerIdNum = Number(playerId);
 
   const { user, refreshMemberships } = useAuth();
-  const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
+  const { data: players, isLoading: isLoadingPlayers } = usePlayers();
   const player = players?.find((p) => p.id === playerIdNum);
   const { updatePlayer } = useManagePlayers();
 
@@ -175,7 +175,7 @@ export default function PlayerSettingsPage() {
                 would happily take one and bolt an email identity onto a Google
                 account, which is how a single sign-in turns into two without
                 anyone deciding it should — so the field is not there to press.
-                See `hasPassword` in libs/auth.functions.ts. */}
+                See `hasPassword` in libs/server/auth.functions.ts. */}
             {user.hasPassword ? (
               // No current-password step, because there is nothing for one to
               // defend: this only ever reaches the caller's own account, and

@@ -3,24 +3,24 @@ import { getRouteApi, Navigate, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { LuExpand, LuTrash2 } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatch, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
-import { seatsOf } from "@/libs/night";
+import { seatsOf } from "@/libs/algorithms/night";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { readTodaySetup } from "@/libs/prefs";
-import { seatsNeeded } from "@/libs/today";
+import { seatsNeeded } from "@/libs/algorithms/today";
 import Scoreboard from "@/components/live/Scoreboard";
 import { AppLink, useAppNavigate } from "@/components/layout/AppLink";
 import { Button, IconButton } from "@/components/ui/Button";
 import ConfirmButton from "@/components/ui/ConfirmButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageSkeleton } from "@/components/ui/Skeleton";
-import { useFullscreen } from "@/libs/useFullscreen";
-import { readKioskTable } from "@/libs/kiosk";
-import { liveWriteMessage } from "@/libs/dbError";
+import { useFullscreen } from "@/hooks/useFullscreen";
+import { readKioskTable } from "@/libs/browser/kiosk";
+import { liveWriteMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/app/_authed/$clubSlug/live/$liveId");
@@ -38,7 +38,7 @@ export default function LiveMatchPage() {
   const { liveId, clubSlug } = route.useParams();
   const navigate = useNavigate();
   const { player, isClubAdmin } = useAuth();
-  const { data: players } = useGetPlayers();
+  const { data: players } = usePlayers();
   const pinned = readKioskTable() !== null;
   // Polled only there: the tablet on the rail is the one screen that finds out
   // the match is over by nobody telling it.

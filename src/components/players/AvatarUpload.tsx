@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/supabaseClient";
+import { supabase } from "@/libs/supabase/browser";
 import { keys } from "@/libs/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { toAvatarDataUrl } from "@/libs/avatarImage";
+import { toAvatarDataUrl } from "@/libs/browser/avatarImage";
 import { useT } from "@/i18n";
 
 /**

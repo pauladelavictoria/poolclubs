@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/Input";
 import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { SkeletonRows } from "@/components/ui/Skeleton";
-import { useDialog } from "@/libs/useDialog";
+import { useDialog } from "@/hooks/useDialog";
 import type { Player, Category } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";

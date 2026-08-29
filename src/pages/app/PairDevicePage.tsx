@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { LuCheck, LuMonitorSmartphone, LuShare2 } from "react-icons/lu";
-import { pairDevice } from "@/libs/auth.functions";
-import { pinKioskAndOpen } from "@/libs/kiosk";
-import { canOfferInstall } from "@/libs/installPrompt";
+import { pairDevice } from "@/libs/server/auth.functions";
+import { pinKioskAndOpen } from "@/libs/browser/kiosk";
+import { canOfferInstall } from "@/libs/browser/installPrompt";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";

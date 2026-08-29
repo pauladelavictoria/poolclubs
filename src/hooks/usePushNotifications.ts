@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/supabaseClient";
+import { supabase } from "@/libs/supabase/browser";
 import { useAuth } from "@/hooks/useAuth";
-import { toKeyBytes } from "@/libs/pushKey";
+import { toKeyBytes } from "@/libs/algorithms/pushKey";
 import { useT } from "@/i18n";
 
 /**

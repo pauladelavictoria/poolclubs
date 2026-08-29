@@ -2,14 +2,14 @@ import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { LuImageOff } from "react-icons/lu";
 import { Button } from "@/components/ui/Button";
-import { toLogoDataUrl } from "@/libs/logoImage";
+import { toLogoDataUrl } from "@/libs/browser/logoImage";
 import { useT } from "@/i18n";
 
 /**
  * The club's own picture, staged in the single club settings form and
  * committed by that form's one Guardar button rather than saving itself.
  * Same shrink-in-the-browser approach as AvatarUpload — see
- * libs/logoImage.ts — except square-cornered rather than round, so it reads
+ * libs/browser/logoImage.ts — except square-cornered rather than round, so it reads
  * as a mark rather than a face.
  */
 export default function ClubLogoUpload({

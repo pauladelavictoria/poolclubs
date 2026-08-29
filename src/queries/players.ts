@@ -13,7 +13,7 @@ import type { Player } from "@/types";
  * copies of a query mean two keys, and two keys mean the loader warms a cache the
  * component never reads.
  *
- * Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
+ * Cache invalidation on inserts/updates lives in libs/browser/realtime.ts — one channel
  * for the app, rather than one per hook instance.
  */
 

@@ -3,11 +3,11 @@ import { Link, type LinkProps } from "@tanstack/react-router";
 import { LuMenu, LuSearch, LuX } from "react-icons/lu";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { useDialog } from "@/libs/useDialog";
+import { useDialog } from "@/hooks/useDialog";
 import { useSession } from "@/hooks/useAuth";
 import { LANGS, useT } from "@/i18n";
 import type { Key } from "@/i18n";
-import { DRILLS_ENABLED } from "@/libs/features";
+import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 
 /**
  * The public side of the site: a bar with the product name and the public

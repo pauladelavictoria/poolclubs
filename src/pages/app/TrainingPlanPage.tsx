@@ -3,7 +3,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import PageTitle from "@/components/layout/PageTitle";
 import TrainingPlanStepList from "@/components/drills/TrainingPlanStepList";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { Card } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/ui/Ball";
@@ -24,7 +24,7 @@ export default function TrainingPlanPage() {
   const { playerId } = route.useParams();
   const playerIdNum = Number(playerId);
 
-  const { data: players } = useGetPlayers();
+  const { data: players } = usePlayers();
   const player = players?.find((p) => p.id === playerIdNum);
 
   const {

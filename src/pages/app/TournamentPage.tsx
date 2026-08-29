@@ -12,11 +12,11 @@ import {
   LuUserPlus,
 } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
-import { useGetGames } from "@/hooks/useGetGames";
+import { usePlayers, usePlayerLookup } from "@/hooks/usePlayers";
+import { useGames } from "@/hooks/useGames";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import {
-  useGetTournament,
+  useTournament,
   useManageTournaments,
   type TournamentDetail,
 } from "@/hooks/useTournaments";
@@ -29,8 +29,8 @@ import {
   raceFor,
   resolveBracket,
   type BracketIndex,
-} from "@/libs/bracket";
-import { groupStandings, leaguePodium, standings } from "@/libs/leagueTable";
+} from "@/libs/algorithms/bracket";
+import { groupStandings, leaguePodium, standings } from "@/libs/algorithms/leagueTable";
 import PageTitle from "@/components/layout/PageTitle";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
@@ -49,7 +49,7 @@ import { Select } from "@/components/ui/Select";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useDialog } from "@/libs/useDialog";
+import { useDialog } from "@/hooks/useDialog";
 import { FORMAT_KEY, type TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
 import { getRouteApi } from "@tanstack/react-router";
@@ -63,10 +63,10 @@ export default function TournamentPage() {
   const tournamentId = Number(tournamentIdParam);
 
   const { player, activeClubId, isClubAdmin, isMember } = useAuth();
-  const { data: tournament, isLoading } = useGetTournament(tournamentId);
-  const { data: players } = useGetPlayers();
+  const { data: tournament, isLoading } = useTournament(tournamentId);
+  const { data: players } = usePlayers();
   const { byId, nameOf } = usePlayerLookup();
-  const { data: games } = useGetGames({});
+  const { data: games } = useGames({});
   const elo = useEloRanking({ games: games?.games, players });
 
   const {

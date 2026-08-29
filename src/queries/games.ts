@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
-import { CLUB_TZ, dayRange } from "@/libs/day";
+import { CLUB_TZ, dayRange } from "@/libs/algorithms/day";
 import type { Game, GameMode } from "@/types";
 
 export type UseGetGamesFilters = {
@@ -14,12 +14,12 @@ export type UseGetGamesFilters = {
   mode?: GameMode;
   /** The club's zone, for what `date` means. Part of the filters and so part of
    *  the query key, which is right: the same date in two zones is two different
-   *  ranges. See libs/day.ts. */
+   *  ranges. See libs/algorithms/day.ts. */
   tz?: string;
 };
 
 // A day is the club's night, 06:00 to 06:00, and the range comes from
-// libs/day.ts — where the zone lives and where the arithmetic is checked. It
+// libs/algorithms/day.ts — where the zone lives and where the arithmetic is checked. It
 // used to be built here as UTC midnights around a locally-formatted date, which
 // dropped every result filed after 22:00 UTC out of its own night.
 const getDateRange = (date: string, tz?: string) =>
@@ -48,7 +48,7 @@ const playedIn = (playerId: number) =>
 const playedInAny = (playerIds: number[]) =>
   SEATS.map((seat) => `${seat}.in.(${playerIds.join(",")})`).join(",");
 
-// Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
+// Cache invalidation on inserts/updates lives in libs/browser/realtime.ts — one channel
 // for the app, rather than one per hook instance.
 export const gamesQuery = (
   clubId: number,

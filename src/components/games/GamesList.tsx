@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { EmptyState } from "@/components/ui/EmptyState";
 import SocialBar from "@/components/social/SocialBar";
 import { LuSwords } from "react-icons/lu";
-import { dayLabel, startsNewDay, timeOf } from "@/libs/dayLabel";
+import { dayLabel, startsNewDay, timeOf } from "@/libs/algorithms/dayLabel";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 
@@ -81,7 +81,7 @@ function Team({
 interface GamesListProps {
   games: Game[];
   /** The roster these games were played in, for resolving ids to names. In the
-   *  app that is useGetPlayers(); on the public side, publicClubRosterQuery. */
+   *  app that is usePlayers(); on the public side, publicClubRosterQuery. */
   players: GamesListPlayer[];
   /** Whose page this is, if anyone's — their won frames get the accent. */
   playerId?: number;

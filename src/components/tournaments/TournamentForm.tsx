@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
 import { DisciplineBall } from "@/components/ui/Ball";
-import { groupCount, minimumEntrants } from "@/libs/bracket";
+import { groupCount, minimumEntrants } from "@/libs/algorithms/bracket";
 import {
   DISCIPLINES,
   type Category,

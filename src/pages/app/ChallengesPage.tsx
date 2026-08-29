@@ -5,13 +5,13 @@ import ChallengeButton from "@/components/social/ChallengeButton";
 import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
-import { useGetPlayers, usePlayerLookup } from "@/hooks/useGetPlayers";
+import { useChallenges, useManageChallenges } from "@/hooks/useChallenges";
+import { usePlayers, usePlayerLookup } from "@/hooks/usePlayers";
 import { useWhoIsHere } from "@/hooks/useNight";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import StartMatchForm from "@/components/live/StartMatchForm";
-import { useDialog } from "@/libs/useDialog";
+import { useDialog } from "@/hooks/useDialog";
 import PageTitle from "@/components/layout/PageTitle";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { dialogClasses } from "@/components/ui/cardStyles";
@@ -50,8 +50,8 @@ function withPlayerLink(text: string, name: string, playerId: number) {
 export default function ChallengesPage() {
   const { t } = useT();
   const { player } = useAuth();
-  const { data: challenges, isLoading } = useGetChallenges();
-  const { data: players } = useGetPlayers();
+  const { data: challenges, isLoading } = useChallenges();
+  const { data: players } = usePlayers();
   const { respondToChallenge, cancelChallenge } = useManageChallenges();
   const [toPlayerId, setToPlayerId] = useState("");
   // Starting the match here rather than filing a result later is the whole

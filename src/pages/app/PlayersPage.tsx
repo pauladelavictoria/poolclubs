@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { LuUsers } from "react-icons/lu";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useWhoIsHere } from "@/hooks/useNight";
-import { useGetGames } from "@/hooks/useGetGames";
+import { useGames } from "@/hooks/useGames";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import PageTitle from "@/components/layout/PageTitle";
 import { Card } from "@/components/ui/Card";
@@ -100,8 +100,8 @@ export default function PlayersPage() {
   const here = useWhoIsHere();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: players, isLoading: playersLoading } = useGetPlayers();
-  const { data: gamesData, isLoading: gamesLoading } = useGetGames({});
+  const { data: players, isLoading: playersLoading } = usePlayers();
+  const { data: gamesData, isLoading: gamesLoading } = useGames({});
   // Same hook and same query key as the global ranking, so the win rate on a
   // card is the same number the standings computed — and costs no extra fetch.
   const ranking = useEloRanking({ games: gamesData?.games ?? [], players });
@@ -125,7 +125,7 @@ export default function PlayersPage() {
 
   const hereIds = useMemo(() => new Set(here.map((p) => p.id)), [here]);
 
-  // useGetPlayers already orders by name, so alphabetical is the list as it
+  // usePlayers already orders by name, so alphabetical is the list as it
   // arrives; grouping is what the other modes add.
   const sections = useMemo(() => {
     const roster = filteredPlayers;

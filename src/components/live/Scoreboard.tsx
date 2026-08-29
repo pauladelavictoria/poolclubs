@@ -5,9 +5,9 @@ import { Avatar } from "@/components/ui/Avatar";
 import { DisciplineBall } from "@/components/ui/Ball";
 import { Button, IconButton } from "@/components/ui/Button";
 import { keys } from "@/libs/queryKeys";
-import { isMatchOver, leaderOf } from "@/libs/night";
-import { useDialog } from "@/libs/useDialog";
-import { useWakeLock } from "@/libs/useWakeLock";
+import { isMatchOver, leaderOf } from "@/libs/algorithms/night";
+import { useDialog } from "@/hooks/useDialog";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import type { LiveMatch, Player } from "@/types";
 import { useT } from "@/i18n";
 
@@ -252,7 +252,7 @@ export default function Scoreboard({
             <Button
               aria-label={t("live.scoreFor", { name: full })}
               // The finish sheet is up: a press landing behind it must do
-              // nothing, and libs/night.ts refuses the write too.
+              // nothing, and libs/algorithms/night.ts refuses the write too.
               disabled={over}
               onClick={() => onBump?.(n)}
               className="scoreboard-btn"

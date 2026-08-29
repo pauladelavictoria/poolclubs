@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import DrillEditorPage from "@/pages/app/DrillEditorPage";
 import { drillQuery } from "@/queries/drills";
-import { canEditDrill } from "@/libs/drillPermissions";
+import { canEditDrill } from "@/libs/algorithms/drillPermissions";
 import { ADMIN_PLAYER_ID } from "@/hooks/useAuth";
 
 export const Route = createFileRoute(

@@ -1,13 +1,13 @@
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
-import { usePlayerLookup } from "@/hooks/useGetPlayers";
-import { useGetTournament, useManageTournaments } from "@/hooks/useTournaments";
+import { usePlayerLookup } from "@/hooks/usePlayers";
+import { useTournament, useManageTournaments } from "@/hooks/useTournaments";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { CategoryBadge } from "@/components/ui/Ball";
-import { placings, resolveBracket } from "@/libs/bracket";
-import { leaguePodium, standings } from "@/libs/leagueTable";
+import { placings, resolveBracket } from "@/libs/algorithms/bracket";
+import { leaguePodium, standings } from "@/libs/algorithms/leagueTable";
 import { FORMAT_KEY, type Tournament } from "@/types";
 import { useT, type Key } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -60,7 +60,7 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
   const { t } = useT();
   const { player, isMember } = useAuth();
   const { byId } = usePlayerLookup();
-  const { data: detail } = useGetTournament(tournament.id);
+  const { data: detail } = useTournament(tournament.id);
   const { joinTournament, leaveTournament } = useManageTournaments();
 
   const entrants = (detail?.tournament_players ?? []).map((e) => e.player_id);
@@ -142,7 +142,7 @@ export function TournamentResultCard({
   tournament: Tournament;
 }) {
   const { byId } = usePlayerLookup();
-  const { data: detail } = useGetTournament(tournament.id);
+  const { data: detail } = useTournament(tournament.id);
 
   const matches = resolveBracket(detail?.tournament_matches ?? []);
   const entrants = (detail?.tournament_players ?? []).map((e) => e.player_id);

@@ -11,14 +11,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { useAppNavigate } from "@/components/layout/AppLink";
-import { liveWriteMessage } from "@/libs/dbError";
+import { liveWriteMessage } from "@/libs/algorithms/dbError";
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/Button";
 import ConfirmButton from "@/components/ui/ConfirmButton";
 import { pickerClasses } from "@/components/ui/buttonStyles";
-import { unpinKiosk } from "@/libs/kiosk";
-import { useFullscreen } from "@/libs/useFullscreen";
-import { useOutsideClose } from "@/libs/useOutsideClose";
+import { unpinKiosk } from "@/libs/browser/kiosk";
+import { useFullscreen } from "@/hooks/useFullscreen";
+import { useOutsideClose } from "@/hooks/useOutsideClose";
 import { LANGS, useT, type Lang } from "@/i18n";
 
 /**
