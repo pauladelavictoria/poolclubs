@@ -20,7 +20,21 @@ import type { Membership } from "@/types";
 
 /** What the whole app knows about who is looking at it. */
 export type Session = {
-  user: { id: string; email: string | null; fullName: string | null };
+  user: {
+    id: string;
+    email: string | null;
+    fullName: string | null;
+    /**
+     * Whether this account has an email/password identity at all.
+     *
+     * False for someone who only ever pressed "Continue with Google", and for
+     * the anonymous user behind a paired tablet. Settings needs it because
+     * `updateUser({ password })` does not fail on an OAuth-only account — it
+     * quietly *adds* a password identity, so an unguarded "change password"
+     * field turns one way in into two without ever saying so.
+     */
+    hasPassword: boolean;
+  };
   /** Every club the user belongs to, pending ones included. */
   memberships: Membership[];
 };
@@ -85,11 +99,20 @@ export const getSession = createServerFn({ method: "GET" }).handler(
       memberships.forEach((m) => (m.avatar_url = avatarUrl));
     }
 
+    // `identities` is the authoritative list of ways into this account —
+    // app_metadata.providers is a denormalised copy of it, kept only as the
+    // fallback for a token that arrived without identities attached.
+    const providers =
+      user.identities?.map((i) => i.provider) ??
+      (user.app_metadata?.providers as string[] | undefined) ??
+      [];
+
     return {
       user: {
         id: user.id,
         email: user.email ?? null,
         fullName: (user.user_metadata?.full_name as string | undefined) ?? null,
+        hasPassword: providers.includes("email"),
       },
       memberships,
     };

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { AppLink } from "@/components/layout/AppLink";
-import { LuUser, LuLogOut } from "react-icons/lu";
+import { LuUser, LuSettings, LuLogOut } from "react-icons/lu";
 import { Avatar } from "@/components/ui/Avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useSignOut } from "@/hooks/useSignOut";
@@ -69,6 +69,18 @@ export default function ProfileMenu() {
           >
             <LuUser className="h-[18px] w-[18px] shrink-0" aria-hidden />
             {t("nav.myProfile")}
+          </AppLink>
+          {/* Straight to the id rather than through /me/settings, which only
+              exists to redirect here — the player is already in hand. */}
+          <AppLink
+            to="/app/$clubSlug/players/$playerId/settings"
+            params={{ playerId: player.id }}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={itemClasses}
+          >
+            <LuSettings className="h-[18px] w-[18px] shrink-0" aria-hidden />
+            {t("nav.settings")}
           </AppLink>
           <button
             type="button"

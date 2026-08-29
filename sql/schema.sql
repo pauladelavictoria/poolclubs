@@ -328,17 +328,27 @@ CREATE OR REPLACE FUNCTION "public"."create_club"("club_name" "text") RETURNS in
 DECLARE
   cid INTEGER;
   uid UUID := auth.uid();
+  me BIGINT;
+  pname TEXT;
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'sign in first'; END IF;
 
   INSERT INTO clubs (name, owner_id) VALUES (btrim(club_name), uid) RETURNING id INTO cid;
 
-  INSERT INTO players (club_id, user_id, name, category, status)
-  VALUES (
-    cid, uid,
-    COALESCE(NULLIF(btrim(auth.jwt() -> 'user_metadata' ->> 'full_name'), ''), 'Player'),
-    3, 'active'
-  );
+  -- One person per account, shared across every club they belong to. Someone
+  -- starting their second club already has one and keeps their name and face.
+  SELECT id INTO me FROM people WHERE user_id = uid;
+
+  IF me IS NULL THEN
+    pname := COALESCE(
+      NULLIF(btrim(auth.jwt() -> 'user_metadata' ->> 'full_name'), ''),
+      'Player'
+    );
+    INSERT INTO people (name, user_id) VALUES (pname, uid) RETURNING id INTO me;
+  END IF;
+
+  INSERT INTO players (club_id, person_id, category, status)
+  VALUES (cid, me, 3, 'active');
 
   RETURN cid;
 END $$;
