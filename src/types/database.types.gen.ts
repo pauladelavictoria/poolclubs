@@ -82,14 +82,18 @@ export type Database = {
           city: string | null
           country: string | null
           created_at: string | null
+          description: string | null
           id: number
           is_public: boolean
           lat: number | null
           logo_url: string | null
           lon: number | null
           member_count: number
+          members_only: boolean
           name: string
           owner_id: string
+          phone: string | null
+          schedule: Json
           slug: string
           theme_color: Database["public"]["Enums"]["BallColor"]
         }
@@ -98,14 +102,18 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string | null
+          description?: string | null
           id?: number
           is_public?: boolean
           lat?: number | null
           logo_url?: string | null
           lon?: number | null
           member_count?: number
+          members_only?: boolean
           name: string
           owner_id: string
+          phone?: string | null
+          schedule?: Json
           slug: string
           theme_color?: Database["public"]["Enums"]["BallColor"]
         }
@@ -114,14 +122,18 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string | null
+          description?: string | null
           id?: number
           is_public?: boolean
           lat?: number | null
           logo_url?: string | null
           lon?: number | null
           member_count?: number
+          members_only?: boolean
           name?: string
           owner_id?: string
+          phone?: string | null
+          schedule?: Json
           slug?: string
           theme_color?: Database["public"]["Enums"]["BallColor"]
         }

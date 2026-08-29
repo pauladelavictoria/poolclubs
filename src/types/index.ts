@@ -41,7 +41,25 @@ type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
  * The location columns (address, city, country, lat, lon) are written together
  * or not at all; see src/libs/geocode.ts for the `Place` they come from.
  */
-export type Club = Stamped<Row<"clubs">> & { slug: string };
+/** One free-text entry per day, like "10:00-22:00" or "Cerrado". A day
+ *  missing from the object means the admin hasn't said anything about it,
+ *  not that the club is closed. */
+export type ClubScheduleDay =
+  | "mon"
+  | "tue"
+  | "wed"
+  | "thu"
+  | "fri"
+  | "sat"
+  | "sun";
+export type ClubSchedule = Partial<Record<ClubScheduleDay, string>>;
+
+/** schedule is jsonb — only the club settings form writes it, so the shape
+ *  below is its real shape rather than a guess, same as ball_positions. */
+export type Club = Omit<Stamped<Row<"clubs">>, "schedule"> & {
+  slug: string;
+  schedule: ClubSchedule;
+};
 
 /** The club's accent colour, keyed to a real Postgres enum so it stays in
  *  lockstep with the palette in libs/clubTheme.ts. Ordered 1-8, the solids'

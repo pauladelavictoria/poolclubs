@@ -8,7 +8,7 @@ import { SESSION_KEY, sessionQuery } from "@/queries/session";
 import { clubPreviewQuery } from "@/queries/club";
 import { clubMembersQuery } from "@/queries/players";
 import type { Place } from "@/libs/geocode";
-import type { BallColor } from "@/types";
+import type { BallColor, ClubSchedule } from "@/types";
 
 export type { ClubPreview } from "@/queries/club";
 
@@ -70,6 +70,13 @@ export const useManageClub = () => {
         /** All five columns or none: a picked suggestion, or null to forget
          *  it. Never a hand-typed address without coordinates. */
         location?: Place | null;
+        phone?: string | null;
+        description?: string | null;
+        schedule?: ClubSchedule;
+        /** Whether only members get to play, independent of isPublic —
+         *  that one is about the public directory listing, not who's
+         *  allowed to walk in. */
+        membersOnly?: boolean;
       }) => {
         if (!activeClubId) throw new Error("no active club");
 
@@ -83,6 +90,10 @@ export const useManageClub = () => {
           country?: string | null;
           lat?: number | null;
           lon?: number | null;
+          phone?: string | null;
+          description?: string | null;
+          schedule?: ClubSchedule;
+          members_only?: boolean;
         } = {};
         if (updates.name !== undefined) patch.name = updates.name.trim();
         if (updates.logoUrl !== undefined) patch.logo_url = updates.logoUrl;
@@ -97,6 +108,13 @@ export const useManageClub = () => {
           patch.lat = place?.lat ?? null;
           patch.lon = place?.lon ?? null;
         }
+        if (updates.phone !== undefined)
+          patch.phone = updates.phone?.trim() || null;
+        if (updates.description !== undefined)
+          patch.description = updates.description?.trim() || null;
+        if (updates.schedule !== undefined) patch.schedule = updates.schedule;
+        if (updates.membersOnly !== undefined)
+          patch.members_only = updates.membersOnly;
 
         await supabase
           .from("clubs")

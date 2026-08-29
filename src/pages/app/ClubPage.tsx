@@ -16,16 +16,19 @@ import PlayerForm from "@/components/players/PlayerForm";
 import ClubLogoUpload from "@/components/club/ClubLogoUpload";
 import ClubThemePicker from "@/components/club/ClubThemePicker";
 import ClubLocationPicker from "@/components/club/ClubLocationPicker";
+import ClubScheduleEditor from "@/components/club/ClubScheduleEditor";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { Label } from "@/components/ui/Label";
 import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Toggle } from "@/components/ui/Toggle";
+import { Segmented } from "@/components/ui/Segmented";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/libs/useDialog";
 import type { Place } from "@/libs/geocode";
-import type { Player, Category, BallColor } from "@/types";
+import type { Player, Category, BallColor, ClubSchedule } from "@/types";
 import { useT } from "@/i18n";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { AppLink } from "@/components/layout/AppLink";
@@ -46,6 +49,8 @@ export default function ClubPage() {
   const { removeMember, updateClub } = useManageClub();
   const { createPlayer, updatePlayer } = useManagePlayers();
 
+  const [tab, setTab] = useState<"info" | "members" | "invite">("info");
+
   const [name, setName] = useState("");
   // undefined means "unchanged" for both — the settings form only sends what
   // the admin actually touched, in one Guardar rather than three saves.
@@ -53,6 +58,12 @@ export default function ClubPage() {
   const [color, setColor] = useState<BallColor | undefined>(undefined);
   const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined);
   const [location, setLocation] = useState<Place | null | undefined>(undefined);
+  const [phone, setPhone] = useState<string | undefined>(undefined);
+  const [description, setDescription] = useState<string | undefined>(undefined);
+  const [schedule, setSchedule] = useState<ClubSchedule | undefined>(undefined);
+  const [membersOnly, setMembersOnly] = useState<boolean | undefined>(
+    undefined,
+  );
   const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -97,7 +108,11 @@ export default function ClubPage() {
     logoUrl !== undefined ||
     color !== undefined ||
     isPublic !== undefined ||
-    location !== undefined;
+    location !== undefined ||
+    phone !== undefined ||
+    description !== undefined ||
+    schedule !== undefined ||
+    membersOnly !== undefined;
 
   const saveSettings = () => {
     updateClub.mutate(
@@ -107,6 +122,10 @@ export default function ClubPage() {
         ...(color !== undefined && { themeColor: color }),
         ...(isPublic !== undefined && { isPublic }),
         ...(location !== undefined && { location }),
+        ...(phone !== undefined && { phone }),
+        ...(description !== undefined && { description }),
+        ...(schedule !== undefined && { schedule }),
+        ...(membersOnly !== undefined && { membersOnly }),
       },
       {
         onSuccess: () => {
@@ -115,6 +134,10 @@ export default function ClubPage() {
           setColor(undefined);
           setIsPublic(undefined);
           setLocation(undefined);
+          setPhone(undefined);
+          setDescription(undefined);
+          setSchedule(undefined);
+          setMembersOnly(undefined);
           toast.success(t("common.saved"));
         },
         onError: () => toast.error(t("common.error")),
@@ -148,215 +171,297 @@ export default function ClubPage() {
     <>
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         <PageTitle title={activeClub.name} />
-        <Card className="overflow-hidden">
-          <CardHeader title={t("club.settings")} />
-          <form
-            className="p-5"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!hasChanges) return;
-              saveSettings();
-            }}
-          >
-            <div className="space-y-1.5">
-              <Label htmlFor="rename">{t("club.rename")}</Label>
-              <Input
-                id="rename"
-                value={name}
-                maxLength={60}
-                placeholder={activeClub.name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
 
-            <div className="mt-5 space-y-1.5 border-t border-hairline pt-4">
-              <Label>{t("club.branding.logoTitle")}</Label>
-              <ClubLogoUpload
-                name={activeClub.name}
-                url={logoUrl !== undefined ? logoUrl : activeClub.logo_url}
-                onChange={setLogoUrl}
-                disabled={updateClub.isPending}
-              />
-            </div>
+        <Segmented
+          value={tab}
+          onChange={setTab}
+          label={t("club.settings")}
+          options={[
+            { value: "info", label: t("club.tabs.info") },
+            {
+              value: "members",
+              label: `${t("club.tabs.members")} (${active.length})`,
+            },
+            { value: "invite", label: t("club.tabs.invite") },
+          ]}
+        />
 
-            <div className="mt-5 space-y-3 border-t border-hairline pt-4">
-              <Label>{t("club.branding.colorTitle")}</Label>
-              <p className="text-body text-ink-soft">
-                {t("club.branding.colorHint")}
-              </p>
-              <ClubThemePicker
-                value={color ?? activeClub.theme_color}
-                onChange={setColor}
-                disabled={updateClub.isPending}
-              />
-            </div>
-
-            <div className="mt-5 space-y-3 border-t border-hairline pt-4">
-              <Label>{t("club.location.title")}</Label>
-              <p className="text-body text-ink-soft">
-                {t("club.location.hint")}
-              </p>
-              <ClubLocationPicker
-                value={location !== undefined ? location : savedPlace}
-                onChange={setLocation}
-                disabled={updateClub.isPending}
-              />
-            </div>
-
-            <div className="mt-5 space-y-2 border-t border-hairline pt-4">
-              <Toggle
-                checked={isPublic ?? activeClub.is_public}
-                onChange={setIsPublic}
-                label={t("club.publicListing")}
-                hint={t("club.publicListingHint")}
-                disabled={updateClub.isPending}
-              />
-              {(isPublic ?? activeClub.is_public) && (
-                <Link
-                  to="/clubs/$slug"
-                  params={{ slug: activeClub.slug }}
-                  className="inline-block pl-7 text-caption font-medium text-strike transition-colors duration-150 hover:text-strike-light"
-                >
-                  {t("club.viewPublicPage")}
-                </Link>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              variant="secondary"
-              className="mt-5"
-              disabled={!hasChanges || updateClub.isPending}
+        {tab === "info" && (
+          <Card className="overflow-hidden">
+            <CardHeader title={t("club.settings")} />
+            <form
+              className="p-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!hasChanges) return;
+                saveSettings();
+              }}
             >
-              {t("common.save")}
-            </Button>
-          </form>
-        </Card>
+              <div className="space-y-1.5">
+                <Label htmlFor="rename">{t("club.rename")}</Label>
+                <Input
+                  id="rename"
+                  value={name}
+                  maxLength={60}
+                  placeholder={activeClub.name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
 
-        <Card className="overflow-hidden">
-          <CardHeader title={t("club.inviteTitle")} />
-          <div className="space-y-2 p-5">
-            <p className="text-body text-ink-soft">{t("club.inviteHint")}</p>
-            <div className="flex gap-2">
-              <Input
-                readOnly
-                value={link}
-                onFocus={(e) => e.currentTarget.select()}
-                className="font-mono"
-                aria-label={t("club.inviteTitle")}
-              />
-              <Button variant="secondary" onClick={copy} className="shrink-0">
-                {copied ? (
-                  <LuCheck className="h-4 w-4" aria-hidden />
-                ) : (
-                  <LuCopy className="h-4 w-4" aria-hidden />
+              <div className="mt-5 space-y-1.5 border-t border-hairline pt-4">
+                <Label>{t("club.branding.logoTitle")}</Label>
+                <ClubLogoUpload
+                  name={activeClub.name}
+                  url={logoUrl !== undefined ? logoUrl : activeClub.logo_url}
+                  onChange={setLogoUrl}
+                  disabled={updateClub.isPending}
+                />
+              </div>
+
+              <div className="mt-5 space-y-3 border-t border-hairline pt-4">
+                <Label>{t("club.branding.colorTitle")}</Label>
+                <p className="text-body text-ink-soft">
+                  {t("club.branding.colorHint")}
+                </p>
+                <ClubThemePicker
+                  value={color ?? activeClub.theme_color}
+                  onChange={setColor}
+                  disabled={updateClub.isPending}
+                />
+              </div>
+
+              <div className="mt-5 space-y-3 border-t border-hairline pt-4">
+                <Label>{t("club.location.title")}</Label>
+                <p className="text-body text-ink-soft">
+                  {t("club.location.hint")}
+                </p>
+                <ClubLocationPicker
+                  value={location !== undefined ? location : savedPlace}
+                  onChange={setLocation}
+                  disabled={updateClub.isPending}
+                />
+              </div>
+
+              <div className="mt-5 space-y-1.5 border-t border-hairline pt-4">
+                <Label htmlFor="phone">{t("club.phone")}</Label>
+                <Input
+                  id="phone"
+                  value={phone !== undefined ? phone : (activeClub.phone ?? "")}
+                  maxLength={60}
+                  placeholder={t("club.phonePlaceholder")}
+                  disabled={updateClub.isPending}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+
+              <div className="mt-5 space-y-3 border-t border-hairline pt-4">
+                <Label>{t("club.schedule.title")}</Label>
+                <p className="text-body text-ink-soft">
+                  {t("club.schedule.hint")}
+                </p>
+                <ClubScheduleEditor
+                  value={
+                    schedule !== undefined ? schedule : activeClub.schedule
+                  }
+                  onChange={setSchedule}
+                  disabled={updateClub.isPending}
+                />
+              </div>
+
+              <div className="mt-5 space-y-2 border-t border-hairline pt-4">
+                <Toggle
+                  checked={membersOnly ?? activeClub.members_only}
+                  onChange={setMembersOnly}
+                  label={t("club.membersOnly")}
+                  hint={t("club.membersOnlyHint")}
+                  disabled={updateClub.isPending}
+                />
+              </div>
+
+              <div className="mt-5 space-y-1.5 border-t border-hairline pt-4">
+                <Label htmlFor="description">{t("club.description")}</Label>
+                <p className="text-body text-ink-soft">
+                  {t("club.descriptionHint")}
+                </p>
+                <Textarea
+                  id="description"
+                  value={
+                    description !== undefined
+                      ? description
+                      : (activeClub.description ?? "")
+                  }
+                  rows={3}
+                  maxLength={1000}
+                  placeholder={t("club.descriptionPlaceholder")}
+                  disabled={updateClub.isPending}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+
+              <div className="mt-5 space-y-2 border-t border-hairline pt-4">
+                <Toggle
+                  checked={isPublic ?? activeClub.is_public}
+                  onChange={setIsPublic}
+                  label={t("club.publicListing")}
+                  hint={t("club.publicListingHint")}
+                  disabled={updateClub.isPending}
+                />
+                {(isPublic ?? activeClub.is_public) && (
+                  <Link
+                    to="/clubs/$slug"
+                    params={{ slug: activeClub.slug }}
+                    className="inline-block pl-7 text-caption font-medium text-strike transition-colors duration-150 hover:text-strike-light"
+                  >
+                    {t("club.viewPublicPage")}
+                  </Link>
                 )}
-                {copied ? t("club.copied") : t("club.copy")}
-              </Button>
-            </div>
+              </div>
 
-            <div className="border-t border-hairline pt-4">
-              <AppLink
-                to="/app/$clubSlug/invite/print"
-                className={buttonClasses({ variant: "secondary", size: "sm" })}
+              <Button
+                type="submit"
+                variant="secondary"
+                className="mt-5"
+                disabled={!hasChanges || updateClub.isPending}
               >
-                <LuPrinter className="h-4 w-4" aria-hidden />
-                {t("club.poster")}
-              </AppLink>
+                {t("common.save")}
+              </Button>
+            </form>
+          </Card>
+        )}
+
+        {tab === "invite" && (
+          <Card className="overflow-hidden">
+            <CardHeader title={t("club.inviteTitle")} />
+            <div className="space-y-2 p-5">
+              <p className="text-body text-ink-soft">{t("club.inviteHint")}</p>
+              <div className="flex gap-2">
+                <Input
+                  readOnly
+                  value={link}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="font-mono"
+                  aria-label={t("club.inviteTitle")}
+                />
+                <Button variant="secondary" onClick={copy} className="shrink-0">
+                  {copied ? (
+                    <LuCheck className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <LuCopy className="h-4 w-4" aria-hidden />
+                  )}
+                  {copied ? t("club.copied") : t("club.copy")}
+                </Button>
+              </div>
+
+              <div className="border-t border-hairline pt-4">
+                <AppLink
+                  to="/app/$clubSlug/invite/print"
+                  className={buttonClasses({
+                    variant: "secondary",
+                    size: "sm",
+                  })}
+                >
+                  <LuPrinter className="h-4 w-4" aria-hidden />
+                  {t("club.poster")}
+                </AppLink>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         {/* Pending join requests surface globally now, see JoinRequestBanner —
             an admin shouldn't have to be on this page to see one.
             The roster lives here rather than on its own page: adding a guest
             player and approving a member are the same job. */}
-        <Card className="overflow-hidden">
-          <CardHeader
-            title={
-              <span className="flex items-baseline gap-2">
-                {t("club.membersTitle")}
-                <span className="text-caption font-normal tabular-nums text-ink-faint">
-                  {active.length}
+        {tab === "members" && (
+          <Card className="overflow-hidden">
+            <CardHeader
+              title={
+                <span className="flex items-baseline gap-2">
+                  {t("club.membersTitle")}
+                  <span className="text-caption font-normal tabular-nums text-ink-faint">
+                    {active.length}
+                  </span>
                 </span>
-              </span>
-            }
-            action={
-              user && (
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setEditingPlayer(null);
-                    setIsModalOpen(true);
-                  }}
-                >
-                  <LuPlus className="h-4 w-4" aria-hidden />
-                  {t("players.add")}
-                </Button>
-              )
-            }
-          />
-          {isLoading ? (
-            <div className="p-3">
-              <SkeletonRows rows={4} />
-            </div>
-          ) : (
-            <ul className="divide-y divide-hairline">
-              {active.map((m) => (
-                <li key={m.id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="min-w-0 flex-1 truncate text-body text-ink">
-                    <AppLink
-                      to="/app/$clubSlug/players/$playerId"
-                      params={{ playerId: m.id }}
-                      className="transition-colors duration-150 hover:text-strike"
-                    >
-                      {m.name}
-                    </AppLink>
-                    {m.id === player?.id && (
-                      <span className="ml-2 text-caption text-ink-faint">
-                        {t("club.you")}
-                      </span>
+              }
+              action={
+                user && (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setEditingPlayer(null);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <LuPlus className="h-4 w-4" aria-hidden />
+                    {t("players.add")}
+                  </Button>
+                )
+              }
+            />
+            {isLoading ? (
+              <div className="p-3">
+                <SkeletonRows rows={4} />
+              </div>
+            ) : (
+              <ul className="divide-y divide-hairline">
+                {active.map((m) => (
+                  <li key={m.id} className="flex items-center gap-3 px-4 py-3">
+                    <span className="min-w-0 flex-1 truncate text-body text-ink">
+                      <AppLink
+                        to="/app/$clubSlug/players/$playerId"
+                        params={{ playerId: m.id }}
+                        className="transition-colors duration-150 hover:text-strike"
+                      >
+                        {m.name}
+                      </AppLink>
+                      {m.id === player?.id && (
+                        <span className="ml-2 text-caption text-ink-faint">
+                          {t("club.you")}
+                        </span>
+                      )}
+                    </span>
+                    <span className="shrink-0 text-caption text-ink-faint">
+                      {activeClub.owner_id === m.user_id
+                        ? t("club.owner")
+                        : t("category.short", { n: m.category })}
+                    </span>
+                    {user && (
+                      <IconButton
+                        label={t("players.editNamed", { name: m.name })}
+                        onClick={() => {
+                          setEditingPlayer(m);
+                          setIsModalOpen(true);
+                        }}
+                      >
+                        <LuPencil className="h-[18px] w-[18px]" />
+                      </IconButton>
                     )}
-                  </span>
-                  <span className="shrink-0 text-caption text-ink-faint">
-                    {activeClub.owner_id === m.user_id
-                      ? t("club.owner")
-                      : t("category.short", { n: m.category })}
-                  </span>
-                  {user && (
-                    <IconButton
-                      label={t("players.editNamed", { name: m.name })}
-                      onClick={() => {
-                        setEditingPlayer(m);
-                        setIsModalOpen(true);
-                      }}
-                    >
-                      <LuPencil className="h-[18px] w-[18px]" />
-                    </IconButton>
-                  )}
-                  {/* Removing takes their games and drill logs with them, so it
-                      asks first. */}
-                  {m.id !== player?.id && (
-                    <IconButton
-                      label={t("club.removeNamed", { name: m.name })}
-                      size="sm"
-                      tone="danger"
-                      onClick={() => {
-                        if (!confirm(t("club.removeConfirm", { name: m.name })))
-                          return;
-                        removeMember.mutate(m.id, {
-                          onError: () => toast.error(t("common.error")),
-                        });
-                      }}
-                    >
-                      <LuUserMinus className="h-4 w-4" aria-hidden />
-                    </IconButton>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+                    {/* Removing takes their games and drill logs with them, so
+                        it asks first. */}
+                    {m.id !== player?.id && (
+                      <IconButton
+                        label={t("club.removeNamed", { name: m.name })}
+                        size="sm"
+                        tone="danger"
+                        onClick={() => {
+                          if (
+                            !confirm(t("club.removeConfirm", { name: m.name }))
+                          )
+                            return;
+                          removeMember.mutate(m.id, {
+                            onError: () => toast.error(t("common.error")),
+                          });
+                        }}
+                      >
+                        <LuUserMinus className="h-4 w-4" aria-hidden />
+                      </IconButton>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        )}
       </div>
 
       {/* Native <dialog>, like the nav drawer: backdrop, Esc and focus trap come
