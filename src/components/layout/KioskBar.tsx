@@ -36,11 +36,20 @@ import { LANGS, useT, type Lang } from "@/i18n";
 export default function KioskBar({
   tableId,
   containerRef,
+  floating = false,
 }: {
   tableId: number;
   /** The element fullscreen acts on — the whole kiosk shell, so the browser's
    *  chrome goes with the app's. */
   containerRef: React.RefObject<HTMLDivElement | null>;
+  /**
+   * Laid on the page rather than stacked above it, for the pages that are the
+   * whole screen. A row of its own takes height off the top of a scoreboard —
+   * which pushes both numerals below the middle of the display and stops the
+   * spine short of the top edge. Floating, it is the same four controls in the
+   * same corners, over an area of the board that has nothing in it.
+   */
+  floating?: boolean;
 }) {
   const { t, lang, setLang } = useT();
   const { activeClub } = useAuth();
@@ -63,7 +72,16 @@ export default function KioskBar({
   const match = (live ?? []).find((m) => m.table_id === tableId);
 
   return (
-    <div className="flex shrink-0 items-center justify-between gap-3 border-b border-hairline bg-felt px-3 py-2">
+    <div
+      className={[
+        "flex items-start justify-between gap-3 px-3 py-2",
+        floating
+          ? // Nothing but the controls takes a tap: the strip covers the top of
+            // both halves of the board, and the board is what is being pressed.
+            "pointer-events-none absolute inset-x-0 top-0 z-30"
+          : "shrink-0 items-center border-b border-hairline bg-felt",
+      ].join(" ")}
+    >
       <div className="flex min-w-0 items-center gap-2.5">
         {activeClub && (
           <Avatar
@@ -89,7 +107,7 @@ export default function KioskBar({
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
         {/* Ending the match the device is showing. It belongs to whatever is on
             screen, but it lives here: the alternative was a strip of chrome
             under this bar holding one rarely-wanted button, on the one screen

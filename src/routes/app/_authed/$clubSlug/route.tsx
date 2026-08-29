@@ -145,11 +145,20 @@ function ClubLayout() {
     return (
       <>
         {accent}
-        <div ref={kioskRef} className="flex h-dvh flex-col overflow-hidden bg-pocket">
+        <div
+          ref={kioskRef}
+          className="relative flex h-dvh flex-col overflow-hidden bg-pocket"
+        >
           {/* The tablet's only chrome. The pages below render content and
               nothing else — a second header on a scoreboard is a second header
-              on the one screen that wants the whole display. */}
-          <KioskBar tableId={kioskTable} containerRef={kioskRef} />
+              on the one screen that wants the whole display. On the pages that
+              say they want the display to themselves it is laid over the page
+              rather than stacked above it, for the same reason. */}
+          <KioskBar
+            tableId={kioskTable}
+            containerRef={kioskRef}
+            floating={bareOnDevice}
+          />
           <main className="min-h-0 flex-1 overflow-hidden pb-[env(safe-area-inset-bottom)]">
             <Suspense fallback={<PageSkeleton />}>
               <Outlet />
