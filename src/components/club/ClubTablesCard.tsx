@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
+import { renderSVG } from "uqr";
 import { LuMonitorSmartphone, LuPlus, LuTrash2, LuUnlink } from "react-icons/lu";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +25,10 @@ import { useT } from "@/i18n";
 export default function ClubTablesCard() {
   const { t } = useT();
   const { activeClubId } = useAuth();
+  // The QR needs an absolute URL, and `window` is not there on the server —
+  // the root route already reads the origin off the request for the invite
+  // poster.
+  const { origin } = getRouteApi("__root__").useRouteContext();
   const { data: tables, isLoading } = useClubTables();
   // The devices, from the full membership list rather than the roster — the
   // roster filters them out precisely because they are not players.
@@ -35,6 +41,16 @@ export default function ClubTablesCard() {
   const [pairing, setPairing] = useState<{ tableId: number; code: string } | null>(
     null,
   );
+
+  /** The same link the tablet would reach by typing, with the code in it, as a
+   *  symbol the tablet's camera can read. ecc M and a 4-module quiet zone for
+   *  the same reason the invite poster uses them: a code read across a room off
+   *  a screen at an angle. */
+  const pairQr = useMemo(() => {
+    if (!pairing) return null;
+    const link = `${origin}/app/pair?code=${pairing.code}`;
+    return { link, svg: renderSVG(link, { ecc: "M", border: 4, pixelSize: 1 }) };
+  }, [origin, pairing]);
 
   const deviceOn = (tableId: number) =>
     (members ?? []).find((m) => m.is_device && m.device_table_id === tableId);
@@ -166,16 +182,27 @@ export default function ClubTablesCard() {
                 </IconButton>
               </div>
 
-              {pairing?.tableId === table.id && (
-                <div className="mt-2 space-y-1 rounded-card bg-felt-raised p-3 text-center">
-                  {/* Read off this screen and typed into another one by
-                      somebody standing up, so it is the largest thing here. */}
-                  <p className="font-mono text-display font-semibold tracking-[0.2em] text-ink">
-                    {pairing.code}
-                  </p>
-                  <p className="text-caption text-ink-faint">
-                    {t("kiosk.pairCode", { name: table.label })}
-                  </p>
+              {pairing?.tableId === table.id && pairQr && (
+                <div className="mt-2 flex items-center gap-3 rounded-card bg-felt-raised p-3">
+                  {/* White behind it always: the app is dark by default and a
+                      QR inverted is a QR most cameras will not read. The input
+                      is our own URL — nothing user-written. */}
+                  <div
+                    className="h-56 w-56 shrink-0 rounded-control bg-white p-2 [&>svg]:h-full [&>svg]:w-full"
+                    role="img"
+                    aria-label={pairQr.link}
+                    dangerouslySetInnerHTML={{ __html: pairQr.svg }}
+                  />
+                  <div className="min-w-0 space-y-1">
+                    {/* Still spelled out: the fallback when the tablet has no
+                        camera, or the scan lands somewhere odd. */}
+                    <p className="font-mono text-h2 font-semibold tracking-[0.2em] text-ink">
+                      {pairing.code}
+                    </p>
+                    <p className="text-caption text-ink-faint">
+                      {t("kiosk.pairCode", { name: table.label })}
+                    </p>
+                  </div>
                 </div>
               )}
             </li>
