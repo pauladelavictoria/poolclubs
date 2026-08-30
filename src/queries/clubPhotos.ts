@@ -14,7 +14,7 @@ export type ClubPhoto = {
   /** The object key, which is also its identity for deletion. */
   path: string;
   /** Ready to put in an <img src>. A public bucket, so no signing and no
-   *  expiry — see the warning in sql/club-photos.sql. */
+   *  expiry — see the warning in sql/schema.sql. */
   url: string;
 };
 
@@ -24,7 +24,7 @@ export type ClubPhoto = {
  * There is no `club_photos` table: the bucket is the list. Ordering comes from
  * the millisecond prefix in the object name, which is why sorting by `name`
  * ascending is chronological — see src/libs/browser/photoImage.ts and the note
- * in sql/club-photos.sql about why a table would only be a second source of
+ * in sql/schema.sql about why a table would only be a second source of
  * truth to disagree with this one.
  *
  * Whether a stranger may see the list at all is decided by RLS on
@@ -46,7 +46,7 @@ export const clubPhotosQuery = (clubId: number | null | undefined) =>
       });
 
       // Deliberately swallowed. The bucket may not exist yet on a checkout that
-      // has not applied sql/club-photos.sql, and a club page is not the place to
+      // has not applied sql/schema.sql, and a club page is not the place to
       // report that — the gallery is an enhancement and its absence is a
       // non-event. A genuine failure shows up as no photos, which is also what
       // a club with no photos looks like.

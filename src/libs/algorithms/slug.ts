@@ -3,7 +3,7 @@
  *
  * `/app/paulas-pool/ranking` rather than `/app/12/ranking`. The slug is the
  * club's identity in every link, so it is generated once by the database (see
- * the trigger in sql/club-slug.sql) and never derived on the fly — renaming a
+ * the trigger in sql/schema.sql) and never derived on the fly — renaming a
  * club must not break the URLs people have bookmarked.
  *
  * This file exists so the app can predict and validate what the database will

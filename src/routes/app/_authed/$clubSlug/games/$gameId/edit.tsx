@@ -12,7 +12,7 @@ export const Route = createFileRoute(
   // The club admin's screen. Checked here rather than after render for the same
   // reason the drill editor does it: a redirect on the way in beats a page that
   // paints and then bounces. RLS says the same thing again on the write — this
-  // is the door, not the lock (sql/game-admin-edit.sql).
+  // is the door, not the lock (sql/schema.sql).
   loader: async ({ context, params }) => {
     if (!context.isClubAdmin) {
       throw redirect({

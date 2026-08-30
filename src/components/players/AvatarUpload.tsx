@@ -17,7 +17,7 @@ import { useT } from "@/i18n";
  *
  * One person, one face — which is now a fact about the schema rather than
  * something this component has to arrange. It used to write the same data URI to
- * every player row matching user_id; since sql/people.sql it is one row.
+ * every player row matching user_id; since sql/schema.sql it is one row.
  */
 export default function AvatarUpload({
   name,

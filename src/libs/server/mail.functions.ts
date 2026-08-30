@@ -18,7 +18,7 @@ import { MAIL_FROM, memberApprovedMail } from "@/libs/algorithms/mailText";
  *
  * Authorisation is not here. It is approved_member_contact, a SECURITY DEFINER
  * function that decides whether the caller may know this address at all and
- * returns nothing if not — see sql/member-approved-mail.sql. This handler could
+ * returns nothing if not — see sql/schema.sql. This handler could
  * be called with any player id by any signed-in person and would still only
  * ever send to somebody that caller just legitimately approved.
  */

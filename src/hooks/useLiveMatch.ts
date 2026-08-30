@@ -206,7 +206,7 @@ export const useManageLiveMatch = () => {
      * Both phones and the tablet all show the same Finish button, `games` has
      * nothing to deduplicate on, and two rows would land in the club feed and
      * in the Elo ranking. The row lock inside finish_live_match is the only
-     * defence — see sql/live-night.sql.
+     * defence — see sql/schema.sql.
      */
     finishMatch: useMutation({
       mutationFn: async (id: string): Promise<string> => {

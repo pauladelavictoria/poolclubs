@@ -52,7 +52,7 @@ export const useGame = (id?: string) =>
  * Fixing a filed result, and unfiling one.
  *
  * Both are the club admin's, and both are enforced by RLS rather than by the
- * button being hidden: see the policies in sql/game-admin-edit.sql. A member
+ * button being hidden: see the policies in sql/schema.sql. A member
  * who calls these gets a denial, which is what dbErrorMessage turns into
  * "common.deniedError" at the call site.
  */

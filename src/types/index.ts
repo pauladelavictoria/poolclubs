@@ -72,7 +72,7 @@ export const CATEGORIES = [1, 2, 3] as const satisfies readonly Category[];
 export type PlayerStatus = "pending" | "active";
 
 /** The human. One row per person, however many clubs they play in — see
- *  sql/people.sql. Name, face and public listing live here and nowhere else. */
+ *  sql/schema.sql. Name, face and public listing live here and nowhere else. */
 export type Person = Row<"people">;
 
 /** One of the venue's tables. `label` is what is painted on the wall — "3",
@@ -219,7 +219,7 @@ export const SKILL_TYPES = [
   "specials",
 ] as const satisfies readonly DrillSkillType[];
 
-// Tournaments — see sql/tournaments.sql and libs/algorithms/bracket/.
+// Tournaments — see sql/schema.sql and libs/algorithms/bracket/.
 
 export type TournamentFormat = "double_elim" | "league" | "group_knockout";
 

@@ -1,6 +1,6 @@
 /**
  * The point of these assertions is the SQL: every case below is also what
- * public.slugify() in sql/club-slug.sql must return. If you change one,
+ * public.slugify() in sql/schema.sql must return. If you change one,
  * change both.
  */
 import { describe, expect, it } from "vitest";

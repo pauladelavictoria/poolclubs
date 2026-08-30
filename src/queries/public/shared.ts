@@ -4,7 +4,7 @@
  * drills.ts and search.ts for the queries themselves.
  *
  * Two rules hold for every query in this module, and both come from
- * sql/public-pages.sql:
+ * sql/schema.sql:
  *
  *   1. Columns are named, never `select("*")`. Anon's table-wide SELECT on
  *      clubs, players and drills is revoked in favour of column grants, so a
@@ -34,7 +34,7 @@ export const CLUB_COLS =
  * no card shows any of it.
  *
  * These columns need `GRANT SELECT` for anon before this ships — see
- * sql/club-public-info.sql, which explains why the order is not negotiable.
+ * sql/schema.sql, which explains why the order is not negotiable.
  */
 export const CLUB_DETAIL_COLS = `${CLUB_COLS}, description, phone, schedule, timezone, photo_order`;
 export const PERSON_COLS = "id, slug, name, avatar_url, is_public";

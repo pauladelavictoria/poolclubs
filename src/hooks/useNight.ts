@@ -45,7 +45,7 @@ export const useCheckIn = () => {
     }: {
       here: boolean;
       /** Somebody else — the tablet checking in whoever is standing at it.
-       *  Refused by the guard in sql/live-night.sql unless you are the club or
+       *  Refused by the guard in sql/schema.sql unless you are the club or
        *  its device, so the UI only offers it where the database allows it. */
       playerId?: number;
     }) => {

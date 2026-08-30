@@ -20,7 +20,7 @@
  * country would see the night cut in a different place than the room does.
  *
  * The club's own zone lives on its row (`clubs.timezone`, see
- * sql/club-timezone.sql) and reaches every one of these as an argument. This is
+ * sql/schema.sql) and reaches every one of these as an argument. This is
  * the fallback for a club that has none and for a value Intl does not know: a
  * junk zone must not be able to throw inside a date range.
  */

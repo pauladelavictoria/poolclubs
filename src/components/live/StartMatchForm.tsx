@@ -92,7 +92,7 @@ export default function StartMatchForm({
 
   // Who may put two other people in a match.
   //
-  // Mirrors can_score_live_match in sql/live-night.sql: the club's admin, the
+  // Mirrors can_score_live_match in sql/schema.sql: the club's admin, the
   // club's tablet, or somebody who is one of the seats. Any other member
   // picking two other names would have the insert refused, which is not a
   // choice worth offering.

@@ -195,7 +195,7 @@ export default function LiveMatchPage() {
   const seat = (id: number | null) =>
     id === null ? undefined : roster.find((p) => p.id === id);
 
-  // Mirrors can_score_live_match in sql/live-night.sql. The database is the
+  // Mirrors can_score_live_match in sql/schema.sql. The database is the
   // boundary; this is only what decides whether the halves are buttons.
   const canScore =
     isClubAdmin ||

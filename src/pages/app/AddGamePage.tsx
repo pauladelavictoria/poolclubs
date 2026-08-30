@@ -163,7 +163,7 @@ export default function AddGamePage() {
   const onSubmit = (game: Game) => {
     // The selects hold ids now rather than names, so there is nothing left to
     // resolve here — games stopped carrying player names when those moved to
-    // people. See sql/people.sql.
+    // people. See sql/schema.sql.
     const values = {
       ...game,
       played_at: toPlayedAt(

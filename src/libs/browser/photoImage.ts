@@ -132,7 +132,7 @@ export async function toPhotoBlob(file: File): Promise<Blob> {
 /**
  * Where a club's photos live. The folder is what every storage policy
  * authorises on, and the millisecond prefix is what makes a plain name sort
- * chronological — see sql/club-photos.sql.
+ * chronological — see sql/schema.sql.
  */
 export const clubPhotoFolder = (clubId: number) => `club-${clubId}`;
 

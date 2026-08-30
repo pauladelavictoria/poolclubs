@@ -11,7 +11,7 @@ import type { LiveMatch, Player } from "@/types";
  * How long a live match survives with nobody touching it.
  *
  * The same three hours are written into the "Members can clear an abandoned
- * match" policy in sql/live-night.sql. This constant is the single source for
+ * match" policy in sql/schema.sql. This constant is the single source for
  * both client copies of the rule — the list filter and the badge — and the
  * policy has a comment pointing back here. Drift and a row disappears from the
  * list while still refusing to be deleted.

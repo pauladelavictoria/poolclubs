@@ -44,7 +44,7 @@ export const clubPreviewQuery = (slug: string) =>
             name: r.player_name as string,
           })),
         // takenNames is gone: join_club() no longer rejects a duplicate name,
-        // because names are no longer unique inside a club. See sql/people.sql.
+        // because names are no longer unique inside a club. See sql/schema.sql.
       };
     },
   });

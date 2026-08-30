@@ -18,7 +18,7 @@ import { pushText, type PushKey } from "@/libs/algorithms/pushText";
  * for the words — whose name, which club. And once inside push_targets, which is
  * SECURITY DEFINER and is the *only* authorisation that matters: it decides who
  * may be told about this event and hands back their subscriptions, or returns
- * nothing at all. See sql/push-notifications.sql.
+ * nothing at all. See sql/schema.sql.
  */
 
 /** What sw.js reads out of event.data. Kept under ~3KB by construction; the

@@ -778,7 +778,7 @@
   "ops.unlisted": "non publié",
   "ops.totals": "Total",
   "ops.empty": "Aucun club pour l'instant.",
-  "ops.error": "Chargement impossible. sql/operator-dashboard.sql a-t-il été appliqué ?",
+  "ops.error": "Chargement impossible. operator_clubs est-elle installée sur cette base ?",
   "invite.eyebrow": "{club} utilise PoolClubs",
   "invite.sub": "Enregistre tes matchs depuis ton téléphone et regarde-toi grimper au classement du club.",
   "invite.b1": "Classement Elo du club",

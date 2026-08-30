@@ -50,7 +50,7 @@ export const useManageClub = () => {
       //
       // Ordered after the shared onSuccess so the roster is already moving
       // while the mail goes out; the send decides for itself whether it is
-      // allowed to (sql/member-approved-mail.sql), and says nothing back.
+      // allowed to (sql/schema.sql), and says nothing back.
       onSuccess: async (playerId) => {
         await onSuccess();
         void sendMemberApprovedMail({ data: { playerId } }).catch(() => {});
@@ -86,7 +86,7 @@ export const useManageClub = () => {
         location?: Place | null;
         /** The club's own clock, as an IANA zone. What decides which night a
          *  result belongs to — see libs/algorithms/day.ts. The database refuses a zone
-         *  Postgres does not know (sql/club-timezone.sql). */
+         *  Postgres does not know (sql/schema.sql). */
         timezone?: string;
         /** What the club says about itself, on its public page. */
         description?: string | null;

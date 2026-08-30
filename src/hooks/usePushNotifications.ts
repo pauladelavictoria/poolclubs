@@ -10,7 +10,7 @@ import { useT } from "@/i18n";
  * A subscription belongs to a browser installation, not to an account and not to
  * a club — enabling it on your phone says nothing about your laptop, which is
  * why the copy around this says "this device" and why the row is keyed by
- * endpoint (see sql/push-notifications.sql).
+ * endpoint (see sql/schema.sql).
  *
  * Everything here is a browser API the server cannot see, so `supported` and
  * `permission` start as their "nothing yet" values and are filled in by an

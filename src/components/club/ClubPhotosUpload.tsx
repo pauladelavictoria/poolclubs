@@ -33,7 +33,7 @@ import { useT } from "@/i18n";
  * remember to press Save is an upload people lose.
  *
  * ponytail: no reordering and no captions. Chronological is an order, and the
- * ceiling is written down in sql/club-photos.sql along with what to do about it.
+ * ceiling is written down in sql/schema.sql along with what to do about it.
  */
 export default function ClubPhotosUpload({ disabled }: { disabled?: boolean }) {
   const { t } = useT();

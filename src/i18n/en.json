@@ -778,7 +778,7 @@
   "ops.unlisted": "not listed",
   "ops.totals": "Total",
   "ops.empty": "No clubs yet.",
-  "ops.error": "Could not load. Has sql/operator-dashboard.sql been applied?",
+  "ops.error": "Could not load. Is operator_clubs installed on this database?",
   "invite.eyebrow": "{club} runs on PoolClubs",
   "invite.sub": "Record your matches from your phone and watch yourself climb the club table.",
   "invite.b1": "Club Elo ranking",

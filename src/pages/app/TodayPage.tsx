@@ -319,7 +319,7 @@ export default function TodayPage() {
           read by somebody with a cue bag on their shoulder and the point is
           recognising yourself rather than reading a name.
           On a phone only your own tap does anything — checking somebody else in
-          is refused by the guard in sql/live-night.sql. */}
+          is refused by the guard in sql/schema.sql. */}
       <section className="space-y-3">
         <div className="flex items-baseline justify-between gap-3 px-1">
           <h2 className="text-h4 font-semibold text-ink">

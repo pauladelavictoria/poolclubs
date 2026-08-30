@@ -778,7 +778,7 @@
   "ops.unlisted": "sin publicar",
   "ops.totals": "Total",
   "ops.empty": "Todavía no hay clubes.",
-  "ops.error": "No se pudo cargar. ¿Se ha aplicado sql/operator-dashboard.sql?",
+  "ops.error": "No se pudo cargar. ¿Está operator_clubs instalada en esta base de datos?",
   "invite.eyebrow": "{club} usa PoolClubs",
   "invite.sub": "Registra tus partidos desde el móvil y mira cómo subes en la tabla del club.",
   "invite.b1": "Ranking Elo del club",
