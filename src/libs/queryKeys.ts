@@ -1,8 +1,5 @@
 import type { UseGetGamesFilters } from "@/queries/games";
-import type {
-  DrillLogsFilters,
-  DrillsFilters,
-} from "@/queries/drills";
+import type { DrillLogsFilters, DrillsFilters } from "@/queries/drills";
 import type { PublicClubsFilters } from "@/queries/public/clubs";
 import type { PublicDrillsFilters } from "@/queries/public/drills";
 import type { PublicPlayersFilters } from "@/queries/public/players";
@@ -35,6 +32,13 @@ export const keys = {
     for: (code?: string) => ["club-preview", code] as const,
   },
 
+  /** A club's venue photos. Keyed by id rather than slug because the storage
+   *  folder is the id, and the settings page has no slug to hand. */
+  clubPhotos: {
+    all: ["club-photos"] as const,
+    in: (clubId?: number | null) => ["club-photos", clubId] as const,
+  },
+
   /** The cross-club operator dashboard. Not club-scoped — it is every club. */
   operator: {
     clubs: ["operator-clubs"] as const,
@@ -61,6 +65,19 @@ export const keys = {
         f.category,
         f.mode,
       ] as const,
+    /** Which nights of a month have games at all — the dots on the calendar.
+     *  The zone is in the key because it decides which night a small-hours
+     *  result lands on, exactly as it does for `list`. */
+    days: (clubId: number | null | undefined, month: string, tz: string) =>
+      ["games", "days", clubId, month, tz] as const,
+  },
+
+  /** One game, for the editor. Its own root rather than a member of `games`,
+   *  so saving a correction does not have to refetch every filtered list to
+   *  put the form back — the same split `drill` makes below. */
+  game: {
+    all: ["game"] as const,
+    one: (id?: string) => ["game", id] as const,
   },
 
   drills: {

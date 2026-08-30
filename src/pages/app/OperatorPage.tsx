@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import PageTitle from "@/components/layout/PageTitle";
 import { Link } from "@tanstack/react-router";
 import { LuTriangleAlert } from "react-icons/lu";
 import { Card } from "@/components/ui/Card";
@@ -52,10 +53,7 @@ export default function OperatorPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-      <div>
-        <h1 className="text-h2 font-semibold text-ink">{t("ops.title")}</h1>
-        <p className="mt-1 text-body text-ink-soft">{t("ops.lede")}</p>
-      </div>
+      <PageTitle title={t("ops.title")} subtitle={t("ops.lede")} />
 
       <Card className="overflow-hidden">
         {isLoading ? (

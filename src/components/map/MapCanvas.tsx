@@ -165,7 +165,7 @@ export default function MapCanvas({
                 <img
                   src={pin.imageUrl}
                   alt=""
-                  className="h-10 w-10 rounded-full border-2 border-strike bg-white object-contain p-0.5 shadow-lg"
+                  className="h-10 w-10 rounded-full border-2 border-strike bg-white object-contain p-0.5 shadow-pop"
                 />
               ) : (
                 <PinGlyph />

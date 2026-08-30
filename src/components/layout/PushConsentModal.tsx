@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { dialogClasses } from "@/components/ui/cardStyles";
 import { LuBellRing, LuX } from "react-icons/lu";
 import { toast } from "react-toastify";
 import { Button, IconButton } from "@/components/ui/Button";
@@ -66,7 +67,7 @@ export default function PushConsentModal({
   return (
     <dialog
       ref={ref}
-      className="sheet m-0 mt-auto w-full max-w-none sm:max-w-md rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+      className={dialogClasses()}
       aria-label={t("push.bannerTitle")}
       onClose={dismiss}
       onClick={(e) => {

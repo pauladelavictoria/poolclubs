@@ -76,6 +76,12 @@ export const useMyPendingMatches = () => {
 
 type NewTournament = {
   name: string;
+  /** When it runs, as ISO days. A null start is a tournament with no date yet;
+   *  a null end is a one-day one, or a league whose last week is not fixed. */
+  starts_on: string | null;
+  ends_on: string | null;
+  /** What entry costs, as the organiser wrote it. */
+  entry_fee: string | null;
   format: TournamentFormat;
   category: Category | null;
   legs: 1 | 2;

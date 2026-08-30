@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { cardClasses } from "@/components/ui/cardStyles";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { LuSearch } from "react-icons/lu";
 import DrillCard from "@/components/drills/DrillCard";
 import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
+import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/ui/Ball";
@@ -78,21 +80,16 @@ export default function SearchPage() {
     <>
       {/* The field is the hero. No photograph and no grid above the fold: on a
           page whose whole job is one box, the box is the image. */}
-      <section>
-        <div className="px-4 py-6 sm:px-6 sm:py-8">
-          <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
-            {t("public.search.title")}
-          </h1>
-          <SearchInput
-            value={q}
-            onChange={setQ}
-            placeholder={t("public.search.placeholder")}
-            className="mt-5 w-full sm:max-w-xl"
-            autoFocus
-          />
-          {chips("justify-start")}
-        </div>
-      </section>
+      <PublicPageTitle title={t("public.search.title")}>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder={t("public.search.placeholder")}
+          className="mt-5 w-full sm:max-w-xl"
+          autoFocus
+        />
+        {chips("justify-start")}
+      </PublicPageTitle>
 
       <PublicShell>
         {/* The proof the search worked: a count per kind, before any block below
@@ -156,8 +153,11 @@ export default function SearchPage() {
                       key={club.id}
                       to="/clubs/$slug"
                       params={{ slug: club.slug }}
-                      data-ball={club.theme_color}
-                      className="wash lift flex w-44 shrink-0 snap-start flex-col items-center gap-2 rounded-card border border-hairline p-4 text-center"
+                      className={cardClasses({
+                        interactive: true,
+                        className:
+                          "lift flex w-44 shrink-0 snap-start flex-col items-center gap-2 p-4 text-center",
+                      })}
                     >
                       <Avatar
                         name={club.name}
@@ -196,7 +196,6 @@ export default function SearchPage() {
                         key={person.id}
                         to="/players/$playerSlug"
                         params={{ playerSlug: person.slug }}
-                        data-ball={first?.club.theme_color}
                         className="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 hover:bg-felt-raised"
                       >
                         <Avatar
@@ -239,11 +238,10 @@ export default function SearchPage() {
                 term={term}
               >
                 <div className="flex flex-col gap-3">
-                  {data.tournaments.map((tournament, i) => (
+                  {data.tournaments.map((tournament) => (
                     <TournamentCard
                       key={tournament.id}
                       tournament={tournament}
-                      index={i}
                     />
                   ))}
                 </div>
@@ -257,8 +255,8 @@ export default function SearchPage() {
                 term={term}
               >
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-                  {data.drills.map((drill, i) => (
-                    <DrillCard key={drill.id} drill={drill} public index={i} />
+                  {data.drills.map((drill) => (
+                    <DrillCard key={drill.id} drill={drill} public />
                   ))}
                 </div>
               </Block>

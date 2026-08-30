@@ -12,6 +12,13 @@ type Props = {
    * below, not a link back to itself.
    */
   crumbs?: (CrumbLink & { label: string })[];
+  /**
+   * The line under the title: what this page is, or the facts that qualify it.
+   * A slot rather than a <p> each page writes itself, which is how three pages
+   * ended up with three different sizes and three different gaps under an h1
+   * that is the same h1 on all of them.
+   */
+  subtitle?: ReactNode;
   /** Wrapper classes for pages that have no content container to sit inside. */
   className?: string;
   /** Page actions, on the title's row. */
@@ -27,6 +34,7 @@ type Props = {
 export default function PageTitle({
   title,
   crumbs,
+  subtitle,
   className,
   children,
 }: Props) {
@@ -78,6 +86,10 @@ export default function PageTitle({
           </div>
         )}
       </div>
+
+      {subtitle && (
+        <p className="mt-1 text-caption text-ink-faint">{subtitle}</p>
+      )}
     </div>
   );
 }

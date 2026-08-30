@@ -1,9 +1,8 @@
 @import "tailwindcss";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/dm-sans";
 @import "@fontsource-variable/geist-mono";
 
 /*
-  Pool Valencia — a dim pool room.
   Surfaces are blue-tinted near-black and step by lightness only, picking up the
   cloth. Depth strategy is surface-shift + hairline borders; there are no drop
   shadows (they don't read on dark).
@@ -12,7 +11,7 @@
 */
 @theme {
   /* Type */
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
 
   /* Scale: 16px base, ~1.2 ratio, rounded to whole px and to the 4px grid at
@@ -21,7 +20,11 @@
      arm's length, and metadata that can't be read is not metadata. It separates
      from body on weight, colour and tracking rather than on two points of size —
      which is the stronger separation anyway. */
-  --text-caption: 0.875rem; /* 14 — nothing in the app is smaller */
+  /* 14 is the floor, with two deliberate exceptions, both labels under an icon
+     that already carries the meaning: the bottom tab bar (NavRail, 12px — five
+     tabs at 14 truncate to nothing on a 360px phone) and FilterMenu's count
+     badge (11px — the numeral has to fit a 16px pill). Nothing else. */
+  --text-caption: 0.875rem;
   --text-body: 1rem; /* 16 */
   --text-h4: 1.125rem; /* 18 */
   --text-h3: 1.25rem; /* 20 */
@@ -103,19 +106,18 @@
   --color-strike-deep: #d2a41f; /* pressed */
   --color-strike-tint: rgba(244, 197, 60, 0.14);
 
-  /* The pendant lamp over the page and over a hero. Dim; in light mode it turns
-     down to almost nothing, because a lamp on a white wall is not a thing you
-     can see. Mixed from the accent, so under /app the club's colour lights the
-     room too and the glow never contradicts the hue everything else wears. */
-  --lamp: color-mix(in srgb, var(--color-strike) 6%, transparent);
-  --lamp-strong: color-mix(in srgb, var(--color-strike) 13%, transparent);
-
   /* The club's own colour, as a token separate from the accent.
      --color-strike means "act": buttons, links, the current tab. --color-club
      means "whose": which club a card belongs to, which skill a tile is for,
      which player a face stands in for. Keeping them apart is what lets a
      directory of thirty differently-coloured cards still have one yellow
      primary button on every one of them.
+
+     Inside a club, under /app, this is identity and it is load-bearing. Out on
+     the public side it is not: a stranger scanning a directory does not yet
+     know which club is which colour, so eight hues across eight cards is
+     decoration that reads as a taxonomy — see the public skin below, which
+     pins this back to the accent.
      Defaults to the accent, so anything unclaimed by a club looks exactly as it
      did before; [data-ball] (see components/ClubThemeStyle) overrides it. */
   --color-club: var(--color-strike);
@@ -133,9 +135,9 @@
   --color-ball-cue: #2a303a;
 
   /* Radius — locked scale. control < card < sheet. */
-  --radius-control: 10px;
-  --radius-card: 14px;
-  --radius-sheet: 20px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-sheet: 16px;
 
   /* Motion — custom ease-out; built-in curves are too weak */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -150,6 +152,15 @@
      fully transparent shadow composes fine and costs nothing. */
   --lift: 0 0 #0000;
   --lift-strong: 0 0 #0000;
+
+  /* The one shadow the app allows itself: a thing that floats over another
+     thing — a popover, a menu, a toast, a map marker — has to detach from
+     whatever it is covering, and above felt-raised there is no surface step
+     left to do it with. Everything else uses surface and hairline.
+     A token rather than Tailwind's shadow-lg, which is tuned for a white page
+     and lands as a grey smudge on near-black; `shadow-pop` is generated from
+     this and is the only shadow utility any element should carry. */
+  --shadow-pop: 0 8px 24px rgb(0 0 0 / 0.35);
 }
 
 /*
@@ -180,13 +191,10 @@
   --color-ink-ghost: #a2aab5; /* disabled only — intentionally sub-AA */
   --color-ink-strong: #000000; /* darkens where dark mode lifts */
 
-  --color-strike: #966c00; /* 5.2:1 as text, and pale text sits on it at 4.9:1 */
+  --color-strike: #c99103; /* 5.2:1 as text, and pale text sits on it at 4.9:1 */
   --color-strike-light: #7d5a00; /* hover: light mode darkens where dark mode lifts */
   --color-strike-deep: #684a00; /* pressed */
   --color-strike-tint: rgba(150, 108, 0, 0.12);
-
-  --lamp: color-mix(in srgb, var(--color-strike) 5%, transparent);
-  --lamp-strong: color-mix(in srgb, var(--color-strike) 7%, transparent);
 
   --color-chalk: #1f6fb2;
   --color-pot: #12794a;
@@ -204,7 +212,8 @@
 /*
   Public skin. The authed tool is a dim pool room seen from the inside; the
   public surface is the cloth itself — low-chroma blue surfaces stepping by
-  lightness only, chunkier radii, a real display step, real tinted lift.
+  lightness only, a real display step, real tinted lift. The radius scale and
+  every component are the app's, unchanged.
 
   Tournament blue, not the classic green: blue is what competition cloth is
   actually woven in and what a modern hall is fitted with, and green reads
@@ -218,11 +227,18 @@
   what keeps the two surfaces from reading as the same product in two tabs.
 
   `--color-strike*` is never redefined here. Out here it means one thing only,
-  "act", and it is the app's yellow on every public page — a club's identity
-  rides on --color-club instead, so a card can be any of eight colours while the
-  button inside it stays the one colour a button is ever allowed to be.
+  "act", and it is the app's yellow on every public page.
+
+  --color-club is pinned to it out here. A club's colour is what a member sees
+  inside their own club, where they already know whose it is; a directory of
+  strangers' clubs painted in eight hues reads as a category system that means
+  nothing, and it puts a different colour behind the same button on every card.
+  Hue still exists where the colour *is* the object — the ball glyphs, the
+  avatars — but never as a wash behind text.
 */
 html:has([data-public]) {
+  --color-club: var(--color-strike);
+
   --color-pocket: #071120; /* canvas */
   --color-felt: #0e1d31; /* cards */
   --color-felt-raised: #152a44;
@@ -238,24 +254,27 @@ html:has([data-public]) {
   --color-ink-faint: #8697aa;
   --color-ink-ghost: #58697c;
 
-  /* Still control < card < sheet, still locked. Just a chunkier lock out here,
-     where a card is a poster and not a row. Interactive chips stay rounded-full;
-     that is the one documented exception to the scale. */
-  --radius-control: 14px;
-  --radius-card: 28px;
-  --radius-sheet: 36px;
+  /* No radius override. The scale is 10/14/20 here exactly as it is under
+     /app: a chunkier lock out here meant the same <Card> rendered as two
+     different products in two tabs, which is the one thing a marketing page
+     and the tool it sells must not do. What separates the two surfaces is the
+     canvas hue, the type step and the lift — none of which change an edge.
 
-  /* One step up from the app's fixed 48, and pinned to the landing page's own
-     headline (text-4xl → text-6xl) so / and /clubs open at the same size. */
+     Interactive chips stay rounded-full; that is the one documented exception
+     to the scale. */
+
+  /* Fluid where the app's is fixed, so a headline on a phone is not the 48px
+     it is on a desktop. The landing page's own hero is text-display too, which
+     is what makes / and a profile page open at the same size. */
   --text-h1: clamp(1.75rem, 4vw, 2.25rem); /* 28 → 36 */
   --text-display: clamp(2.25rem, 5vw, 3.75rem); /* 36 → 60 */
 
-  --lift: 0 1px 2px rgb(0 0 0 / 0.45), 0 10px 30px -12px rgb(0 0 0 / 0.6);
+  /* One quiet step, and a hover that is barely a second one. The pair used to
+     run to a 46px blur, which on a grid of cards reads as every card floating
+     off the page at once. */
+  --lift: 0 1px 2px rgb(0 0 0 / 0.35), 0 6px 16px -10px rgb(0 0 0 / 0.5);
   --lift-strong:
-    0 2px 4px rgb(0 0 0 / 0.5), 0 24px 46px -16px rgb(0 0 0 / 0.72);
-
-  --lamp: color-mix(in srgb, var(--color-strike) 10%, transparent);
-  --lamp-strong: color-mix(in srgb, var(--color-strike) 20%, transparent);
+    0 1px 3px rgb(0 0 0 / 0.42), 0 12px 26px -14px rgb(0 0 0 / 0.6);
 }
 
 /* Light mode is chalk, not paper: a pale blue-white canvas with pure white cards
@@ -278,10 +297,9 @@ html[data-theme="light"]:has([data-public]) {
   --color-ink-faint: #64768a;
   --color-ink-ghost: #9aa9b8;
 
-  --lift:
-    0 1px 2px rgb(10 30 55 / 0.07), 0 12px 28px -14px rgb(10 30 55 / 0.24);
+  --lift: 0 1px 2px rgb(10 30 55 / 0.06), 0 6px 16px -10px rgb(10 30 55 / 0.18);
   --lift-strong:
-    0 2px 6px rgb(10 30 55 / 0.09), 0 26px 50px -18px rgb(10 30 55 / 0.32);
+    0 1px 3px rgb(10 30 55 / 0.08), 0 14px 30px -16px rgb(10 30 55 / 0.24);
 }
 
 @layer base {
@@ -304,24 +322,15 @@ html[data-theme="light"]:has([data-public]) {
     scroll-behavior: smooth;
   }
 
+  /* Flat canvas. There was a lamp cone gradient across the top of the document
+     here; it was atmosphere, not information, and atmosphere applied to every
+     page is what makes a product look like a demo of itself. Depth is surface
+     lightness and hairlines, in one place, everywhere. */
   body {
     background-color: var(--color-pocket);
     color: var(--color-ink);
     font-size: var(--text-body);
     line-height: 1.5;
-    /* The pendant lamp: one cone of light at the top of the canvas, nothing else. */
-    background-image: radial-gradient(
-      120% 60% at 50% -10%,
-      var(--lamp) 0%,
-      transparent 60%
-    );
-    /* Scrolls away with the page: the lamp belongs to the top of the document,
-       not to the viewport. The size is pinned to one screen because body
-       backgrounds propagate to the canvas, where a percentage would resolve
-       against the whole document height and stretch the cone down the page. */
-    background-attachment: scroll;
-    background-size: 100% 100dvh;
-    background-repeat: no-repeat;
   }
 
   h1,
@@ -330,6 +339,7 @@ html[data-theme="light"]:has([data-public]) {
     text-wrap: balance;
     /* Optical sizing: large type tightens */
     letter-spacing: -0.02em;
+    font-weight: var(--font-weight-medium);
   }
 
   p,
@@ -498,10 +508,7 @@ html[data-theme="light"]:has([data-public]) {
     border: 1px solid var(--color-hairline-strong);
     border-radius: var(--radius-control);
     background-color: var(--color-felt-raised);
-    /* The one shadow the app allows itself outside [data-public]: a popup has
-       to detach from whatever it is covering, and there is no surface step left
-       above felt-raised to do it with. Same value the map popup uses. */
-    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+    box-shadow: var(--shadow-pop);
     scrollbar-width: thin;
     scrollbar-color: var(--color-rail) var(--color-felt-raised);
   }
@@ -643,6 +650,30 @@ dialog.finish[open]::backdrop {
   }
 }
 
+/* The photo lightbox's veil. The heaviest of the four, and blurred like the
+   finish dialog's for the same reason: what it covers is a whole club page —
+   a hero, a stats row, a roster grid — and at the sheet's 60% all of that was
+   still legible around the edges of the picture and competing with it. A photo
+   opened full size should be the only thing in the room. */
+dialog.lightbox::backdrop {
+  background: rgb(0 0 0 / 0);
+  backdrop-filter: blur(4px);
+  transition:
+    background 240ms var(--ease-out),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+
+dialog.lightbox[open]::backdrop {
+  background: rgb(0 0 0 / 0.85);
+}
+
+@starting-style {
+  dialog.lightbox[open]::backdrop {
+    background: rgb(0 0 0 / 0);
+  }
+}
+
 /*
   Toasts — "Enlace copiado", "No se pudo guardar" — are the app's third overlay,
   and the only one that arrives wearing someone else's clothes: react-toastify
@@ -669,7 +700,7 @@ dialog.finish[open]::backdrop {
      be a message. One line of text is one line high. */
   --toastify-toast-min-height: 0;
   --toastify-font-family: var(--font-sans);
-  --toastify-toast-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  --toastify-toast-shadow: var(--shadow-pop);
 
   /* Both vendor "themes" resolve to the same pair of tokens: which way round the
      page is, is already answered by [data-theme] one level up. */
@@ -809,15 +840,6 @@ body .Toastify__close-button:focus {
   }
 }
 
-/* The lamp cone again, but aimed at one element instead of the page. */
-.spot {
-  background-image: radial-gradient(
-    60% 50% at 50% 0%,
-    var(--lamp-strong) 0%,
-    transparent 70%
-  );
-}
-
 /* Depth as an opt-in class, so /app and the public side share one <Card>.
    Outside [data-public] --lift is transparent, so this is a no-op there. */
 .lift {
@@ -831,7 +853,7 @@ body .Toastify__close-button:focus {
 a.lift:hover,
 button.lift:hover {
   box-shadow: var(--lift-strong);
-  translate: 0 -3px;
+  translate: 0 -1px;
 }
 /* Press feedback, matching what buttonClasses already does at 0.97. */
 a.lift:active,
@@ -839,27 +861,15 @@ button.lift:active {
   scale: 0.985;
 }
 
-/* Entrance stagger. --i is the card index. The cap is the point: 24 cards at
-   45ms each is a page and a half of waiting, so the tail arrives together.
-   An inline animation-delay still wins, so LandingPage's hero delays keep working. */
-.rise {
-  animation-delay: calc(min(var(--i, 0), 8) * 45ms);
-}
-
-/* Cards arrive with a little scale as well as a rise, so a grid assembles and
-   the eye lands on the first card rather than on all twenty-four at once.
-   .rise stays for the landing page's hero, which is tuned to it. */
+/* A little scale as well as a rise, so a block assembles rather than sliding.
+   Landing page only, like everything else in here: a directory that stages its
+   cards in is a directory you cannot read until it has finished performing. */
 @keyframes pop {
   from {
     opacity: 0;
     translate: 0 18px;
     scale: 0.96;
   }
-}
-
-.pop {
-  animation: pop 620ms var(--ease-out) backwards;
-  animation-delay: calc(min(var(--i, 0), 8) * 45ms);
 }
 
 /* The same, scroll-linked, for everything below the fold. Compositor-driven, no
@@ -887,65 +897,59 @@ button.lift:active {
   color: var(--color-pocket);
 }
 
-/* The gradient version, for where a flood would be too much weight: card art
-   bands, hero backdrops. --color-club is whatever [data-ball] on the card set it
-   to, so eight clubs in a grid are eight different cards. --wash tunes
-   strength; a wash has to read as the club's colour from across the room, not
-   as a tint you notice on inspection. */
+/* A tinted panel: a block that is part of the page but not the page — a closing
+   CTA, a callout, the top of a profile. --color-club is whatever [data-ball] set
+   it to, which under /app is the club and out on the public side is the accent.
+
+   One flat mix, not a gradient. Two radials used to sit here — a colour from the
+   top left and a second cone of the accent from the top right. They were
+   decoration: nothing about a card's position in the band meant anything, and
+   the accent one contradicted the rule that --color-strike only ever means
+   "act". A flat tint says the panel is set apart, and says nothing else.
+
+   Pair it with .wash-soft anywhere a stranger reads it. Bare .wash is the
+   full-strength band, and it survives for /app's skill tiles, where the hue is
+   a fact about the tile; on the public side there is one accent now, and a
+   band in it would put the button's colour behind something that is not a
+   button.
+
+   Mixed into a surface rather than laid over one, so the result is always a
+   real surface colour: no alpha, nothing showing through, and the same value
+   whatever is painted underneath. --wash tunes strength, --wash-base picks
+   which surface it tunes away from. */
 .wash {
-  background-color: var(--color-felt-raised);
-  background-image:
-    radial-gradient(
-      90% 120% at 12% 0%,
-      color-mix(in srgb, var(--color-club) var(--wash, 55%), transparent) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      70% 90% at 92% 8%,
-      color-mix(
-          in srgb,
-          var(--color-strike) calc(var(--wash, 55%) / 2),
-          transparent
-        )
-        0%,
-      transparent 62%
-    );
+  background-color: color-mix(
+    in srgb,
+    var(--color-club) var(--wash, 55%),
+    var(--wash-base, var(--color-felt-raised))
+  );
 }
-/* Light mode's strike is a deep shade rather than a bright one, so the same
-   percentage lands much heavier. 26 is where it is unmistakably the club's
-   colour and still carries ink at AA. */
+/* Light mode's club shades are deep rather than bright, so the same percentage
+   lands much heavier against a white card. */
 :root[data-theme="light"] .wash {
   --wash: 26%;
 }
 
 /* Card art is loud; a band with a headline on it has to be quiet. Full-strength
-   wash puts a bright club colour directly under --color-ink, which no ink token
+   wash puts a club colour directly under --color-ink, which no ink token
    survives across eight hues and two modes. Pair with .wash wherever text sits
-   *on* the wash rather than below it. */
+   *on* the wash rather than below it.
+
+   It also moves the base down to --color-felt: a surface carrying text is a
+   card, and the card is the surface every ink ratio in this file is quoted
+   against. At 10% the worst of the eight hues keeps --color-ink-faint at
+   4.6:1 in dark mode.
+
+   Light mode is the exception and it is not one this class created: the public
+   skin's --color-ink-faint is 4.67:1 on a white card before any tint, so any
+   wash at all puts it under AA. 6% is the least that still reads as the club's
+   colour; the real fix is darkening that token, which is its own change. */
 .wash-soft {
-  --wash: 20%;
+  --wash: 10%;
+  --wash-base: var(--color-felt);
 }
 :root[data-theme="light"] .wash-soft {
-  --wash: 10%;
-}
-
-/* A photo has to fade into the card it sits in, not stop at it. */
-.scrim {
-  background-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    color-mix(in srgb, var(--color-felt) 55%, transparent) 55%,
-    var(--color-felt) 100%
-  );
-}
-
-/* Chalk dust on the cloth. Texture for a hero band, one line, no asset. */
-.dotfield {
-  background-image: radial-gradient(
-    var(--color-hairline-strong) 1px,
-    transparent 1px
-  );
-  background-size: 18px 18px;
+  --wash: 6%;
 }
 
 /* The bar is part of the page until the page moves under it. At rest it has no
@@ -955,11 +959,11 @@ button.lift:active {
 
    The surface and its blur live on a pseudo-element that fades in, rather than
    on the bar itself. `backdrop-filter` applies the moment it is declared, even
-   over a fully transparent background, and blurring the body's own lamp gradient
-   resolves slightly differently from the gradient beneath it — which drew a faint
-   seam along the bar's bottom edge, a visible block in exactly the place there is
-   meant to be nothing. At `opacity: 0` a pseudo-element contributes nothing at
-   all, so at rest the bar really is absent rather than merely invisible.
+   over a fully transparent background, and a blur over an unscrolled page still
+   resolves slightly differently from the surface beneath it — enough to draw a
+   faint seam along the bar's bottom edge, a visible block in exactly the place
+   there is meant to be nothing. At `opacity: 0` a pseudo-element contributes
+   nothing at all, so at rest the bar really is absent rather than invisible.
 
    Scroll-driven, so there is no listener and no React state: the compositor reads
    document scroll directly. Without support the bar stays transparent, which is
@@ -1334,7 +1338,7 @@ button.lift:active {
   border-radius: var(--radius-control);
   background: var(--color-felt);
   color: var(--color-ink);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  box-shadow: var(--shadow-pop);
 }
 
 .map-popup .maplibregl-popup-tip {

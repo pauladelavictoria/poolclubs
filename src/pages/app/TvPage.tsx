@@ -1,4 +1,5 @@
 import { LuExpand } from "react-icons/lu";
+import { cardClasses } from "@/components/ui/cardStyles";
 import { useAuth } from "@/hooks/useAuth";
 import { useGames } from "@/hooks/useGames";
 import { usePlayers } from "@/hooks/usePlayers";
@@ -39,10 +40,10 @@ export default function TvPage() {
   const { data: live } = useLiveMatches({ poll: true });
   const { data: players } = usePlayers();
   const { data: gamesData, isLoading: gamesLoading } = useGames(
-    { date: today ?? undefined, mode: "single", tz },
-    // Not until the day is known: without a date this is every single-player
-    // game the club has ever filed, and the wall display would spend its first
-    // render ranking the lot. See the note on useGames' `enabled`.
+    { date: today ?? undefined, tz },
+    // Not until the day is known: without a date this is every game the club has
+    // ever filed, and the wall display would spend its first render ranking the
+    // lot. See the note on useGames' `enabled`.
     { poll: true, enabled: today !== null },
   );
   const ranking = useDailyRanking({
@@ -122,7 +123,9 @@ export default function TvPage() {
             {matches.map((match) => (
               <div
                 key={match.id}
-                className="min-h-0 overflow-hidden rounded-card border border-hairline bg-felt"
+                className={cardClasses({
+                  className: "min-h-0 overflow-hidden",
+                })}
               >
                 <Scoreboard
                   match={match}
@@ -139,7 +142,12 @@ export default function TvPage() {
           {/* The one thing beside the tables: today's ladder. It stays put —
               nothing rotates through here, so a glance up finds the same list
               in the same place, which is what a wall display is for. */}
-          <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-card border border-hairline bg-felt lg:w-[28rem] xl:w-[34rem]">
+          <aside
+            className={cardClasses({
+              className:
+                "flex min-h-0 w-full shrink-0 flex-col overflow-hidden lg:w-[28rem] xl:w-[34rem]",
+            })}
+          >
             <h2 className="shrink-0 border-b border-hairline px-4 py-3 text-caption font-medium uppercase tracking-wide text-ink-faint">
               {t("ranking.dailyTitle")}
             </h2>

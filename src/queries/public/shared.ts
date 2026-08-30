@@ -4,7 +4,7 @@
  * drills.ts and search.ts for the queries themselves.
  *
  * Two rules hold for every query in this module, and both come from
- * sql/public-pages.sql:
+ * sql/schema.sql:
  *
  *   1. Columns are named, never `select("*")`. Anon's table-wide SELECT on
  *      clubs, players and drills is revoked in favour of column grants, so a
@@ -23,6 +23,33 @@
 
 export const CLUB_COLS =
   "id, name, slug, logo_url, theme_color, member_count, created_at, address, city, country, lat, lon";
+
+/**
+ * One club's own page, which is the only place these three are read.
+ *
+ * Deliberately not folded into CLUB_COLS. That string is a card in a list — the
+ * directory asks for 24 of them, the map pins for up to 500, and every public
+ * tournament and player row embeds one. A paragraph of prose and a week of
+ * opening hours on each would grow all seven of those queries to buy nothing:
+ * no card shows any of it.
+ *
+ * These columns need `GRANT SELECT` for anon before this ships — see
+ * sql/schema.sql, which explains why the order is not negotiable.
+ */
+/**
+ * The directory's own list, and nothing else that embeds a club.
+ *
+ * `photo_order` is what says which of a club's photos is its cover, so a card
+ * that shows one has to read it or it will show a different picture than the
+ * club's own page does. It stays out of CLUB_COLS because the tournament and
+ * player rows that embed a club show no photo at all, and the map pins query
+ * (which asks for up to 500) names its own columns anyway.
+ *
+ * anon already has the grant — CLUB_DETAIL_COLS reads the same column.
+ */
+export const CLUB_CARD_COLS = `${CLUB_COLS}, photo_order`;
+
+export const CLUB_DETAIL_COLS = `${CLUB_COLS}, description, phone, tables_info, schedule, timezone, photo_order`;
 export const PERSON_COLS = "id, slug, name, avatar_url, is_public";
 export const PLAYER_COLS = "id, club_id, category";
 export const DRILL_COLS =

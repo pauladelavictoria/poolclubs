@@ -10,7 +10,7 @@ import type { Key } from "@/i18n";
  *
  * Postgres says which. 23505 is a unique index; 42501 and PostgREST's own
  * PGRST301/PGRST116 are RLS turning the write away; a `RAISE EXCEPTION` from
- * one of the database's own guards (sql/live-night.sql, for the live-match
+ * one of the database's own guards (sql/schema.sql, for the live-match
  * ones) arrives as P0001 carrying its own sentence.
  *
  * The caller supplies the key for each category it can tell a better story

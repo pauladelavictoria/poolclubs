@@ -29,6 +29,7 @@ export function getRouter() {
     defaultErrorComponent: RouteError,
     defaultNotFoundComponent: NotFound,
     scrollRestoration: true,
+    scrollToTopSelectors: ['[data-scroll-restoration-id="app-shell"]'],
   });
 
   // Dehydrates whatever the loaders primed into the HTML, so the client renders

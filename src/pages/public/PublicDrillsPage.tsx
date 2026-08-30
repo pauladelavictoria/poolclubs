@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { LuTarget } from "react-icons/lu";
 import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
+import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import DrillCard from "@/components/drills/DrillCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -76,16 +77,10 @@ export default function PublicDrillsPage() {
 
   return (
     <>
-      <section>
-        <div className="px-4 py-6 sm:px-6 sm:py-8">
-          <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
-            {t("public.publicDrills.title")}
-          </h1>
-          <p className="mt-2 max-w-[46ch] text-h4 text-ink-soft">
-            {t("public.publicDrills.subtitle")}
-          </p>
-        </div>
-      </section>
+      <PublicPageTitle
+        title={t("public.publicDrills.title")}
+        lede={t("public.publicDrills.subtitle")}
+      />
 
       <PublicShell>
         {/* The skill facet, as a rail rather than a second row of pills: eight
@@ -194,8 +189,8 @@ export default function PublicDrillsPage() {
           </Card>
         ) : search.difficulty ? (
           <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-            {shown.map((drill, i) => (
-              <DrillCard key={drill.id} drill={drill} public index={i} />
+            {shown.map((drill) => (
+              <DrillCard key={drill.id} drill={drill} public />
             ))}
           </div>
         ) : (
@@ -206,8 +201,8 @@ export default function PublicDrillsPage() {
                   {t(`difficulty.${difficulty}`)}
                 </h2>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-                  {rows.map((drill, i) => (
-                    <DrillCard key={drill.id} drill={drill} public index={i} />
+                  {rows.map((drill) => (
+                    <DrillCard key={drill.id} drill={drill} public />
                   ))}
                 </div>
               </section>

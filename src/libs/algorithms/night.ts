@@ -11,7 +11,7 @@ import type { LiveMatch, Player } from "@/types";
  * How long a live match survives with nobody touching it.
  *
  * The same three hours are written into the "Members can clear an abandoned
- * match" policy in sql/live-night.sql. This constant is the single source for
+ * match" policy in sql/schema.sql. This constant is the single source for
  * both client copies of the rule — the list filter and the badge — and the
  * policy has a comment pointing back here. Drift and a row disappears from the
  * list while still refusing to be deleted.
@@ -30,6 +30,17 @@ export const isAbandoned = (match: LiveMatch, now: number) =>
   now - new Date(match.updated_at).getTime() >= ABANDON_AFTER_MS;
 
 /**
+ * The four seats and the mode — the shape a live match and the game it becomes
+ * both have, because finishing copies the columns straight across. Taking the
+ * shape rather than the row lets the ranking maths read seats through the same
+ * function the live lists use.
+ */
+type Seated = Pick<
+  LiveMatch,
+  "player_1_id" | "player_2_id" | "player_1b_id" | "player_2b_id" | "mode"
+>;
+
+/**
  * The players on one side, one id for singles and two for doubles.
  *
  * Worth having as a function rather than reading the columns at each call site:
@@ -37,15 +48,21 @@ export const isAbandoned = (match: LiveMatch, now: number) =>
  * two seats, and every one of those places is wrong for doubles in a way
  * nothing would notice — a partner who is at a table would still be counted as
  * waiting at one.
+ *
+ * `mode` decides, not the column being filled: `live_matches` has a CHECK
+ * keeping the two in step, but `games` has none, so a stray partner id on a row
+ * filed as singles must not quietly become a third player.
  */
-export const seatsOfSide = (match: LiveMatch, side: 1 | 2): number[] =>
-  side === 1
-    ? [match.player_1_id, match.player_1b_id].filter(
-        (id): id is number => id !== null,
-      )
-    : [match.player_2_id, match.player_2b_id].filter(
-        (id): id is number => id !== null,
-      );
+export const seatsOfSide = (match: Seated, side: 1 | 2): number[] => {
+  const isDoubles = match.mode === "doubles";
+  const [seat, partner] =
+    side === 1
+      ? [match.player_1_id, match.player_1b_id]
+      : [match.player_2_id, match.player_2b_id];
+  return [seat, isDoubles ? partner : null].filter(
+    (id): id is number => id !== null,
+  );
+};
 
 /** Who a side is, as one string: a name, or a pair joined. Every list that
  *  summarises a live match needs this, and each of them writing its own is how
@@ -64,6 +81,30 @@ export const seatsOf = (match: LiveMatch): number[] => [
   ...seatsOfSide(match, 1),
   ...seatsOfSide(match, 2),
 ];
+
+/**
+ * Who is at the club right now.
+ *
+ * A check-in, or a seat at a table. The second half is not a convenience: a
+ * night starts with four people racking up and nobody pressing "I'm here", and
+ * the home page then said the club was empty above a live 2v2 it was already
+ * showing the names of. Being in a match is the stronger evidence of the two —
+ * a check-in is a claim, a match is a fact.
+ *
+ * `now` may be null while the browser has not told us the time yet (see
+ * useNow); the seats still count, since they do not depend on a clock.
+ */
+export const whoIsHere = (
+  players: Player[],
+  matches: LiveMatch[],
+  now: number | null,
+): Player[] => {
+  const playing = new Set(matches.flatMap(seatsOf));
+  return players.filter(
+    (player) =>
+      playing.has(player.id) || (now !== null && isPresent(player, now)),
+  );
+};
 
 /** 1 or 2 — which side is ahead, or null while it is level. */
 export const leaderOf = (match: LiveMatch): 1 | 2 | null => {

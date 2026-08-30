@@ -10,7 +10,7 @@ import { ADMIN_PLAYER_ID } from "@/hooks/useAuth";
  * a list of all of them.
  *
  * Two gates, on purpose. This one keeps the page out of the router for anyone
- * else; the SQL function behind it (sql/operator-dashboard.sql) refuses to return
+ * else; the SQL function behind it (sql/schema.sql) refuses to return
  * rows regardless. The client-side one is the courtesy, not the security.
  */
 export const Route = createFileRoute("/app/_authed/ops")({

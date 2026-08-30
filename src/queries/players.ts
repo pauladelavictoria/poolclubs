@@ -26,7 +26,7 @@ type WithPerson = {
     avatar_url: string | null;
     slug: string;
     is_public: boolean;
-    /** Optional because anon is not granted it — see sql/people.sql. Present
+    /** Optional because anon is not granted it — see sql/schema.sql. Present
      *  for a member reading their own club, null everywhere public. */
     user_id?: string | null;
   } | null;

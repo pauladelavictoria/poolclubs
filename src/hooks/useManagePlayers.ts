@@ -23,7 +23,7 @@ type UpdatePlayerInput = {
   name?: string;
   category?: Category;
   /** Listed on the public site. Set by the player themselves in their own
-   *  settings — see sql/public-pages.sql for what it does and does not hide. */
+   *  settings — see sql/schema.sql for what it does and does not hide. */
   is_public?: boolean;
 };
 

@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { LuUsers } from "react-icons/lu";
 import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
+import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -68,16 +69,10 @@ export default function PublicPlayersPage() {
 
   return (
     <>
-      <section>
-        <div className="px-4 py-6 sm:px-6 sm:py-8">
-          <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
-            {t("public.publicPlayers.title")}
-          </h1>
-          <p className="mt-2 max-w-[46ch] text-h4 text-ink-soft">
-            {t("public.publicPlayers.subtitle")}
-          </p>
-        </div>
-      </section>
+      <PublicPageTitle
+        title={t("public.publicPlayers.title")}
+        lede={t("public.publicPlayers.subtitle")}
+      />
 
       <PublicShell>
         <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
@@ -209,8 +204,7 @@ export default function PublicPlayersPage() {
                   key={club.id}
                   to="/clubs/$slug"
                   params={{ slug: club.slug }}
-                  data-ball={club.theme_color}
-                  className="wash lift flex shrink-0 snap-start items-center gap-2 rounded-full border border-hairline px-3 py-2"
+                  className="lift flex shrink-0 snap-start items-center gap-2 rounded-full border border-hairline bg-felt px-3 py-2 transition-colors duration-150 hover:border-hairline-strong"
                 >
                   <Avatar
                     name={club.name}
@@ -259,15 +253,10 @@ function groupByLetter(people: PublicPersonWithClubs[]) {
  * thirty histories to print one number each.
  */
 function PersonRow({ person }: { person: PublicPersonWithClubs }) {
-  // The row's accent takes the first club's, the same compromise the profile
-  // hero makes: there is no single colour for somebody who plays in three.
-  const [first] = person.memberships;
-
   return (
     <Link
       to="/players/$playerSlug"
       params={{ playerSlug: person.slug }}
-      data-ball={first?.club.theme_color}
       className="group flex items-center gap-2.5 rounded-control border border-hairline px-2.5 py-2 transition-colors duration-150 hover:bg-felt-raised"
     >
       <Avatar

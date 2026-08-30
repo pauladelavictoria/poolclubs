@@ -160,8 +160,10 @@ export type Database = {
           name: string
           owner_id: string
           phone: string | null
+          photo_order: Json
           schedule: Json
           slug: string
+          tables_info: string | null
           theme_color: Database["public"]["Enums"]["BallColor"]
           timezone: string
         }
@@ -180,8 +182,10 @@ export type Database = {
           name: string
           owner_id: string
           phone?: string | null
+          photo_order?: Json
           schedule?: Json
           slug: string
+          tables_info?: string | null
           theme_color?: Database["public"]["Enums"]["BallColor"]
           timezone?: string
         }
@@ -200,8 +204,10 @@ export type Database = {
           name?: string
           owner_id?: string
           phone?: string | null
+          photo_order?: Json
           schedule?: Json
           slug?: string
+          tables_info?: string | null
           theme_color?: Database["public"]["Enums"]["BallColor"]
           timezone?: string
         }
@@ -895,6 +901,8 @@ export type Database = {
           club_id: number
           created_at: string
           discipline: Database["public"]["Enums"]["Discipline"]
+          ends_on: string | null
+          entry_fee: string | null
           format: string
           id: number
           legs: number
@@ -903,6 +911,7 @@ export type Database = {
           race_semi: number | null
           race_to: number
           single_from: number
+          starts_on: string | null
           status: string
         }
         Insert: {
@@ -911,6 +920,8 @@ export type Database = {
           club_id: number
           created_at?: string
           discipline?: Database["public"]["Enums"]["Discipline"]
+          ends_on?: string | null
+          entry_fee?: string | null
           format: string
           id?: number
           legs?: number
@@ -919,6 +930,7 @@ export type Database = {
           race_semi?: number | null
           race_to?: number
           single_from?: number
+          starts_on?: string | null
           status?: string
         }
         Update: {
@@ -927,6 +939,8 @@ export type Database = {
           club_id?: number
           created_at?: string
           discipline?: Database["public"]["Enums"]["Discipline"]
+          ends_on?: string | null
+          entry_fee?: string | null
           format?: string
           id?: number
           legs?: number
@@ -935,6 +949,7 @@ export type Database = {
           race_semi?: number | null
           race_to?: number
           single_from?: number
+          starts_on?: string | null
           status?: string
         }
         Relationships: [
@@ -1037,6 +1052,15 @@ export type Database = {
         Args: { cat?: number; cid: number; pname: string }
         Returns: number
       }
+      approved_member_contact: {
+        Args: { p_player_id: number }
+        Returns: {
+          club_name: string
+          club_slug: string
+          email: string
+          name: string
+        }[]
+      }
       can_score_live_match: {
         Args: { cid: number; p1: number; p1b: number; p2: number; p2b: number }
         Returns: boolean
@@ -1050,6 +1074,7 @@ export type Database = {
           table_id: number
         }[]
       }
+      club_photo_club_id: { Args: { object_name: string }; Returns: number }
       club_preview: {
         Args: { p_slug: string }
         Returns: {

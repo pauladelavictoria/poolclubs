@@ -6,7 +6,9 @@ import { keys } from "@/libs/queryKeys";
 import { SESSION_KEY, sessionQuery } from "@/queries/session";
 import { clubPreviewQuery } from "@/queries/club";
 import { clubMembersQuery } from "@/queries/players";
+import { sendMemberApprovedMail } from "@/libs/server/mail.functions";
 import type { Place } from "@/libs/algorithms/geocode";
+import type { Schedule } from "@/libs/algorithms/schedule";
 import type { BallColor } from "@/types";
 
 export type { ClubPreview } from "@/queries/club";
@@ -38,8 +40,21 @@ export const useManageClub = () => {
           .update({ status: "active" })
           .eq("id", playerId)
           .throwOnError();
+        return playerId;
       },
-      onSuccess,
+      // Tell them they are in. Fired from here rather than from a database
+      // trigger, and never awaited, for the same reasons useChallenges fires
+      // sendPush that way — see src/libs/server/push.functions.ts. The price is
+      // a mail lost if the admin's browser dies in the next second, and the
+      // approval itself has already succeeded by then.
+      //
+      // Ordered after the shared onSuccess so the roster is already moving
+      // while the mail goes out; the send decides for itself whether it is
+      // allowed to (sql/schema.sql), and says nothing back.
+      onSuccess: async (playerId) => {
+        await onSuccess();
+        void sendMemberApprovedMail({ data: { playerId } }).catch(() => {});
+      },
     }),
 
     // Removing drops their games and drill logs with them (ON DELETE CASCADE).
@@ -71,8 +86,24 @@ export const useManageClub = () => {
         location?: Place | null;
         /** The club's own clock, as an IANA zone. What decides which night a
          *  result belongs to — see libs/algorithms/day.ts. The database refuses a zone
-         *  Postgres does not know (sql/club-timezone.sql). */
+         *  Postgres does not know (sql/schema.sql). */
         timezone?: string;
+        /** What the club says about itself, on its public page. */
+        description?: string | null;
+        /** A public venue's phone number. Stored as typed — it is rendered as a
+         *  tel: link and dialled, never parsed. */
+        phone?: string | null;
+        /** The room, in the admin's own words: how many tables, what make,
+         *  what size. Free text because any schema for it is a guess — see
+         *  sql/schema.sql. */
+        tablesInfo?: string | null;
+        /** Opening hours. The column is jsonb with no CHECK, so the shape is
+         *  defended in libs/algorithms/schedule.ts rather than in the database. */
+        schedule?: Schedule;
+        /** The order the venue photos are shown in; the first is the cover.
+         *  An array of storage paths, reconciled against the bucket on read —
+         *  see libs/algorithms/photoOrder.ts. */
+        photoOrder?: string[];
       }) => {
         if (!activeClubId) throw new Error("no active club");
 
@@ -87,6 +118,11 @@ export const useManageClub = () => {
           lat?: number | null;
           lon?: number | null;
           timezone?: string;
+          description?: string | null;
+          phone?: string | null;
+          tables_info?: string | null;
+          schedule?: Schedule;
+          photo_order?: string[];
         } = {};
         if (updates.name !== undefined) patch.name = updates.name.trim();
         if (updates.logoUrl !== undefined) patch.logo_url = updates.logoUrl;
@@ -102,6 +138,17 @@ export const useManageClub = () => {
           patch.lon = place?.lon ?? null;
         }
         if (updates.timezone !== undefined) patch.timezone = updates.timezone;
+        // Empty text is no text: a cleared field should read as unset on the
+        // public page, not as an empty paragraph with a heading over it.
+        if (updates.description !== undefined)
+          patch.description = updates.description?.trim() || null;
+        if (updates.phone !== undefined)
+          patch.phone = updates.phone?.trim() || null;
+        if (updates.tablesInfo !== undefined)
+          patch.tables_info = updates.tablesInfo?.trim() || null;
+        if (updates.schedule !== undefined) patch.schedule = updates.schedule;
+        if (updates.photoOrder !== undefined)
+          patch.photo_order = updates.photoOrder;
 
         await supabase
           .from("clubs")

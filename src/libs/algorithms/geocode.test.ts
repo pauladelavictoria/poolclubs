@@ -67,7 +67,7 @@ describe("toPlace", () => {
     ).toBeNull();
   });
 
-  it("drops a malformed country code rather than storing it — the CHECK in sql/club-location.sql would reject it anyway", () => {
+  it("drops a malformed country code rather than storing it — the CHECK in sql/schema.sql would reject it anyway", () => {
     expect(
       toPlace({
         geometry: { coordinates: [0, 0] },

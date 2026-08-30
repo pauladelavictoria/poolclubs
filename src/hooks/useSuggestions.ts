@@ -65,7 +65,7 @@ export function useSuggestions({
   groups: Player[][];
   freeTables: ClubTable[];
   /** Whether the signed-in player may start this one. Mirrors
-   *  can_score_live_match in sql/live-night.sql. */
+   *  can_score_live_match in sql/schema.sql. */
   canStart: (group: Player[]) => boolean;
 } {
   const { player, isClubAdmin, activeClub } = useAuth();

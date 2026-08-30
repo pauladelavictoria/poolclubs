@@ -23,3 +23,9 @@
 #                            Server code reads it from process.env.
 # Generate a pair with `npx web-push generate-vapid-keys`. Rotating them
 # invalidates every existing subscription, so members would have to re-enable.
+
+# And one more for the approval email, same place:
+#   RESEND_API_KEY — secret, so NOT VITE_-prefixed. Without it the send logs a
+#                    line and does nothing, which is what dev and CI do. The
+#                    From domain has to be verified in Resend or every send
+#                    comes back 403.

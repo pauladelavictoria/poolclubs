@@ -20,7 +20,7 @@
  * country would see the night cut in a different place than the room does.
  *
  * The club's own zone lives on its row (`clubs.timezone`, see
- * sql/club-timezone.sql) and reaches every one of these as an argument. This is
+ * sql/schema.sql) and reaches every one of these as an argument. This is
  * the fallback for a club that has none and for a value Intl does not know: a
  * junk zone must not be able to throw inside a date range.
  */
@@ -56,8 +56,11 @@ export const DAY_START_HOUR = 6;
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** The club's wall clock for an instant, as "YYYY-MM-DD HH:mm:ss" — sortable,
- *  parseable, and the one locale that formats it that way by default. */
-const wallClock = (ts: number, tz: string) =>
+ *  parseable, and the one locale that formats it that way by default.
+ *
+ *  Exported for libs/algorithms/schedule.ts, which asks the same question of the
+ *  same zone ("what time is it *there*") and must not grow a second answer. */
+export const wallClock = (ts: number, tz: string) =>
   new Intl.DateTimeFormat("sv-SE", {
     timeZone: tz,
     dateStyle: "short",

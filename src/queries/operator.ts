@@ -6,7 +6,7 @@ import { keys } from "@/libs/queryKeys";
  * One row per club, across every club — the only query in the app that is not
  * scoped to a club or a person.
  *
- * It goes through `operator_clubs()` (sql/operator-dashboard.sql) rather than a
+ * It goes through `operator_clubs()` (sql/schema.sql) rather than a
  * table read, because RLS scopes `clubs` and `games` to the caller's own
  * memberships. The gate lives in the function: a caller who is not the operator
  * gets an empty array, which is why there is nothing to check here.

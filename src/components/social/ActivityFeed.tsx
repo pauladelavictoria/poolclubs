@@ -196,7 +196,7 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
             {/* Three weights, so the feed reads as a feed and not as a stack of
                 identical boxes: a result gets a card, because the conversation
                 under it belongs to that result; a finished tournament gets the
-                lamp on it; an announcement gets neither. */}
+                raised surface; an announcement gets neither. */}
             {item.games && item.games.length > 1 ? (
               <Card className="overflow-hidden px-4 py-3">
                 <TournamentGamesCard
@@ -221,7 +221,7 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
               <Card
                 className={
                   item.tournament
-                    ? "spot overflow-hidden px-4 py-3"
+                    ? "overflow-hidden bg-felt-raised px-4 py-3"
                     : "px-4 py-3"
                 }
               >

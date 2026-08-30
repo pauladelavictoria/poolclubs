@@ -19,8 +19,10 @@ export default function ClubSelectPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-4 px-3 py-6">
-      <PageTitle title={t("club.selectTitle")} />
-      <p className="text-body text-ink-faint">{t("club.selectHint")}</p>
+      <PageTitle
+        title={t("club.selectTitle")}
+        subtitle={t("club.selectHint")}
+      />
 
       <Card className="divide-y divide-hairline overflow-hidden">
         {clubs.map((m) => (

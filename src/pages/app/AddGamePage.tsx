@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { getRouteApi } from "@tanstack/react-router";
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { useChallenges, useManageChallenges } from "@/hooks/useChallenges";
-import { useAddGame } from "@/hooks/useAddGame";
+import { useAddGame, useGame, useManageGames } from "@/hooks/useAddGame";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { usePlayers } from "@/hooks/usePlayers";
 import PageTitle from "@/components/layout/PageTitle";
@@ -14,11 +14,10 @@ import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { Segmented } from "@/components/ui/Segmented";
+import ConfirmButton from "@/components/ui/ConfirmButton";
 import { DisciplineBall } from "@/components/ui/Ball";
 import { DISCIPLINES, type Discipline, type Game } from "@/types";
 import { useT } from "@/i18n";
-
-const route = getRouteApi("/app/_authed/$clubSlug/games/new");
 
 const SIDES = [1, 2] as const;
 
@@ -30,21 +29,32 @@ const todayLocal = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
-/** The date input hands back "YYYY-MM-DD"; combined with the current time of
- *  day rather than midnight, so today's games keep sorting exactly as they
- *  did before this field existed, and a backdated one still lands after
- *  whatever else was recorded that same evening. */
-const toPlayedAt = (dateStr: string) => {
+/** The date input hands back "YYYY-MM-DD"; combined with a time of day rather
+ *  than midnight, so today's games keep sorting exactly as they did before this
+ *  field existed, and a backdated one still lands after whatever else was
+ *  recorded that same evening.
+ *
+ *  `clock` is now for a new result and the result's own time for a correction:
+ *  re-saving a game filed at 23:51 must not move it to whenever the fix was
+ *  made, which on a club night is a different night. */
+const toPlayedAt = (dateStr: string, clock = new Date()) => {
   const [y, m, d] = dateStr.split("-").map(Number);
-  const now = new Date();
   return new Date(
     y,
     m - 1,
     d,
-    now.getHours(),
-    now.getMinutes(),
-    now.getSeconds(),
+    clock.getHours(),
+    clock.getMinutes(),
+    clock.getSeconds(),
   ).toISOString();
+};
+
+/** A stored timestamp back into what the date input reads, in the reader's own
+ *  zone for the same reason `todayLocal` is. */
+const toDateInput = (playedAt: string) => {
+  const d = new Date(playedAt);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
 export default function AddGamePage() {
@@ -62,9 +72,19 @@ export default function AddGamePage() {
   const { data: players, isLoading: playersLoading } = usePlayers();
   const { mutate: handleAddGame, isPending } = useAddGame();
 
+  // One component, two routes: /games/new files a result, /games/$gameId/edit
+  // corrects one. `strict: false` is how you read a parameter — and a search
+  // key — that only one of the two has. Same shape as DrillEditorPage.
+  const { clubSlug, gameId } = useParams({ strict: false });
+  const { challenge: challengeId } = useSearch({ strict: false });
+  const navigate = useNavigate();
+
+  const { data: editing } = useGame(gameId);
+  const { updateGame, deleteGame } = useManageGames();
+  const isEdit = !!gameId;
+
   // Arriving from an accepted challenge: prefill the two names and close the
   // challenge once the result lands, so the loop ends where it started.
-  const { challenge: challengeId } = route.useSearch();
   const { data: challenges } = useChallenges();
   const { respondToChallenge } = useManageChallenges();
   const challenge = challenges?.find((c) => c.id === challengeId) ?? null;
@@ -74,6 +94,14 @@ export default function AddGamePage() {
     setValue("player_1_id", challenge.from_player_id);
     setValue("player_2_id", challenge.to_player_id);
   }, [challenge, setValue]);
+
+  // The row arrives after the first render — from the route's loader on a cold
+  // link, from the cache on a tap from the tape — so the form is filled here
+  // rather than in defaultValues.
+  useEffect(() => {
+    if (!editing) return;
+    reset({ ...editing, played_at: toDateInput(editing.played_at) });
+  }, [editing, reset]);
 
   // `useWatch`, not `watch()`: the hook form is memoizable, so React Compiler
   // doesn't bail out of optimising this whole component.
@@ -119,43 +147,65 @@ export default function AddGamePage() {
   const addDisabled =
     playersLoading ||
     isPending ||
+    updateGame.isPending ||
     !playersComplete ||
     !bothScoresIn ||
     !!problem;
 
+  const toGamesList = () =>
+    navigate({ to: "/app/$clubSlug/games", params: { clubSlug: clubSlug! } });
+
+  const onError = (err: unknown) =>
+    toast.error(
+      t(dbErrorMessage(err, "addGame", { denied: "common.deniedError" })),
+    );
+
   const onSubmit = (game: Game) => {
     // The selects hold ids now rather than names, so there is nothing left to
     // resolve here — games stopped carrying player names when those moved to
-    // people. See sql/people.sql.
-    handleAddGame(
-      {
-        ...game,
-        played_at: toPlayedAt(game.played_at),
-        // An unpicked partner select submits "", which is not a bigint.
-        player_1b_id: game.player_1b_id || null,
-        player_2b_id: game.player_2b_id || null,
-      },
-      {
-        onSuccess: (saved) => {
-          toast.success(t("games.added"));
-          if (challenge) {
-            respondToChallenge.mutate({
-              id: challenge.id,
-              status: "played",
-              gameId: saved.id,
-            });
-          }
-          // The date carries over rather than snapping back to today: loading
-          // a notebook of last season's results means entering many games
-          // against the same handful of dates in one sitting.
-          reset({ discipline, mode: game.mode, played_at: game.played_at });
+    // people. See sql/schema.sql.
+    const values = {
+      ...game,
+      played_at: toPlayedAt(
+        game.played_at,
+        editing ? new Date(editing.played_at) : undefined,
+      ),
+      // An unpicked partner select submits "", which is not a bigint.
+      player_1b_id: game.player_1b_id || null,
+      player_2b_id: game.player_2b_id || null,
+    };
+
+    if (isEdit && editing) {
+      updateGame.mutate(
+        { ...values, id: editing.id },
+        {
+          onSuccess: () => {
+            toast.success(t("common.saved"));
+            toGamesList();
+          },
+          onError,
         },
-        onError: (err) =>
-          toast.error(
-            t(dbErrorMessage(err, "addGame", { denied: "common.deniedError" })),
-          ),
+      );
+      return;
+    }
+
+    handleAddGame(values, {
+      onSuccess: (saved) => {
+        toast.success(t("games.added"));
+        if (challenge) {
+          respondToChallenge.mutate({
+            id: challenge.id,
+            status: "played",
+            gameId: saved.id,
+          });
+        }
+        // The date carries over rather than snapping back to today: loading
+        // a notebook of last season's results means entering many games
+        // against the same handful of dates in one sitting.
+        reset({ discipline, mode: game.mode, played_at: game.played_at });
       },
-    );
+      onError,
+    });
   };
 
   const playerOptions = players?.map((player) => (
@@ -169,7 +219,7 @@ export default function AddGamePage() {
   return (
     <>
       <div className="mx-auto max-w-2xl space-y-4 px-3 py-4">
-        <PageTitle title={t("games.add")} />
+        <PageTitle title={isEdit ? t("games.edit") : t("games.add")} />
         <Card className="p-5">
           {/* One wrapping row: pushed to the card edges when both fit, centred
               once they wrap onto their own lines on narrow phones. */}
@@ -273,9 +323,40 @@ export default function AddGamePage() {
             <div className="flex gap-3">
               <CancelLink />
               <Button type="submit" className="flex-1" disabled={addDisabled}>
-                {isPending ? t("common.saving") : t("games.add")}
+                {isPending || updateGame.isPending
+                  ? t("common.saving")
+                  : isEdit
+                    ? t("common.save")
+                    : t("games.add")}
               </Button>
             </div>
+
+            {/* Unfiling a result is the other half of correcting one, and it
+                belongs on the same screen rather than on the tape's row: by the
+                time you are here you can see which game it is. Set apart from
+                the commit above so it is not the button next to it. */}
+            {isEdit && (
+              <div className="border-t border-hairline pt-4">
+                <ConfirmButton
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={deleteGame.isPending}
+                  confirmLabel={t("games.deleteConfirm")}
+                  onConfirm={() =>
+                    deleteGame.mutate(gameId!, {
+                      onSuccess: () => {
+                        toast.success(t("games.deleted"));
+                        toGamesList();
+                      },
+                      onError,
+                    })
+                  }
+                >
+                  {t("games.delete")}
+                </ConfirmButton>
+              </div>
+            )}
           </form>
         </Card>
       </div>

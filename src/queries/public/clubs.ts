@@ -2,7 +2,14 @@ import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
 import { flattenPlayer } from "@/queries/players";
-import { CLUB_COLS, PERSON_COLS, PLAYER_COLS, orContains, rangeOf } from "./shared";
+import {
+  CLUB_CARD_COLS,
+  CLUB_DETAIL_COLS,
+  PERSON_COLS,
+  PLAYER_COLS,
+  orContains,
+  rangeOf,
+} from "./shared";
 import type { Club, Player } from "@/types";
 
 export type PublicClub = Pick<
@@ -21,6 +28,23 @@ export type PublicClub = Pick<
   | "lat"
   | "lon"
 > & { created_at: string | null };
+
+/** A directory card: a club plus the one column that says which photo is its
+ *  cover. See CLUB_CARD_COLS for why that is not in PublicClub itself. */
+export type PublicClubCard = PublicClub & Pick<Club, "photo_order">;
+
+/** The club's own page, which reads the columns no card does. Everything
+ *  else that embeds a club stays on PublicClub — see CLUB_DETAIL_COLS. */
+export type PublicClubDetail = PublicClub &
+  Pick<
+    Club,
+    | "description"
+    | "phone"
+    | "tables_info"
+    | "schedule"
+    | "timezone"
+    | "photo_order"
+  >;
 
 /** One membership, flattened the same way src/queries/players.ts does it, so a
  *  roster row out here is the same shape as a roster row inside a club. */
@@ -56,7 +80,7 @@ export const publicClubsQuery = (filters: PublicClubsFilters = {}) => {
       const supabase = getSupabase();
       let query = supabase
         .from("clubs")
-        .select(CLUB_COLS, { count: "exact" })
+        .select(CLUB_CARD_COLS, { count: "exact" })
         // Redundant against the anon policy, and deliberately so: a signed-in
         // visitor reads under their own policies, which would otherwise show
         // them their own hidden club in a public directory.
@@ -99,7 +123,7 @@ export const publicClubsQuery = (filters: PublicClubsFilters = {}) => {
       const [from, to] = rangeOf(page);
       const { data, count } = await query.range(from, to).throwOnError();
 
-      return { clubs: data as PublicClub[], totalCount: count ?? 0 };
+      return { clubs: data as PublicClubCard[], totalCount: count ?? 0 };
     },
   });
 };
@@ -153,13 +177,13 @@ export const publicClubQuery = (slug: string) =>
       const supabase = getSupabase();
       const { data } = await supabase
         .from("clubs")
-        .select(CLUB_COLS)
+        .select(CLUB_DETAIL_COLS)
         .eq("slug", slug)
         .eq("is_public", true)
         .maybeSingle()
         .throwOnError();
 
-      return (data as PublicClub | null) ?? null;
+      return (data as PublicClubDetail | null) ?? null;
     },
   });
 

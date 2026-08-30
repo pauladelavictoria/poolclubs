@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { headlineClasses } from "@/components/layout/publicTitleStyles";
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { LuMenu, LuSearch, LuX } from "react-icons/lu";
 import ThemeToggle from "@/components/layout/ThemeToggle";
@@ -193,12 +194,10 @@ export function PublicNav() {
 export function CtaBand() {
   const { t } = useT();
 
-  // No .dotfield alongside .wash: both set background-image, and .dotfield is
-  // defined later in the stylesheet, so pairing them silently drops the wash.
   return (
     <section className="wash wash-soft relative mt-16 overflow-hidden rounded-sheet border border-hairline">
       <div className="relative flex flex-col items-center gap-4 px-6 py-16 text-center sm:py-20">
-        <h2 className="max-w-[24ch] text-display leading-[1.05] font-semibold tracking-tighter text-ink">
+        <h2 className={headlineClasses("display", "max-w-[24ch]")}>
           {t("public.ctaBand.title")}
         </h2>
         <p className="max-w-[46ch] text-body text-ink-soft">
@@ -317,7 +316,7 @@ export function PublicFooter() {
           by the container. -0.58em leaves roughly the top half of the cap
           height standing — the baseline sits ~0.78em down a leading-none box. */}
       <div className="overflow-hidden" aria-hidden>
-        <span className="-mb-[0.42em] block text-nowrap text-[15.4vw] leading-none font-semibold tracking-tighter text-ink/[0.06] select-none">
+        <span className="-mb-[0.42em] block text-nowrap text-[15.4vw] leading-none font-semibold text-ink/[0.06] select-none">
           {t("common.appName")}
         </span>
       </div>

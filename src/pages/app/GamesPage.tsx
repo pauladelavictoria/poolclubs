@@ -1,5 +1,6 @@
 import { getRouteApi } from "@tanstack/react-router";
 import { LuPlus } from "react-icons/lu";
+import { useAuth } from "@/hooks/useAuth";
 import { useGames } from "@/hooks/useGames";
 import { usePlayers } from "@/hooks/usePlayers";
 import PageTitle from "@/components/layout/PageTitle";
@@ -23,6 +24,7 @@ export default function GamesPage() {
   // The filters are in the URL, not in useState. A loader can only key on the
   // URL, so this is what lets the page arrive already fetched — and it makes a
   // filtered view something you can send someone.
+  const { isClubAdmin } = useAuth();
   const { page, playerId, category } = route.useSearch();
   const navigate = route.useNavigate();
 
@@ -107,6 +109,7 @@ export default function GamesPage() {
                 games={games}
                 showDates
                 stickyDates
+                admin={isClubAdmin}
               />
 
               {totalCount > PAGE_SIZE && (

@@ -110,6 +110,36 @@ END $$;
 ALTER FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text", "cat" double precision) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."approved_member_contact"("p_player_id" bigint) RETURNS TABLE("email" "text", "name" "text", "club_name" "text", "club_slug" "text")
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT u.email::text, pe.name, c.name, c.slug
+  FROM players pl
+  JOIN people pe ON pe.id = pl.person_id
+  JOIN clubs  c  ON c.id  = pl.club_id
+  JOIN auth.users u ON u.id = pe.user_id
+  WHERE pl.id = p_player_id
+    -- Only an admin of *this* player's club, which is the same test the UI
+    -- gates the Approve button on. is_club_admin reads auth.uid() itself.
+    AND public.is_club_admin(pl.club_id)
+    -- Only once they are actually in. This is what pins the function to the
+    -- moment the mail is legitimate: a pending request, or somebody who was
+    -- rejected, returns nothing. It also means the caller cannot use this to
+    -- enumerate addresses of people who never joined.
+    AND pl.status = 'active'
+    -- A claimed roster row that no human has ever signed into has no user and
+    -- no address. Nothing to send, and the join would drop it anyway — spelled
+    -- out so the intent is not mistaken for an oversight.
+    AND pe.user_id IS NOT NULL
+    -- The club's own tablet is a player row with no person behind it.
+    AND pl.is_device = false;
+$$;
+
+
+ALTER FUNCTION "public"."approved_member_contact"("p_player_id" bigint) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -208,6 +238,20 @@ END $$;
 
 
 ALTER FUNCTION "public"."claim_device"("p_code" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."club_photo_club_id"("object_name" "text") RETURNS integer
+    LANGUAGE "sql" STABLE STRICT
+    SET "search_path" TO 'public'
+    AS $_$
+  SELECT CASE
+    WHEN (storage.foldername(object_name))[1] ~ '^club-\d+$'
+    THEN substring((storage.foldername(object_name))[1] from 6)::integer
+  END;
+$_$;
+
+
+ALTER FUNCTION "public"."club_photo_club_id"("object_name" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."club_preview"("p_slug" "text") RETURNS TABLE("club_id" integer, "club_name" "text", "player_id" integer, "player_name" "text", "claimable" boolean)
@@ -1084,6 +1128,8 @@ CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "description" "text",
     "schedule" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "timezone" "text" DEFAULT 'Europe/Madrid'::"text" NOT NULL,
+    "photo_order" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
+    "tables_info" "text",
     CONSTRAINT "clubs_country_shape" CHECK ((("country" IS NULL) OR ("country" ~ '^[A-Z]{2}$'::"text"))),
     CONSTRAINT "clubs_latlon_pair" CHECK (((("lat" IS NULL) = ("lon" IS NULL)) AND (("lat" IS NULL) OR ((("lat" >= ('-90'::integer)::double precision) AND ("lat" <= (90)::double precision)) AND (("lon" >= ('-180'::integer)::double precision) AND ("lon" <= (180)::double precision)))))),
     CONSTRAINT "clubs_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
@@ -1413,9 +1459,13 @@ CREATE TABLE IF NOT EXISTS "public"."tournaments" (
     "race_semi" smallint,
     "race_final" smallint,
     "single_from" smallint DEFAULT 2 NOT NULL,
+    "starts_on" "date",
+    "ends_on" "date",
+    "entry_fee" "text",
     CONSTRAINT "tournaments_advance_check" CHECK ((("format" = 'group_knockout'::"text") = ("advance" IS NOT NULL))),
     CONSTRAINT "tournaments_advance_values_check" CHECK (("advance" = ANY (ARRAY[2, 4, 8, 16]))),
     CONSTRAINT "tournaments_category_check" CHECK (("category" = ANY (ARRAY[1, 2, 3]))),
+    CONSTRAINT "tournaments_dates_check" CHECK ((("ends_on" IS NULL) OR (("starts_on" IS NOT NULL) AND ("ends_on" >= "starts_on")))),
     CONSTRAINT "tournaments_format_check" CHECK (("format" = ANY (ARRAY['double_elim'::"text", 'league'::"text", 'group_knockout'::"text"]))),
     CONSTRAINT "tournaments_legs_check" CHECK (("legs" = ANY (ARRAY[1, 2]))),
     CONSTRAINT "tournaments_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
@@ -2102,6 +2152,14 @@ CREATE POLICY "Challenger can withdraw" ON "public"."challenges" FOR DELETE TO "
 
 
 
+CREATE POLICY "Club admins can delete club games" ON "public"."games" FOR DELETE TO "authenticated" USING ("public"."is_club_admin"("club_id"));
+
+
+
+CREATE POLICY "Club admins can edit club games" ON "public"."games" FOR UPDATE TO "authenticated" USING ("public"."is_club_admin"("club_id")) WITH CHECK ("public"."is_club_admin"("club_id"));
+
+
+
 CREATE POLICY "Creator or admin can delete drills" ON "public"."drills" FOR DELETE TO "authenticated" USING ((("created_by" = "auth"."uid"()) OR "public"."is_drill_admin"()));
 
 
@@ -2139,10 +2197,6 @@ CREATE POLICY "Members can add club games" ON "public"."games" FOR INSERT TO "au
 
 
 CREATE POLICY "Members can clear an abandoned match" ON "public"."live_matches" FOR DELETE TO "authenticated" USING (("public"."is_club_member"("club_id") AND ("updated_at" < ("now"() - '03:00:00'::interval))));
-
-
-
-CREATE POLICY "Members can delete club games" ON "public"."games" FOR DELETE TO "authenticated" USING ("public"."is_club_member"("club_id"));
 
 
 
@@ -2613,6 +2667,12 @@ GRANT ALL ON FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text",
 
 
 
+REVOKE ALL ON FUNCTION "public"."approved_member_contact"("p_player_id" bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."approved_member_contact"("p_player_id" bigint) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."approved_member_contact"("p_player_id" bigint) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "anon";
 GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "service_role";
@@ -2634,6 +2694,12 @@ GRANT ALL ON FUNCTION "public"."can_touch_player"("pid" integer) TO "service_rol
 REVOKE ALL ON FUNCTION "public"."claim_device"("p_code" "text") FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."claim_device"("p_code" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."claim_device"("p_code" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."club_photo_club_id"("object_name" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."club_photo_club_id"("object_name" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."club_photo_club_id"("object_name" "text") TO "service_role";
 
 
 
@@ -2918,6 +2984,30 @@ GRANT SELECT("lat") ON TABLE "public"."clubs" TO "anon";
 
 
 GRANT SELECT("lon") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("phone") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("description") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("schedule") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("timezone") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("photo_order") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("tables_info") ON TABLE "public"."clubs" TO "anon";
 
 
 

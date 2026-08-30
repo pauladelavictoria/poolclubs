@@ -11,6 +11,7 @@ import {
   seatsOf,
   seatsOfSide,
   unbump,
+  whoIsHere,
 } from "./night";
 
 const NOW = new Date("2026-08-25T21:00:00.000Z").getTime();
@@ -98,15 +99,15 @@ describe("isAbandoned", () => {
 
 describe("isMatchOver / leaderOf — the race", () => {
   it("is not over while tied below the race", () => {
-    expect(
-      isMatchOver(match({ player_1_score: 4, player_2_score: 4 })),
-    ).toBe(false);
+    expect(isMatchOver(match({ player_1_score: 4, player_2_score: 4 }))).toBe(
+      false,
+    );
   });
 
   it("is won by getting there, not by being ahead at the end", () => {
-    expect(
-      isMatchOver(match({ player_1_score: 5, player_2_score: 4 })),
-    ).toBe(true);
+    expect(isMatchOver(match({ player_1_score: 5, player_2_score: 4 }))).toBe(
+      true,
+    );
   });
 
   it("has no leader when tied", () => {
@@ -122,9 +123,7 @@ describe("isMatchOver / leaderOf — the race", () => {
 
 describe("bump", () => {
   it("adds a rack to the scoring side", () => {
-    expect(
-      bump(match({ player_1_score: 1, player_2_score: 3 }), 1),
-    ).toEqual({
+    expect(bump(match({ player_1_score: 1, player_2_score: 3 }), 1)).toEqual({
       player_1_score: 2,
       player_2_score: 3,
       last_side: 1,
@@ -154,9 +153,7 @@ describe("unbump", () => {
   });
 
   it("is allowed once the race is reached — this is what 'keep playing' is, and the only way back from a mis-tap that ended the match", () => {
-    expect(
-      unbump(match({ player_1_score: 5, player_2_score: 2 }), 1),
-    ).toEqual({
+    expect(unbump(match({ player_1_score: 5, player_2_score: 2 }), 1)).toEqual({
       player_1_score: 4,
       player_2_score: 2,
       last_side: null,
@@ -184,5 +181,46 @@ describe("seatsOfSide / seatsOf", () => {
   it("seats everyone in the match, doubles or singles", () => {
     expect(seatsOf(pairs)).toEqual([1, 11, 2, 22]);
     expect(seatsOf(match())).toEqual([1, 2]);
+  });
+});
+
+describe("whoIsHere", () => {
+  const roster = [1, 2, 3, 4, 5].map((id) => player({ id, name: `p${id}` }));
+
+  it("counts a check-in inside the window", () => {
+    const checkedIn = player({
+      id: 9,
+      present_since: new Date(NOW - 1000).toISOString(),
+    });
+    expect(whoIsHere([checkedIn], [], NOW).map((p) => p.id)).toEqual([9]);
+  });
+
+  it("counts everyone at a table, checked in or not — the club is not empty above a live match", () => {
+    const doubles = match({
+      player_1_id: 1,
+      player_1b_id: 2,
+      player_2_id: 3,
+      player_2b_id: 4,
+      mode: "doubles",
+    });
+    expect(whoIsHere(roster, [doubles], NOW).map((p) => p.id)).toEqual([
+      1, 2, 3, 4,
+    ]);
+  });
+
+  it("does not double-count somebody both playing and checked in", () => {
+    const playing = [
+      player({ id: 1, present_since: new Date(NOW - 1000).toISOString() }),
+      player({ id: 2 }),
+    ];
+    expect(whoIsHere(playing, [match()], NOW).map((p) => p.id)).toEqual([1, 2]);
+  });
+
+  it("still counts seats before the browser knows the time", () => {
+    expect(whoIsHere(roster, [match()], null).map((p) => p.id)).toEqual([1, 2]);
+  });
+
+  it("is empty with no check-ins and no matches", () => {
+    expect(whoIsHere(roster, [], NOW)).toEqual([]);
   });
 });

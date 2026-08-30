@@ -35,7 +35,7 @@ export const LANG_COOKIE = "lang";
  * It is a guardrail, not a boundary. Anyone who can open the browser can clear
  * it. What actually decides whether a device may score somebody else's match is
  * `players.is_device`, checked by can_score_live_match in the database — see
- * sql/live-night.sql.
+ * sql/schema.sql.
  */
 export const KIOSK_COOKIE = "kiosk";
 

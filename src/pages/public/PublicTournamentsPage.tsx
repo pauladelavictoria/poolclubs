@@ -1,8 +1,9 @@
-import type { CSSProperties } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { cardClasses } from "@/components/ui/cardStyles";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import { LuNetwork, LuUsers } from "react-icons/lu";
+import { LuCalendar, LuNetwork, LuUsers } from "react-icons/lu";
 import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
+import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import { Avatar } from "@/components/ui/Avatar";
 import { CategoryBadge, DisciplineBall } from "@/components/ui/Ball";
 import { Card } from "@/components/ui/Card";
@@ -12,6 +13,7 @@ import { FilterPills } from "@/components/ui/FilterPills";
 import { Pager } from "@/components/ui/Pager";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";
+import { eventDates } from "@/libs/algorithms/eventDates";
 import { PUBLIC_PAGE_SIZE } from "@/queries/public/shared";
 import {
   publicTournamentsQuery,
@@ -28,9 +30,11 @@ import { useT, type Key } from "@/i18n";
 
 const route = getRouteApi("/_public/tournaments/");
 
-/** Live first, then what is still open, then the archive — the same order the
- *  club's own index uses, so the two read the same way round. */
-const GROUPS: { key: Key; statuses: TournamentStatus[] }[] = [
+/** Live first, then what is still open, then the archive. Exported because a
+ *  club's own tournaments tab is the same page scoped to one club, and the two
+ *  have to group and order it the same way. */
+// eslint-disable-next-line react-refresh/only-export-components
+export const GROUPS: { key: Key; statuses: TournamentStatus[] }[] = [
   { key: "tournaments.live", statuses: ["groups", "running"] },
   { key: "tournaments.openTitle", statuses: ["open"] },
 ];
@@ -92,16 +96,10 @@ export default function PublicTournamentsPage() {
 
   return (
     <>
-      <section>
-        <div className="px-4 py-6 sm:px-6 sm:py-8">
-          <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
-            {t("public.publicTournaments.title")}
-          </h1>
-          <p className="mt-2 max-w-[46ch] text-h4 text-ink-soft">
-            {t("public.publicTournaments.subtitle")}
-          </p>
-        </div>
-      </section>
+      <PublicPageTitle
+        title={t("public.publicTournaments.title")}
+        lede={t("public.publicTournaments.subtitle")}
+      />
 
       <PublicShell>
         <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 -mx-4 mt-8 bg-pocket/90 px-4 py-3 backdrop-blur-lg sm:-mx-6 sm:px-6">
@@ -178,11 +176,10 @@ export default function PublicTournamentsPage() {
                     {t(key)}
                   </h2>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                    {rows.map((tournament, i) => (
+                    {rows.map((tournament) => (
                       <TournamentCard
                         key={tournament.id}
                         tournament={tournament}
-                        index={i}
                       />
                     ))}
                   </div>
@@ -229,43 +226,50 @@ export default function PublicTournamentsPage() {
  */
 export function TournamentCard({
   tournament,
-  index,
+  hideClub = false,
 }: {
   tournament: PublicTournamentListItem;
-  index: number;
+  /** On a club's own page the club is the page — repeating it on every card is
+   *  noise, the same as it is on TournamentRow. */
+  hideClub?: boolean;
 }) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const live = isLive(tournament.status);
+  const when = eventDates(tournament.starts_on, tournament.ends_on, locale);
 
   return (
     <Link
       to="/tournaments/$tournamentId"
       params={{ tournamentId: String(tournament.id) }}
-      data-ball={tournament.club?.theme_color}
-      style={{ "--i": index } as CSSProperties}
-      className="pop lift group flex flex-col overflow-hidden rounded-card border border-hairline bg-felt"
+      className={cardClasses({
+        className: "lift group flex flex-col overflow-hidden",
+      })}
     >
-      <div className="wash flex items-center justify-between px-4 py-3 transition-[filter] duration-300 group-hover:saturate-150">
-        <DisciplineBall
-          discipline={tournament.discipline}
-          className="h-10 w-10 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-12"
-        />
-        {live && (
-          <span className="flex items-center gap-1.5 rounded-full bg-pocket/70 px-2 py-1 font-mono text-caption font-semibold text-strike">
-            <span
-              className="live-dot h-1.5 w-1.5 rounded-full bg-strike"
-              aria-hidden
-            />
-            {t("tournaments.status.running")}
-          </span>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col gap-2 px-4 pt-3 pb-4">
-        <h3 className="truncate text-h4 font-semibold text-ink transition-colors duration-150 group-hover:text-strike">
-          {tournament.name}
-        </h3>
-        {tournament.club && (
+      {/* No colour band over the card. It was a block of tint carrying one ball
+          and, sometimes, one pill — art where the reader wanted the name, and
+          on a card with no date it left half the tile empty. The ball is the
+          discipline and it belongs beside the title it qualifies; everything
+          else about the tournament is a line of text inside. */}
+      <div className="flex flex-1 flex-col gap-2 px-4 pt-4 pb-4">
+        <div className="flex items-center gap-3">
+          <DisciplineBall
+            discipline={tournament.discipline}
+            className="h-8 w-8 shrink-0"
+          />
+          <h3 className="min-w-0 flex-1 truncate text-h4 font-semibold text-ink transition-colors duration-150 group-hover:text-strike">
+            {tournament.name}
+          </h3>
+          {live && (
+            <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-strike-tint px-2 py-0.5 font-mono text-caption font-semibold text-strike">
+              <span
+                className="live-dot h-1.5 w-1.5 rounded-full bg-strike"
+                aria-hidden
+              />
+              {t("tournaments.status.running")}
+            </span>
+          )}
+        </div>
+        {!hideClub && tournament.club && (
           <p className="flex items-center gap-1.5 text-caption text-ink-soft">
             <Avatar
               name={tournament.club.name}
@@ -274,6 +278,17 @@ export function TournamentCard({
               className="h-4 w-4"
             />
             <span className="truncate">{tournament.club.name}</span>
+          </p>
+        )}
+        {/* When. The one question a card in a directory of events is asked
+            that the card itself can answer — the fee is a sentence of tiers
+            that only fits, and only matters, on the tournament's own page.
+            Absent for a tournament with no date, which is every one of them
+            until an organiser sets it. */}
+        {when && (
+          <p className="flex items-center gap-1.5 text-caption text-ink-soft">
+            <LuCalendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="truncate">{when}</span>
           </p>
         )}
         <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-caption text-ink-faint">
@@ -309,7 +324,8 @@ export function TournamentRow({
    *  noise. */
   hideClub?: boolean;
 }) {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const when = eventDates(tournament.starts_on, tournament.ends_on, locale);
 
   return (
     <Link
@@ -322,6 +338,7 @@ export function TournamentRow({
         <p className="mt-0.5 truncate text-caption text-ink-faint">
           {!hideClub && tournament.club ? `${tournament.club.name} · ` : null}
           {t(`tournaments.status.${tournament.status}`)}
+          {when ? ` · ${when}` : null}
         </p>
       </div>
       <span className="flex shrink-0 items-center gap-1 font-mono text-caption tabular-nums text-ink-faint">
