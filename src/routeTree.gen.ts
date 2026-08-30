@@ -23,7 +23,7 @@ import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppPairRouteImport } from './routes/app/pair'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as PublicClubsIndexRouteImport } from './routes/_public/clubs/index'
-import { Route as PublicClubsSlugRouteImport } from './routes/_public/clubs/$slug'
+import { Route as PublicClubsSlugRouteRouteImport } from './routes/_public/clubs/$slug/route'
 import { Route as PublicDrillsIndexRouteImport } from './routes/_public/drills/index'
 import { Route as PublicDrillsDrillIdRouteImport } from './routes/_public/drills/$drillId'
 import { Route as PublicLegalAvisoLegalRouteImport } from './routes/_public/legal/aviso-legal'
@@ -40,6 +40,10 @@ import { Route as AppAuthedOpsRouteImport } from './routes/app/_authed/ops'
 import { Route as AppAuthedSelectClubRouteImport } from './routes/app/_authed/select-club'
 import { Route as AppAuthedUpdatePasswordRouteImport } from './routes/app/_authed/update-password'
 import { Route as AppJoinSlugRouteImport } from './routes/app/join.$slug'
+import { Route as PublicClubsSlugIndexRouteImport } from './routes/_public/clubs/$slug/index'
+import { Route as PublicClubsSlugGamesRouteImport } from './routes/_public/clubs/$slug/games'
+import { Route as PublicClubsSlugInfoRouteImport } from './routes/_public/clubs/$slug/info'
+import { Route as PublicClubsSlugPlayersRouteImport } from './routes/_public/clubs/$slug/players'
 import { Route as ApiClubsSlugLogoRouteImport } from './routes/api/clubs/$slug/logo'
 import { Route as AppAuthedClubSlugIndexRouteImport } from './routes/app/_authed/$clubSlug/index'
 import { Route as AppAuthedClubSlugChallengesRouteImport } from './routes/app/_authed/$clubSlug/challenges'
@@ -144,7 +148,7 @@ const PublicClubsIndexRoute = PublicClubsIndexRouteImport.update({
   path: '/clubs/',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-const PublicClubsSlugRoute = PublicClubsSlugRouteImport.update({
+const PublicClubsSlugRouteRoute = PublicClubsSlugRouteRouteImport.update({
   id: '/clubs/$slug',
   path: '/clubs/$slug',
   getParentRoute: () => PublicRouteRoute,
@@ -230,6 +234,26 @@ const AppJoinSlugRoute = AppJoinSlugRouteImport.update({
   id: '/join/$slug',
   path: '/join/$slug',
   getParentRoute: () => AppRouteRoute,
+} as any)
+const PublicClubsSlugIndexRoute = PublicClubsSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicClubsSlugRouteRoute,
+} as any)
+const PublicClubsSlugGamesRoute = PublicClubsSlugGamesRouteImport.update({
+  id: '/games',
+  path: '/games',
+  getParentRoute: () => PublicClubsSlugRouteRoute,
+} as any)
+const PublicClubsSlugInfoRoute = PublicClubsSlugInfoRouteImport.update({
+  id: '/info',
+  path: '/info',
+  getParentRoute: () => PublicClubsSlugRouteRoute,
+} as any)
+const PublicClubsSlugPlayersRoute = PublicClubsSlugPlayersRouteImport.update({
+  id: '/players',
+  path: '/players',
+  getParentRoute: () => PublicClubsSlugRouteRoute,
 } as any)
 const ApiClubsSlugLogoRoute = ApiClubsSlugLogoRouteImport.update({
   id: '/api/clubs/$slug/logo',
@@ -448,8 +472,8 @@ export interface FileRoutesByFullPath {
   '/app/login': typeof AppLoginRoute
   '/app/pair': typeof AppPairRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/clubs/$slug': typeof PublicClubsSlugRouteRouteWithChildren
   '/app/$clubSlug': typeof AppAuthedClubSlugRouteRouteWithChildren
-  '/clubs/$slug': typeof PublicClubsSlugRoute
   '/drills/$drillId': typeof PublicDrillsDrillIdRoute
   '/legal/aviso-legal': typeof PublicLegalAvisoLegalRoute
   '/legal/privacy': typeof PublicLegalPrivacyRoute
@@ -467,12 +491,16 @@ export interface FileRoutesByFullPath {
   '/tournaments/': typeof PublicTournamentsIndexRoute
   '/app/': typeof AppAuthedIndexRoute
   '/app/$clubSlug/club': typeof AppAuthedClubSlugClubRouteRouteWithChildren
+  '/clubs/$slug/games': typeof PublicClubsSlugGamesRoute
+  '/clubs/$slug/info': typeof PublicClubsSlugInfoRoute
+  '/clubs/$slug/players': typeof PublicClubsSlugPlayersRoute
   '/api/clubs/$slug/logo': typeof ApiClubsSlugLogoRoute
   '/app/$clubSlug/challenges': typeof AppAuthedClubSlugChallengesRoute
   '/app/$clubSlug/night': typeof AppAuthedClubSlugNightRoute
   '/app/$clubSlug/today': typeof AppAuthedClubSlugTodayRoute
   '/app/$clubSlug/tv': typeof AppAuthedClubSlugTvRoute
   '/app/clubs/new': typeof AppAuthedClubsNewRoute
+  '/clubs/$slug/': typeof PublicClubsSlugIndexRoute
   '/app/$clubSlug/': typeof AppAuthedClubSlugIndexRoute
   '/app/$clubSlug/club/members': typeof AppAuthedClubSlugClubMembersRoute
   '/app/$clubSlug/club/tables': typeof AppAuthedClubSlugClubTablesRoute
@@ -514,7 +542,6 @@ export interface FileRoutesByTo {
   '/app/pair': typeof AppPairRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/': typeof PublicIndexRoute
-  '/clubs/$slug': typeof PublicClubsSlugRoute
   '/drills/$drillId': typeof PublicDrillsDrillIdRoute
   '/legal/aviso-legal': typeof PublicLegalAvisoLegalRoute
   '/legal/privacy': typeof PublicLegalPrivacyRoute
@@ -530,12 +557,16 @@ export interface FileRoutesByTo {
   '/drills': typeof PublicDrillsIndexRoute
   '/players': typeof PublicPlayersIndexRoute
   '/tournaments': typeof PublicTournamentsIndexRoute
+  '/clubs/$slug/games': typeof PublicClubsSlugGamesRoute
+  '/clubs/$slug/info': typeof PublicClubsSlugInfoRoute
+  '/clubs/$slug/players': typeof PublicClubsSlugPlayersRoute
   '/api/clubs/$slug/logo': typeof ApiClubsSlugLogoRoute
   '/app/$clubSlug/challenges': typeof AppAuthedClubSlugChallengesRoute
   '/app/$clubSlug/night': typeof AppAuthedClubSlugNightRoute
   '/app/$clubSlug/today': typeof AppAuthedClubSlugTodayRoute
   '/app/$clubSlug/tv': typeof AppAuthedClubSlugTvRoute
   '/app/clubs/new': typeof AppAuthedClubsNewRoute
+  '/clubs/$slug': typeof PublicClubsSlugIndexRoute
   '/app/$clubSlug': typeof AppAuthedClubSlugIndexRoute
   '/app/$clubSlug/club/members': typeof AppAuthedClubSlugClubMembersRoute
   '/app/$clubSlug/club/tables': typeof AppAuthedClubSlugClubTablesRoute
@@ -580,8 +611,8 @@ export interface FileRoutesById {
   '/app/pair': typeof AppPairRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_public/': typeof PublicIndexRoute
+  '/_public/clubs/$slug': typeof PublicClubsSlugRouteRouteWithChildren
   '/app/_authed/$clubSlug': typeof AppAuthedClubSlugRouteRouteWithChildren
-  '/_public/clubs/$slug': typeof PublicClubsSlugRoute
   '/_public/drills/$drillId': typeof PublicDrillsDrillIdRoute
   '/_public/legal/aviso-legal': typeof PublicLegalAvisoLegalRoute
   '/_public/legal/privacy': typeof PublicLegalPrivacyRoute
@@ -599,12 +630,16 @@ export interface FileRoutesById {
   '/_public/tournaments/': typeof PublicTournamentsIndexRoute
   '/app/_authed/': typeof AppAuthedIndexRoute
   '/app/_authed/$clubSlug/club': typeof AppAuthedClubSlugClubRouteRouteWithChildren
+  '/_public/clubs/$slug/games': typeof PublicClubsSlugGamesRoute
+  '/_public/clubs/$slug/info': typeof PublicClubsSlugInfoRoute
+  '/_public/clubs/$slug/players': typeof PublicClubsSlugPlayersRoute
   '/api/clubs/$slug/logo': typeof ApiClubsSlugLogoRoute
   '/app/_authed/$clubSlug/challenges': typeof AppAuthedClubSlugChallengesRoute
   '/app/_authed/$clubSlug/night': typeof AppAuthedClubSlugNightRoute
   '/app/_authed/$clubSlug/today': typeof AppAuthedClubSlugTodayRoute
   '/app/_authed/$clubSlug/tv': typeof AppAuthedClubSlugTvRoute
   '/app/_authed/clubs/new': typeof AppAuthedClubsNewRoute
+  '/_public/clubs/$slug/': typeof PublicClubsSlugIndexRoute
   '/app/_authed/$clubSlug/': typeof AppAuthedClubSlugIndexRoute
   '/app/_authed/$clubSlug/club/members': typeof AppAuthedClubSlugClubMembersRoute
   '/app/_authed/$clubSlug/club/tables': typeof AppAuthedClubSlugClubTablesRoute
@@ -648,8 +683,8 @@ export interface FileRouteTypes {
     | '/app/login'
     | '/app/pair'
     | '/auth/callback'
-    | '/app/$clubSlug'
     | '/clubs/$slug'
+    | '/app/$clubSlug'
     | '/drills/$drillId'
     | '/legal/aviso-legal'
     | '/legal/privacy'
@@ -667,12 +702,16 @@ export interface FileRouteTypes {
     | '/tournaments/'
     | '/app/'
     | '/app/$clubSlug/club'
+    | '/clubs/$slug/games'
+    | '/clubs/$slug/info'
+    | '/clubs/$slug/players'
     | '/api/clubs/$slug/logo'
     | '/app/$clubSlug/challenges'
     | '/app/$clubSlug/night'
     | '/app/$clubSlug/today'
     | '/app/$clubSlug/tv'
     | '/app/clubs/new'
+    | '/clubs/$slug/'
     | '/app/$clubSlug/'
     | '/app/$clubSlug/club/members'
     | '/app/$clubSlug/club/tables'
@@ -714,7 +753,6 @@ export interface FileRouteTypes {
     | '/app/pair'
     | '/auth/callback'
     | '/'
-    | '/clubs/$slug'
     | '/drills/$drillId'
     | '/legal/aviso-legal'
     | '/legal/privacy'
@@ -730,12 +768,16 @@ export interface FileRouteTypes {
     | '/drills'
     | '/players'
     | '/tournaments'
+    | '/clubs/$slug/games'
+    | '/clubs/$slug/info'
+    | '/clubs/$slug/players'
     | '/api/clubs/$slug/logo'
     | '/app/$clubSlug/challenges'
     | '/app/$clubSlug/night'
     | '/app/$clubSlug/today'
     | '/app/$clubSlug/tv'
     | '/app/clubs/new'
+    | '/clubs/$slug'
     | '/app/$clubSlug'
     | '/app/$clubSlug/club/members'
     | '/app/$clubSlug/club/tables'
@@ -779,8 +821,8 @@ export interface FileRouteTypes {
     | '/app/pair'
     | '/auth/callback'
     | '/_public/'
-    | '/app/_authed/$clubSlug'
     | '/_public/clubs/$slug'
+    | '/app/_authed/$clubSlug'
     | '/_public/drills/$drillId'
     | '/_public/legal/aviso-legal'
     | '/_public/legal/privacy'
@@ -798,12 +840,16 @@ export interface FileRouteTypes {
     | '/_public/tournaments/'
     | '/app/_authed/'
     | '/app/_authed/$clubSlug/club'
+    | '/_public/clubs/$slug/games'
+    | '/_public/clubs/$slug/info'
+    | '/_public/clubs/$slug/players'
     | '/api/clubs/$slug/logo'
     | '/app/_authed/$clubSlug/challenges'
     | '/app/_authed/$clubSlug/night'
     | '/app/_authed/$clubSlug/today'
     | '/app/_authed/$clubSlug/tv'
     | '/app/_authed/clubs/new'
+    | '/_public/clubs/$slug/'
     | '/app/_authed/$clubSlug/'
     | '/app/_authed/$clubSlug/club/members'
     | '/app/_authed/$clubSlug/club/tables'
@@ -947,7 +993,7 @@ declare module '@tanstack/react-router' {
       id: '/_public/clubs/$slug'
       path: '/clubs/$slug'
       fullPath: '/clubs/$slug'
-      preLoaderRoute: typeof PublicClubsSlugRouteImport
+      preLoaderRoute: typeof PublicClubsSlugRouteRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/drills/': {
@@ -1061,6 +1107,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/join/$slug'
       preLoaderRoute: typeof AppJoinSlugRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/_public/clubs/$slug/': {
+      id: '/_public/clubs/$slug/'
+      path: '/'
+      fullPath: '/clubs/$slug/'
+      preLoaderRoute: typeof PublicClubsSlugIndexRouteImport
+      parentRoute: typeof PublicClubsSlugRouteRoute
+    }
+    '/_public/clubs/$slug/games': {
+      id: '/_public/clubs/$slug/games'
+      path: '/games'
+      fullPath: '/clubs/$slug/games'
+      preLoaderRoute: typeof PublicClubsSlugGamesRouteImport
+      parentRoute: typeof PublicClubsSlugRouteRoute
+    }
+    '/_public/clubs/$slug/info': {
+      id: '/_public/clubs/$slug/info'
+      path: '/info'
+      fullPath: '/clubs/$slug/info'
+      preLoaderRoute: typeof PublicClubsSlugInfoRouteImport
+      parentRoute: typeof PublicClubsSlugRouteRoute
+    }
+    '/_public/clubs/$slug/players': {
+      id: '/_public/clubs/$slug/players'
+      path: '/players'
+      fullPath: '/clubs/$slug/players'
+      preLoaderRoute: typeof PublicClubsSlugPlayersRouteImport
+      parentRoute: typeof PublicClubsSlugRouteRoute
     }
     '/api/clubs/$slug/logo': {
       id: '/api/clubs/$slug/logo'
@@ -1310,13 +1384,30 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface PublicClubsSlugRouteRouteChildren {
+  PublicClubsSlugGamesRoute: typeof PublicClubsSlugGamesRoute
+  PublicClubsSlugInfoRoute: typeof PublicClubsSlugInfoRoute
+  PublicClubsSlugPlayersRoute: typeof PublicClubsSlugPlayersRoute
+  PublicClubsSlugIndexRoute: typeof PublicClubsSlugIndexRoute
+}
+
+const PublicClubsSlugRouteRouteChildren: PublicClubsSlugRouteRouteChildren = {
+  PublicClubsSlugGamesRoute: PublicClubsSlugGamesRoute,
+  PublicClubsSlugInfoRoute: PublicClubsSlugInfoRoute,
+  PublicClubsSlugPlayersRoute: PublicClubsSlugPlayersRoute,
+  PublicClubsSlugIndexRoute: PublicClubsSlugIndexRoute,
+}
+
+const PublicClubsSlugRouteRouteWithChildren =
+  PublicClubsSlugRouteRoute._addFileChildren(PublicClubsSlugRouteRouteChildren)
+
 interface PublicRouteRouteChildren {
   PublicAboutRoute: typeof PublicAboutRoute
   PublicContactRoute: typeof PublicContactRoute
   PublicPricingRoute: typeof PublicPricingRoute
   PublicSearchRoute: typeof PublicSearchRoute
   PublicIndexRoute: typeof PublicIndexRoute
-  PublicClubsSlugRoute: typeof PublicClubsSlugRoute
+  PublicClubsSlugRouteRoute: typeof PublicClubsSlugRouteRouteWithChildren
   PublicDrillsDrillIdRoute: typeof PublicDrillsDrillIdRoute
   PublicLegalAvisoLegalRoute: typeof PublicLegalAvisoLegalRoute
   PublicLegalPrivacyRoute: typeof PublicLegalPrivacyRoute
@@ -1335,7 +1426,7 @@ const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicPricingRoute: PublicPricingRoute,
   PublicSearchRoute: PublicSearchRoute,
   PublicIndexRoute: PublicIndexRoute,
-  PublicClubsSlugRoute: PublicClubsSlugRoute,
+  PublicClubsSlugRouteRoute: PublicClubsSlugRouteRouteWithChildren,
   PublicDrillsDrillIdRoute: PublicDrillsDrillIdRoute,
   PublicLegalAvisoLegalRoute: PublicLegalAvisoLegalRoute,
   PublicLegalPrivacyRoute: PublicLegalPrivacyRoute,

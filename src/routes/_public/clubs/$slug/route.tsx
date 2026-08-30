@@ -1,14 +1,12 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import PublicClubPage, {
-  CLUB_GAMES_LIMIT,
-} from "@/pages/public/PublicClubPage";
-import { gamesQuery } from "@/queries/games";
+import PublicClubPage from "@/pages/public/PublicClubPage";
 import { publicClubQuery, publicClubRosterQuery } from "@/queries/public/clubs";
-import { publicTournamentsQuery } from "@/queries/public/tournaments";
 import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 
 /**
- * A club's public profile.
+ * A club's public profile: a shared hero, with the four things there are to
+ * say about a club — what it is, what is on, who plays
+ * there, what they have played — as four sub-routes under it.
  *
  * The loader *returns* the club rather than only priming the cache, because
  * `head` is handed `loaderData` and nothing else it could read a name from — an
@@ -24,17 +22,9 @@ export const Route = createFileRoute("/_public/clubs/$slug")({
     // private club exists is itself private.
     if (!club) throw notFound();
 
-    // Awaited together: all three are above the fold, and the ranking is
-    // computed from the games, so a page that paints without them paints wrong.
-    await Promise.all([
-      context.queryClient.ensureQueryData(publicClubRosterQuery(club.id)),
-      context.queryClient.ensureQueryData(
-        gamesQuery(club.id, { pageSize: CLUB_GAMES_LIMIT }),
-      ),
-      context.queryClient.ensureQueryData(
-        publicTournamentsQuery({ clubId: club.id }),
-      ),
-    ]);
+    // Only what the frame itself draws: the roster is the hero's face pile, so
+    // a page that paints without it paints wrong. Each tab loads its own.
+    await context.queryClient.ensureQueryData(publicClubRosterQuery(club.id));
 
     return { club, origin: context.origin };
   },

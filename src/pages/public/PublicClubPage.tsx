@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Link, getRouteApi } from "@tanstack/react-router";
+import { Link, Outlet, getRouteApi } from "@tanstack/react-router";
 import { LuMapPin, LuX } from "react-icons/lu";
 import GamesList from "@/components/games/GamesList";
 import ShareButton from "@/components/social/ShareButton";
 import PublicShell from "@/components/layout/PublicShell";
+import {
+  GROUPS,
+  TournamentCard,
+  TournamentRow,
+} from "@/pages/public/PublicTournamentsPage";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { DisciplineBall } from "@/components/ui/Ball";
 import { SectionHead } from "@/components/ui/SectionHead";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { gamesQuery } from "@/queries/games";
@@ -28,10 +32,7 @@ import {
   parseSchedule,
   weekRows,
 } from "@/libs/algorithms/schedule";
-import {
-  publicTournamentsQuery,
-  type PublicTournamentListItem,
-} from "@/queries/public/tournaments";
+import { publicTournamentsQuery } from "@/queries/public/tournaments";
 import { useT, type Key } from "@/i18n";
 
 const route = getRouteApi("/_public/clubs/$slug");
@@ -61,181 +62,53 @@ const mapsUrl = (club: PublicClub) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 };
 
-const isLive = (status: PublicTournamentListItem["status"]) =>
-  status === "running" || status === "groups";
-const entrantsOf = (t: PublicTournamentListItem) =>
-  t.tournament_players[0]?.count ?? 0;
+/**
+ * The club itself. It came from the loader, which already threw notFound() if
+ * there wasn't one, so it is non-null here where the query's type is nullable.
+ * Every tab reads it through this rather than through props — they are route
+ * components, so there is nowhere for props to come from.
+ */
+const useClub = () => route.useLoaderData().club;
+
+/** The roster, listed and unlisted. Primed by the parent loader; the tabs read
+ *  the same cache entry the hero does. */
+const useRoster = () =>
+  useSuspenseQuery(publicClubRosterQuery(useClub().id)).data;
+
+/**
+ * The roster grid is the one block that is a list of people, so it is the one
+ * place the opt-out applies. Everything else on this page is the club's record.
+ *
+ * Faces first: the hero shows the first six of these, and six initials in
+ * circles say nothing about the club. Stable, so within each group the roster
+ * keeps the order it arrived in.
+ */
+const listedOf = (roster: PublicPlayer[]) =>
+  roster
+    .filter((player) => player.is_public)
+    .sort((a, b) => Number(!!b.avatar_url) - Number(!!a.avatar_url));
 
 /**
  * A club's public face: who plays there, who is winning, what is on, and one way
  * in.
  *
- * It reads as a page rather than a dashboard on purpose — a stranger arriving
- * from a link has no idea what any of this is yet, so each block says what it is
- * before it says a number.
+ * The frame only — the hero, the tabs and the closing call to action. Each tab under it is its own route, because a club's players
+ * and a club's results are two different things to link somebody at, and one
+ * page that stacked all four made the reader scroll past three of them.
  */
 export default function PublicClubPage() {
   const { t } = useT();
   const { club, origin } = route.useLoaderData();
 
-  // The club itself comes from the loader — it already threw notFound() if there
-  // wasn't one, so it is non-null here where the query's type is nullable. The
-  // rest read from the cache the loader primed.
-  const { data: roster } = useSuspenseQuery(publicClubRosterQuery(club.id));
-  const { data: gamesData } = useSuspenseQuery(
-    gamesQuery(club.id, { pageSize: CLUB_GAMES_LIMIT }),
-  );
-  const { data: tournamentsData } = useSuspenseQuery(
-    publicTournamentsQuery({ clubId: club.id }),
-  );
-
   const url = `${origin}/clubs/${club.slug}`;
-
-  // The roster grid is the one block that is a list of people, so it is the one
-  // place the opt-out applies. Everything else on this page is the club's record.
-  //
-  // Faces first: the hero shows the first six of these, and six initials in
-  // circles say nothing about the club. Stable, so within each group the roster
-  // keeps the order it arrived in.
-  const listed = roster
-    .filter((player) => player.is_public)
-    .sort((a, b) => Number(!!b.avatar_url) - Number(!!a.avatar_url));
-
-  const tournaments = tournamentsData.tournaments;
-  // Being played first, still taking entries after: one is happening right now
-  // and the other is a date in somebody's diary. Stable within each group.
-  const onNow = tournaments
-    .filter((x) => isLive(x.status) || x.status === "open")
-    .sort((a, b) => Number(isLive(b.status)) - Number(isLive(a.status)));
-
-  const playingSince = club.created_at
-    ? new Date(club.created_at).getFullYear()
-    : null;
-
-  // Read here rather than inside ClubPhotos because the hero needs the first
-  // one too, and both must agree about which photo leads.
-  const { data: storedPhotos = [] } = useQuery(clubPhotosQuery(club.id));
-  const photos = orderPhotos(storedPhotos, club.photo_order);
-  const cover = photos[0] ?? null;
+  const listed = listedOf(useRoster());
 
   return (
     <>
-      <ClubHero club={club} listed={listed} url={url} cover={cover} />
+      <ClubHero club={club} listed={listed} url={url} />
 
       <PublicShell>
-        <div className="grid grid-cols-3 divide-x divide-hairline">
-          <Stat
-            value={club.member_count}
-            label={t("public.publicClub.statMembers")}
-          />
-          <Stat
-            value={gamesData.totalCount ?? 0}
-            label={t("public.publicClub.statGames")}
-          />
-          {playingSince && (
-            <Stat
-              value={playingSince}
-              label={t("public.publicClub.statSince", { year: playingSince })}
-            />
-          )}
-        </div>
-
-        <ClubPhotos photos={photos} />
-
-        <ClubVisit club={club} />
-
-        <section className="mt-10">
-          <SectionHead title={t("public.publicClub.tournaments")} />
-          {onNow.length === 0 ? (
-            <p className="mt-4 text-body text-ink-faint">
-              {t("public.publicClub.noTournamentsTitle")}
-            </p>
-          ) : (
-            // py-2, not pb-1: `overflow-x: auto` clips vertically too, so the
-            // 3px a card rises on hover — and the shadow above it — was cut off
-            // against the top edge of the scroller.
-            <div className="no-bar -mx-4 mt-2 flex snap-x gap-3 overflow-x-auto px-4 py-2 sm:-mx-6 sm:px-6">
-              {onNow.map((tournament) => (
-                <Link
-                  key={tournament.id}
-                  to="/tournaments/$tournamentId"
-                  params={{ tournamentId: String(tournament.id) }}
-                  className="lift flex w-56 shrink-0 snap-start flex-col gap-2 rounded-card border border-hairline bg-felt p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <DisciplineBall
-                      discipline={tournament.discipline}
-                      className="h-6 w-6"
-                    />
-                    {isLive(tournament.status) && (
-                      <span
-                        className="live-dot h-1.5 w-1.5 rounded-full bg-strike"
-                        aria-hidden
-                      />
-                    )}
-                  </div>
-                  <span className="truncate text-body font-medium text-ink">
-                    {tournament.name}
-                  </span>
-                  <span className="font-mono text-caption tabular-nums text-ink-faint">
-                    {t("tournaments.entrants", { n: entrantsOf(tournament) })}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="mt-10">
-          <SectionHead title={t("public.publicClub.roster")} />
-          {listed.length === 0 ? (
-            <p className="mt-4 text-body text-ink-faint">
-              {t("public.publicClub.noRosterHint")}
-            </p>
-          ) : (
-            <div className="mt-5 grid grid-cols-4 gap-4 sm:grid-cols-6 lg:grid-cols-8">
-              {listed.map((player) => (
-                <Link
-                  key={player.id}
-                  to="/players/$playerSlug"
-                  params={{ playerSlug: player.slug }}
-                  className="group flex flex-col items-center gap-1.5 text-center"
-                >
-                  <Avatar
-                    name={player.name}
-                    url={player.avatar_url}
-                    seed={player.id}
-                    className="h-16 w-16 transition-transform duration-150 group-hover:scale-105 sm:h-20 sm:w-20"
-                  />
-                  <span className="w-full truncate text-caption text-ink-soft group-hover:text-ink">
-                    {player.name}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-          {/* Said plainly rather than left as a discrepancy the reader has to
-              spot between the count above and the length of this list. */}
-          {club.member_count > listed.length && (
-            <p className="mt-4 text-caption text-ink-faint">
-              {t("public.publicClub.hiddenMembers", {
-                n: club.member_count - listed.length,
-              })}
-            </p>
-          )}
-        </section>
-
-        <Card className="mt-10 overflow-hidden">
-          <CardHeader title={t("public.publicClub.recentResults")} />
-          <div className="p-3">
-            <GamesList
-              games={gamesData.games}
-              players={roster}
-              showDates
-              public
-            />
-          </div>
-        </Card>
+        <Outlet />
 
         <section
           data-ball={club.theme_color}
@@ -257,6 +130,231 @@ export default function PublicClubPage() {
 }
 
 /**
+ * The four sub-routes, as tabs standing on the hero's own bottom rule.
+ *
+ * Underlines rather than the segmented pill the app's ClubTabs wears: this is
+ * the page's own navigation, not a control sitting on the page, and the pill
+ * read as a widget dropped into the gap between the hero and the content. The
+ * active tab's rule replaces the hero's border for its own width, which is what
+ * ties the two together — hence `-mb-px` on the row.
+ *
+ * Links rather than buttons, for the reason the app's ClubTabs gives: each tab
+ * is an address, so it can be shared, opened in a new tab and prefetched on
+ * hover. `activeProps` rather than comparing pathnames, because the router
+ * already knows which one is current.
+ */
+const TABS = [
+  { to: "/clubs/$slug", labelKey: "nav.publicTournaments", exact: true },
+  { to: "/clubs/$slug/players", labelKey: "public.publicClub.roster" },
+  { to: "/clubs/$slug/games", labelKey: "public.publicClub.statGames" },
+  { to: "/clubs/$slug/info", labelKey: "club.tabs.info" },
+] as const satisfies { to: string; labelKey: Key; exact?: boolean }[];
+
+const TAB =
+  "shrink-0 border-b-2 px-1 py-3 text-body transition-colors duration-150";
+
+function ClubTabs({ slug }: { slug: string }) {
+  const { t } = useT();
+
+  return (
+    // The scroller is for a narrow phone: four labels in three languages do not
+    // all fit on a 320px line, and a row that wraps stops reading as one.
+    <nav
+      aria-label={t("nav.navigation")}
+      className="no-bar relative -mb-px flex gap-5 overflow-x-auto px-4 sm:gap-6 sm:px-6"
+    >
+      {TABS.map((tab) => (
+        <Link
+          key={tab.to}
+          to={tab.to}
+          params={{ slug }}
+          // Without `exact` the tournaments tab, whose path is a prefix of the
+          // other three, would light up on all four.
+          activeOptions={{ exact: "exact" in tab }}
+          activeProps={{
+            className: `${TAB} border-strike font-medium text-ink`,
+            "aria-current": "page",
+          }}
+          inactiveProps={{
+            className: `${TAB} border-transparent text-ink-soft hover:text-ink`,
+          }}
+        >
+          {t(tab.labelKey)}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+/**
+ * What a stranger needs before turning up: the room, what the club says it is,
+ * when it is open and how to phone it.
+ */
+export function ClubInfoTab() {
+  const { t } = useT();
+  const club = useClub();
+
+  // Read here rather than inside ClubPhotos so the empty case below can see
+  // whether there is anything on this tab at all.
+  const { data: storedPhotos = [] } = useQuery(clubPhotosQuery(club.id));
+  const photos = orderPhotos(storedPhotos, club.photo_order);
+
+  const hasVisit = Boolean(
+    club.description || club.phone || !isEmpty(parseSchedule(club.schedule)),
+  );
+
+  if (photos.length === 0 && !hasVisit) {
+    return <Empty text={t("public.publicClub.noInfo")} />;
+  }
+
+  return (
+    <>
+      <ClubPhotos photos={photos} />
+      <ClubVisit club={club} />
+    </>
+  );
+}
+
+/**
+ * What is on at the club, and the shelf of what has been.
+ *
+ * The same shape /tournaments has — live, then open, then the archive as rows
+ * in one card — because it is the same page scoped to one club, and two lists
+ * of tournaments that group differently make the reader learn it twice. It
+ * shares that page's GROUPS and its two card components; only the club line is
+ * dropped, since the club is the page here.
+ */
+export function ClubTournamentsTab() {
+  const { t } = useT();
+  const club = useClub();
+  const { data } = useSuspenseQuery(
+    publicTournamentsQuery({ clubId: club.id }),
+  );
+
+  const all = data.tournaments;
+  const grouped = GROUPS.map(({ key, statuses }) => ({
+    key,
+    rows: all.filter((x) => statuses.includes(x.status)),
+  })).filter((group) => group.rows.length > 0);
+  const finished = all.filter((x) => x.status === "done");
+
+  if (all.length === 0) {
+    return <Empty text={t("public.publicTournaments.emptyTitle")} />;
+  }
+
+  return (
+    <div className="mt-8 space-y-10">
+      {grouped.map(({ key, rows }) => (
+        <section key={key}>
+          <h2 className="px-1 pb-3 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
+            {t(key)}
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {rows.map((tournament, i) => (
+              <TournamentCard
+                key={tournament.id}
+                tournament={tournament}
+                index={i}
+                hideClub
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {/* The archive must not look like the news: rows in one Card, not cards
+          of their own. */}
+      {finished.length > 0 && (
+        <section>
+          <h2 className="px-1 pb-3 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
+            {t("tournaments.finished")}
+          </h2>
+          <Card className="divide-y divide-hairline">
+            {finished.map((tournament) => (
+              <TournamentRow
+                key={tournament.id}
+                tournament={tournament}
+                hideClub
+              />
+            ))}
+          </Card>
+        </section>
+      )}
+    </div>
+  );
+}
+
+/** Everyone who plays here and chose to be listed. */
+export function ClubPlayersTab() {
+  const { t } = useT();
+  const club = useClub();
+  const listed = listedOf(useRoster());
+
+  if (listed.length === 0) {
+    return <Empty text={t("public.publicClub.noRosterHint")} />;
+  }
+
+  return (
+    <section className="mt-8">
+      <div className="grid grid-cols-4 gap-4 sm:grid-cols-6 lg:grid-cols-8">
+        {listed.map((player) => (
+          <Link
+            key={player.id}
+            to="/players/$playerSlug"
+            params={{ playerSlug: player.slug }}
+            className="group flex flex-col items-center gap-1.5 text-center"
+          >
+            <Avatar
+              name={player.name}
+              url={player.avatar_url}
+              seed={player.id}
+              className="h-16 w-16 transition-transform duration-150 group-hover:scale-105 sm:h-20 sm:w-20"
+            />
+            <span className="w-full truncate text-caption text-ink-soft group-hover:text-ink">
+              {player.name}
+            </span>
+          </Link>
+        ))}
+      </div>
+      {/* Said plainly rather than left as a discrepancy the reader has to spot
+          between the count above and the length of this list. */}
+      {club.member_count > listed.length && (
+        <p className="mt-4 text-caption text-ink-faint">
+          {t("public.publicClub.hiddenMembers", {
+            n: club.member_count - listed.length,
+          })}
+        </p>
+      )}
+    </section>
+  );
+}
+
+/** The results tape. GamesList draws its own empty state, so this one doesn't. */
+export function ClubGamesTab() {
+  const { t } = useT();
+  const club = useClub();
+  const roster = useRoster();
+  const { data } = useSuspenseQuery(
+    gamesQuery(club.id, { pageSize: CLUB_GAMES_LIMIT }),
+  );
+
+  return (
+    <Card className="mt-8 overflow-hidden">
+      <CardHeader title={t("public.publicClub.recentResults")} />
+      <div className="p-3">
+        <GamesList games={data.games} players={roster} showDates public />
+      </div>
+    </Card>
+  );
+}
+
+/** One line where a tab has nothing to show — a heading over an empty grid
+ *  reads as a bug, and every tab is reachable whether or not it is filled in. */
+function Empty({ text }: { text: string }) {
+  return <p className="mt-8 text-body text-ink-faint">{text}</p>;
+}
+
+/**
  * Full-bleed, the Patreon creator-header shape: a cover band, the logo plate
  * overlapping it, the name at display size, the roster as the social-proof
  * line underneath. Rendered as a sibling of `PublicShell` rather than inside
@@ -267,16 +365,18 @@ function ClubHero({
   club,
   listed,
   url,
-  cover,
 }: {
-  club: PublicClub;
+  club: PublicClubDetail;
   listed: PublicPlayer[];
   url: string;
-  /** The club's first photo, if it has any. Behind the accent wash rather than
-   *  instead of it, so a club with no photos loses nothing. */
-  cover: ClubPhoto | null;
 }) {
   const { t } = useT();
+
+  // The club's first photo, behind the accent wash rather than instead of it,
+  // so a club with no photos loses nothing. Same order the info tab's gallery
+  // uses, so both agree about which photo leads.
+  const { data: storedPhotos = [] } = useQuery(clubPhotosQuery(club.id));
+  const cover = orderPhotos(storedPhotos, club.photo_order)[0] ?? null;
 
   return (
     <section
@@ -303,7 +403,7 @@ function ClubHero({
           />
         </>
       )}
-      <div className="relative px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
+      <div className="relative px-4 pt-10 pb-6 sm:px-6 sm:pt-16 sm:pb-8">
         {/* Top-aligned, not bottom: the title has a different amount of detail
             under it on a club, a player and a tournament, so aligning the block's
             bottom to the avatar moves the h1 up or down with it — the title
@@ -364,6 +464,8 @@ function ClubHero({
           </div>
         </div>
       </div>
+
+      <ClubTabs slug={club.slug} />
     </section>
   );
 }
@@ -371,12 +473,11 @@ function ClubHero({
 /**
  * The venue itself, if the club has published any pictures of it.
  *
- * Renders nothing at all when there are none, which is most clubs — the hero
- * above already carries the club's accent wash and its logo, and an empty
- * gallery slot under it would be worse than no gallery.
+ * Renders nothing at all when there are none — the info tab's own empty line
+ * covers the club that has published nothing.
  *
- * The same CSS scroll-snap strip the tournaments and the roster use rather than
- * a carousel dependency: it is four utility classes, it works with a thumb, a
+ * The same CSS scroll-snap strip the tabs and the roster use rather than a
+ * carousel dependency: it is four utility classes, it works with a thumb, a
  * trackpad and a keyboard, and it degrades to a plain scrolling row with no JS.
  */
 function ClubPhotos({ photos }: { photos: ClubPhoto[] }) {
@@ -386,10 +487,11 @@ function ClubPhotos({ photos }: { photos: ClubPhoto[] }) {
   if (photos.length === 0) return null;
 
   return (
-    <section className="mt-10">
+    <section className="mt-8">
       <SectionHead title={t("public.publicClub.photos")} />
-      {/* py-2, not pb-1, for the same reason as the tournament strip above:
-          overflow-x clips vertically too. */}
+      {/* py-2, not pb-1: `overflow-x: auto` clips vertically too, so the 3px a
+          card rises on hover — and the shadow above it — was cut off against
+          the top edge of the scroller. */}
       <div className="no-bar -mx-4 mt-2 flex snap-x gap-3 overflow-x-auto px-4 py-2 sm:-mx-6 sm:px-6">
         {photos.map((photo, i) => (
           <button
@@ -493,12 +595,10 @@ function PhotoLightbox({
 }
 
 /**
- * What a stranger needs before turning up: what the club says it is, when it is
- * open and how to phone it.
+ * What the club says it is, when it is open and how to phone it.
  *
  * The whole section is absent for a club that has set none of the three, rather
- * than three empty headings — most clubs will not have filled this in, and the
- * page above and below it already stands on its own.
+ * than three empty headings.
  */
 function ClubVisit({ club }: { club: PublicClubDetail }) {
   const { t } = useT();
@@ -516,7 +616,7 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
   if (!club.description && !club.phone && !hasHours) return null;
 
   return (
-    <section className="mt-10">
+    <section className="mt-8">
       <SectionHead title={t("public.publicClub.visit")} />
 
       {club.description && (
@@ -597,16 +697,5 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
         )}
       </div>
     </section>
-  );
-}
-
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="flex flex-col items-center gap-1 px-2 py-4 text-center">
-      <span className="font-mono text-display font-semibold tabular-nums text-ink">
-        {value}
-      </span>
-      <span className="text-caption text-ink-faint">{label}</span>
-    </div>
   );
 }

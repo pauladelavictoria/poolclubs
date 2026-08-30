@@ -28,9 +28,11 @@ import { useT, type Key } from "@/i18n";
 
 const route = getRouteApi("/_public/tournaments/");
 
-/** Live first, then what is still open, then the archive — the same order the
- *  club's own index uses, so the two read the same way round. */
-const GROUPS: { key: Key; statuses: TournamentStatus[] }[] = [
+/** Live first, then what is still open, then the archive. Exported because a
+ *  club's own tournaments tab is the same page scoped to one club, and the two
+ *  have to group and order it the same way. */
+// eslint-disable-next-line react-refresh/only-export-components
+export const GROUPS: { key: Key; statuses: TournamentStatus[] }[] = [
   { key: "tournaments.live", statuses: ["groups", "running"] },
   { key: "tournaments.openTitle", statuses: ["open"] },
 ];
@@ -230,9 +232,13 @@ export default function PublicTournamentsPage() {
 export function TournamentCard({
   tournament,
   index,
+  hideClub = false,
 }: {
   tournament: PublicTournamentListItem;
   index: number;
+  /** On a club's own page the club is the page — repeating it on every card is
+   *  noise, the same as it is on TournamentRow. */
+  hideClub?: boolean;
 }) {
   const { t } = useT();
   const live = isLive(tournament.status);
@@ -265,7 +271,7 @@ export function TournamentCard({
         <h3 className="truncate text-h4 font-semibold text-ink transition-colors duration-150 group-hover:text-strike">
           {tournament.name}
         </h3>
-        {tournament.club && (
+        {!hideClub && tournament.club && (
           <p className="flex items-center gap-1.5 text-caption text-ink-soft">
             <Avatar
               name={tournament.club.name}

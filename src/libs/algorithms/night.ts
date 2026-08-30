@@ -82,6 +82,30 @@ export const seatsOf = (match: LiveMatch): number[] => [
   ...seatsOfSide(match, 2),
 ];
 
+/**
+ * Who is at the club right now.
+ *
+ * A check-in, or a seat at a table. The second half is not a convenience: a
+ * night starts with four people racking up and nobody pressing "I'm here", and
+ * the home page then said the club was empty above a live 2v2 it was already
+ * showing the names of. Being in a match is the stronger evidence of the two —
+ * a check-in is a claim, a match is a fact.
+ *
+ * `now` may be null while the browser has not told us the time yet (see
+ * useNow); the seats still count, since they do not depend on a clock.
+ */
+export const whoIsHere = (
+  players: Player[],
+  matches: LiveMatch[],
+  now: number | null,
+): Player[] => {
+  const playing = new Set(matches.flatMap(seatsOf));
+  return players.filter(
+    (player) =>
+      playing.has(player.id) || (now !== null && isPresent(player, now)),
+  );
+};
+
 /** 1 or 2 — which side is ahead, or null while it is level. */
 export const leaderOf = (match: LiveMatch): 1 | 2 | null => {
   if (match.player_1_score > match.player_2_score) return 1;

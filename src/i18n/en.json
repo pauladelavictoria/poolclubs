@@ -572,6 +572,7 @@
   "public.publicClub.noTournamentsTitle": "No active tournaments",
   "public.publicClub.roster": "Players",
   "public.publicClub.noRosterHint": "This club's players have all chosen not to be listed.",
+  "public.publicClub.noInfo": "This club hasn't shared any details yet.",
   "public.publicClub.hiddenMembers": "{n} more players chose not to be listed here.",
   "public.publicClub.recentResults": "Recent results",
   "public.publicClub.directions": "Open in Google Maps",

@@ -3,28 +3,28 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/libs/supabase/browser";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
+import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { keys } from "@/libs/queryKeys";
-import { isPresent } from "@/libs/algorithms/night";
+import { whoIsHere } from "@/libs/algorithms/night";
 import { useNow } from "@/hooks/useNow";
 import type { Player } from "@/types";
 
 /**
- * Who is at the club right now.
+ * Who is at the club right now: checked in, or sat at a table.
  *
- * Derived from the roster that is already in the cache — being here is a column
- * on the membership, not a table of its own, so this costs no request and
- * updates over the same realtime channel a rename does.
- *
- * Empty until the browser knows the time; see libs/useNow.
+ * Derived from two lists already in the cache — being here is a column on the
+ * membership and a seat is a live row, so this costs no request of its own and
+ * updates over the same realtime channel a rename does. The rule itself is
+ * `whoIsHere` in libs/algorithms/night.ts, where it can be checked.
  */
 export const useWhoIsHere = (): Player[] => {
   const now = useNow();
   const { data: players } = usePlayers();
+  const { data: live } = useLiveMatches();
 
   return useMemo(
-    () =>
-      now === null ? [] : (players ?? []).filter((p) => isPresent(p, now)),
-    [players, now],
+    () => whoIsHere(players ?? [], live ?? [], now),
+    [players, live, now],
   );
 };
 
