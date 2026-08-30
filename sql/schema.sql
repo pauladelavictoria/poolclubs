@@ -1129,6 +1129,7 @@ CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "schedule" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "timezone" "text" DEFAULT 'Europe/Madrid'::"text" NOT NULL,
     "photo_order" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
+    "tables_info" "text",
     CONSTRAINT "clubs_country_shape" CHECK ((("country" IS NULL) OR ("country" ~ '^[A-Z]{2}$'::"text"))),
     CONSTRAINT "clubs_latlon_pair" CHECK (((("lat" IS NULL) = ("lon" IS NULL)) AND (("lat" IS NULL) OR ((("lat" >= ('-90'::integer)::double precision) AND ("lat" <= (90)::double precision)) AND (("lon" >= ('-180'::integer)::double precision) AND ("lon" <= (180)::double precision)))))),
     CONSTRAINT "clubs_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
@@ -1458,9 +1459,13 @@ CREATE TABLE IF NOT EXISTS "public"."tournaments" (
     "race_semi" smallint,
     "race_final" smallint,
     "single_from" smallint DEFAULT 2 NOT NULL,
+    "starts_on" "date",
+    "ends_on" "date",
+    "entry_fee" "text",
     CONSTRAINT "tournaments_advance_check" CHECK ((("format" = 'group_knockout'::"text") = ("advance" IS NOT NULL))),
     CONSTRAINT "tournaments_advance_values_check" CHECK (("advance" = ANY (ARRAY[2, 4, 8, 16]))),
     CONSTRAINT "tournaments_category_check" CHECK (("category" = ANY (ARRAY[1, 2, 3]))),
+    CONSTRAINT "tournaments_dates_check" CHECK ((("ends_on" IS NULL) OR (("starts_on" IS NOT NULL) AND ("ends_on" >= "starts_on")))),
     CONSTRAINT "tournaments_format_check" CHECK (("format" = ANY (ARRAY['double_elim'::"text", 'league'::"text", 'group_knockout'::"text"]))),
     CONSTRAINT "tournaments_legs_check" CHECK (("legs" = ANY (ARRAY[1, 2]))),
     CONSTRAINT "tournaments_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
@@ -2999,6 +3004,10 @@ GRANT SELECT("timezone") ON TABLE "public"."clubs" TO "anon";
 
 
 GRANT SELECT("photo_order") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("tables_info") ON TABLE "public"."clubs" TO "anon";
 
 
 

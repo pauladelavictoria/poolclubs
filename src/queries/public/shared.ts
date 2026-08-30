@@ -36,7 +36,7 @@ export const CLUB_COLS =
  * These columns need `GRANT SELECT` for anon before this ships — see
  * sql/schema.sql, which explains why the order is not negotiable.
  */
-export const CLUB_DETAIL_COLS = `${CLUB_COLS}, description, phone, schedule, timezone, photo_order`;
+export const CLUB_DETAIL_COLS = `${CLUB_COLS}, description, phone, tables_info, schedule, timezone, photo_order`;
 export const PERSON_COLS = "id, slug, name, avatar_url, is_public";
 export const PLAYER_COLS = "id, club_id, category";
 export const DRILL_COLS =

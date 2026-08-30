@@ -200,7 +200,10 @@ export function ClubInfoTab() {
   const photos = orderPhotos(storedPhotos, club.photo_order);
 
   const hasVisit = Boolean(
-    club.description || club.phone || !isEmpty(parseSchedule(club.schedule)),
+    club.description ||
+    club.phone ||
+    club.tables_info ||
+    !isEmpty(parseSchedule(club.schedule)),
   );
 
   if (photos.length === 0 && !hasVisit) {
@@ -613,7 +616,8 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
   const open =
     now !== null && hasHours && isOpenNow(schedule, club.timezone, now);
 
-  if (!club.description && !club.phone && !hasHours) return null;
+  if (!club.description && !club.phone && !club.tables_info && !hasHours)
+    return null;
 
   return (
     <section className="mt-8">
@@ -676,6 +680,19 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
                 </div>
               ))}
             </dl>
+          </div>
+        )}
+
+        {club.tables_info && (
+          <div className="rounded-card border border-hairline bg-felt p-4">
+            <h3 className="pb-2 text-body font-medium text-ink">
+              {t("club.tablesInfo")}
+            </h3>
+            {/* whitespace-pre-line for the same reason the description has it:
+                a textarea's line breaks are the only formatting there is. */}
+            <p className="whitespace-pre-line text-body text-ink-soft">
+              {club.tables_info}
+            </p>
           </div>
         )}
 

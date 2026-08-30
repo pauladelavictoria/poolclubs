@@ -29,10 +29,18 @@ export type PublicClub = Pick<
   | "lon"
 > & { created_at: string | null };
 
-/** The club's own page, which reads three columns no card does. Everything
+/** The club's own page, which reads the columns no card does. Everything
  *  else that embeds a club stays on PublicClub — see CLUB_DETAIL_COLS. */
 export type PublicClubDetail = PublicClub &
-  Pick<Club, "description" | "phone" | "schedule" | "timezone" | "photo_order">;
+  Pick<
+    Club,
+    | "description"
+    | "phone"
+    | "tables_info"
+    | "schedule"
+    | "timezone"
+    | "photo_order"
+  >;
 
 /** One membership, flattened the same way src/queries/players.ts does it, so a
  *  roster row out here is the same shape as a roster row inside a club. */

@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import { LuNetwork, LuUsers } from "react-icons/lu";
+import { LuCalendar, LuNetwork, LuUsers } from "react-icons/lu";
 import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
 import { Avatar } from "@/components/ui/Avatar";
 import { CategoryBadge, DisciplineBall } from "@/components/ui/Ball";
@@ -12,6 +12,7 @@ import { FilterPills } from "@/components/ui/FilterPills";
 import { Pager } from "@/components/ui/Pager";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";
+import { eventDates } from "@/libs/algorithms/eventDates";
 import { PUBLIC_PAGE_SIZE } from "@/queries/public/shared";
 import {
   publicTournamentsQuery,
@@ -240,8 +241,9 @@ export function TournamentCard({
    *  noise, the same as it is on TournamentRow. */
   hideClub?: boolean;
 }) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const live = isLive(tournament.status);
+  const when = eventDates(tournament.starts_on, tournament.ends_on, locale);
 
   return (
     <Link
@@ -282,6 +284,20 @@ export function TournamentCard({
             <span className="truncate">{tournament.club.name}</span>
           </p>
         )}
+        {/* When, and what it costs — the two questions a card in a directory of
+            events is actually asked. Absent for a tournament with no date, which
+            is every one of them until an organiser sets it. */}
+        {when && (
+          <p className="flex items-center gap-1.5 text-caption text-ink-soft">
+            <LuCalendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="truncate">{when}</span>
+          </p>
+        )}
+        {tournament.entry_fee && (
+          <p className="truncate text-caption text-ink-faint">
+            {tournament.entry_fee}
+          </p>
+        )}
         <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-caption text-ink-faint">
           <span className="rounded-control border border-hairline bg-pocket px-1.5 py-0.5 font-mono tracking-[0.06em] text-ink-soft uppercase">
             {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}
@@ -315,7 +331,8 @@ export function TournamentRow({
    *  noise. */
   hideClub?: boolean;
 }) {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const when = eventDates(tournament.starts_on, tournament.ends_on, locale);
 
   return (
     <Link
@@ -328,6 +345,7 @@ export function TournamentRow({
         <p className="mt-0.5 truncate text-caption text-ink-faint">
           {!hideClub && tournament.club ? `${tournament.club.name} · ` : null}
           {t(`tournaments.status.${tournament.status}`)}
+          {when ? ` · ${when}` : null}
         </p>
       </div>
       <span className="flex shrink-0 items-center gap-1 font-mono text-caption tabular-nums text-ink-faint">

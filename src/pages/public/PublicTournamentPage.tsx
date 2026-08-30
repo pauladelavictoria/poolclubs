@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, getRouteApi } from "@tanstack/react-router";
-import { LuGitFork, LuList } from "react-icons/lu";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { Link, getRouteApi, useRouter } from "@tanstack/react-router";
+import { LuCalendar, LuGitFork, LuList, LuTicket } from "react-icons/lu";
 import PublicShell from "@/components/layout/PublicShell";
 import ShareButton from "@/components/social/ShareButton";
 import BracketView from "@/components/tournaments/BracketView";
@@ -10,6 +14,7 @@ import MatchList from "@/components/games/MatchList";
 import { PlayerHighlight } from "@/components/players/PlayerLink";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -23,7 +28,16 @@ import {
   raceFor,
   resolveBracket,
 } from "@/libs/algorithms/bracket";
-import { groupStandings, leaguePodium, standings } from "@/libs/algorithms/leagueTable";
+import {
+  groupStandings,
+  leaguePodium,
+  standings,
+} from "@/libs/algorithms/leagueTable";
+import { eventDates } from "@/libs/algorithms/eventDates";
+import { runMutation } from "@/libs/browser/mutationToast";
+import { supabase } from "@/libs/supabase/browser";
+import { keys } from "@/libs/queryKeys";
+import { useSession } from "@/hooks/useAuth";
 import { publicClubRosterQuery } from "@/queries/public/clubs";
 import type { PublicTournament } from "@/queries/public/tournaments";
 import { FORMAT_KEY, type Player, type TournamentMatch } from "@/types";
@@ -286,8 +300,9 @@ function TournamentHero({
   matchesPlayed: number;
   url: string;
 }) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const progress = matchesTotal > 0 ? matchesPlayed / matchesTotal : 0;
+  const when = eventDates(tournament.starts_on, tournament.ends_on, locale);
 
   return (
     <section
@@ -334,8 +349,30 @@ function TournamentHero({
                 <CategoryBadge category={tournament.category} />
               )}
             </p>
+            {/* When it is and what it costs, on their own line rather than run
+                in with the format and the discipline: those describe the draw,
+                these two are what somebody deciding whether to turn up reads.
+                Either can be missing — most tournaments open before they are
+                dated. */}
+            {(when || tournament.entry_fee) && (
+              <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-body text-ink-soft">
+                {when && (
+                  <span className="flex items-center gap-1.5">
+                    <LuCalendar className="h-4 w-4 shrink-0" aria-hidden />
+                    {when}
+                  </span>
+                )}
+                {tournament.entry_fee && (
+                  <span className="flex items-center gap-1.5">
+                    <LuTicket className="h-4 w-4 shrink-0" aria-hidden />
+                    {tournament.entry_fee}
+                  </span>
+                )}
+              </p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <TournamentEntry tournament={tournament} entrantIds={entrantIds} />
             <ShareButton title={tournament.name} url={url} />
           </div>
         </div>
@@ -397,5 +434,128 @@ function TournamentHero({
         ) : null}
       </div>
     </section>
+  );
+}
+
+/**
+ * The way in, for whoever is reading the page.
+ *
+ * Entering a tournament is a member's action — the RLS policy on
+ * tournament_players wants an active player row in the host club and your own
+ * user behind it (see sql/schema.sql) — so what this renders is whichever step
+ * of that the visitor is missing: sign in, join the club, or enter. A stranger
+ * who lands here from a share link gets a path rather than a disabled button.
+ *
+ * Only while entries are open. Once the draw is cut the field is fixed, and a
+ * button that would always fail is worse than no button.
+ *
+ * The mutation is written here rather than reused from useManageTournaments:
+ * that hook reads `useAuth`, which only exists under /app/$clubSlug. Out here
+ * the membership comes off the root context instead.
+ */
+function TournamentEntry({
+  tournament,
+  entrantIds,
+}: {
+  tournament: PublicTournament;
+  entrantIds: number[];
+}) {
+  const { t } = useT();
+  const { session, memberships } = useSession();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  // Their player row in *this* club. Someone can be a member of three clubs and
+  // a pending request at a fourth; only an active row here can enter.
+  const membership = memberships.find(
+    (m) => m.club_id === tournament.club_id && m.status === "active",
+  );
+  const entered = !!membership && entrantIds.includes(membership.id);
+  // A tournament limited to one division is not open to the others. Mirrors the
+  // check the club's own page makes.
+  const eligible =
+    tournament.category === null ||
+    membership?.category === tournament.category;
+
+  const entry = useMutation({
+    mutationFn: async () => {
+      if (!membership) throw new Error("no player");
+      if (entered) {
+        await supabase
+          .from("tournament_players")
+          .delete()
+          .eq("tournament_id", tournament.id)
+          .eq("player_id", membership.id)
+          .throwOnError();
+      } else {
+        await supabase
+          .from("tournament_players")
+          .insert([{ tournament_id: tournament.id, player_id: membership.id }])
+          .throwOnError();
+      }
+    },
+    onSuccess: async () => {
+      // Both halves, for the reason useAuth's refresh gives: the query holds the
+      // entrants, the route's loader holds the copy this page renders.
+      await queryClient.invalidateQueries({
+        queryKey: keys.public.tournament(tournament.id),
+      });
+      await router.invalidate();
+    },
+  });
+
+  if (tournament.status !== "open") return null;
+
+  if (!session) {
+    return (
+      <Link
+        to="/app/login"
+        search={{ next: `/tournaments/${tournament.id}` }}
+        className={buttonClasses({ size: "sm" })}
+      >
+        {t("public.publicTournament.signInToEnter")}
+      </Link>
+    );
+  }
+
+  // Signed in, but not a player at this club yet — the invite link is the same
+  // one the club hands out, and it comes back here afterwards.
+  if (!membership) {
+    return tournament.club ? (
+      <Link
+        to="/app/join/$slug"
+        params={{ slug: tournament.club.slug }}
+        className={buttonClasses({ size: "sm" })}
+      >
+        {t("public.publicTournament.joinClubToEnter")}
+      </Link>
+    ) : null;
+  }
+
+  if (!entered && !eligible) {
+    return (
+      <p className="max-w-[24ch] text-caption text-ink-faint">
+        {t("tournaments.notEligible")}
+      </p>
+    );
+  }
+
+  return (
+    <Button
+      size="sm"
+      variant={entered ? "secondary" : "primary"}
+      disabled={entry.isPending}
+      onClick={() =>
+        runMutation(
+          entry.mutateAsync(),
+          t,
+          entered ? "tournaments.left" : "tournaments.joined",
+          "common.error",
+          { denied: "common.deniedError" },
+        )
+      }
+    >
+      {entered ? t("tournaments.leave") : t("tournaments.join")}
+    </Button>
   );
 }

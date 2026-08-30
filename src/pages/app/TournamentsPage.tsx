@@ -19,6 +19,7 @@ import { CategoryBadge } from "@/components/ui/Ball";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/hooks/useDialog";
+import { eventDates } from "@/libs/algorithms/eventDates";
 import { FORMAT_KEY, type TournamentStatus } from "@/types";
 import { useT, type Key } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -145,8 +146,9 @@ export default function TournamentsPage() {
  * anonymous list row it shared with every other kind of thing in the app.
  */
 function EventCard({ tournament }: { tournament: TournamentListItem }) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const entrants = entrantCount(tournament);
+  const when = eventDates(tournament.starts_on, tournament.ends_on, locale);
 
   return (
     <AppLink
@@ -175,6 +177,14 @@ function EventCard({ tournament }: { tournament: TournamentListItem }) {
             {t(`tournaments.status.${tournament.status}`)}
           </span>
         </p>
+        {/* The date under the facts rather than in them: it is the one thing a
+            member checks before deciding to enter, and it is prose. */}
+        {when && (
+          <p className="mt-1 text-caption text-ink-soft">
+            {when}
+            {tournament.entry_fee ? ` · ${tournament.entry_fee}` : null}
+          </p>
+        )}
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-1.5">

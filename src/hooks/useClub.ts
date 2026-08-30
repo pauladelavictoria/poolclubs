@@ -93,6 +93,10 @@ export const useManageClub = () => {
         /** A public venue's phone number. Stored as typed — it is rendered as a
          *  tel: link and dialled, never parsed. */
         phone?: string | null;
+        /** The room, in the admin's own words: how many tables, what make,
+         *  what size. Free text because any schema for it is a guess — see
+         *  sql/schema.sql. */
+        tablesInfo?: string | null;
         /** Opening hours. The column is jsonb with no CHECK, so the shape is
          *  defended in libs/algorithms/schedule.ts rather than in the database. */
         schedule?: Schedule;
@@ -116,6 +120,7 @@ export const useManageClub = () => {
           timezone?: string;
           description?: string | null;
           phone?: string | null;
+          tables_info?: string | null;
           schedule?: Schedule;
           photo_order?: string[];
         } = {};
@@ -139,6 +144,8 @@ export const useManageClub = () => {
           patch.description = updates.description?.trim() || null;
         if (updates.phone !== undefined)
           patch.phone = updates.phone?.trim() || null;
+        if (updates.tablesInfo !== undefined)
+          patch.tables_info = updates.tablesInfo?.trim() || null;
         if (updates.schedule !== undefined) patch.schedule = updates.schedule;
         if (updates.photoOrder !== undefined)
           patch.photo_order = updates.photoOrder;

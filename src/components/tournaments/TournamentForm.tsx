@@ -16,6 +16,12 @@ import { useT } from "@/i18n";
 
 export type TournamentValues = {
   name: string;
+  /** ISO days, as the `date` columns store them. Both null for a tournament
+   *  nobody has dated yet, which is most of them while entries are open. */
+  starts_on: string | null;
+  ends_on: string | null;
+  /** What it costs to enter, in the organiser's own words. */
+  entry_fee: string | null;
   format: TournamentFormat;
   category: Category | null;
   legs: 1 | 2;
@@ -51,6 +57,9 @@ export default function TournamentForm({
 }) {
   const { t } = useT();
   const [name, setName] = useState(initialValues?.name ?? "");
+  const [startsOn, setStartsOn] = useState(initialValues?.starts_on ?? "");
+  const [endsOn, setEndsOn] = useState(initialValues?.ends_on ?? "");
+  const [entryFee, setEntryFee] = useState(initialValues?.entry_fee ?? "");
   const [format, setFormat] = useState<TournamentFormat>(
     initialValues?.format ?? "double_elim",
   );
@@ -85,6 +94,11 @@ export default function TournamentForm({
     if (!raceValid) return;
     onSubmit({
       name: name.trim(),
+      starts_on: startsOn || null,
+      // An end with no start is half a range, and the CHECK on the table
+      // refuses it — see sql/schema.sql.
+      ends_on: startsOn && endsOn ? endsOn : null,
+      entry_fee: entryFee.trim() || null,
       format,
       category,
       legs,
@@ -107,6 +121,51 @@ export default function TournamentForm({
           maxLength={60}
           onChange={(e) => setName(e.target.value)}
           required
+          disabled={isSubmitting}
+        />
+      </div>
+
+      {/* Native date inputs: the browser already owns the calendar, the
+          locale, the keyboard on a phone and the min/max clamp. A picker
+          component would be a dependency for a field an organiser fills in
+          once. */}
+      <fieldset className="space-y-1.5">
+        <Label htmlFor="tournament-starts">{t("tournaments.dates")}</Label>
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            id="tournament-starts"
+            type="date"
+            value={startsOn}
+            aria-label={t("tournaments.startsOn")}
+            onChange={(e) => setStartsOn(e.target.value)}
+            disabled={isSubmitting}
+          />
+          <Input
+            type="date"
+            value={endsOn}
+            // A day at a time: a range cannot end before it starts, and
+            // nothing to end until there is a start.
+            min={startsOn || undefined}
+            disabled={isSubmitting || !startsOn}
+            aria-label={t("tournaments.endsOn")}
+            onChange={(e) => setEndsOn(e.target.value)}
+          />
+        </div>
+        <p className="text-caption text-ink-faint">
+          {t("tournaments.datesHint")}
+        </p>
+      </fieldset>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="tournament-fee">{t("tournaments.entryFee")}</Label>
+        {/* Text, not a number: "15 €", "20 € / 10 € socios" and "free for
+            members" are all real answers and none of them is an amount. */}
+        <Input
+          id="tournament-fee"
+          value={entryFee}
+          maxLength={80}
+          placeholder={t("tournaments.entryFeePlaceholder")}
+          onChange={(e) => setEntryFee(e.target.value)}
           disabled={isSubmitting}
         />
       </div>

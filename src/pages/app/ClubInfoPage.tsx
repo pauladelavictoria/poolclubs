@@ -107,6 +107,7 @@ export default function ClubInfoPage() {
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
   const [description, setDescription] = useState<string | undefined>(undefined);
   const [phone, setPhone] = useState<string | undefined>(undefined);
+  const [tablesInfo, setTablesInfo] = useState<string | undefined>(undefined);
   const [schedule, setSchedule] = useState<Schedule | undefined>(undefined);
 
   // Admin-only, enforced by the route's beforeLoad before this renders.
@@ -130,6 +131,7 @@ export default function ClubInfoPage() {
   const shownPublic = isPublic ?? activeClub.is_public;
   const shownDescription = description ?? activeClub.description ?? "";
   const shownPhone = phone ?? activeClub.phone ?? "";
+  const shownTables = tablesInfo ?? activeClub.tables_info ?? "";
   // Parsed rather than cast: the column is jsonb with no CHECK, so what comes
   // back is whatever is in the row. See libs/algorithms/schedule.ts.
   const shownSchedule = schedule ?? parseSchedule(activeClub.schedule);
@@ -144,6 +146,7 @@ export default function ClubInfoPage() {
     timezone !== undefined ||
     description !== undefined ||
     phone !== undefined ||
+    tablesInfo !== undefined ||
     schedule !== undefined;
 
   const saveSettings = () => {
@@ -157,6 +160,7 @@ export default function ClubInfoPage() {
         ...(timezone !== undefined && { timezone }),
         ...(description !== undefined && { description }),
         ...(phone !== undefined && { phone }),
+        ...(tablesInfo !== undefined && { tablesInfo }),
         ...(schedule !== undefined && { schedule }),
       },
       {
@@ -169,6 +173,7 @@ export default function ClubInfoPage() {
           setTimezone(undefined);
           setDescription(undefined);
           setPhone(undefined);
+          setTablesInfo(undefined);
           setSchedule(undefined);
           toast.success(t("common.saved"));
         },
@@ -283,6 +288,22 @@ export default function ClubInfoPage() {
             placeholder={t("club.phonePlaceholder")}
             disabled={updateClub.isPending}
             onChange={(e) => setPhone(e.target.value)}
+          />
+        </div>
+
+        {/* The room itself, in prose. Not club_tables, which is the list of
+            tablets bolted to each table and never leaves the app — this is what
+            a stranger reads before deciding to come. */}
+        <div className="mt-4 space-y-1.5">
+          <Label htmlFor="club-tables">{t("club.tablesInfo")}</Label>
+          <Textarea
+            id="club-tables"
+            rows={2}
+            maxLength={300}
+            value={shownTables}
+            placeholder={t("club.tablesInfoPlaceholder")}
+            disabled={updateClub.isPending}
+            onChange={(e) => setTablesInfo(e.target.value)}
           />
         </div>
 

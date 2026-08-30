@@ -513,6 +513,9 @@ export default function TournamentPage() {
           <TournamentForm
             initialValues={{
               name: tournament.name,
+              starts_on: tournament.starts_on,
+              ends_on: tournament.ends_on,
+              entry_fee: tournament.entry_fee,
               format: tournament.format,
               category: tournament.category,
               legs: tournament.legs,
