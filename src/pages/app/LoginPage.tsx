@@ -9,9 +9,9 @@ import {
   signIn,
   signUp,
   startGoogleOAuth,
-} from "@/libs/auth.functions";
+} from "@/libs/server/auth.functions";
 import { useSessionRefresh } from "@/hooks/useAuth";
-import { isSafePath } from "@/libs/nextPath";
+import { isSafePath } from "@/libs/algorithms/nextPath";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/app/login");
@@ -20,7 +20,7 @@ const route = getRouteApi("/app/login");
  * Signing in, on the server.
  *
  * All three routes — Google, email sign-in, email sign-up — go through server
- * functions in libs/auth.functions.ts, so the session lands in httpOnly cookies
+ * functions in libs/server/auth.functions.ts, so the session lands in httpOnly cookies
  * and no token is ever handled by code on this page.
  *
  * The old sessionStorage handoff is gone with it. `next` used to be written here
@@ -127,7 +127,9 @@ export default function LoginPage() {
       }
       await arrive();
     } catch {
-      setNote({ text: t(mode === "signin" ? "auth.badCredentials" : "auth.signUpError") });
+      setNote({
+        text: t(mode === "signin" ? "auth.badCredentials" : "auth.signUpError"),
+      });
     } finally {
       setBusy(false);
     }

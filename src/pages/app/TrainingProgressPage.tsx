@@ -4,8 +4,8 @@ import { LuTrash2 } from "react-icons/lu";
 import PageTitle from "@/components/layout/PageTitle";
 import DrillProgressChart from "@/components/drills/DrillProgressChart";
 import SocialBar from "@/components/social/SocialBar";
-import { useGetDrillLogs } from "@/hooks/useGetDrillLogs";
-import { useGetDrills } from "@/hooks/useGetDrills";
+import { useDrillLogs } from "@/hooks/useDrillLogs";
+import { useDrills } from "@/hooks/useDrills";
 import { useDeleteDrillLog } from "@/hooks/useDeleteDrillLog";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -17,8 +17,8 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { DIFFICULTIES, type DrillDifficulty } from "@/types";
-import { scoreBand, scorePct } from "@/libs/scoreBand";
-import { fmt, startsNewDay, timeOf } from "@/libs/dayLabel";
+import { scoreBand, scorePct } from "@/libs/algorithms/scoreBand";
+import { fmt, startsNewDay, timeOf } from "@/libs/algorithms/dayLabel";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 
@@ -35,9 +35,9 @@ export default function TrainingProgressPage() {
   const [drillId, setDrillId] = useState<number | "">("");
 
   const { user } = useAuth();
-  const { data: drills } = useGetDrills();
+  const { data: drills } = useDrills();
   const deleteLog = useDeleteDrillLog();
-  const { data: allLogs, isLoading } = useGetDrillLogs({
+  const { data: allLogs, isLoading } = useDrillLogs({
     player_id: selectedPlayerId ?? undefined,
   });
 

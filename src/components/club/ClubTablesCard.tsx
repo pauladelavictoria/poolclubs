@@ -3,8 +3,14 @@ import { useMutation } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { renderSVG } from "uqr";
-import { LuMonitorSmartphone, LuPlus, LuTrash2, LuUnlink } from "react-icons/lu";
-import { supabase } from "@/supabaseClient";
+import {
+  LuMonitorSmartphone,
+  LuPlus,
+  LuTrash2,
+  LuUnlink,
+} from "react-icons/lu";
+import { supabase } from "@/libs/supabase/browser";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubTables, useManageClubTables } from "@/hooks/useClubTables";
 import { useClubMembers, useManageClub } from "@/hooks/useClub";
@@ -38,9 +44,10 @@ export default function ClubTablesCard() {
   const [label, setLabel] = useState("");
   /** The code just cut, and which table it was cut for. One at a time: it is
    *  read off this screen and typed into a tablet standing at that table. */
-  const [pairing, setPairing] = useState<{ tableId: number; code: string } | null>(
-    null,
-  );
+  const [pairing, setPairing] = useState<{
+    tableId: number;
+    code: string;
+  } | null>(null);
 
   /** The same link the tablet would reach by typing, with the code in it, as a
    *  symbol the tablet's camera can read. ecc M and a 4-module quiet zone for
@@ -49,7 +56,10 @@ export default function ClubTablesCard() {
   const pairQr = useMemo(() => {
     if (!pairing) return null;
     const link = `${origin}/app/pair?code=${pairing.code}`;
-    return { link, svg: renderSVG(link, { ecc: "M", border: 4, pixelSize: 1 }) };
+    return {
+      link,
+      svg: renderSVG(link, { ecc: "M", border: 4, pixelSize: 1 }),
+    };
   }, [origin, pairing]);
 
   const deviceOn = (tableId: number) =>
@@ -59,28 +69,25 @@ export default function ClubTablesCard() {
     mutationFn: async (tableId: number): Promise<string> => {
       if (!activeClubId) throw new Error("no active club");
 
-      // start_device_pairing takes a table now, and the generated types still
-      // carry the one-argument version. Narrow cast until sql/device-pairing.sql
-      // is applied and `npm run db:types` re-run.
-      const rpc = supabase as unknown as {
-        rpc: (
-          fn: string,
-          args: Record<string, number>,
-        ) => PromiseLike<{
-          data: string | null;
-          error: { message: string } | null;
-        }>;
-      };
-
-      const { data, error } = await rpc.rpc("start_device_pairing", {
+      const { data, error } = await supabase.rpc("start_device_pairing", {
         cid: activeClubId,
         tid: tableId,
       });
-      if (error || !data) throw new Error(error?.message ?? "no code");
+      // Thrown rather than wrapped so the PostgrestError's own code reaches
+      // the caller, same reason as useLiveMatch's startMatch.
+      if (error) throw error;
+      if (!data) throw new Error("no code");
       return data;
     },
     onSuccess: (code, tableId) => setPairing({ tableId, code }),
-    onError: () => toast.error(t("common.error")),
+    onError: (err) =>
+      toast.error(
+        t(
+          dbErrorMessage(err, "startPairing", {
+            denied: "common.deniedError",
+          }),
+        ),
+      ),
   });
 
   const add = () => {
@@ -90,7 +97,16 @@ export default function ClubTablesCard() {
       onSuccess: () => setLabel(""),
       // Almost always the unique index: this club already has a table by that
       // name.
-      onError: () => toast.error(t("tables.duplicate")),
+      onError: (err) =>
+        toast.error(
+          t(
+            dbErrorMessage(err, "addTable", {
+              duplicate: "tables.duplicate",
+              denied: "common.deniedError",
+              fallback: "tables.duplicate",
+            }),
+          ),
+        ),
     });
   };
 

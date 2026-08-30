@@ -1,7 +1,7 @@
 import { getRouteApi } from "@tanstack/react-router";
 import { LuPlus } from "react-icons/lu";
-import { useGetGames } from "@/hooks/useGetGames";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useGames } from "@/hooks/useGames";
+import { usePlayers } from "@/hooks/usePlayers";
 import PageTitle from "@/components/layout/PageTitle";
 import GamesList from "@/components/games/GamesList";
 import { Select } from "@/components/ui/Select";
@@ -33,7 +33,7 @@ export default function GamesPage() {
   const setPage = (next: number) =>
     navigate({ search: (prev) => ({ ...prev, page: next }) });
 
-  const { data: gamesData, isLoading: gamesLoading } = useGetGames({
+  const { data: gamesData, isLoading: gamesLoading } = useGames({
     page,
     pageSize: PAGE_SIZE,
     playerId,
@@ -41,7 +41,7 @@ export default function GamesPage() {
   });
   const games = gamesData?.games ?? [];
   const totalCount = gamesData?.totalCount ?? 0;
-  const { data: players } = useGetPlayers();
+  const { data: players } = usePlayers();
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
 

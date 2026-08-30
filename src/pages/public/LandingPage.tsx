@@ -19,10 +19,10 @@ import {
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Shot } from "@/components/ui/Shot";
 import { BallGlyph, DisciplineBall } from "@/components/ui/Ball";
-import { CLUB_BALL_LABEL } from "@/libs/clubTheme";
+import { CLUB_BALL_LABEL } from "@/libs/theme/clubTheme";
 import type { BallColor } from "@/types";
 import { useT, type Key } from "@/i18n";
-import { DRILLS_ENABLED } from "@/libs/features";
+import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 
 /**
  * The front door, written for a club rather than for a player.

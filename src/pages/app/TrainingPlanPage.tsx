@@ -3,8 +3,9 @@ import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import PageTitle from "@/components/layout/PageTitle";
 import TrainingPlanStepList from "@/components/drills/TrainingPlanStepList";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { Card } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +13,9 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useT } from "@/i18n";
 
-const route = getRouteApi("/app/_authed/$clubSlug/players/$playerId/training/plan");
+const route = getRouteApi(
+  "/app/_authed/$clubSlug/players/$playerId/training/plan",
+);
 
 export default function TrainingPlanPage() {
   const { t } = useT();
@@ -22,7 +25,7 @@ export default function TrainingPlanPage() {
   const { playerId } = route.useParams();
   const playerIdNum = Number(playerId);
 
-  const { data: players } = useGetPlayers();
+  const { data: players } = usePlayers();
   const player = players?.find((p) => p.id === playerIdNum);
 
   const {
@@ -49,16 +52,21 @@ export default function TrainingPlanPage() {
       { playerId: player.id, category: player.category },
       {
         onSuccess: () => toast.success(t("training.newPlanCreated")),
-        onError: () => toast.error(t("drills.planError")),
+        onError: (err) =>
+          toast.error(
+            t(
+              dbErrorMessage(err, "generatePlan", {
+                denied: "common.deniedError",
+                fallback: "drills.planError",
+              }),
+            ),
+          ),
       },
     );
   };
 
   const title = (
-    <PageTitle
-      title={t("training.planTitle")}
-      crumbs={[]}
-    >
+    <PageTitle title={t("training.planTitle")} crumbs={[]}>
       {player && <CategoryBadge category={player.category} full />}
     </PageTitle>
   );

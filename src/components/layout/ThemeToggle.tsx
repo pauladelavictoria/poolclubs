@@ -1,6 +1,6 @@
 import { LuMoon, LuSun } from "react-icons/lu";
 import { pickerClasses } from "@/components/ui/buttonStyles";
-import { setTheme, useTheme } from "@/libs/theme";
+import { setTheme, useTheme } from "@/libs/theme/theme";
 import { useT } from "@/i18n";
 
 /**

@@ -13,8 +13,12 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/today")({
   staticData: { section: "home" },
   loader: ({ context }) =>
     Promise.all([
-      context.queryClient.ensureQueryData(clubTablesQuery(context.activeClubId)),
-      context.queryClient.ensureQueryData(liveMatchesQuery(context.activeClubId)),
+      context.queryClient.ensureQueryData(
+        clubTablesQuery(context.activeClubId),
+      ),
+      context.queryClient.ensureQueryData(
+        liveMatchesQuery(context.activeClubId),
+      ),
     ]),
   component: TodayPage,
 });

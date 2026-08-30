@@ -1,6 +1,6 @@
 import ActivityFeed from "@/components/social/ActivityFeed";
 import TonightPanel from "@/components/live/TonightPanel";
-import { useGetTournaments } from "@/hooks/useTournaments";
+import { useTournaments } from "@/hooks/useTournaments";
 import { TournamentOpenCard } from "@/components/tournaments/TournamentFeedCard";
 import { Card } from "@/components/ui/Card";
 import { useT } from "@/i18n";
@@ -8,7 +8,7 @@ import { useT } from "@/i18n";
 export default function DashboardPage() {
   const { t } = useT();
   // Same key the feed below reads, so listing the open ones costs no request.
-  const { data: tournaments } = useGetTournaments();
+  const { data: tournaments } = useTournaments();
   const open = (tournaments ?? []).filter((x) => x.status === "open");
 
   return (

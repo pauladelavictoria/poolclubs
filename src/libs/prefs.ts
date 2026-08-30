@@ -4,7 +4,7 @@ import {
   getRequestHeader,
   getRequestUrl,
 } from "@tanstack/react-start/server";
-import { decodeSetup, encodeSetup, type DaySetup } from "@/libs/today";
+import { decodeSetup, encodeSetup, type DaySetup } from "@/libs/algorithms/today";
 
 /**
  * The two choices the server has to know before it renders anything: which way
@@ -41,13 +41,13 @@ export const KIOSK_COOKIE = "kiosk";
 
 /**
  * What the club is playing today — format, game and race, as one string. Read on
- * the server so /today's bar is right in the first byte; see libs/today.ts for
+ * the server so /today's bar is right in the first byte; see libs/algorithms/today.ts for
  * the shape and why it is not per club.
  */
-export const TODAY_COOKIE = "today";
+const TODAY_COOKIE = "today";
 
 /** The day's setup, as the page reads and writes it. Here rather than in
- *  libs/today.ts because that module is checked under bare node and this one
+ *  libs/algorithms/today.ts because that module is checked under bare node and this one
  *  imports the server's request helpers. */
 export const readTodaySetup = (): DaySetup =>
   decodeSetup(readPref(TODAY_COOKIE));
@@ -108,6 +108,4 @@ export const readPreferredLangs = createIsomorphicFn()
       .map((part) => part.split(";")[0].trim())
       .filter(Boolean),
   )
-  .client((): string[] => [
-    ...(navigator.languages ?? [navigator.language]),
-  ]);
+  .client((): string[] => [...(navigator.languages ?? [navigator.language])]);

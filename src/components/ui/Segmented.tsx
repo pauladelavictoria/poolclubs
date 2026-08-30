@@ -16,11 +16,7 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div
-      role="tablist"
-      aria-label={label}
-      className={segmentedShell}
-    >
+    <div role="tablist" aria-label={label} className={segmentedShell}>
       {options.map((option) => {
         const selected = option.value === value;
         return (

@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getSupabaseServer } from "@/libs/supabase.server";
+import { getSupabaseServer } from "@/libs/supabase/server";
 
 const DATA_URL = /^data:(image\/\w+);base64,(.+)$/;
 
 /**
  * A club's logo as a real, fetchable image — `clubs.logo_url` only ever holds
- * a `data:` URI (see libs/logoImage.ts), which is fine inline in the app but
+ * a `data:` URI (see libs/browser/logoImage.ts), which is fine inline in the app but
  * useless anywhere something else has to fetch it over HTTP, such as a web
  * app manifest's `icons[].src`. This just unwraps the stored data URI back
  * into bytes on the way out.

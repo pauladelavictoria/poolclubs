@@ -14,7 +14,9 @@
  * The payload shape is PushPayload in src/libs/push.functions.ts.
  */
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener("activate", (event) =>
+  event.waitUntil(self.clients.claim()),
+);
 
 self.addEventListener("push", (event) => {
   let payload = {};
@@ -44,7 +46,8 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || "/app";
+  const url =
+    (event.notification.data && event.notification.data.url) || "/app";
 
   // waitUntil is not optional: without it the worker can be killed before any
   // of this runs, and the tap does nothing at all.

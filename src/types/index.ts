@@ -32,25 +32,13 @@ type Row<T extends keyof Database["public"]["Tables"]> =
 type Stamped<T> = Omit<T, "created_at"> & { created_at: string };
 
 /**
- * `slug` is intersected in rather than read from the generated Row because the
- * app is typed against it before `sql/club-slug.sql` has been applied and
- * `npm run db:types` re-run. The intersection is harmless once the column is
- * generated — it is the same `string` — so this line does not need removing,
- * but it can go once the schema catches up.
- *
  * The location columns (address, city, country, lat, lon) are written together
- * or not at all; see src/libs/geocode.ts for the `Place` they come from.
+ * or not at all; see src/libs/algorithms/geocode.ts for the `Place` they come from.
  */
-export type Club = Stamped<Row<"clubs">> & { slug: string } & {
-  /** The club's own clock, as an IANA zone: what 06:00 means when a night is
-   *  bucketed into a day. Intersected in rather than read from the generated Row
-   *  until sql/club-timezone.sql is applied and `npm run db:types` re-run;
-   *  harmless once it is. See libs/day.ts. */
-  timezone: string | null;
-};
+export type Club = Stamped<Row<"clubs">>;
 
 /** The club's accent colour, keyed to a real Postgres enum so it stays in
- *  lockstep with the palette in libs/clubTheme.ts. Ordered 1-8, the solids'
+ *  lockstep with the palette in libs/theme/clubTheme.ts. Ordered 1-8, the solids'
  *  own rack order — the picker and any legend read in that order too. */
 export type BallColor = Database["public"]["Enums"]["BallColor"];
 
@@ -78,6 +66,8 @@ export type Game = Stamped<Row<"games">>;
 
 export type Category = 1 | 2 | 3;
 
+export const CATEGORIES = [1, 2, 3] as const satisfies readonly Category[];
+
 /** 'pending' until the club owner approves the join request. */
 export type PlayerStatus = "pending" | "active";
 
@@ -94,7 +84,7 @@ export type ClubTable = Row<"club_tables">;
  *
  * The row's existence is its status: live while it is here, finished once
  * `finish_live_match` has turned it into a `games` row and deleted it,
- * abandoned while it is here and nobody has touched it — see libs/night.ts.
+ * abandoned while it is here and nobody has touched it — see libs/algorithms/night.ts.
  * The four seats, `mode` and `discipline` are the same shape as a game, because
  * finishing copies them straight across.
  *
@@ -111,12 +101,7 @@ export type LiveMatch = Omit<Row<"live_matches">, "last_side"> & {
 export type Player = Omit<Row<"players">, "category" | "status"> & {
   category: Category;
   status: PlayerStatus;
-} & {
-    /** Which table this tablet is paired to, when it is one. Intersected in
-     *  rather than read from the generated Row until sql/device-pairing.sql is
-     *  applied and `npm run db:types` re-run; harmless once it is. */
-    device_table_id: number | null;
-  } & Pick<Person, "name" | "avatar_url" | "slug" | "is_public"> & {
+} & Pick<Person, "name" | "avatar_url" | "slug" | "is_public"> & {
     /** Null out here on the public side, where anon is not granted the column.
      *  Only ClubPage reads it, to mark which member owns the club. */
     user_id: string | null;
@@ -141,30 +126,30 @@ export type Comment = Stamped<Row<"comments">>;
 /** The picker's palette. The database accepts any emoji, so a row may carry
  *  one that is not on this list — render what is stored, not what is here. */
 export const REACTIONS = [
-  '👍',
-  '👏',
-  '🙌',
-  '🔥',
-  '🐐',
-  '😮',
-  '😂',
-  '🎱',
+  "👍",
+  "👏",
+  "🙌",
+  "🔥",
+  "🐐",
+  "😮",
+  "😂",
+  "🎱",
 ] as const;
 export type ReactionEmoji = (typeof REACTIONS)[number];
 
 export type Reaction = Stamped<Row<"reactions">>;
 
 // Training / Drills types
-export type DrillDifficulty = 'beginner' | 'intermediate' | 'advanced';
+export type DrillDifficulty = "beginner" | "intermediate" | "advanced";
 export type DrillSkillType =
-  | 'potting'
-  | 'position'
-  | 'safety'
-  | 'break'
-  | 'banks'
-  | 'kicks'
-  | 'patterns'
-  | 'specials';
+  | "potting"
+  | "position"
+  | "safety"
+  | "break"
+  | "banks"
+  | "kicks"
+  | "patterns"
+  | "specials";
 
 export type BallPosition = {
   x: number;
@@ -178,7 +163,7 @@ export type ShotPath = {
   y1: number;
   x2: number;
   y2: number;
-  type?: 'solid' | 'dashed';
+  type?: "solid" | "dashed";
 };
 
 /** ball_positions and shot_paths are jsonb — only the drill editor writes them,
@@ -195,7 +180,7 @@ export type Drill = Omit<
 
 export type DrillLog = Row<"drill_logs">;
 
-export type TrainingPlanStepStatus = 'pending' | 'completed' | 'skipped';
+export type TrainingPlanStepStatus = "pending" | "completed" | "skipped";
 
 export type TrainingPlan = Row<"training_plans">;
 
@@ -207,9 +192,9 @@ export type TrainingPlanStep = Omit<Row<"training_plan_steps">, "status"> & {
 
 /** Which drills a division is aimed at. Used to seed a training plan. */
 export const CATEGORY_TO_DIFFICULTY: Record<Category, DrillDifficulty> = {
-  1: 'advanced',
-  2: 'intermediate',
-  3: 'beginner',
+  1: "advanced",
+  2: "intermediate",
+  3: "beginner",
 };
 
 /* Display order for the filters and the editor. The labels themselves live in
@@ -218,23 +203,23 @@ export const CATEGORY_TO_DIFFICULTY: Record<Category, DrillDifficulty> = {
    ?difficulty validator straight from this list, and a plain
    DrillDifficulty[] would widen the parsed value back to `string`. */
 export const DIFFICULTIES = [
-  'beginner',
-  'intermediate',
-  'advanced',
+  "beginner",
+  "intermediate",
+  "advanced",
 ] as const satisfies readonly DrillDifficulty[];
 
 export const SKILL_TYPES = [
-  'potting',
-  'position',
-  'safety',
-  'break',
-  'banks',
-  'kicks',
-  'patterns',
-  'specials',
+  "potting",
+  "position",
+  "safety",
+  "break",
+  "banks",
+  "kicks",
+  "patterns",
+  "specials",
 ] as const satisfies readonly DrillSkillType[];
 
-// Tournaments — see sql/tournaments.sql and libs/bracket.ts.
+// Tournaments — see sql/tournaments.sql and libs/algorithms/bracket/.
 
 export type TournamentFormat = "double_elim" | "league" | "group_knockout";
 
@@ -274,7 +259,7 @@ export type TournamentPlayer = Row<"tournament_players">;
 
 export type TournamentMatch = Omit<Row<"tournament_matches">, "bracket"> & {
   bracket: BracketSide;
-  /** Joined by useGetTournament's select, not a column — the racks a league
+  /** Joined by useTournament's select, not a column — the racks a league
    *  table needs live on the game, not the match, and so does when it was
    *  played: a match row has no time of its own because a fixture is not an
    *  event until somebody turns up. */

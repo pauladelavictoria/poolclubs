@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
 import { useAddDrillLog } from "@/hooks/useAddDrillLog";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import type { Drill } from "@/types";
@@ -51,8 +52,14 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
           reset();
           onSuccess?.(result.id);
         },
-        onError: () => {
-          toast.error(t("common.error"));
+        onError: (err) => {
+          toast.error(
+            t(
+              dbErrorMessage(err, "addDrillLog", {
+                denied: "common.deniedError",
+              }),
+            ),
+          );
         },
       },
     );

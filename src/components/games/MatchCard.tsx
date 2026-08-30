@@ -1,4 +1,4 @@
-import type { BracketIndex } from "@/libs/bracket";
+import type { BracketIndex } from "@/libs/algorithms/bracket";
 import type { TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
 import PlayerLink from "@/components/players/PlayerLink";

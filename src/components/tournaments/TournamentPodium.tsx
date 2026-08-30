@@ -1,6 +1,6 @@
 import { Avatar } from "@/components/ui/Avatar";
 import { ballTone } from "@/components/ui/Ball";
-import type { Places } from "@/libs/bracket";
+import type { Places } from "@/libs/algorithms/bracket";
 import type { Player } from "@/types";
 import { useT } from "@/i18n";
 import PlayerLink from "@/components/players/PlayerLink";

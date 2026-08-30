@@ -37,7 +37,11 @@ export const SUBPROCESSORS = [
   { name: "Supabase", role: "database, authentication, storage", region: "EU" },
   { name: "Netlify", role: "hosting, CDN", region: "US/global" },
   { name: "Google", role: "sign-in with Google (OAuth)", region: "US/global" },
-  { name: "OpenStreetMap / Photon", role: "address search on maps", region: "EU" },
+  {
+    name: "OpenStreetMap / Photon",
+    role: "address search on maps",
+    region: "EU",
+  },
 ] as const;
 
 export type LegalSection = { heading: string; body: string[] };
@@ -559,7 +563,9 @@ const avisoEs: LegalDoc = {
         `NIF: ${OPERATOR.nif}`,
         `Domicilio: ${OPERATOR.address}`,
         `Correo electrónico: ${CONTACT_EMAIL}`,
-        ...(OPERATOR.registry ? [`Datos registrales: ${OPERATOR.registry}`] : []),
+        ...(OPERATOR.registry
+          ? [`Datos registrales: ${OPERATOR.registry}`]
+          : []),
       ],
     },
     {
@@ -614,7 +620,9 @@ const avisoEn: LegalDoc = {
         `Tax ID: ${OPERATOR.nif}`,
         `Address: ${OPERATOR.address}`,
         `Email: ${CONTACT_EMAIL}`,
-        ...(OPERATOR.registry ? [`Registry details: ${OPERATOR.registry}`] : []),
+        ...(OPERATOR.registry
+          ? [`Registry details: ${OPERATOR.registry}`]
+          : []),
       ],
     },
     {

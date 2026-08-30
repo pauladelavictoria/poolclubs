@@ -1,11 +1,11 @@
-import type { BracketIndex } from "@/libs/bracket";
+import type { BracketIndex } from "@/libs/algorithms/bracket";
 import type { BracketSide, TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
 import PlayerLink from "@/components/players/PlayerLink";
 
 /** Reading order of a tournament: groups, then the main draw, then the repêchage
  *  it feeds, then the match everything has been building to. Kept in step with
- *  the numbering in libs/bracket.ts, which sorts by the same thing. */
+ *  the numbering in libs/algorithms/bracket/, which sorts by the same thing. */
 const ORDER: BracketSide[] = ["group", "league", "winners", "losers", "final"];
 
 /**

@@ -1,14 +1,15 @@
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { useCheckIn, useWhoIsHere } from "@/hooks/useNight";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { AppLink } from "@/components/layout/AppLink";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { sideNames } from "@/libs/night";
+import { sideNames } from "@/libs/algorithms/night";
 import { useT } from "@/i18n";
 
 /**
@@ -32,7 +33,7 @@ export default function TonightPanel() {
   const { t } = useT();
   const { player } = useAuth();
   const { data: live } = useLiveMatches();
-  const { data: players } = useGetPlayers();
+  const { data: players } = usePlayers();
   const { data: tables } = useClubTables();
   const here = useWhoIsHere();
   const checkIn = useCheckIn();
@@ -115,7 +116,16 @@ export default function TonightPanel() {
           onClick={() =>
             checkIn.mutate(
               { here: !imHere },
-              { onError: () => toast.error(t("common.error")) },
+              {
+                onError: (err) =>
+                  toast.error(
+                    t(
+                      dbErrorMessage(err, "checkIn", {
+                        denied: "common.deniedError",
+                      }),
+                    ),
+                  ),
+              },
             )
           }
           disabled={checkIn.isPending || !player}

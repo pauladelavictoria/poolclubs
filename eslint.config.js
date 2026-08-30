@@ -6,13 +6,15 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   // routeTree.gen.ts is written by the TanStack Start plugin on every build.
-  { ignores: ["dist", ".output", ".nitro", ".tanstack", "src/routeTree.gen.ts"] },
+  {
+    ignores: ["dist", ".output", ".nitro", ".tanstack", "src/routeTree.gen.ts"],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: { ...globals.browser, ...globals.node },
     },
     plugins: {
       "react-hooks": reactHooks,
@@ -20,7 +22,6 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "@typescript-eslint/no-explicit-any": "off",
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
@@ -32,5 +33,11 @@ export default tseslint.config(
     // is the file-based routing convention, not an accident.
     files: ["src/routes/**/*.{ts,tsx}"],
     rules: { "react-refresh/only-export-components": "off" },
-  }
+  },
+  {
+    // Test helpers re-export testing-library's own named exports alongside a
+    // wrapped `render` — not a component file react-refresh needs to guard.
+    files: ["src/test/**/*.{ts,tsx}", "**/*.test.{ts,tsx}"],
+    rules: { "react-refresh/only-export-components": "off" },
+  },
 );

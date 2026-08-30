@@ -9,8 +9,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterGroup, FilterMenu } from "@/components/ui/FilterMenu";
 import { FilterPills } from "@/components/ui/FilterPills";
 import { SearchInput } from "@/components/ui/SearchInput";
-import { useDebouncedQuery } from "@/libs/useDebouncedQuery";
-import { publicDrillsQuery } from "@/queries/public";
+import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";
+import { publicDrillsQuery } from "@/queries/public/drills";
 import {
   CLUB_BALL_COLORS,
   DIFFICULTIES,

@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import PublicPlayersPage from "@/pages/public/PublicPlayersPage";
-import { publicPlayersQuery } from "@/queries/public";
-import { publicMeta } from "@/libs/publicMeta";
+import { publicPlayersQuery } from "@/queries/public/players";
+import { publicMeta } from "@/libs/algorithms/publicMeta";
 
 /**
  * Defaults are deliberately absent from this schema.

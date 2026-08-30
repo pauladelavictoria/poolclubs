@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getSupabaseServer } from "@/libs/supabase.server";
-import { isSafePath, loginFailedLink } from "@/libs/nextPath";
-import { pickBranch } from "@/libs/callbackParams";
+import { getSupabaseServer } from "@/libs/supabase/server";
+import { isSafePath, loginFailedLink } from "@/libs/algorithms/nextPath";
+import { pickBranch } from "@/libs/algorithms/callbackParams";
 
 /**
  * Where Google and the confirmation emails come back to.
@@ -19,7 +19,7 @@ import { pickBranch } from "@/libs/callbackParams";
  *    browser that signed up.
  *
  *  - code, from Google. PKCE, and the verifier was written to a cookie when the
- *    trip started (startGoogleOAuth in libs/auth.functions.ts) — same browser,
+ *    trip started (startGoogleOAuth in libs/server/auth.functions.ts) — same browser,
  *    same visit, so it is there.
  *
  * The email branch is the newer one. Before it, every confirmation went through

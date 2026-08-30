@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { LuChevronDown, LuCheck, LuPlus } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useOutsideClose } from "@/libs/useOutsideClose";
+import { useOutsideClose } from "@/hooks/useOutsideClose";
 import { useT } from "@/i18n";
 
 /**

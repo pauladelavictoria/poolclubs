@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import PublicDrillsPage from "@/pages/public/PublicDrillsPage";
-import { publicDrillsQuery } from "@/queries/public";
-import { publicMeta } from "@/libs/publicMeta";
+import { publicDrillsQuery } from "@/queries/public/drills";
+import { publicMeta } from "@/libs/algorithms/publicMeta";
 import { DIFFICULTIES, SKILL_TYPES } from "@/types";
 
 const searchSchema = z.object({

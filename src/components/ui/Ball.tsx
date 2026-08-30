@@ -4,7 +4,7 @@ import {
   BALL_COLORS,
   BALL_RADIUS,
   isStriped,
-} from "@/libs/drillGeometry";
+} from "@/libs/algorithms/drillGeometry";
 import type { Category, Discipline } from "@/types";
 import { useT } from "@/i18n";
 

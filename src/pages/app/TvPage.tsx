@@ -1,17 +1,17 @@
 import { LuExpand } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetGames } from "@/hooks/useGetGames";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useGames } from "@/hooks/useGames";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useDailyRanking } from "@/hooks/useDailyRanking";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import Scoreboard from "@/components/live/Scoreboard";
 import Ranking from "@/components/ranking/Ranking";
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/Button";
-import { useFullscreen } from "@/libs/useFullscreen";
-import { useWakeLock } from "@/libs/useWakeLock";
-import { dayKeyOf, zoneOf } from "@/libs/day";
-import { useNow } from "@/libs/useNow";
+import { useFullscreen } from "@/hooks/useFullscreen";
+import { useWakeLock } from "@/hooks/useWakeLock";
+import { dayKeyOf, zoneOf } from "@/libs/algorithms/day";
+import { useNow } from "@/hooks/useNow";
 import { useT } from "@/i18n";
 
 const gridFor = (n: number) =>
@@ -33,16 +33,16 @@ export default function TvPage() {
   // date over. Null until the browser has it — see libs/useNow.
   const now = useNow(60_000);
   // Rolls over at 06:00, not at midnight: the wall display must not blank the
-  // night's standings while the last two are still playing — see libs/day.ts.
+  // night's standings while the last two are still playing — see libs/algorithms/day.ts.
   const today = now === null ? null : dayKeyOf(now, tz);
 
   const { data: live } = useLiveMatches({ poll: true });
-  const { data: players } = useGetPlayers();
-  const { data: gamesData, isLoading: gamesLoading } = useGetGames(
+  const { data: players } = usePlayers();
+  const { data: gamesData, isLoading: gamesLoading } = useGames(
     { date: today ?? undefined, mode: "single", tz },
     // Not until the day is known: without a date this is every single-player
     // game the club has ever filed, and the wall display would spend its first
-    // render ranking the lot. See the note on useGetGames' `enabled`.
+    // render ranking the lot. See the note on useGames' `enabled`.
     { poll: true, enabled: today !== null },
   );
   const ranking = useDailyRanking({
@@ -93,10 +93,10 @@ export default function TvPage() {
           <span className="font-mono text-h3 tabular-nums text-ink-soft">
             {now === null
               ? "--:--"
-              // The club's language, not the device's: a tablet bought in
-              // one country and hung on a wall in another was showing a
-              // Spanish room a 12-hour clock.
-              : new Date(now).toLocaleTimeString(locale, {
+              : // The club's language, not the device's: a tablet bought in
+                // one country and hung on a wall in another was showing a
+                // Spanish room a 12-hour clock.
+                new Date(now).toLocaleTimeString(locale, {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}

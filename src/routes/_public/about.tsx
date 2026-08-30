@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import ProsePage from "@/pages/public/ProsePage";
-import { publicMeta, canonical } from "@/libs/publicMeta";
+import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 
 /** Who is behind this and why it exists — the authority signal the landing page
  *  buries in a feature body. */

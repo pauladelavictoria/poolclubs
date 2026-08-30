@@ -1,8 +1,5 @@
 import { AppLink } from "@/components/layout/AppLink";
-import {
-  segmentedShell,
-  segmentedItem,
-} from "@/components/ui/segmentedStyles";
+import { segmentedShell, segmentedItem } from "@/components/ui/segmentedStyles";
 import { useT } from "@/i18n";
 
 /**

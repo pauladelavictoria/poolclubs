@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getSupabaseServer } from "@/libs/supabase.server";
-import { DRILLS_ENABLED } from "@/libs/features";
+import { getSupabaseServer } from "@/libs/supabase/server";
+import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 
 /**
  * The sitemap, built per request from what is actually public.
@@ -88,7 +88,9 @@ export const Route = createFileRoute("/sitemap.xml")({
           '<?xml version="1.0" encoding="UTF-8"?>\n' +
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
           paths
-            .map((path) => `  <url><loc>${origin}${escapeXml(path)}</loc></url>`)
+            .map(
+              (path) => `  <url><loc>${origin}${escapeXml(path)}</loc></url>`,
+            )
             .join("\n") +
           "\n</urlset>\n";
 

@@ -5,9 +5,10 @@ import PageTitle from "@/components/layout/PageTitle";
 import AvatarUpload from "@/components/players/AvatarUpload";
 import PushToggle from "@/components/players/PushToggle";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
-import { changePassword } from "@/libs/auth.functions";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
+import { changePassword } from "@/libs/server/auth.functions";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -24,7 +25,7 @@ export default function PlayerSettingsPage() {
   const playerIdNum = Number(playerId);
 
   const { user, refreshMemberships } = useAuth();
-  const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
+  const { data: players, isLoading: isLoadingPlayers } = usePlayers();
   const player = players?.find((p) => p.id === playerIdNum);
   const { updatePlayer } = useManagePlayers();
 
@@ -60,7 +61,15 @@ export default function PlayerSettingsPage() {
         // No name-clash branch any more: names stopped being unique per club
         // when they moved to people. Two members can share one, and the slug
         // keeps their profiles apart.
-        onError: () => toast.error(t("players.updateError")),
+        onError: (err) =>
+          toast.error(
+            t(
+              dbErrorMessage(err, "updatePlayer", {
+                denied: "common.deniedError",
+                fallback: "players.updateError",
+              }),
+            ),
+          ),
       },
     );
   };
@@ -76,7 +85,17 @@ export default function PlayerSettingsPage() {
     if (!player) return;
     updatePlayer.mutate(
       { id: player.id, personId: player.person_id, is_public: next },
-      { onError: () => toast.error(t("players.updateError")) },
+      {
+        onError: (err) =>
+          toast.error(
+            t(
+              dbErrorMessage(err, "updatePlayer", {
+                denied: "common.deniedError",
+                fallback: "players.updateError",
+              }),
+            ),
+          ),
+      },
     );
   };
 
@@ -102,12 +121,7 @@ export default function PlayerSettingsPage() {
 
   // The middle crumb is the player, so it is named by the player once they
   // have loaded rather than by the route's generic label.
-  const title = (
-    <PageTitle
-      title={t("players.accountSettings")}
-      crumbs={[]}
-    />
-  );
+  const title = <PageTitle title={t("players.accountSettings")} crumbs={[]} />;
 
   if (isLoadingPlayers) {
     return (
@@ -136,7 +150,10 @@ export default function PlayerSettingsPage() {
               a cropped photo worth holding back behind a button. */}
           <AvatarUpload name={player.name} url={player.avatar_url} />
 
-          <form onSubmit={saveName} className="space-y-3 border-t border-hairline pt-4">
+          <form
+            onSubmit={saveName}
+            className="space-y-3 border-t border-hairline pt-4"
+          >
             <div className="space-y-1.5">
               <Label htmlFor="player-name">{t("players.name")}</Label>
               <Input
@@ -177,7 +194,7 @@ export default function PlayerSettingsPage() {
                 would happily take one and bolt an email identity onto a Google
                 account, which is how a single sign-in turns into two without
                 anyone deciding it should — so the field is not there to press.
-                See `hasPassword` in libs/auth.functions.ts. */}
+                See `hasPassword` in libs/server/auth.functions.ts. */}
             {user.hasPassword ? (
               // No current-password step, because there is nothing for one to
               // defend: this only ever reaches the caller's own account, and

@@ -1,12 +1,13 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import { useGetDrill } from "@/hooks/useGetDrills";
+import { useDrill } from "@/hooks/useDrills";
 import PageTitle from "@/components/layout/PageTitle";
 import DrillForm from "@/components/drills/DrillForm";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useManageDrills, type DrillInput } from "@/hooks/useManageDrills";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 export default function DrillEditorPage() {
@@ -17,13 +18,21 @@ export default function DrillEditorPage() {
   const drillId = drillIdParam ? Number(drillIdParam) : undefined;
   const navigate = useNavigate();
 
-  const { data: drill, isLoading } = useGetDrill(drillId);
+  const { data: drill, isLoading } = useDrill(drillId);
 
   const { createDrill, updateDrill, deleteDrill } = useManageDrills();
   const isSubmitting = createDrill.isPending || updateDrill.isPending;
 
   const handleSubmit = (values: DrillInput) => {
-    const onError = () => toast.error(t("drills.saveError"));
+    const onError = (err: unknown) =>
+      toast.error(
+        t(
+          dbErrorMessage(err, "saveDrill", {
+            denied: "common.deniedError",
+            fallback: "drills.saveError",
+          }),
+        ),
+      );
 
     if (drillId) {
       updateDrill.mutate(
@@ -54,8 +63,19 @@ export default function DrillEditorPage() {
     if (!confirm(t("drills.deleteConfirm"))) return;
     deleteDrill.mutate(drillId, {
       onSuccess: () =>
-        navigate({ to: "/app/$clubSlug/drills", params: { clubSlug: clubSlug! } }),
-      onError: () => toast.error(t("drills.deleteError")),
+        navigate({
+          to: "/app/$clubSlug/drills",
+          params: { clubSlug: clubSlug! },
+        }),
+      onError: (err) =>
+        toast.error(
+          t(
+            dbErrorMessage(err, "deleteDrill", {
+              denied: "common.deniedError",
+              fallback: "drills.deleteError",
+            }),
+          ),
+        ),
     });
   };
 

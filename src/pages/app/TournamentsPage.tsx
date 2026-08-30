@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
 import { LuPlus, LuNetwork, LuUsers } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import {
   entrantCount,
-  useGetTournaments,
+  useTournaments,
   useManageTournaments,
   type TournamentListItem,
 } from "@/hooks/useTournaments";
+import { runMutation } from "@/libs/browser/mutationToast";
 import PageTitle from "@/components/layout/PageTitle";
 import TournamentForm, {
   type TournamentValues,
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
-import { useDialog } from "@/libs/useDialog";
+import { useDialog } from "@/hooks/useDialog";
 import { FORMAT_KEY, type TournamentStatus } from "@/types";
 import { useT, type Key } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -45,21 +45,21 @@ const RAIL: Record<TournamentStatus, string> = {
 export default function TournamentsPage() {
   const { t } = useT();
   const { isClubAdmin } = useAuth();
-  const { data: tournaments, isLoading } = useGetTournaments();
+  const { data: tournaments, isLoading } = useTournaments();
   const { createTournament } = useManageTournaments();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const dialogRef = useDialog(isModalOpen);
 
   const create = async (values: TournamentValues) => {
-    try {
-      await createTournament.mutateAsync(values);
-      setIsModalOpen(false);
-      toast.success(t("tournaments.created"));
-    } catch {
-      // Logged by the mutation cache; this is the part the user sees.
-      toast.error(t("common.error"));
-    }
+    const ok = await runMutation(
+      createTournament.mutateAsync(values),
+      t,
+      "tournaments.created",
+      "common.error",
+      { denied: "common.deniedError" },
+    );
+    if (ok) setIsModalOpen(false);
   };
 
   const all = tournaments ?? [];

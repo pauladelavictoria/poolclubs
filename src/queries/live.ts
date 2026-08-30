@@ -1,14 +1,14 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
-import { ABANDON_AFTER_MS } from "@/libs/night";
+import { ABANDON_AFTER_MS } from "@/libs/algorithms/night";
 import type { ClubTable, LiveMatch } from "@/types";
 
 /**
  * The club's night.
  *
  * Rows arrive over the realtime channel and go straight into these caches — see
- * applyLiveRow in libs/realtime.ts. A score bump carries the whole row, so
+ * applyLiveRow in libs/browser/realtime.ts. A score bump carries the whole row, so
  * refetching it would buy nothing and would cost every other open tab a request
  * per rack.
  */

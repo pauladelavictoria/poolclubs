@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import MapView from "@/components/map/MapView";
 import { keys } from "@/libs/queryKeys";
-import { searchPlaces } from "@/libs/geocode.functions";
-import { countryName, placeLabel, type Place } from "@/libs/geocode";
+import { searchPlaces } from "@/libs/server/geocode.functions";
+import { countryName, placeLabel, type Place } from "@/libs/algorithms/geocode";
 import { useT } from "@/i18n";
 
 /** Below this, every query matches half the planet. */
