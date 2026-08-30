@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import { LuMapPin } from "react-icons/lu";
+import { LuMapPin, LuX } from "react-icons/lu";
 import GamesList from "@/components/games/GamesList";
 import ShareButton from "@/components/social/ShareButton";
 import PublicShell from "@/components/layout/PublicShell";
@@ -10,7 +11,9 @@ import { DisciplineBall } from "@/components/ui/Ball";
 import { SectionHead } from "@/components/ui/SectionHead";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { gamesQuery } from "@/queries/games";
-import { clubPhotosQuery } from "@/queries/clubPhotos";
+import { clubPhotosQuery, type ClubPhoto } from "@/queries/clubPhotos";
+import { orderPhotos } from "@/libs/algorithms/photoOrder";
+import { useDialog } from "@/hooks/useDialog";
 import {
   publicClubRosterQuery,
   type PublicClub,
@@ -19,10 +22,11 @@ import {
 } from "@/queries/public/clubs";
 import { useNow } from "@/hooks/useNow";
 import {
-  WEEKDAYS,
+  isAllDay,
   isEmpty,
   isOpenNow,
   parseSchedule,
+  weekRows,
 } from "@/libs/algorithms/schedule";
 import {
   publicTournamentsQuery,
@@ -108,9 +112,15 @@ export default function PublicClubPage() {
     ? new Date(club.created_at).getFullYear()
     : null;
 
+  // Read here rather than inside ClubPhotos because the hero needs the first
+  // one too, and both must agree about which photo leads.
+  const { data: storedPhotos = [] } = useQuery(clubPhotosQuery(club.id));
+  const photos = orderPhotos(storedPhotos, club.photo_order);
+  const cover = photos[0] ?? null;
+
   return (
     <>
-      <ClubHero club={club} listed={listed} url={url} />
+      <ClubHero club={club} listed={listed} url={url} cover={cover} />
 
       <PublicShell>
         <div className="grid grid-cols-3 divide-x divide-hairline">
@@ -130,7 +140,7 @@ export default function PublicClubPage() {
           )}
         </div>
 
-        <ClubPhotos clubId={club.id} />
+        <ClubPhotos photos={photos} />
 
         <ClubVisit club={club} />
 
@@ -257,10 +267,14 @@ function ClubHero({
   club,
   listed,
   url,
+  cover,
 }: {
   club: PublicClub;
   listed: PublicPlayer[];
   url: string;
+  /** The club's first photo, if it has any. Behind the accent wash rather than
+   *  instead of it, so a club with no photos loses nothing. */
+  cover: ClubPhoto | null;
 }) {
   const { t } = useT();
 
@@ -269,6 +283,26 @@ function ClubHero({
       data-ball={club.theme_color}
       className="wash wash-soft relative overflow-hidden border-b border-hairline"
     >
+      {cover && (
+        <>
+          <img
+            src={cover.url}
+            alt=""
+            // Decorative: the club's name is right on top of it and is the
+            // heading. A description here would be read out before it.
+            aria-hidden
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* The scrim, and it is not optional. A photo of a bright room puts
+              near-white behind near-white text; this keeps the h1 and the
+              address readable over whatever the club happened to upload, in
+              both themes, without knowing anything about the image. */}
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-t from-felt via-felt/85 to-felt/60"
+          />
+        </>
+      )}
       <div className="relative px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
         {/* Top-aligned, not bottom: the title has a different amount of detail
             under it on a club, a player and a tournament, so aligning the block's
@@ -345,9 +379,9 @@ function ClubHero({
  * a carousel dependency: it is four utility classes, it works with a thumb, a
  * trackpad and a keyboard, and it degrades to a plain scrolling row with no JS.
  */
-function ClubPhotos({ clubId }: { clubId: number }) {
+function ClubPhotos({ photos }: { photos: ClubPhoto[] }) {
   const { t } = useT();
-  const { data: photos = [] } = useQuery(clubPhotosQuery(clubId));
+  const [open, setOpen] = useState<number | null>(null);
 
   if (photos.length === 0) return null;
 
@@ -358,18 +392,103 @@ function ClubPhotos({ clubId }: { clubId: number }) {
           overflow-x clips vertically too. */}
       <div className="no-bar -mx-4 mt-2 flex snap-x gap-3 overflow-x-auto px-4 py-2 sm:-mx-6 sm:px-6">
         {photos.map((photo, i) => (
-          <img
+          <button
             key={photo.path}
-            src={photo.url}
-            alt=""
-            // The first is what the page opens on, so it is the one image here
-            // worth blocking layout for; the rest are a scroll away.
-            loading={i === 0 ? "eager" : "lazy"}
-            className="h-48 w-auto max-w-[85vw] shrink-0 snap-start rounded-card border border-hairline bg-felt-raised object-cover sm:h-64"
-          />
+            type="button"
+            onClick={() => setOpen(i)}
+            aria-label={t("public.publicClub.viewPhoto", { n: String(i + 1) })}
+            className="lift shrink-0 snap-start overflow-hidden rounded-card border border-hairline bg-felt-raised"
+          >
+            <img
+              src={photo.url}
+              alt=""
+              // The first is what the page opens on, so it is the one image
+              // here worth blocking layout for; the rest are a scroll away.
+              loading={i === 0 ? "eager" : "lazy"}
+              className="h-48 w-auto max-w-[85vw] object-cover sm:h-64"
+            />
+          </button>
         ))}
       </div>
+
+      <PhotoLightbox
+        photos={photos}
+        index={open}
+        onClose={() => setOpen(null)}
+        onIndex={setOpen}
+      />
     </section>
+  );
+}
+
+/**
+ * One photo, big.
+ *
+ * A native <dialog> via useDialog, which is where the backdrop, Esc-to-close,
+ * the focus trap and the inertness of the page behind all come from for free —
+ * see the hook. A div with a fixed overlay would hand-roll four things and get
+ * at least one of them wrong.
+ *
+ * ponytail: no zoom, no pinch, no swipe. Arrows and Esc, on a picture of a pool
+ * room. A gallery library is a lot of kilobytes for eight photos.
+ */
+function PhotoLightbox({
+  photos,
+  index,
+  onClose,
+  onIndex,
+}: {
+  photos: ClubPhoto[];
+  index: number | null;
+  onClose: () => void;
+  onIndex: (index: number) => void;
+}) {
+  const { t } = useT();
+  const ref = useDialog(index !== null);
+  const photo = index === null ? null : photos[index];
+
+  return (
+    <dialog
+      ref={ref}
+      // The dialog's own close (Esc, or the backdrop) has to reach React, or
+      // reopening the same photo does nothing because the state never cleared.
+      onClose={onClose}
+      onClick={(e) => {
+        // Clicking the backdrop closes. The backdrop is the dialog element
+        // itself, so this only fires when the click missed the content.
+        if (e.target === ref.current) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (index === null) return;
+        if (e.key === "ArrowRight" && index < photos.length - 1)
+          onIndex(index + 1);
+        if (e.key === "ArrowLeft" && index > 0) onIndex(index - 1);
+      }}
+      className="lightbox m-auto max-h-[92dvh] max-w-[95vw] overflow-hidden rounded-sheet border border-hairline bg-felt p-0 text-ink"
+    >
+      {photo && (
+        <div className="relative">
+          <img
+            src={photo.url}
+            alt=""
+            className="max-h-[92dvh] max-w-[95vw] object-contain"
+          />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("common.close")}
+            className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-control bg-pocket/90 text-ink-soft transition-colors duration-150 hover:text-ink"
+          >
+            <LuX className="h-5 w-5" aria-hidden />
+          </button>
+          {photos.length > 1 && (
+            <p className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-control bg-pocket/90 px-2 py-0.5 font-mono text-caption tabular-nums text-ink-soft">
+              {index !== null ? index + 1 : 0} / {photos.length}
+            </p>
+          )}
+        </div>
+      )}
+    </dialog>
   );
 }
 
@@ -391,7 +510,8 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
   // wrong for a few minutes either side of closing time. The server renders no
   // pill and the browser fills it in. Same trick useSuggestions uses.
   const now = useNow();
-  const open = now !== null && hasHours && isOpenNow(schedule, club.timezone, now);
+  const open =
+    now !== null && hasHours && isOpenNow(schedule, club.timezone, now);
 
   if (!club.description && !club.phone && !hasHours) return null;
 
@@ -421,20 +541,37 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
                     open ? "bg-strike text-pocket" : "bg-pocket text-ink-faint",
                   ].join(" ")}
                 >
-                  {t(open ? "club.schedule.openNow" : "club.schedule.closedNow")}
+                  {t(
+                    open ? "club.schedule.openNow" : "club.schedule.closedNow",
+                  )}
                 </span>
               )}
             </div>
             <dl className="divide-y divide-hairline">
-              {WEEKDAYS.map((day) => (
-                <div key={day} className="flex justify-between gap-3 py-1.5">
+              {weekRows(schedule).map((row) => (
+                <div
+                  // The first day names the run, and a run is a set of
+                  // consecutive days, so it is unique across the week.
+                  key={row.days[0]}
+                  className="flex justify-between gap-3 py-1.5"
+                >
                   <dt className="text-body text-ink-soft">
-                    {t(`club.schedule.day.${day}` as Key)}
+                    {row.days.length === 7
+                      ? t("club.schedule.everyDay")
+                      : row.days.length === 1
+                        ? t(`club.schedule.day.${row.days[0]}` as Key)
+                        : `${t(`club.schedule.day.${row.days[0]}` as Key)} – ${t(
+                            `club.schedule.day.${row.days[row.days.length - 1]}` as Key,
+                          )}`}
                   </dt>
                   <dd className="text-right font-mono text-body tabular-nums text-ink">
-                    {schedule[day]?.length
-                      ? schedule[day]!.map(([f, s]) => `${f}–${s}`).join(", ")
-                      : t("club.schedule.closed")}
+                    {/* "00:00–00:00" is technically what an all-day row
+                        holds, and it reads as a typo. */}
+                    {isAllDay(row.ranges)
+                      ? t("club.schedule.allDay")
+                      : row.ranges.length
+                        ? row.ranges.map(([f, s]) => `${f}–${s}`).join(", ")
+                        : t("club.schedule.closed")}
                   </dd>
                 </div>
               ))}

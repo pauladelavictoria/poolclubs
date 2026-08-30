@@ -1,4 +1,3 @@
-import { MAX_FILE_BYTES } from "@/libs/browser/avatarImage";
 import { uuid } from "@/libs/algorithms/uuid";
 
 /**
@@ -20,18 +19,61 @@ import { uuid } from "@/libs/algorithms/uuid";
  * cuts the far end off a long room. The carousel letterboxes instead.
  */
 
-/** Long edge. Enough for a full-width header on a 2x phone and a card on a
- *  desktop; past this the extra pixels only cost upload time. */
-const MAX_EDGE = 1600;
+/**
+ * Long edges to try, in order. 1600 is enough for a full-width header on a 2x
+ * phone and a card on a desktop; the rest are the way down.
+ *
+ * Stepping the *size* and not only the quality is the whole point, and it is
+ * what logoImage.ts already does. A quality-only ladder does not converge: a
+ * busy room with a lot of texture is still over budget at 1600px and quality
+ * 0.4, and the only honest thing left to do at that point is refuse a photo
+ * somebody legitimately picked. Fewer pixels always gets there.
+ */
+const SIZES = [1600, 1200, 900];
 
-/** Quality steps, tried in order until one fits the budget. The first is
- *  indistinguishable from the source at this size; the last is visibly soft but
- *  still better than refusing a photo somebody wants to publish. */
-const QUALITIES = [0.82, 0.7, 0.55, 0.4];
+/** Tried innermost, at each size. 0.82 is indistinguishable from the source
+ *  here; 0.55 is soft but publishable. */
+const QUALITIES = [0.82, 0.7, 0.55];
 
 const MAX_OUT_BYTES = 300 * 1024;
 
-export { MAX_FILE_BYTES };
+/**
+ * Input cap, and deliberately not avatarImage's 8 MB.
+ *
+ * A 48-megapixel phone photo is routinely over 8 MB, and this is the one place
+ * in the app somebody uploads a real camera photo rather than a face or a mark
+ * — so borrowing the avatar's cap rejected ordinary files. The number that
+ * matters downstream is the *output* budget above, which is unaffected by how
+ * big the source was.
+ *
+ * There is still a cap, because `createImageBitmap` decodes the whole thing
+ * into memory and the club's tablet is not a workstation.
+ */
+export const MAX_PHOTO_FILE_BYTES = 25 * 1024 * 1024;
+
+/** Thrown for a file that is too big to decode, as opposed to one that failed
+ *  for any other reason. The caller tells the two apart so it can say which. */
+export class PhotoTooLargeError extends Error {
+  constructor() {
+    super("file too large");
+    this.name = "PhotoTooLargeError";
+  }
+}
+
+/** The size an image becomes when its long edge is capped. Only ever down —
+ *  a small photo stays its own size rather than being upscaled into a bigger
+ *  file with no more detail in it. Pure, so it is the part under test. */
+export function fitWithin(
+  width: number,
+  height: number,
+  maxEdge: number,
+): { width: number; height: number } {
+  const scale = Math.min(1, maxEdge / Math.max(width, height));
+  return {
+    width: Math.max(1, Math.round(width * scale)),
+    height: Math.max(1, Math.round(height * scale)),
+  };
+}
 
 /**
  * Decode → downscale the long edge → JPEG at the first quality that fits.
@@ -44,7 +86,7 @@ export { MAX_FILE_BYTES };
  * toast; there is nothing to fall back to.
  */
 export async function toPhotoBlob(file: File): Promise<Blob> {
-  if (file.size > MAX_FILE_BYTES) throw new Error("file too large");
+  if (file.size > MAX_PHOTO_FILE_BYTES) throw new PhotoTooLargeError();
 
   const bitmap = await createImageBitmap(file, {
     // Phones write orientation into EXIF rather than rotating the pixels, so
@@ -53,23 +95,34 @@ export async function toPhotoBlob(file: File): Promise<Blob> {
   });
 
   try {
-    // Only ever down. A small photo stays its own size rather than being
-    // upscaled into a bigger file with no more detail in it.
-    const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("no 2d context");
-    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 
-    for (const quality of QUALITIES) {
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", quality),
-      );
-      if (blob && blob.size <= MAX_OUT_BYTES) return blob;
+    let smallest: Blob | null = null;
+
+    for (const edge of SIZES) {
+      const { width, height } = fitWithin(bitmap.width, bitmap.height, edge);
+      canvas.width = width;
+      canvas.height = height;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(bitmap, 0, 0, width, height);
+
+      for (const quality of QUALITIES) {
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, "image/jpeg", quality),
+        );
+        if (!blob) continue;
+        if (blob.size <= MAX_OUT_BYTES) return blob;
+        smallest = blob;
+      }
     }
+
+    // Every combination was over budget, which for a photograph means the
+    // source was pathological rather than merely large. The smallest attempt is
+    // still the smallest thing we can make of it, and the bucket's own 1 MB
+    // limit is the backstop — so hand it over rather than refusing outright.
+    if (smallest && smallest.size <= 1024 * 1024) return smallest;
     throw new Error("image will not compress");
   } finally {
     bitmap.close();

@@ -643,6 +643,30 @@ dialog.finish[open]::backdrop {
   }
 }
 
+/* The photo lightbox's veil. The heaviest of the four, and blurred like the
+   finish dialog's for the same reason: what it covers is a whole club page —
+   a hero, a stats row, a roster grid — and at the sheet's 60% all of that was
+   still legible around the edges of the picture and competing with it. A photo
+   opened full size should be the only thing in the room. */
+dialog.lightbox::backdrop {
+  background: rgb(0 0 0 / 0);
+  backdrop-filter: blur(4px);
+  transition:
+    background 240ms var(--ease-out),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+
+dialog.lightbox[open]::backdrop {
+  background: rgb(0 0 0 / 0.85);
+}
+
+@starting-style {
+  dialog.lightbox[open]::backdrop {
+    background: rgb(0 0 0 / 0);
+  }
+}
+
 /*
   Toasts — "Enlace copiado", "No se pudo guardar" — are the app's third overlay,
   and the only one that arrives wearing someone else's clothes: react-toastify

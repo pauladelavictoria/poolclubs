@@ -1,7 +1,12 @@
 import { LuPlus, LuX } from "react-icons/lu";
 import { Button } from "@/components/ui/Button";
+import { Toggle } from "@/components/ui/Toggle";
 import {
+  ALL_DAY,
   WEEKDAYS,
+  allWeek,
+  isAllDay,
+  isAlwaysOpen,
   type Range,
   type Schedule,
   type Weekday,
@@ -46,85 +51,136 @@ export default function ClubScheduleEditor({
     onChange(next);
   };
 
+  const always = isAlwaysOpen(value);
+
   return (
-    <div className="space-y-2">
-      {WEEKDAYS.map((day) => {
-        const ranges = value[day] ?? [];
-        return (
-          <div key={day} className="flex flex-wrap items-center gap-2">
-            <span className="w-24 shrink-0 text-body text-ink-soft">
-              {t(`club.schedule.day.${day}` as Key)}
-            </span>
+    <div className="space-y-3">
+      {/* The case two time inputs cannot express. Without it people reach for
+          00:00–23:00, which is a club that shuts for an hour every night. */}
+      <Toggle
+        checked={always}
+        onChange={(on) => onChange(on ? allWeek() : {})}
+        label={t("club.schedule.always")}
+        hint={t("club.schedule.alwaysHint")}
+        disabled={disabled}
+      />
 
-            {ranges.length === 0 && (
-              <span className="text-caption text-ink-faint">
-                {t("club.schedule.closed")}
+      {!always &&
+        WEEKDAYS.map((day) => {
+          const ranges = value[day] ?? [];
+          const allDay = isAllDay(ranges);
+          return (
+            <div key={day} className="flex flex-wrap items-center gap-2">
+              <span className="w-24 shrink-0 text-body text-ink-soft">
+                {t(`club.schedule.day.${day}` as Key)}
               </span>
-            )}
 
-            {ranges.map(([from, to], i) => (
-              // Keyed by position: the ranges of a day have no id, and the only
-              // edits are "change this one" and "remove this one", both of which
-              // are positional anyway.
-              <span key={i} className="flex items-center gap-1">
-                <TimeInput
-                  label={t("club.schedule.from")}
-                  value={from}
-                  disabled={disabled}
-                  onChange={(v) =>
-                    setDay(
-                      day,
-                      ranges.map((r, j) => (j === i ? [v, r[1]] : r)),
-                    )
-                  }
-                />
-                <span aria-hidden className="text-ink-faint">
-                  –
+              {ranges.length === 0 && (
+                <span className="text-caption text-ink-faint">
+                  {t("club.schedule.closed")}
                 </span>
-                <TimeInput
-                  label={t("club.schedule.to")}
-                  value={to}
-                  disabled={disabled}
-                  onChange={(v) =>
-                    setDay(
-                      day,
-                      ranges.map((r, j) => (j === i ? [r[0], v] : r)),
-                    )
-                  }
-                />
-                <button
-                  type="button"
-                  disabled={disabled}
-                  aria-label={t("club.schedule.removeRange")}
-                  onClick={() =>
-                    setDay(
-                      day,
-                      ranges.filter((_, j) => j !== i),
-                    )
-                  }
-                  className="flex h-7 w-7 items-center justify-center rounded-control text-ink-faint transition-colors duration-150 hover:bg-felt hover:text-ink"
-                >
-                  <LuX className="h-3.5 w-3.5" aria-hidden />
-                </button>
-              </span>
-            ))}
+              )}
 
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              disabled={disabled}
-              aria-label={t("club.schedule.addRange")}
-              // A first range starts on a plausible evening rather than 00:00 —
-              // the club is being described, and midnight to midnight is never
-              // what anyone meant.
-              onClick={() => setDay(day, [...ranges, ["17:00", "23:00"]])}
-            >
-              <LuPlus className="h-3.5 w-3.5" aria-hidden />
-            </Button>
-          </div>
-        );
-      })}
+              {/* Rendered as a chip rather than two inputs both reading 00:00,
+                which looks like a mistake somebody should correct. */}
+              {allDay && (
+                <span className="flex items-center gap-1">
+                  <span className="rounded-control border border-hairline bg-pocket px-2 py-1 text-body text-ink">
+                    {t("club.schedule.allDay")}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    aria-label={t("club.schedule.removeRange")}
+                    onClick={() => setDay(day, [])}
+                    className="flex h-7 w-7 items-center justify-center rounded-control text-ink-faint transition-colors duration-150 hover:bg-felt hover:text-ink"
+                  >
+                    <LuX className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                </span>
+              )}
+
+              {!allDay &&
+                ranges.map(([from, to], i) => (
+                  // Keyed by position: the ranges of a day have no id, and the only
+                  // edits are "change this one" and "remove this one", both of which
+                  // are positional anyway.
+                  <span key={i} className="flex items-center gap-1">
+                    <TimeInput
+                      label={t("club.schedule.from")}
+                      value={from}
+                      disabled={disabled}
+                      onChange={(v) =>
+                        setDay(
+                          day,
+                          ranges.map((r, j) => (j === i ? [v, r[1]] : r)),
+                        )
+                      }
+                    />
+                    <span aria-hidden className="text-ink-faint">
+                      –
+                    </span>
+                    <TimeInput
+                      label={t("club.schedule.to")}
+                      value={to}
+                      disabled={disabled}
+                      onChange={(v) =>
+                        setDay(
+                          day,
+                          ranges.map((r, j) => (j === i ? [r[0], v] : r)),
+                        )
+                      }
+                    />
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      aria-label={t("club.schedule.removeRange")}
+                      onClick={() =>
+                        setDay(
+                          day,
+                          ranges.filter((_, j) => j !== i),
+                        )
+                      }
+                      className="flex h-7 w-7 items-center justify-center rounded-control text-ink-faint transition-colors duration-150 hover:bg-felt hover:text-ink"
+                    >
+                      <LuX className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                  </span>
+                ))}
+
+              {!allDay && (
+                <>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={disabled}
+                    aria-label={t("club.schedule.addRange")}
+                    // A first range starts on a plausible evening rather than
+                    // 00:00 — the club is being described, and midnight to
+                    // midnight is never what anyone meant by typing.
+                    onClick={() => setDay(day, [...ranges, ["17:00", "23:00"]])}
+                  >
+                    <LuPlus className="h-3.5 w-3.5" aria-hidden />
+                  </Button>
+                  {/* One day open around the clock, for a club that does it at
+                    weekends but not all week. */}
+                  {ranges.length === 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={disabled}
+                      onClick={() => setDay(day, [[...ALL_DAY] as Range])}
+                    >
+                      {t("club.schedule.allDay")}
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
     </div>
   );
 }

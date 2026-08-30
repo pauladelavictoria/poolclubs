@@ -110,6 +110,36 @@ END $$;
 ALTER FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text", "cat" double precision) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."approved_member_contact"("p_player_id" bigint) RETURNS TABLE("email" "text", "name" "text", "club_name" "text", "club_slug" "text")
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT u.email::text, pe.name, c.name, c.slug
+  FROM players pl
+  JOIN people pe ON pe.id = pl.person_id
+  JOIN clubs  c  ON c.id  = pl.club_id
+  JOIN auth.users u ON u.id = pe.user_id
+  WHERE pl.id = p_player_id
+    -- Only an admin of *this* player's club, which is the same test the UI
+    -- gates the Approve button on. is_club_admin reads auth.uid() itself.
+    AND public.is_club_admin(pl.club_id)
+    -- Only once they are actually in. This is what pins the function to the
+    -- moment the mail is legitimate: a pending request, or somebody who was
+    -- rejected, returns nothing. It also means the caller cannot use this to
+    -- enumerate addresses of people who never joined.
+    AND pl.status = 'active'
+    -- A claimed roster row that no human has ever signed into has no user and
+    -- no address. Nothing to send, and the join would drop it anyway — spelled
+    -- out so the intent is not mistaken for an oversight.
+    AND pe.user_id IS NOT NULL
+    -- The club's own tablet is a player row with no person behind it.
+    AND pl.is_device = false;
+$$;
+
+
+ALTER FUNCTION "public"."approved_member_contact"("p_player_id" bigint) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -1098,6 +1128,7 @@ CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "description" "text",
     "schedule" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "timezone" "text" DEFAULT 'Europe/Madrid'::"text" NOT NULL,
+    "photo_order" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
     CONSTRAINT "clubs_country_shape" CHECK ((("country" IS NULL) OR ("country" ~ '^[A-Z]{2}$'::"text"))),
     CONSTRAINT "clubs_latlon_pair" CHECK (((("lat" IS NULL) = ("lon" IS NULL)) AND (("lat" IS NULL) OR ((("lat" >= ('-90'::integer)::double precision) AND ("lat" <= (90)::double precision)) AND (("lon" >= ('-180'::integer)::double precision) AND ("lon" <= (180)::double precision)))))),
     CONSTRAINT "clubs_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
@@ -2627,6 +2658,12 @@ GRANT ALL ON FUNCTION "public"."add_guest_player"("cid" integer, "pname" "text",
 
 
 
+REVOKE ALL ON FUNCTION "public"."approved_member_contact"("p_player_id" bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."approved_member_contact"("p_player_id" bigint) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."approved_member_contact"("p_player_id" bigint) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "anon";
 GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "service_role";
@@ -2954,6 +2991,10 @@ GRANT SELECT("schedule") ON TABLE "public"."clubs" TO "anon";
 
 
 GRANT SELECT("timezone") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("photo_order") ON TABLE "public"."clubs" TO "anon";
 
 
 

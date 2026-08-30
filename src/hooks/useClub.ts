@@ -6,6 +6,7 @@ import { keys } from "@/libs/queryKeys";
 import { SESSION_KEY, sessionQuery } from "@/queries/session";
 import { clubPreviewQuery } from "@/queries/club";
 import { clubMembersQuery } from "@/queries/players";
+import { sendMemberApprovedMail } from "@/libs/server/mail.functions";
 import type { Place } from "@/libs/algorithms/geocode";
 import type { Schedule } from "@/libs/algorithms/schedule";
 import type { BallColor } from "@/types";
@@ -39,8 +40,21 @@ export const useManageClub = () => {
           .update({ status: "active" })
           .eq("id", playerId)
           .throwOnError();
+        return playerId;
       },
-      onSuccess,
+      // Tell them they are in. Fired from here rather than from a database
+      // trigger, and never awaited, for the same reasons useChallenges fires
+      // sendPush that way — see src/libs/server/push.functions.ts. The price is
+      // a mail lost if the admin's browser dies in the next second, and the
+      // approval itself has already succeeded by then.
+      //
+      // Ordered after the shared onSuccess so the roster is already moving
+      // while the mail goes out; the send decides for itself whether it is
+      // allowed to (sql/member-approved-mail.sql), and says nothing back.
+      onSuccess: async (playerId) => {
+        await onSuccess();
+        void sendMemberApprovedMail({ data: { playerId } }).catch(() => {});
+      },
     }),
 
     // Removing drops their games and drill logs with them (ON DELETE CASCADE).
@@ -82,6 +96,10 @@ export const useManageClub = () => {
         /** Opening hours. The column is jsonb with no CHECK, so the shape is
          *  defended in libs/algorithms/schedule.ts rather than in the database. */
         schedule?: Schedule;
+        /** The order the venue photos are shown in; the first is the cover.
+         *  An array of storage paths, reconciled against the bucket on read —
+         *  see libs/algorithms/photoOrder.ts. */
+        photoOrder?: string[];
       }) => {
         if (!activeClubId) throw new Error("no active club");
 
@@ -99,6 +117,7 @@ export const useManageClub = () => {
           description?: string | null;
           phone?: string | null;
           schedule?: Schedule;
+          photo_order?: string[];
         } = {};
         if (updates.name !== undefined) patch.name = updates.name.trim();
         if (updates.logoUrl !== undefined) patch.logo_url = updates.logoUrl;
@@ -121,6 +140,8 @@ export const useManageClub = () => {
         if (updates.phone !== undefined)
           patch.phone = updates.phone?.trim() || null;
         if (updates.schedule !== undefined) patch.schedule = updates.schedule;
+        if (updates.photoOrder !== undefined)
+          patch.photo_order = updates.photoOrder;
 
         await supabase
           .from("clubs")

@@ -67,6 +67,64 @@ export function parseSchedule(json: unknown): Schedule {
   return out;
 }
 
+/**
+ * Open all day.
+ *
+ * An end equal to its start is the degenerate case of the wrapping rule below —
+ * it runs from midnight round to midnight — so this needs no special case in
+ * `isOpenNow` and never has. What it needed was a way to say it: two time
+ * inputs cannot express "all day" without somebody typing 00:00 to 23:00 and
+ * quietly losing an hour, which is exactly what happens in practice.
+ */
+export const ALL_DAY: Range = ["00:00", "00:00"];
+
+/** One range, covering the whole day. Anything more than one range cannot be,
+ *  and a day that is closed is not. */
+export const isAllDay = (ranges?: Range[]) =>
+  ranges?.length === 1 && ranges[0][0] === ranges[0][1];
+
+/** Open around the clock, every day — what a 24/7 club looks like. */
+export const isAlwaysOpen = (s: Schedule) =>
+  WEEKDAYS.every((day) => isAllDay(s[day]));
+
+/** That same schedule, to write. */
+export const allWeek = (): Schedule =>
+  Object.fromEntries(WEEKDAYS.map((day) => [day, [[...ALL_DAY] as Range]]));
+
+/** A run of consecutive days that all say the same thing. `ranges` empty means
+ *  closed, exactly as an absent day does everywhere else here. */
+export type WeekRow = { days: Weekday[]; ranges: Range[] };
+
+/** Two days say the same thing. Serialised rather than compared field by field:
+ *  a day is at most a handful of ranges, and the shape is already plain data. */
+const sameRanges = (a: Range[], b: Range[]) =>
+  JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * The week as the fewest rows that still say all of it.
+ *
+ * "Monday–Friday 17:00–23:00, Saturday 12:00–02:00, Sunday closed" is how
+ * opening hours are written everywhere, and it is what stops a club that is
+ * open around the clock rendering as seven identical lines.
+ *
+ * Runs are consecutive only, and the week does not wrap: a club closed on
+ * Sunday and Monday gets two rows, not a "Sunday–Monday" that reads as a span
+ * running the wrong way through the week. Every other hours table in the world
+ * does it this way.
+ */
+export function weekRows(s: Schedule): WeekRow[] {
+  const rows: WeekRow[] = [];
+
+  for (const day of WEEKDAYS) {
+    const ranges = s[day] ?? [];
+    const last = rows[rows.length - 1];
+    if (last && sameRanges(last.ranges, ranges)) last.days.push(day);
+    else rows.push({ days: [day], ranges });
+  }
+
+  return rows;
+}
+
 /** Nothing set at all: the caller shows nothing rather than seven "closed"s. */
 export const isEmpty = (s: Schedule) => WEEKDAYS.every((d) => !s[d]?.length);
 

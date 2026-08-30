@@ -160,6 +160,7 @@ export type Database = {
           name: string
           owner_id: string
           phone: string | null
+          photo_order: Json
           schedule: Json
           slug: string
           theme_color: Database["public"]["Enums"]["BallColor"]
@@ -180,6 +181,7 @@ export type Database = {
           name: string
           owner_id: string
           phone?: string | null
+          photo_order?: Json
           schedule?: Json
           slug: string
           theme_color?: Database["public"]["Enums"]["BallColor"]
@@ -200,6 +202,7 @@ export type Database = {
           name?: string
           owner_id?: string
           phone?: string | null
+          photo_order?: Json
           schedule?: Json
           slug?: string
           theme_color?: Database["public"]["Enums"]["BallColor"]
@@ -1036,6 +1039,15 @@ export type Database = {
       add_guest_player: {
         Args: { cat?: number; cid: number; pname: string }
         Returns: number
+      }
+      approved_member_contact: {
+        Args: { p_player_id: number }
+        Returns: {
+          club_name: string
+          club_slug: string
+          email: string
+          name: string
+        }[]
       }
       can_score_live_match: {
         Args: { cid: number; p1: number; p1b: number; p2: number; p2b: number }
