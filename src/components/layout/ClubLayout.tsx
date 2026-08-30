@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, useState } from "react";
-import { Outlet, getRouteApi, useLocation } from "@tanstack/react-router";
+import { Outlet, getRouteApi } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { startRealtime } from "@/libs/browser/realtime";
 import AppHeader from "@/components/layout/AppHeader";
@@ -50,8 +50,6 @@ export default function ClubLayout() {
   // The shell fullscreen acts on. The bar owns the button; the ref has to be
   // here, because this is what renders the element.
   const kioskRef = useRef<HTMLDivElement>(null);
-  const { pathname } = useLocation();
-  const scroller = useRef<HTMLElement>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   // A drawer the pointer opened is one the pointer should be able to put away;
   // one opened from a button stays until it is dismissed.
@@ -60,13 +58,6 @@ export default function ClubLayout() {
   // Every page under a club shares its accent, so it is set here rather than in
   // each page that happens to render something coloured.
   const accent = <ClubThemeStyle color={activeClub?.theme_color} />;
-
-  // The page scrolls, the chrome does not — so the scrollbar lives inside the
-  // content and taking or freeing it can't move the bar or the tabs. Router
-  // scroll restoration only knows about the window, so the reset is ours.
-  useEffect(() => {
-    scroller.current?.scrollTo(0, 0);
-  }, [pathname]);
 
   // Approved membership is what every club-scoped query waits on. Rather than
   // showing a wall of empty states, swap the whole thing for the way in — and
@@ -158,7 +149,7 @@ export default function ClubLayout() {
             The pt is for the pinned case: with no bar above it, the page's own
             py-4 is all there is between the first heading and the window. */}
         <main
-          ref={scroller}
+          data-scroll-restoration-id="app-shell"
           className={[
             "flex-1 pinned:pt-2",
             fullBleed
