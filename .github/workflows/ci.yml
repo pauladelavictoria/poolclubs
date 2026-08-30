@@ -16,6 +16,8 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
 
+      - run: npm install -g npm@10.9.8
+
       - run: npm ci
 
       - run: npm run lint
