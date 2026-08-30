@@ -15,9 +15,7 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/club")({
   // Primed here rather than per tab: the roster is what Members renders, and
   // Tables reads the same list to find which tablet is paired to which table.
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(
-      clubMembersQuery(context.activeClubId),
-    ),
+    context.queryClient.ensureQueryData(clubMembersQuery(context.activeClubId)),
   component: ClubSettingsLayout,
 });
 

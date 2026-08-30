@@ -12,13 +12,13 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import { gamesQuery } from "@/queries/games";
 import {
   publicClubRosterQuery,
+  type PublicClub,
+  type PublicPlayer,
+} from "@/queries/public/clubs";
+import {
   publicTournamentsQuery,
-} from "@/queries/public";
-import type {
-  PublicClub,
-  PublicPlayer,
-  PublicTournamentListItem,
-} from "@/queries/public";
+  type PublicTournamentListItem,
+} from "@/queries/public/tournaments";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/_public/clubs/$slug");

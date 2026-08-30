@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { LuCheck, LuMonitorSmartphone, LuShare2 } from "react-icons/lu";
-import { pairDevice } from "@/libs/auth.functions";
-import { pinKioskAndOpen } from "@/libs/kiosk";
-import { canOfferInstall } from "@/libs/installPrompt";
+import { pairDevice } from "@/libs/server/auth.functions";
+import { pinKioskAndOpen } from "@/libs/browser/kiosk";
+import { canOfferInstall } from "@/libs/browser/installPrompt";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -35,7 +35,10 @@ import { useT } from "@/i18n";
 /** Codes are printed in one case and a tablet keyboard offers the other. Same
  *  cleanup for what is typed and what arrives in the URL. */
 const normalize = (raw: string) =>
-  raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  raw
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 6);
 
 const routeApi = getRouteApi("/app/pair");
 
@@ -124,7 +127,10 @@ export default function PairDevicePage() {
               Android the install opens the app fresh, and this window is still
               the one holding the pairing that has to be pinned. */}
           {!install.isIOS && (
-            <Button className="w-full" onClick={() => void install.promptInstall()}>
+            <Button
+              className="w-full"
+              onClick={() => void install.promptInstall()}
+            >
               {t("installPrompt.install")}
             </Button>
           )}

@@ -35,7 +35,7 @@ sets `?next=`; if it ever stops doing that, the appended `&token_hash=` becomes
 part of the path and every confirmation link dies. The two are a pair.
 
 `type` values must stay in the allowlist in `src/libs/callbackParams.ts`, which
-is asserted by `src/libs/callbackParams.check.ts` (`npm run check`).
+is asserted by `src/libs/callbackParams.test.ts` (`npm run test`).
 
 ## After editing
 

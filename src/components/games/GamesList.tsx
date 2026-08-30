@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { EmptyState } from "@/components/ui/EmptyState";
 import SocialBar from "@/components/social/SocialBar";
 import { LuSwords } from "react-icons/lu";
-import { dayLabel, startsNewDay, timeOf } from "@/libs/dayLabel";
+import { dayLabel, startsNewDay, timeOf } from "@/libs/algorithms/dayLabel";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 
@@ -13,7 +13,7 @@ const NAME_LINK = "transition-colors duration-150 hover:text-strike";
 /** What this list needs to turn a game's player id into a linked name. Games
  *  stopped carrying a copy of the name when names moved to people, so the
  *  roster is now an input rather than a convenience. */
-export type GamesListPlayer = Pick<Player, "id" | "name" | "slug">;
+type GamesListPlayer = Pick<Player, "id" | "name" | "slug">;
 
 /**
  * One player's name on the tape, as a tap to their page.
@@ -81,7 +81,7 @@ function Team({
 interface GamesListProps {
   games: Game[];
   /** The roster these games were played in, for resolving ids to names. In the
-   *  app that is useGetPlayers(); on the public side, publicClubRosterQuery. */
+   *  app that is usePlayers(); on the public side, publicClubRosterQuery. */
   players: GamesListPlayer[];
   /** Whose page this is, if anyone's — their won frames get the accent. */
   playerId?: number;

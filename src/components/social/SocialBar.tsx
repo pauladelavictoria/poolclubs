@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LuMessageSquare, LuSmilePlus, LuX } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { usePlayerLookup } from "@/hooks/useGetPlayers";
+import { usePlayerLookup } from "@/hooks/usePlayers";
 import {
   matchesTarget,
   useComments,
@@ -10,7 +10,7 @@ import {
 } from "@/hooks/useSocial";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { fmt } from "@/libs/dayLabel";
+import { fmt } from "@/libs/algorithms/dayLabel";
 import { REACTIONS, type SocialTarget } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";

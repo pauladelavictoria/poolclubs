@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { LuUsers } from "react-icons/lu";
 import { useSession } from "@/hooks/useAuth";
 import { useJoinOrCreateClub } from "@/hooks/useClub";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import PageTitle from "@/components/layout/PageTitle";
 import CancelLink from "@/components/layout/CancelLink";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -41,7 +42,14 @@ export default function ClubOnboardingPage() {
       // createClub's own mutationFn navigates to the new club once the session
       // has been re-read and its slug is known — see useJoinOrCreateClub.
       onSuccess: () => toast.success(t("club.created")),
-      onError: () => toast.error(t("common.error")),
+      onError: (err) =>
+        toast.error(
+          t(
+            dbErrorMessage(err, "createClub", {
+              denied: "common.deniedError",
+            }),
+          ),
+        ),
     });
   };
 
@@ -107,7 +115,8 @@ export default function ClubOnboardingPage() {
               // just the slug — take whatever comes after the last "/".
               const raw = slug.trim().toLowerCase();
               const clean = raw.slice(raw.lastIndexOf("/") + 1);
-              if (clean) navigate({ to: "/app/join/$slug", params: { slug: clean } });
+              if (clean)
+                navigate({ to: "/app/join/$slug", params: { slug: clean } });
             }}
           >
             <div className="space-y-1.5">

@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import PublicDrillPage from "@/pages/public/PublicDrillPage";
-import { publicDrillQuery, publicDrillsQuery } from "@/queries/public";
-import { publicMeta, canonical } from "@/libs/publicMeta";
+import { publicDrillQuery, publicDrillsQuery } from "@/queries/public/drills";
+import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 
 export const Route = createFileRoute("/_public/drills/$drillId")({
   loader: async ({ context, params }) => {

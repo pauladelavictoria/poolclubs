@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import PublicTournamentsPage from "@/pages/public/PublicTournamentsPage";
-import { publicTournamentsQuery } from "@/queries/public";
-import { publicMeta } from "@/libs/publicMeta";
+import { publicTournamentsQuery } from "@/queries/public/tournaments";
+import { publicMeta } from "@/libs/algorithms/publicMeta";
 
 /** Literals rather than the exported DISCIPLINES/format lists: those are typed
  *  as plain arrays, and z.enum needs a tuple of literals to keep the parsed

@@ -8,8 +8,8 @@ import { Card } from "@/components/ui/Card";
 import { DifficultyTag } from "@/components/ui/DifficultyTag";
 import { SectionHead } from "@/components/ui/SectionHead";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { useTablePortrait } from "@/libs/useMedia";
-import { publicDrillsQuery } from "@/queries/public";
+import { useTablePortrait } from "@/hooks/useMedia";
+import { publicDrillsQuery } from "@/queries/public/drills";
 import { useSession } from "@/hooks/useAuth";
 import { useT } from "@/i18n";
 

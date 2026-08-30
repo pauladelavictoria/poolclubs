@@ -12,9 +12,9 @@ import { Stat } from "@/components/ui/Stat";
 import { gamesQuery } from "@/queries/games";
 import {
   publicClubRosterQuery,
-  type PublicPersonWithClubs,
   type PublicPlayer,
-} from "@/queries/public";
+} from "@/queries/public/clubs";
+import type { PublicPersonWithClubs } from "@/queries/public/players";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/_public/players/$playerSlug");

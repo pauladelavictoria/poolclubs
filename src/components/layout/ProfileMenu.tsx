@@ -4,7 +4,7 @@ import { LuUser, LuSettings, LuLogOut } from "react-icons/lu";
 import { Avatar } from "@/components/ui/Avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useSignOut } from "@/hooks/useSignOut";
-import { useOutsideClose } from "@/libs/useOutsideClose";
+import { useOutsideClose } from "@/hooks/useOutsideClose";
 import { useT } from "@/i18n";
 
 const itemClasses =

@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { LuUsers } from "react-icons/lu";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useWhoIsHere } from "@/hooks/useNight";
-import { useGetGames } from "@/hooks/useGetGames";
+import { useGames } from "@/hooks/useGames";
 import { useEloRanking } from "@/hooks/useEloRanking";
 import PageTitle from "@/components/layout/PageTitle";
 import { Card } from "@/components/ui/Card";
@@ -13,13 +13,11 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Button } from "@/components/ui/Button";
-import type { Category, Player } from "@/types";
+import { CATEGORIES, type Category, type Player } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 
 type SortMode = "here" | "name" | "category";
-
-const CATEGORIES = [1, 2, 3] as const;
 
 /** Win rate and matches played, keyed by player. Anyone with no games is absent
  *  rather than zero, so the card can say "no matches" instead of "0%". */
@@ -102,8 +100,8 @@ export default function PlayersPage() {
   const here = useWhoIsHere();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: players, isLoading: playersLoading } = useGetPlayers();
-  const { data: gamesData, isLoading: gamesLoading } = useGetGames({});
+  const { data: players, isLoading: playersLoading } = usePlayers();
+  const { data: gamesData, isLoading: gamesLoading } = useGames({});
   // Same hook and same query key as the global ranking, so the win rate on a
   // card is the same number the standings computed — and costs no extra fetch.
   const ranking = useEloRanking({ games: gamesData?.games ?? [], players });
@@ -127,7 +125,7 @@ export default function PlayersPage() {
 
   const hereIds = useMemo(() => new Set(here.map((p) => p.id)), [here]);
 
-  // useGetPlayers already orders by name, so alphabetical is the list as it
+  // usePlayers already orders by name, so alphabetical is the list as it
   // arrives; grouping is what the other modes add.
   const sections = useMemo(() => {
     const roster = filteredPlayers;

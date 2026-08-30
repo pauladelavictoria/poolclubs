@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useFullscreen } from "@/libs/useFullscreen";
+import { useFullscreen } from "@/hooks/useFullscreen";
 import { LuPlus, LuTv } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetGames } from "@/hooks/useGetGames";
-import { zoneOf } from "@/libs/day";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { useGames } from "@/hooks/useGames";
+import { zoneOf } from "@/libs/algorithms/day";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useDailyRanking } from "@/hooks/useDailyRanking";
 import PageTitle from "@/components/layout/PageTitle";
 import RankingPeriodTabs from "@/components/ranking/RankingPeriodTabs";
@@ -35,12 +35,15 @@ export default function RankingDailyPage() {
 
   const [viewMode, setViewMode] = useState<ViewMode>("combined");
   // Shared with the scoreboard, which wants the same trick for the same reason.
-  const { ref: tvRef, isFullscreen: isTv, toggle: toggleTv } =
-    useFullscreen<HTMLDivElement>();
+  const {
+    ref: tvRef,
+    isFullscreen: isTv,
+    toggle: toggleTv,
+  } = useFullscreen<HTMLDivElement>();
 
   // The club's zone decides what that date covers: a night runs 06:00 to 06:00
-  // of the club's own clock, not the calendar's — see libs/day.ts.
-  const { data: gamesData, isLoading: gamesLoading } = useGetGames({
+  // of the club's own clock, not the calendar's — see libs/algorithms/day.ts.
+  const { data: gamesData, isLoading: gamesLoading } = useGames({
     date: selectedDate,
     mode: "single",
     tz: zoneOf(activeClub),
@@ -51,7 +54,7 @@ export default function RankingDailyPage() {
     if (e.target.value) navigate({ search: { date: e.target.value } });
   };
 
-  const { data: players, isLoading: playersLoading } = useGetPlayers();
+  const { data: players, isLoading: playersLoading } = usePlayers();
   const ranking = useDailyRanking({ games, players });
 
   return (

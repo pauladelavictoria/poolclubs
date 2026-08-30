@@ -5,13 +5,13 @@ import { Avatar } from "@/components/ui/Avatar";
 import { DisciplineBall } from "@/components/ui/Ball";
 import { Button, IconButton } from "@/components/ui/Button";
 import { keys } from "@/libs/queryKeys";
-import { isMatchOver, leaderOf } from "@/libs/night";
-import { useDialog } from "@/libs/useDialog";
-import { useWakeLock } from "@/libs/useWakeLock";
+import { isMatchOver, leaderOf } from "@/libs/algorithms/night";
+import { useDialog } from "@/hooks/useDialog";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import type { LiveMatch, Player } from "@/types";
 import { useT } from "@/i18n";
 
-export type ScoreboardVariant = "play" | "spectate" | "tv";
+type ScoreboardVariant = "play" | "spectate" | "tv";
 
 /** Past this a bead stops being countable at a glance and the ratio says it
  *  better — the same reason a real wire carries a dozen beads and not fifty. */
@@ -87,7 +87,9 @@ export default function Scoreboard({
   // One player or a pair. The pair is the unit that wins the rack, so it is the
   // unit a half is labelled with and the unit that wins the match.
   const sideOf = (n: 1 | 2) =>
-    (n === 1 ? [p1, p1b] : [p2, p2b]).filter((p): p is Player => p !== undefined);
+    (n === 1 ? [p1, p1b] : [p2, p2b]).filter(
+      (p): p is Player => p !== undefined,
+    );
   const nameOf = (n: 1 | 2) =>
     sideOf(n)
       .map((p) => p.name)
@@ -250,7 +252,7 @@ export default function Scoreboard({
             <Button
               aria-label={t("live.scoreFor", { name: full })}
               // The finish sheet is up: a press landing behind it must do
-              // nothing, and libs/night.ts refuses the write too.
+              // nothing, and libs/algorithms/night.ts refuses the write too.
               disabled={over}
               onClick={() => onBump?.(n)}
               className="scoreboard-btn"

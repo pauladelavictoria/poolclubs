@@ -31,6 +31,13 @@ inspo
 .env
 
 bun.lockb
+bun.lock
+
+# AI tooling (personal, not part of the app)
+.agents/
+.claude/
+skills-lock.json
+
 # Local Netlify folder
 .netlify
 

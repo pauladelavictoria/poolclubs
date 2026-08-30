@@ -1,7 +1,7 @@
 import { useMatches, useParams } from "@tanstack/react-router";
 import type { LinkProps } from "@tanstack/react-router";
 import type { Key } from "@/i18n";
-import type { SectionId } from "@/libs/sections";
+import type { SectionId } from "@/libs/algorithms/sections";
 
 /**
  * What a route is, said once, on the route.

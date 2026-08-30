@@ -2,6 +2,7 @@ import { LuUserPlus } from "react-icons/lu";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubMembers, useManageClub } from "@/hooks/useClub";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useT } from "@/i18n";
@@ -42,7 +43,14 @@ export default function JoinRequestBanner() {
               size="sm"
               onClick={() =>
                 approveMember.mutate(m.id, {
-                  onError: () => toast.error(t("common.error")),
+                  onError: (err) =>
+                    toast.error(
+                      t(
+                        dbErrorMessage(err, "approveMember", {
+                          denied: "common.deniedError",
+                        }),
+                      ),
+                    ),
                 })
               }
             >
@@ -53,7 +61,14 @@ export default function JoinRequestBanner() {
               variant="ghost"
               onClick={() =>
                 removeMember.mutate(m.id, {
-                  onError: () => toast.error(t("common.error")),
+                  onError: (err) =>
+                    toast.error(
+                      t(
+                        dbErrorMessage(err, "removeMember", {
+                          denied: "common.deniedError",
+                        }),
+                      ),
+                    ),
                 })
               }
             >

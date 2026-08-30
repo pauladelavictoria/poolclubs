@@ -3,8 +3,9 @@ import PublicPlayerPage, {
   PUBLIC_PLAYER_GAMES_LIMIT,
 } from "@/pages/public/PublicPlayerPage";
 import { gamesQuery } from "@/queries/games";
-import { publicClubRosterQuery, publicPersonQuery } from "@/queries/public";
-import { publicMeta, canonical } from "@/libs/publicMeta";
+import { publicClubRosterQuery } from "@/queries/public/clubs";
+import { publicPersonQuery } from "@/queries/public/players";
+import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 
 export const Route = createFileRoute("/_public/players/$playerSlug")({
   loader: async ({ context, params }) => {

@@ -12,8 +12,12 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/tables/$tableId")({
   },
   loader: ({ context }) =>
     Promise.all([
-      context.queryClient.ensureQueryData(clubTablesQuery(context.activeClubId)),
-      context.queryClient.ensureQueryData(liveMatchesQuery(context.activeClubId)),
+      context.queryClient.ensureQueryData(
+        clubTablesQuery(context.activeClubId),
+      ),
+      context.queryClient.ensureQueryData(
+        liveMatchesQuery(context.activeClubId),
+      ),
     ]),
   component: TablePage,
 });

@@ -2,9 +2,10 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { LuSwords } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
+import { useChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 /**
@@ -27,7 +28,7 @@ export default function ChallengeButton({
 }) {
   const { t } = useT();
   const { player } = useAuth();
-  const { data: challenges } = useGetChallenges();
+  const { data: challenges } = useChallenges();
   const { sendChallenge } = useManageChallenges();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -71,11 +72,20 @@ export default function ChallengeButton({
           { toPlayerId, message },
           {
             onSuccess: () => {
-              toast.success(t(isHere ? "challenge.sentHere" : "challenge.sent"));
+              toast.success(
+                t(isHere ? "challenge.sentHere" : "challenge.sent"),
+              );
               setMessage("");
               setOpen(false);
             },
-            onError: () => toast.error(t("common.error")),
+            onError: (err) =>
+              toast.error(
+                t(
+                  dbErrorMessage(err, "sendChallenge", {
+                    denied: "common.deniedError",
+                  }),
+                ),
+              ),
           },
         );
       }}

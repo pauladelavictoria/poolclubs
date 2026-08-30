@@ -13,13 +13,15 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useClubMembers, useManageClub } from "@/hooks/useClub";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
+import { runMutation } from "@/libs/browser/mutationToast";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import PlayerForm from "@/components/players/PlayerForm";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { SkeletonRows } from "@/components/ui/Skeleton";
-import { useDialog } from "@/libs/useDialog";
+import { useDialog } from "@/hooks/useDialog";
 import type { Player, Category } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -78,25 +80,26 @@ export default function ClubMembersPage() {
   };
 
   const savePlayer = async (values: { name: string; category: Category }) => {
-    try {
-      if (editingPlayer) {
-        await updatePlayer.mutateAsync({
-          id: editingPlayer.id,
-          personId: editingPlayer.person_id,
-          ...values,
-        });
-        toast.success(t("players.updated"));
-      } else {
-        await createPlayer.mutateAsync(values);
-        toast.success(t("players.created"));
-      }
-      closeModal();
-    } catch {
-      // Logged by the mutation cache; this is the part the user sees.
-      toast.error(
-        t(editingPlayer ? "players.updateError" : "players.createError"),
-      );
-    }
+    const ok = editingPlayer
+      ? await runMutation(
+          updatePlayer.mutateAsync({
+            id: editingPlayer.id,
+            personId: editingPlayer.person_id,
+            ...values,
+          }),
+          t,
+          "players.updated",
+          "players.updateError",
+          { denied: "common.deniedError" },
+        )
+      : await runMutation(
+          createPlayer.mutateAsync(values),
+          t,
+          "players.created",
+          "players.createError",
+          { denied: "common.deniedError" },
+        );
+    if (ok) closeModal();
   };
 
   return (
@@ -221,7 +224,14 @@ export default function ClubMembersPage() {
                       if (!confirm(t("club.removeConfirm", { name: m.name })))
                         return;
                       removeMember.mutate(m.id, {
-                        onError: () => toast.error(t("common.error")),
+                        onError: (err) =>
+                          toast.error(
+                            t(
+                              dbErrorMessage(err, "removeMember", {
+                                denied: "common.deniedError",
+                              }),
+                            ),
+                          ),
                       });
                     }}
                   >

@@ -13,10 +13,10 @@ import {
 } from "react-icons/lu";
 import type { LinkProps } from "@tanstack/react-router";
 import type { Key } from "@/i18n";
-import type { SectionId } from "@/libs/sections";
-import { DRILLS_ENABLED } from "@/libs/features";
+import type { SectionId } from "@/libs/algorithms/sections";
+import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 
-export type NavItem = {
+type NavItem = {
   /**
    * The route's own pattern, not a path. The club is filled in by AppLink, which
    * is what every one of these is rendered through — so a nav item names a route
@@ -108,59 +108,61 @@ const visible = (item: NavItem) => DRILLS_ENABLED || item.section !== "drills";
 export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
   {
     headingKey: "nav.club",
-    items: ([
-      {
-        to: "/app/$clubSlug",
-        labelKey: "nav.home",
-        icon: LuHouse,
-        section: "home",
-        end: true,
-      },
-      {
-        to: "/app/$clubSlug/today",
-        labelKey: "nav.today",
-        icon: LuLayoutGrid,
-        section: "home",
-      },
-      {
-        to: "/app/$clubSlug/players",
-        labelKey: "nav.players",
-        icon: LuUsers,
-        section: "home",
-      },
-      {
-        to: "/app/$clubSlug/tournaments",
-        labelKey: "nav.tournaments",
-        icon: LuNetwork,
-        section: "tournaments",
-      },
-      {
-        to: "/app/$clubSlug/ranking",
-        labelKey: "nav.ranking",
-        icon: LuTrophy,
-        section: "ranking",
-      },
-      {
-        to: "/app/$clubSlug/games",
-        labelKey: "nav.games",
-        icon: LuCircleDot,
-        section: "games",
-      },
-      {
-        to: "/app/$clubSlug/drills",
-        labelKey: "nav.drills",
-        icon: LuTarget,
-        section: "drills",
-      },
-      {
-        to: "/app/$clubSlug/club",
-        labelKey: "nav.clubSettings",
-        icon: LuSettings,
-        section: "home",
-        // No `end`: club settings is three tabs under this path now, and the
-        // drawer row should stay lit on all of them.
-      },
-    ] as NavItem[]).filter(visible),
+    items: (
+      [
+        {
+          to: "/app/$clubSlug",
+          labelKey: "nav.home",
+          icon: LuHouse,
+          section: "home",
+          end: true,
+        },
+        {
+          to: "/app/$clubSlug/today",
+          labelKey: "nav.today",
+          icon: LuLayoutGrid,
+          section: "home",
+        },
+        {
+          to: "/app/$clubSlug/players",
+          labelKey: "nav.players",
+          icon: LuUsers,
+          section: "home",
+        },
+        {
+          to: "/app/$clubSlug/tournaments",
+          labelKey: "nav.tournaments",
+          icon: LuNetwork,
+          section: "tournaments",
+        },
+        {
+          to: "/app/$clubSlug/ranking",
+          labelKey: "nav.ranking",
+          icon: LuTrophy,
+          section: "ranking",
+        },
+        {
+          to: "/app/$clubSlug/games",
+          labelKey: "nav.games",
+          icon: LuCircleDot,
+          section: "games",
+        },
+        {
+          to: "/app/$clubSlug/drills",
+          labelKey: "nav.drills",
+          icon: LuTarget,
+          section: "drills",
+        },
+        {
+          to: "/app/$clubSlug/club",
+          labelKey: "nav.clubSettings",
+          icon: LuSettings,
+          section: "home",
+          // No `end`: club settings is three tabs under this path now, and the
+          // drawer row should stay lit on all of them.
+        },
+      ] as NavItem[]
+    ).filter(visible),
   },
 ];
 
@@ -168,39 +170,41 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
  * Your half of the drawer. The rows addressed by player id get it from the
  * drawer, which fills in one `params` for the whole list.
  */
-export const ME_NAV: NavItem[] = ([
-  {
-    to: "/app/$clubSlug/me",
-    labelKey: "nav.games",
-    icon: LuCircleDot,
-    section: "games",
-    end: true,
-  },
-  {
-    to: "/app/$clubSlug/challenges",
-    labelKey: "nav.challenges",
-    icon: LuSwords,
-    section: "games",
-    end: true,
-  },
-  {
-    to: "/app/$clubSlug/players/$playerId/training/plan",
-    labelKey: "nav.trainingPlan",
-    icon: LuClipboardList,
-    section: "drills",
-  },
-  {
-    to: "/app/$clubSlug/players/$playerId/training",
-    labelKey: "nav.trainingProgress",
-    icon: LuChartColumn,
-    section: "drills",
-    end: true,
-  },
-  {
-    to: "/app/$clubSlug/players/$playerId/settings",
-    labelKey: "nav.settings",
-    icon: LuSettings,
-    section: "home",
-    end: true,
-  },
-] as NavItem[]).filter(visible);
+export const ME_NAV: NavItem[] = (
+  [
+    {
+      to: "/app/$clubSlug/me",
+      labelKey: "nav.games",
+      icon: LuCircleDot,
+      section: "games",
+      end: true,
+    },
+    {
+      to: "/app/$clubSlug/challenges",
+      labelKey: "nav.challenges",
+      icon: LuSwords,
+      section: "games",
+      end: true,
+    },
+    {
+      to: "/app/$clubSlug/players/$playerId/training/plan",
+      labelKey: "nav.trainingPlan",
+      icon: LuClipboardList,
+      section: "drills",
+    },
+    {
+      to: "/app/$clubSlug/players/$playerId/training",
+      labelKey: "nav.trainingProgress",
+      icon: LuChartColumn,
+      section: "drills",
+      end: true,
+    },
+    {
+      to: "/app/$clubSlug/players/$playerId/settings",
+      labelKey: "nav.settings",
+      icon: LuSettings,
+      section: "home",
+      end: true,
+    },
+  ] as NavItem[]
+).filter(visible);

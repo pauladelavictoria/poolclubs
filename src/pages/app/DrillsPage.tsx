@@ -2,7 +2,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import { LuPlus, LuTarget } from "react-icons/lu";
 import PageTitle from "@/components/layout/PageTitle";
 import DrillCard from "@/components/drills/DrillCard";
-import { useGetDrills } from "@/hooks/useGetDrills";
+import { useDrills } from "@/hooks/useDrills";
 import { useAuth } from "@/hooks/useAuth";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Card } from "@/components/ui/Card";
@@ -31,7 +31,7 @@ export default function DrillsPage() {
   }) => navigate({ search: (prev) => ({ ...prev, ...patch }) });
 
   const { user } = useAuth();
-  const { data: drills, isLoading } = useGetDrills({
+  const { data: drills, isLoading } = useDrills({
     difficulty,
     skill_type: skill,
   });

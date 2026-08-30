@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import LoginPage from "@/pages/app/LoginPage";
-import { isSafePath } from "@/libs/nextPath";
+import { isSafePath } from "@/libs/algorithms/nextPath";
 
 /**
  * Stays at /app/login rather than moving to /login, even though it has nothing

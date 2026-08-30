@@ -10,9 +10,9 @@ import {
 } from "recharts";
 import type { DrillLog } from "@/types";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { bandGradientStops, scoreColor, scorePct } from "@/libs/scoreBand";
-import { fmt, timeOf } from "@/libs/dayLabel";
-import { useChartTheme } from "@/libs/chartTheme";
+import { bandGradientStops, scoreColor, scorePct } from "@/libs/algorithms/scoreBand";
+import { fmt, timeOf } from "@/libs/algorithms/dayLabel";
+import { useChartTheme } from "@/libs/theme/chartTheme";
 import { useT } from "@/i18n";
 
 interface DrillProgressChartProps {

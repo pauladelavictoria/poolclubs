@@ -2,9 +2,10 @@ import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import { useGetChallenges, useManageChallenges } from "@/hooks/useChallenges";
+import { useChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { useAddGame } from "@/hooks/useAddGame";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
+import { usePlayers } from "@/hooks/usePlayers";
 import PageTitle from "@/components/layout/PageTitle";
 import CancelLink from "@/components/layout/CancelLink";
 import { Card } from "@/components/ui/Card";
@@ -51,16 +52,20 @@ export default function AddGamePage() {
   const { register, handleSubmit, reset, control, setValue } = useForm<Game>({
     // 9-ball is what the club plays, and what every game recorded
     // before the column existed was backfilled to.
-    defaultValues: { mode: "single", discipline: "9ball", played_at: todayLocal() },
+    defaultValues: {
+      mode: "single",
+      discipline: "9ball",
+      played_at: todayLocal(),
+    },
   });
 
-  const { data: players, isLoading: playersLoading } = useGetPlayers();
+  const { data: players, isLoading: playersLoading } = usePlayers();
   const { mutate: handleAddGame, isPending } = useAddGame();
 
   // Arriving from an accepted challenge: prefill the two names and close the
   // challenge once the result lands, so the loop ends where it started.
   const { challenge: challengeId } = route.useSearch();
-  const { data: challenges } = useGetChallenges();
+  const { data: challenges } = useChallenges();
   const { respondToChallenge } = useManageChallenges();
   const challenge = challenges?.find((c) => c.id === challengeId) ?? null;
 
@@ -145,7 +150,10 @@ export default function AddGamePage() {
           // against the same handful of dates in one sitting.
           reset({ discipline, mode: game.mode, played_at: game.played_at });
         },
-        onError: () => toast.error(t("common.error")),
+        onError: (err) =>
+          toast.error(
+            t(dbErrorMessage(err, "addGame", { denied: "common.deniedError" })),
+          ),
       },
     );
   };

@@ -3,6 +3,7 @@ import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { useSession } from "@/hooks/useAuth";
 import { useClubPreview, useJoinOrCreateClub } from "@/hooks/useClub";
+import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import PageTitle from "@/components/layout/PageTitle";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -58,7 +59,15 @@ export default function JoinClubPage() {
         // joinClub navigates once the session has been re-read; a pending
         // membership has no club to address yet, so that lands on /app.
         onSuccess: () => toast.success(t("club.requestSent")),
-        onError: () => toast.error(t("club.joinError")),
+        onError: (err) =>
+          toast.error(
+            t(
+              dbErrorMessage(err, "joinClub", {
+                denied: "common.deniedError",
+                fallback: "club.joinError",
+              }),
+            ),
+          ),
       },
     );
   };
@@ -75,7 +84,10 @@ export default function JoinClubPage() {
               title={t("club.badCode")}
               hint={t("club.badCodeHint")}
               action={
-                <Button variant="secondary" onClick={() => navigate({ to: "/app" })}>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate({ to: "/app" })}
+                >
                   {t("common.back")}
                 </Button>
               }
@@ -91,7 +103,10 @@ export default function JoinClubPage() {
                   : t("club.awaitingHint")
               }
               action={
-                <Button variant="secondary" onClick={() => navigate({ to: "/app" })}>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate({ to: "/app" })}
+                >
                   {t("common.back")}
                 </Button>
               }

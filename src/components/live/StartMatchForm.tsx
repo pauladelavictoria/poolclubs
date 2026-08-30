@@ -14,7 +14,7 @@ import {
 } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useWhoIsHere } from "@/hooks/useNight";
-import { DEFAULT_SETUP, type DaySetup } from "@/libs/today";
+import { DEFAULT_SETUP, type DaySetup } from "@/libs/algorithms/today";
 import { useT } from "@/i18n";
 
 /**
@@ -51,7 +51,7 @@ export default function StartMatchForm({
   table?: ClubTable;
   /** Offer a choice of these. Free tables only; the caller knows which. */
   tables?: ClubTable[];
-  /** What the club is playing today — see libs/today.ts. The form opens on
+  /** What the club is playing today — see libs/algorithms/today.ts. The form opens on
    *  these rather than on its own defaults, and they stay changeable: one match
    *  in an evening is a race to nine and should not need the day's setting
    *  changed and changed back. */
@@ -100,7 +100,8 @@ export default function StartMatchForm({
   const forOthers = isDevice || isClubAdmin;
 
   /** An <option> cannot be styled, so presence is a mark in the text. */
-  const label = (p: Player) => (hereIds.has(p.id) ? `\u25CF ${p.name}` : p.name);
+  const label = (p: Player) =>
+    hereIds.has(p.id) ? `\u25CF ${p.name}` : p.name;
   const [opponentId, setOpponentId] = useState("");
   const [mode, setMode] = useState<GameMode>(defaults.mode);
   const [partner1Id, setPartner1Id] = useState("");
@@ -129,9 +130,13 @@ export default function StartMatchForm({
   // case narrows that list to nobody.
   const pool = lockedOpponent ? roster : opponents;
   const partner1 =
-    mode === "doubles" ? (pool.find((p) => String(p.id) === partner1Id) ?? null) : null;
+    mode === "doubles"
+      ? (pool.find((p) => String(p.id) === partner1Id) ?? null)
+      : null;
   const partner2 =
-    mode === "doubles" ? (pool.find((p) => String(p.id) === partner2Id) ?? null) : null;
+    mode === "doubles"
+      ? (pool.find((p) => String(p.id) === partner2Id) ?? null)
+      : null;
 
   const race = Number(raceTo);
   /** Clamped here rather than left to the input's min/max, which only the

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { DailyRankingEntry, Category } from "@/types";
+import { CATEGORIES, type DailyRankingEntry, type Category } from "@/types";
 import RankingTable from "./RankingTable";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -10,7 +10,6 @@ import { useT } from "@/i18n";
  *  the choice belongs to; the pages and RankingTable import it. */
 export type ViewMode = "combined" | "byCategory";
 
-const CATEGORIES = [1, 2, 3] as const;
 
 interface RankingProps {
   ranking: DailyRankingEntry[] | null;

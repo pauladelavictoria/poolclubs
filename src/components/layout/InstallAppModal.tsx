@@ -3,8 +3,8 @@ import { LuShare2, LuSmartphone, LuX } from "react-icons/lu";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
 import type { useInstallPrompt } from "@/hooks/useInstallPrompt";
-import { dismissInstallPromptForever } from "@/libs/installPrompt";
-import { useDialog } from "@/libs/useDialog";
+import { dismissInstallPromptForever } from "@/libs/browser/installPrompt";
+import { useDialog } from "@/hooks/useDialog";
 import { useT } from "@/i18n";
 
 /**
@@ -17,7 +17,7 @@ import { useT } from "@/i18n";
  * until it is either taken or explicitly refused.
  *
  * Closing it is not refusing it. Only the checkbox is persisted; see
- * libs/installPrompt.ts for why that asymmetry is deliberate.
+ * libs/browser/installPrompt.ts for why that asymmetry is deliberate.
  *
  * Whether it is open is AppPrompts' decision, not this component's — it is the
  * one that knows this modal has to go before the notification one.

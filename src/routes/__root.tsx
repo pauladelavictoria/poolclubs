@@ -10,7 +10,7 @@ import { ToastContainer } from "react-toastify";
 import { I18nProvider, detectLang } from "@/i18n";
 import type { Lang } from "@/i18n";
 import { THEME_COOKIE, readOrigin, readPref } from "@/libs/prefs";
-import { isHiddenPath } from "@/libs/features";
+import { isHiddenPath } from "@/libs/algorithms/features";
 import { sessionQuery } from "@/queries/session";
 import RouteError from "@/components/layout/RouteError";
 import { NotFound } from "@/components/layout/NotFound";
@@ -94,7 +94,7 @@ export const Route = createRootRouteWithContext<{
         // The fallback for anything with no card of its own. It used to be
         // /android-chrome-512x512.png — a square PWA icon, which every preview
         // renderer cropped into a thumbnail rather than drawing as a card. Every
-        // public route overrides this from its own data; see libs/publicMeta.ts.
+        // public route overrides this from its own data; see libs/algorithms/publicMeta.ts.
         { property: "og:image", content: "/og/default.png" },
         { name: "twitter:card", content: "summary_large_image" },
       ],
@@ -219,4 +219,3 @@ function Toasts() {
     <ToastContainer position="bottom-center" autoClose={2600} hideProgressBar />
   );
 }
-

@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { changePassword } from "@/libs/auth.functions";
+import { changePassword } from "@/libs/server/auth.functions";
 import { useT } from "@/i18n";
 
 /**

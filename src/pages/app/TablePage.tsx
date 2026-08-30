@@ -3,7 +3,7 @@ import { getRouteApi, Navigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { LuMonitorSmartphone } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import Scoreboard from "@/components/live/Scoreboard";
@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { dialogClasses } from "@/components/ui/cardStyles";
 import { PageSkeleton } from "@/components/ui/Skeleton";
-import { useDialog } from "@/libs/useDialog";
-import { pinKiosk, readKioskTable } from "@/libs/kiosk";
-import { liveWriteMessage } from "@/libs/dbError";
+import { useDialog } from "@/hooks/useDialog";
+import { pinKiosk, readKioskTable } from "@/libs/browser/kiosk";
+import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/app/_authed/$clubSlug/tables/$tableId");
@@ -35,7 +35,7 @@ export default function TablePage() {
   const { player, isClubAdmin } = useAuth();
   const { data: tables, isLoading } = useClubTables();
   const { data: live } = useLiveMatches();
-  const { data: players } = useGetPlayers();
+  const { data: players } = usePlayers();
   const { startMatch } = useManageLiveMatch();
   const appNavigate = useAppNavigate();
 
@@ -172,7 +172,10 @@ export default function TablePage() {
                       liveId: row.id,
                     });
                   },
-                  onError: (err) => toast.error(t(liveWriteMessage(err, "startMatch"))),
+                  onError: (err) =>
+                    toast.error(
+                      t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                    ),
                 },
               )
             }

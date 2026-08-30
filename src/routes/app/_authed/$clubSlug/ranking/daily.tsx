@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import RankingDailyPage from "@/pages/app/RankingDailyPage";
 import { gamesQuery } from "@/queries/games";
-import { dayKeyOf, zoneOf } from "@/libs/day";
+import { dayKeyOf, zoneOf } from "@/libs/algorithms/day";
 
 /**
  * Today's ladder, for the day named in the URL.

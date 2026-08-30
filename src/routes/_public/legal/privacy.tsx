@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import ProsePage from "@/pages/public/ProsePage";
-import { publicMeta, canonical } from "@/libs/publicMeta";
+import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 
 /**
  * GDPR arts. 13–14: the policy has to be reachable at the point where data is

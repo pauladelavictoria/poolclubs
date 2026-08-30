@@ -12,7 +12,7 @@ import {
   type AppNotification,
 } from "@/hooks/useNotifications";
 import { useAuth } from "@/hooks/useAuth";
-import { useOutsideClose } from "@/libs/useOutsideClose";
+import { useOutsideClose } from "@/hooks/useOutsideClose";
 import { useT } from "@/i18n";
 
 const ICONS: Record<

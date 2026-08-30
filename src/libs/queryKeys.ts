@@ -1,20 +1,18 @@
 import type { UseGetGamesFilters } from "@/queries/games";
 import type {
-  UseGetDrillLogsFilters,
-  UseGetDrillsFilters,
+  DrillLogsFilters,
+  DrillsFilters,
 } from "@/queries/drills";
-import type {
-  PublicClubsFilters,
-  PublicDrillsFilters,
-  PublicPlayersFilters,
-  PublicTournamentsFilters,
-} from "@/queries/public";
+import type { PublicClubsFilters } from "@/queries/public/clubs";
+import type { PublicDrillsFilters } from "@/queries/public/drills";
+import type { PublicPlayersFilters } from "@/queries/public/players";
+import type { PublicTournamentsFilters } from "@/queries/public/tournaments";
 
 /**
  * Every cache key in one place.
  *
  * These were bare string literals spread across fourteen hooks and
- * libs/realtime.ts, where a socket event has to invalidate the exact key some
+ * libs/browser/realtime.ts, where a socket event has to invalidate the exact key some
  * other file invented. A typo there doesn't fail — the screen just quietly stops
  * updating, which is the worst kind of bug to go looking for.
  *
@@ -67,7 +65,7 @@ export const keys = {
 
   drills: {
     all: ["drills"] as const,
-    list: (f: UseGetDrillsFilters, clubId: number | null | undefined) =>
+    list: (f: DrillsFilters, clubId: number | null | undefined) =>
       ["drills", clubId, f.difficulty, f.skill_type] as const,
   },
 
@@ -80,7 +78,7 @@ export const keys = {
 
   drillLogs: {
     all: ["drill_logs"] as const,
-    list: (f: UseGetDrillLogsFilters) =>
+    list: (f: DrillLogsFilters) =>
       ["drill_logs", f.player_id, f.drill_id, f.limit] as const,
   },
 

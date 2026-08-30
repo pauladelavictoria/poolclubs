@@ -2,12 +2,12 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { LuMinus, LuPlus, LuTv } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { useCheckIn, useWhoIsHere } from "@/hooks/useNight";
 import { useSuggestions, seatsOfGroup } from "@/hooks/useSuggestions";
-import { sideNames } from "@/libs/night";
+import { sideNames } from "@/libs/algorithms/night";
 import StartMatchForm from "@/components/live/StartMatchForm";
 import PageTitle from "@/components/layout/PageTitle";
 import { AppLink } from "@/components/layout/AppLink";
@@ -20,10 +20,10 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import { dialogClasses } from "@/components/ui/cardStyles";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
-import { useDialog } from "@/libs/useDialog";
+import { useDialog } from "@/hooks/useDialog";
 import { readTodaySetup, writeTodaySetup } from "@/libs/prefs";
-import { clampRace, seatsNeeded, type DaySetup } from "@/libs/today";
-import { liveWriteMessage } from "@/libs/dbError";
+import { clampRace, seatsNeeded, type DaySetup } from "@/libs/algorithms/today";
+import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 import { DISCIPLINES, type ClubTable, type Player } from "@/types";
 
@@ -41,7 +41,7 @@ import { DISCIPLINES, type ClubTable, type Player } from "@/types";
 export default function TodayPage() {
   const { t } = useT();
   const { player, isClubAdmin } = useAuth();
-  const { data: players, isLoading } = useGetPlayers();
+  const { data: players, isLoading } = usePlayers();
   const { data: tables } = useClubTables();
   const { data: live } = useLiveMatches();
   const { startMatch } = useManageLiveMatch();
@@ -49,7 +49,7 @@ export default function TodayPage() {
   const here = useWhoIsHere();
 
   // From the cookie, so the server renders the bar the club left it on — see
-  // libs/today.ts.
+  // libs/algorithms/today.ts.
   const [setup, setSetup] = useState<DaySetup>(readTodaySetup);
   const change = (part: Partial<DaySetup>) => {
     const next = { ...setup, ...part };
@@ -70,7 +70,11 @@ export default function TodayPage() {
   const seats = seatsNeeded(setup);
   // Who could play whom, and on what. Shared with the scoreboard's "next on
   // this table" offer so the two can never disagree — see hooks/useSuggestions.
-  const { groups: suggestions, freeTables, canStart } = useSuggestions({
+  const {
+    groups: suggestions,
+    freeTables,
+    canStart,
+  } = useSuggestions({
     setup,
     maxGroups: Math.max(
       (tables ?? []).filter((tbl) => !matchOn(tbl.id)).length,
@@ -87,7 +91,8 @@ export default function TodayPage() {
         raceTo: setup.raceTo,
       },
       {
-        onError: (err) => toast.error(t(liveWriteMessage(err, "startMatch"))),
+        onError: (err) =>
+          toast.error(t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS))),
       },
     );
 
@@ -343,7 +348,16 @@ export default function TodayPage() {
                     onClick={() =>
                       checkIn.mutate(
                         { here: !isHere, playerId: p.id },
-                        { onError: () => toast.error(t("common.error")) },
+                        {
+                          onError: (err) =>
+                            toast.error(
+                              t(
+                                dbErrorMessage(err, "checkIn", {
+                                  denied: "common.deniedError",
+                                }),
+                              ),
+                            ),
+                        },
                       )
                     }
                     className={[
@@ -419,7 +433,9 @@ export default function TodayPage() {
                   // live on its own, which is the confirmation.
                   onSuccess: close,
                   onError: (err) =>
-                    toast.error(t(liveWriteMessage(err, "startMatch"))),
+                    toast.error(
+                      t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                    ),
                 },
               )
             }

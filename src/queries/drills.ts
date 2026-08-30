@@ -3,7 +3,7 @@ import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
 import type { Drill, DrillDifficulty, DrillLog, DrillSkillType } from "@/types";
 
-export type UseGetDrillsFilters = {
+export type DrillsFilters = {
   difficulty?: DrillDifficulty;
   skill_type?: DrillSkillType;
 };
@@ -27,7 +27,7 @@ export const drillQuery = (id: number) =>
 
 export const drillsQuery = (
   clubId: number,
-  filters: UseGetDrillsFilters = {},
+  filters: DrillsFilters = {},
 ) => {
   const { difficulty, skill_type } = filters;
 
@@ -52,7 +52,7 @@ export const drillsQuery = (
   });
 };
 
-export type UseGetDrillLogsFilters = {
+export type DrillLogsFilters = {
   player_id?: number;
   drill_id?: number;
   limit?: number;
@@ -63,7 +63,7 @@ export type UseGetDrillLogsFilters = {
  * drill, and the drill library is shared. Callers that need one club's activity
  * filter against the roster, which is what ActivityFeed does.
  */
-export const drillLogsQuery = (filters: UseGetDrillLogsFilters) =>
+export const drillLogsQuery = (filters: DrillLogsFilters) =>
   queryOptions({
     queryKey: keys.drillLogs.list(filters),
     queryFn: async () => {

@@ -13,12 +13,12 @@ import type { Player } from "@/types";
  * copies of a query mean two keys, and two keys mean the loader warms a cache the
  * component never reads.
  *
- * Cache invalidation on inserts/updates lives in libs/realtime.ts — one channel
+ * Cache invalidation on inserts/updates lives in libs/browser/realtime.ts — one channel
  * for the app, rather than one per hook instance.
  */
 
 /** Every column of the person, embedded on the membership. */
-export const PLAYER_SELECT = "*, person:people(*)";
+const PLAYER_SELECT = "*, person:people(*)";
 
 type WithPerson = {
   person: {
@@ -85,12 +85,10 @@ export const playersQuery = (clubId: number) =>
 
       // The tablet's own account is a member so that RLS will let it score, but
       // it is not a player: leaving it in would put a face in the roster, a row
-      // in both rankings and a name in every opponent picker. Filtered here
-      // rather than in the query because the column arrives with
-      // sql/live-night.sql and this file is typed against it before that is
-      // applied — `undefined` reads as "not a device", which is the right
-      // answer for every club that has not set one up.
-      return byName((data ?? []).map(flattenPlayer)).filter((p) => !p.is_device);
+      // in both rankings and a name in every opponent picker.
+      return byName((data ?? []).map(flattenPlayer)).filter(
+        (p) => !p.is_device,
+      );
     },
   });
 

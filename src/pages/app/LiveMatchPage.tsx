@@ -3,24 +3,24 @@ import { getRouteApi, Navigate, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { LuExpand, LuTrash2 } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatch, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
-import { seatsOf } from "@/libs/night";
+import { seatsOf } from "@/libs/algorithms/night";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { readTodaySetup } from "@/libs/prefs";
-import { seatsNeeded } from "@/libs/today";
+import { seatsNeeded } from "@/libs/algorithms/today";
 import Scoreboard from "@/components/live/Scoreboard";
 import { AppLink, useAppNavigate } from "@/components/layout/AppLink";
 import { Button, IconButton } from "@/components/ui/Button";
 import ConfirmButton from "@/components/ui/ConfirmButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageSkeleton } from "@/components/ui/Skeleton";
-import { useFullscreen } from "@/libs/useFullscreen";
-import { readKioskTable } from "@/libs/kiosk";
-import { liveWriteMessage } from "@/libs/dbError";
+import { useFullscreen } from "@/hooks/useFullscreen";
+import { readKioskTable } from "@/libs/browser/kiosk";
+import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/app/_authed/$clubSlug/live/$liveId");
@@ -38,7 +38,7 @@ export default function LiveMatchPage() {
   const { liveId, clubSlug } = route.useParams();
   const navigate = useNavigate();
   const { player, isClubAdmin } = useAuth();
-  const { data: players } = useGetPlayers();
+  const { data: players } = usePlayers();
   const pinned = readKioskTable() !== null;
   // Polled only there: the tablet on the rail is the one screen that finds out
   // the match is over by nobody telling it.
@@ -49,9 +49,10 @@ export default function LiveMatchPage() {
   /** The table this match was on and who was on it, held after the row is gone:
    *  filing deletes it, and the next match wants the same table without the two
    *  who just played it being offered straight back onto it. */
-  const [freed, setFreed] = useState<{ tableId: number; seats: number[] } | null>(
-    null,
-  );
+  const [freed, setFreed] = useState<{
+    tableId: number;
+    seats: number[];
+  } | null>(null);
   // The club's setting as it stands. Read, not owned: /today is where it is
   // changed, and a scoreboard arguing with it would be a second answer.
   const setup = readTodaySetup();
@@ -143,7 +144,9 @@ export default function LiveMatchPage() {
                           params: { clubSlug, liveId: row.id },
                         }),
                       onError: (err) =>
-                        toast.error(t(liveWriteMessage(err, "startMatch"))),
+                        toast.error(
+                          t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                        ),
                     },
                   )
                 }
@@ -235,7 +238,9 @@ export default function LiveMatchPage() {
               // The result is filed either way; only the next rack failed to
               // start, so this lands on the table's page rather than nowhere.
               onError: (err) => {
-                toast.error(t(liveWriteMessage(err, "startMatch")));
+                toast.error(
+                  t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                );
                 void navigate({ to: "/app/$clubSlug", params: { clubSlug } });
               },
             },
@@ -253,8 +258,18 @@ export default function LiveMatchPage() {
         void navigate({ to: "/app/$clubSlug", params: { clubSlug } });
       },
       // Usually the other phone pressed Finish half a second earlier, which is
-      // exactly what the row lock is there to make harmless.
-      onError: () => toast.error(t("live.finishError")),
+      // exactly what the row lock is there to make harmless — and exactly the
+      // kind of thing finish_live_match raises as its own P0001.
+      onError: (err) =>
+        toast.error(
+          t(
+            dbErrorMessage(err, "finishMatch", {
+              refused: "live.finishError",
+              denied: "common.deniedError",
+              fallback: "live.finishError",
+            }),
+          ),
+        ),
     });
 
   // Only reachable when the device is not pinned: a pinned tablet abandons from
@@ -263,7 +278,8 @@ export default function LiveMatchPage() {
     abandonMatch.mutate(match.id, {
       // The row is gone, so this page has nothing left to show.
       onSuccess: () => appNavigate("/app/$clubSlug"),
-      onError: (err) => toast.error(t(liveWriteMessage(err, "abandonMatch"))),
+      onError: (err) =>
+        toast.error(t(dbErrorMessage(err, "abandonMatch", LIVE_MATCH_KEYS))),
     });
 
   return (

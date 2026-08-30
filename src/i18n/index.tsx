@@ -93,7 +93,7 @@ const I18nContext = createContext<I18n>({
 });
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  // A store rather than state, the same shape libs/theme.ts uses: the language
+  // A store rather than state, the same shape libs/theme/theme.ts uses: the language
   // can change under us (the picker below) and the server needs its own snapshot.
   // Both snapshots are the same function now that the server reads
   // Accept-Language — so there is nothing for React to reconcile.

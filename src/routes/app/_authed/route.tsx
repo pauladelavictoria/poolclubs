@@ -19,7 +19,7 @@ export const Route = createFileRoute("/app/_authed")({
       throw redirect({
         to: "/app/login",
         // Where to come back to. The provider round trip carries this onward as
-        // /auth/callback?next=… — see libs/auth.functions.ts.
+        // /auth/callback?next=… — see libs/server/auth.functions.ts.
         search: { next: location.href },
       });
     }

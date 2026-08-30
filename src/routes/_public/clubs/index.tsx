@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import PublicClubsPage from "@/pages/public/PublicClubsPage";
-import { publicClubPinsQuery, publicClubsQuery } from "@/queries/public";
-import { publicMeta } from "@/libs/publicMeta";
+import { publicClubPinsQuery, publicClubsQuery } from "@/queries/public/clubs";
+import { publicMeta } from "@/libs/algorithms/publicMeta";
 
 /**
  * Query and facets in the URL, the same rule the app's own filtered lists follow

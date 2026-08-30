@@ -1,8 +1,5 @@
 import { AppLink } from "@/components/layout/AppLink";
-import {
-  segmentedShell,
-  segmentedItem,
-} from "@/components/ui/segmentedStyles";
+import { segmentedShell, segmentedItem } from "@/components/ui/segmentedStyles";
 import { useT } from "@/i18n";
 
 /**
@@ -18,7 +15,11 @@ export default function ClubTabs() {
   const { t } = useT();
 
   return (
-    <div className={segmentedShell} role="group" aria-label={t("club.settings")}>
+    <div
+      className={segmentedShell}
+      role="group"
+      aria-label={t("club.settings")}
+    >
       <AppLink
         to="/app/$clubSlug/club"
         activeOptions={{ exact: true }}

@@ -31,18 +31,7 @@ export const operatorClubsQuery = () =>
   queryOptions({
     queryKey: keys.operator.clubs,
     queryFn: async (): Promise<OperatorClub[]> => {
-      // The function is newer than src/types/database.types.gen.ts, so the typed
-      // client has no signature for it and `rpc("operator_clubs")` does not
-      // compile. One narrow cast here, which can go after the next
-      // `npm run db:types`, beats `any` at the call site.
-      const client = getSupabase() as unknown as {
-        rpc: (fn: string) => PromiseLike<{
-          data: OperatorClub[] | null;
-          error: { message: string } | null;
-        }>;
-      };
-
-      const { data, error } = await client.rpc("operator_clubs");
+      const { data, error } = await getSupabase().rpc("operator_clubs");
       if (error) throw new Error(error.message);
       return data ?? [];
     },

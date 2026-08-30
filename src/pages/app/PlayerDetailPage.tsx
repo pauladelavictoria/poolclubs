@@ -8,8 +8,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { useGetPlayers } from "@/hooks/useGetPlayers";
-import { useGetGames } from "@/hooks/useGetGames";
+import { usePlayers } from "@/hooks/usePlayers";
+import { useGames } from "@/hooks/useGames";
 import { useAuth } from "@/hooks/useAuth";
 import PageTitle from "@/components/layout/PageTitle";
 import ChallengeButton from "@/components/social/ChallengeButton";
@@ -20,7 +20,7 @@ import { Stat } from "@/components/ui/Stat";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { useChartTheme } from "@/libs/chartTheme";
+import { useChartTheme } from "@/libs/theme/chartTheme";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 
@@ -36,10 +36,10 @@ export default function PlayerDetailPage({ playerId }: { playerId: number }) {
   const chart = useChartTheme();
 
   const { user } = useAuth();
-  const { data: players, isLoading: isLoadingPlayers } = useGetPlayers();
+  const { data: players, isLoading: isLoadingPlayers } = usePlayers();
   const player = players?.find((p) => p.id === playerId);
 
-  const { data: gamesData, isLoading: isLoadingGames } = useGetGames({
+  const { data: gamesData, isLoading: isLoadingGames } = useGames({
     playerId,
     pageSize: PLAYER_GAMES_LIMIT,
   });
@@ -247,7 +247,10 @@ export default function PlayerDetailPage({ playerId }: { playerId: number }) {
               title={t("players.noGamesTitle")}
               hint={t("players.noGamesHint", { name: player.name })}
               action={
-                <AppLink to="/app/$clubSlug/games/new" className={buttonClasses({})}>
+                <AppLink
+                  to="/app/$clubSlug/games/new"
+                  className={buttonClasses({})}
+                >
                   {t("games.add")}
                 </AppLink>
               }
