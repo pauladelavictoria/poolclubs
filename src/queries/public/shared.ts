@@ -36,6 +36,19 @@ export const CLUB_COLS =
  * These columns need `GRANT SELECT` for anon before this ships — see
  * sql/schema.sql, which explains why the order is not negotiable.
  */
+/**
+ * The directory's own list, and nothing else that embeds a club.
+ *
+ * `photo_order` is what says which of a club's photos is its cover, so a card
+ * that shows one has to read it or it will show a different picture than the
+ * club's own page does. It stays out of CLUB_COLS because the tournament and
+ * player rows that embed a club show no photo at all, and the map pins query
+ * (which asks for up to 500) names its own columns anyway.
+ *
+ * anon already has the grant — CLUB_DETAIL_COLS reads the same column.
+ */
+export const CLUB_CARD_COLS = `${CLUB_COLS}, photo_order`;
+
 export const CLUB_DETAIL_COLS = `${CLUB_COLS}, description, phone, tables_info, schedule, timezone, photo_order`;
 export const PERSON_COLS = "id, slug, name, avatar_url, is_public";
 export const PLAYER_COLS = "id, club_id, category";

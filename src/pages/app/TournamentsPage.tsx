@@ -13,7 +13,7 @@ import TournamentForm, {
   type TournamentValues,
 } from "@/components/tournaments/TournamentForm";
 import { Card } from "@/components/ui/Card";
-import { cardClasses } from "@/components/ui/cardStyles";
+import { cardClasses, dialogClasses } from "@/components/ui/cardStyles";
 import { Button } from "@/components/ui/Button";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -116,7 +116,7 @@ export default function TournamentsPage() {
 
       <dialog
         ref={dialogRef}
-        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-none sm:max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+        className={dialogClasses()}
         aria-label={t("tournaments.new")}
         onClose={() => setIsModalOpen(false)}
         onClick={(e) => {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { dialogClasses } from "@/components/ui/cardStyles";
 import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import {
@@ -248,7 +249,7 @@ export default function ClubMembersPage() {
           free. A bottom sheet on phones, a centred card from sm up. */}
       <dialog
         ref={dialogRef}
-        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-none sm:max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+        className={dialogClasses()}
         aria-label={editingPlayer ? t("players.edit") : t("players.add")}
         onClose={closeModal}
         onClick={(e) => {

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { headlineClasses } from "@/components/layout/publicTitleStyles";
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { Link, getRouteApi, useRouter } from "@tanstack/react-router";
-import { LuCalendar, LuGitFork, LuList, LuTicket } from "react-icons/lu";
+import { LuGitFork, LuList } from "react-icons/lu";
 import PublicShell from "@/components/layout/PublicShell";
 import ShareButton from "@/components/social/ShareButton";
 import BracketView from "@/components/tournaments/BracketView";
@@ -40,7 +41,7 @@ import { keys } from "@/libs/queryKeys";
 import { useSession } from "@/hooks/useAuth";
 import { publicClubRosterQuery } from "@/queries/public/clubs";
 import type { PublicTournament } from "@/queries/public/tournaments";
-import { FORMAT_KEY, type Player, type TournamentMatch } from "@/types";
+import { FORMAT_KEY, type TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/_public/tournaments/$tournamentId");
@@ -105,7 +106,6 @@ export default function PublicTournamentPage() {
       <TournamentHero
         tournament={tournament}
         entrantIds={entrantIds}
-        byId={byId}
         matchesTotal={matches.length}
         matchesPlayed={played}
         url={url}
@@ -146,10 +146,7 @@ export default function PublicTournamentPage() {
         )}
 
         {finished && (
-          <section
-            data-ball={tournament.club?.theme_color}
-            className="wash wash-soft mt-10 overflow-hidden rounded-sheet border border-hairline"
-          >
+          <section className="wash wash-soft mt-10 overflow-hidden rounded-sheet border border-hairline">
             <h2 className="px-6 pt-6 text-h3 font-semibold tracking-tight text-ink">
               {t("tournaments.results")}
             </h2>
@@ -247,7 +244,6 @@ export default function PublicTournamentPage() {
           <Link
             to="/clubs/$slug"
             params={{ slug: tournament.club.slug }}
-            data-ball={tournament.club.theme_color}
             className="wash wash-soft lift mt-10 flex flex-col items-center gap-4 rounded-sheet border border-hairline p-8 text-center sm:flex-row sm:justify-between sm:text-left"
           >
             <div className="flex items-center gap-3">
@@ -255,7 +251,6 @@ export default function PublicTournamentPage() {
                 name={tournament.club.name}
                 url={tournament.club.logo_url}
                 mark
-                shape="plate"
                 className="h-14 w-14"
               />
               <div>
@@ -280,22 +275,22 @@ export default function PublicTournamentPage() {
 }
 
 /**
- * Status-driven: `open` leads with the entrant count, `running` with a live
- * pill and a real progress bar. A finished one leads with nothing — the results
- * section below it opens with the podium, and saying it twice on one screen read
- * as two different facts.
+ * The name, the way in, and every fact about the tournament as a labelled
+ * field. Below those, only what the fields cannot say: a live pill and a real
+ * progress bar while it is under way. Nothing while it is open — the entrant
+ * count is a field and the entrants themselves are a named section below — and
+ * nothing once it is finished, because the results section opens with the
+ * podium and saying it twice on one screen read as two different facts.
  */
 function TournamentHero({
   tournament,
   entrantIds,
-  byId,
   matchesTotal,
   matchesPlayed,
   url,
 }: {
   tournament: PublicTournament;
   entrantIds: number[];
-  byId: Map<number, Pick<Player, "id" | "name" | "avatar_url">>;
   matchesTotal: number;
   matchesPlayed: number;
   url: string;
@@ -305,25 +300,34 @@ function TournamentHero({
   const when = eventDates(tournament.starts_on, tournament.ends_on, locale);
 
   return (
-    <section
-      data-ball={tournament.club?.theme_color}
-      className="wash wash-soft relative overflow-hidden border-b border-hairline"
-    >
-      <div className="relative px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
+    <section className="border-b border-hairline">
+      <div className="px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1">
-            {/* The title first, not the club above it: as an eyebrow it pushed
-                the h1 a line and a half down, and a tournament page opened from a
-                club page showed its title lower than the one before it. The club
-                reads as well under the name, next to the rest of the facts. */}
-            <h1 className="truncate text-display leading-[1.05] font-semibold tracking-tighter text-ink">
-              {tournament.name}
-            </h1>
-            {tournament.club && (
+          {/* The title alone on its line. Everything that qualifies it is a
+              labelled field below rather than a run-on of pills and separators:
+              a reader looking for the date was reading a sentence to find it,
+              and "Bola 9 · Inscripción abierta" gave neither word a name. */}
+          <h1 className={headlineClasses("display", "min-w-0 flex-1 truncate")}>
+            {tournament.name}
+          </h1>
+          <div className="flex shrink-0 items-center gap-2">
+            <TournamentEntry tournament={tournament} entrantIds={entrantIds} />
+            <ShareButton title={tournament.name} url={url} />
+          </div>
+        </div>
+
+        {/* A definition list, because that is what this is: every row names the
+            question and then answers it. Grid rather than flex so the labels
+            line up down the columns — a ragged left edge is what made the old
+            run-on hard to scan. Fields with nothing in them are absent, not
+            blank: most tournaments open before anyone has dated them. */}
+        <dl className="mt-8 grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {tournament.club && (
+            <Fact label={t("public.publicTournament.hostedBy")}>
               <Link
                 to="/clubs/$slug"
                 params={{ slug: tournament.club.slug }}
-                className="mt-3 inline-flex max-w-full items-center gap-1.5 text-caption text-ink-soft transition-colors duration-150 hover:text-strike"
+                className="inline-flex max-w-full items-center gap-1.5 transition-colors duration-150 hover:text-strike"
               >
                 <Avatar
                   name={tournament.club.name}
@@ -333,64 +337,58 @@ function TournamentHero({
                 />
                 <span className="truncate">{tournament.club.name}</span>
               </Link>
+            </Fact>
+          )}
+          <Fact label={t("tournaments.statusLabel")}>
+            {t(`tournaments.status.${tournament.status}`)}
+          </Fact>
+          <Fact label={t("tournaments.format")}>
+            {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}
+          </Fact>
+          <Fact label={t("tournaments.discipline")}>
+            {t(`discipline.${tournament.discipline}`)}
+          </Fact>
+          <Fact label={t("tournaments.category")}>
+            {tournament.category === null ? (
+              t("tournaments.combined")
+            ) : (
+              <CategoryBadge category={tournament.category} />
             )}
-            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-ink-faint">
-              <span className="rounded-control border border-hairline bg-pocket px-1.5 py-0.5 font-mono tracking-[0.06em] text-ink-soft uppercase">
-                {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}
+          </Fact>
+          {tournament.status === "open" && (
+            <Fact label={t("public.publicTournament.entrantsLabel")}>
+              <span className="font-mono tabular-nums">
+                {entrantIds.length}
               </span>
-              <span>
-                {t(`discipline.${tournament.discipline}`)}
-                {" · "}
-                {t(`tournaments.status.${tournament.status}`)}
-              </span>
-              {tournament.category === null ? (
-                <span>{t("tournaments.combined")}</span>
-              ) : (
-                <CategoryBadge category={tournament.category} />
-              )}
-            </p>
-            {/* When it is and what it costs, on their own line rather than run
-                in with the format and the discipline: those describe the draw,
-                these two are what somebody deciding whether to turn up reads.
-                Either can be missing — most tournaments open before they are
-                dated. */}
-            {(when || tournament.entry_fee) && (
-              <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-body text-ink-soft">
-                {when && (
-                  <span className="flex items-center gap-1.5">
-                    <LuCalendar className="h-4 w-4 shrink-0" aria-hidden />
-                    {when}
-                  </span>
-                )}
-                {tournament.entry_fee && (
-                  <span className="flex items-center gap-1.5">
-                    <LuTicket className="h-4 w-4 shrink-0" aria-hidden />
-                    {tournament.entry_fee}
-                  </span>
-                )}
-              </p>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <TournamentEntry tournament={tournament} entrantIds={entrantIds} />
-            <ShareButton title={tournament.name} url={url} />
-          </div>
-        </div>
+            </Fact>
+          )}
+          {when && <Fact label={t("tournaments.dates")}>{when}</Fact>}
+          {tournament.entry_fee && (
+            <Fact label={t("tournaments.entryFee")}>
+              {tournament.entry_fee}
+            </Fact>
+          )}
+        </dl>
 
-        {/* Nothing under the title once it is finished: the results section
-            below opens with the podium, and the champion's face twice on one
-            screen made the second one look like a different fact. */}
+        {/* Under the fields: only progress, and only while there is any.
+            A count and a row of faces used to sit here too, directly above a
+            section that lists the same people larger and with their names on —
+            the same four faces twice on one screen, the second time captioned.
+            The count is a field now; the faces belong to the list that names
+            them. Nothing at all once it is finished: the results section below
+            opens with the podium, and the champion twice made the second one
+            look like a different fact. */}
         {tournament.status === "running" || tournament.status === "groups" ? (
           <div className="mt-8 max-w-md">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-pocket/70 px-2 py-1 font-mono text-caption font-semibold text-strike">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-strike-tint px-2 py-1 font-mono text-caption font-semibold text-strike">
               <span
                 className="live-dot h-1.5 w-1.5 rounded-full bg-strike"
                 aria-hidden
               />
               {t("tournaments.status.running")}
             </span>
-            {/* ponytail: track tinted from the fill color, not a surface token —
-                the page bg here already equals felt-raised, so the track vanished */}
+            {/* ponytail: track tinted from the fill colour rather than a
+                surface token, so it reads whatever the header sits on */}
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-strike/20">
               <div
                 className="h-full rounded-full bg-strike transition-[width] duration-500"
@@ -404,36 +402,21 @@ function TournamentHero({
               })}
             </p>
           </div>
-        ) : tournament.status === "open" ? (
-          <div className="mt-8 flex flex-wrap items-end gap-6">
-            <div>
-              <span className="font-mono text-display font-semibold tabular-nums text-ink">
-                {entrantIds.length}
-              </span>
-              <p className="text-caption text-ink-faint">
-                {t("public.publicTournament.entrantsLabel")}
-              </p>
-            </div>
-            {entrantIds.length > 0 && (
-              <div className="flex -space-x-2.5 pb-1.5">
-                {entrantIds.slice(0, 8).map((id) => {
-                  const player = byId.get(id);
-                  return (
-                    <Avatar
-                      key={id}
-                      name={player?.name ?? "—"}
-                      url={player?.avatar_url}
-                      seed={id}
-                      className="h-9 w-9"
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </div>
         ) : null}
       </div>
     </section>
+  );
+}
+
+/** One labelled field in the header's definition list. A <div> per pair so the
+ *  grid places the label and its value together — a bare dt/dt/dd/dd sequence
+ *  in a grid puts them in whatever cells come next. */
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-caption text-ink-faint">{label}</dt>
+      <dd className="mt-1 truncate text-body text-ink">{children}</dd>
+    </div>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { dialogClasses } from "@/components/ui/cardStyles";
 import { LuShare2, LuSmartphone, LuX } from "react-icons/lu";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
@@ -52,7 +53,7 @@ export default function InstallAppModal({
   return (
     <dialog
       ref={ref}
-      className="sheet m-0 mt-auto w-full max-w-none sm:max-w-md rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+      className={dialogClasses()}
       aria-label={t("installPrompt.title")}
       onClose={dismiss}
       onClick={(e) => {

@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import type { Drill } from "@/types";
 import { Link } from "@tanstack/react-router";
 import PoolTableDiagram from "./PoolTableDiagram";
@@ -13,30 +12,20 @@ interface DrillCardProps {
    *  the route it sits under, so it cannot be used where there is no club in the
    *  path — this picks the public URL instead. */
   public?: boolean;
-  /** Entrance stagger index — public catalog only. /app's own grids stay
-   *  exactly as they were; `.pop` and `.lift` are no-ops there anyway (the
-   *  tokens they read are transparent outside the public skin), but the entry
-   *  animation itself is a public-only touch. */
-  index?: number;
 }
 
-export default function DrillCard({
-  drill,
-  public: isPublic,
-  index,
-}: DrillCardProps) {
+export default function DrillCard({ drill, public: isPublic }: DrillCardProps) {
   const { t } = useT();
 
   const className = cardClasses({
     interactive: true,
     className: [
       "flex h-full flex-col overflow-hidden",
-      isPublic ? "group pop lift" : "",
+      isPublic ? "group lift" : "",
     ]
       .filter(Boolean)
       .join(" "),
   });
-  const style = isPublic ? ({ "--i": index ?? 0 } as CSSProperties) : undefined;
 
   const body = (
     <>
@@ -86,7 +75,6 @@ export default function DrillCard({
       to="/drills/$drillId"
       params={{ drillId: String(drill.id) }}
       className={className}
-      style={style}
     >
       {body}
     </Link>

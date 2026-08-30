@@ -72,7 +72,7 @@ export function FilterMenu({
         )}
       </summary>
 
-      <div className="absolute left-0 z-20 mt-2 flex w-[min(90vw,20rem)] flex-col gap-4 rounded-card border border-hairline-strong bg-felt p-4 shadow-lg">
+      <div className="absolute left-0 z-20 mt-2 flex w-[min(90vw,20rem)] flex-col gap-4 rounded-card border border-hairline-strong bg-felt p-4 shadow-pop">
         {children}
       </div>
     </details>

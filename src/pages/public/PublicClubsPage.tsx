@@ -1,4 +1,5 @@
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
+import { cardClasses } from "@/components/ui/cardStyles";
 import {
   keepPreviousData,
   useQuery,
@@ -7,6 +8,7 @@ import {
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { LuUsers } from "react-icons/lu";
 import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
+import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -21,9 +23,11 @@ import {
   publicClubPinsQuery,
   publicClubsQuery,
   type Bbox,
-  type PublicClub,
+  type PublicClubCard,
   type PublicClubSort,
 } from "@/queries/public/clubs";
+import { clubPhotosQuery } from "@/queries/clubPhotos";
+import { orderPhotos } from "@/libs/algorithms/photoOrder";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/_public/clubs/");
@@ -115,16 +119,10 @@ export default function PublicClubsPage() {
 
   return (
     <>
-      <section>
-        <div className="px-4 py-6 sm:px-6 sm:py-8">
-          <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
-            {t("public.publicClubs.title")}
-          </h1>
-          <p className="mt-2 max-w-[46ch] text-h4 text-ink-soft">
-            {t("public.publicClubs.subtitle")}
-          </p>
-        </div>
-      </section>
+      <PublicPageTitle
+        title={t("public.publicClubs.title")}
+        lede={t("public.publicClubs.subtitle")}
+      />
 
       <PublicShell>
         {/* Two columns from lg up: the filters and the grid on the left, the
@@ -177,7 +175,7 @@ export default function PublicClubsPage() {
                     // A plain checkbox, coloured by `accent-strike` — a native
                     // control here is one that already knows how to be focused,
                     // toggled with the keyboard and read out.
-                    <label className="flex cursor-pointer items-center gap-2 rounded-control border border-hairline bg-felt/90 px-2.5 py-1.5 text-caption font-medium text-ink shadow-sm backdrop-blur-sm">
+                    <label className="flex cursor-pointer items-center gap-2 rounded-control border border-hairline bg-felt/90 px-2.5 py-1.5 text-caption font-medium text-ink shadow-pop backdrop-blur-sm">
                       <input
                         type="checkbox"
                         checked={tiedToMap}
@@ -258,10 +256,10 @@ export default function PublicClubsPage() {
               <>
                 {/* Two across in the narrower left column, and more as the
                     column widens — without the last step a card on a large
-                    screen is half a metre of empty gradient. */}
+                    screen is half a metre of empty tint. */}
                 <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                  {clubs.map((club, i) => (
-                    <ClubCard key={club.id} club={club} index={i} />
+                  {clubs.map((club) => (
+                    <ClubCard key={club.id} club={club} />
                   ))}
                 </div>
                 <Pager
@@ -282,25 +280,50 @@ export default function PublicClubsPage() {
 }
 
 /**
- * No photograph. The club's colour is the art: a short washed band, the logo
- * straddling its lower edge, and the two facts a directory reader wants.
+ * The club's own venue if it has published one, and the accent if it has not:
+ * a short band, the logo straddling its lower edge, and the two facts a
+ * directory reader wants.
  *
  * The band is a fixed height rather than an aspect ratio, so a card does not get
  * taller as the grid gets wider — a directory is something you scan down, and
  * every row of it should cost the same amount of screen.
+ *
+ * ponytail: one storage list() per card, because the bucket is the photo list
+ * and there is no cover column to read (see queries/clubPhotos). At a page of
+ * 24 that is 24 cheap parallel requests against a public bucket, cached under
+ * the same key the club's own page uses — so clicking a card is already warm.
+ * If the directory ever gets long enough for that to matter, the fix is a
+ * clubs.cover_url column written at upload time, not a batching layer here.
  */
-function ClubCard({ club, index }: { club: PublicClub; index: number }) {
+function ClubCard({ club }: { club: PublicClubCard }) {
   const { t } = useT();
+  // Reconciled against the bucket and against the club's stored order, so the
+  // card's picture is the same one the club's own hero leads with.
+  const { data: photos = [] } = useQuery(clubPhotosQuery(club.id));
+  const cover = orderPhotos(photos, club.photo_order)[0] ?? null;
 
   return (
     <Link
       to="/clubs/$slug"
       params={{ slug: club.slug }}
-      data-ball={club.theme_color}
-      style={{ "--i": index } as CSSProperties}
-      className="pop lift group block overflow-hidden rounded-card border border-hairline bg-felt"
+      className={cardClasses({ className: "lift group block overflow-hidden" })}
     >
-      <div className="wash relative h-20 overflow-hidden transition-[filter] duration-300 group-hover:saturate-150">
+      {/* The venue if there is one, and a plain raised surface if not. The
+          fallback used to be the club's colour at full strength; on one accent
+          that would be a yellow strip on every photo-less club, in the exact
+          colour this app reserves for "act". */}
+      <div className="relative h-20 overflow-hidden bg-felt-raised">
+        {cover && (
+          <img
+            src={cover.url}
+            // Decorative: the club's name is the heading right below it, and a
+            // description here would be read out before the name.
+            alt=""
+            aria-hidden
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
         {isNew(club.created_at) && (
           <span className="flood absolute top-2.5 left-2.5 rounded-full px-2 py-0.5 font-mono text-caption font-semibold">
             {t("public.publicClubs.new")}

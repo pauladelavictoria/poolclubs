@@ -191,10 +191,7 @@ export default function PlayersPage() {
         {isLoading ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }, (_, i) => (
-              <div
-                key={i}
-                className="rounded-card border border-hairline bg-felt p-4"
-              >
+              <div key={i} className={cardClasses({ className: "p-4" })}>
                 <Skeleton className="h-10 w-2/3" />
                 <Skeleton className="mt-4 h-8 w-1/2" />
               </div>

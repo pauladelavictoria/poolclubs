@@ -3,7 +3,7 @@ import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
 import { flattenPlayer } from "@/queries/players";
 import {
-  CLUB_COLS,
+  CLUB_CARD_COLS,
   CLUB_DETAIL_COLS,
   PERSON_COLS,
   PLAYER_COLS,
@@ -28,6 +28,10 @@ export type PublicClub = Pick<
   | "lat"
   | "lon"
 > & { created_at: string | null };
+
+/** A directory card: a club plus the one column that says which photo is its
+ *  cover. See CLUB_CARD_COLS for why that is not in PublicClub itself. */
+export type PublicClubCard = PublicClub & Pick<Club, "photo_order">;
 
 /** The club's own page, which reads the columns no card does. Everything
  *  else that embeds a club stays on PublicClub — see CLUB_DETAIL_COLS. */
@@ -76,7 +80,7 @@ export const publicClubsQuery = (filters: PublicClubsFilters = {}) => {
       const supabase = getSupabase();
       let query = supabase
         .from("clubs")
-        .select(CLUB_COLS, { count: "exact" })
+        .select(CLUB_CARD_COLS, { count: "exact" })
         // Redundant against the anon policy, and deliberately so: a signed-in
         // visitor reads under their own policies, which would otherwise show
         // them their own hidden club in a public directory.
@@ -119,7 +123,7 @@ export const publicClubsQuery = (filters: PublicClubsFilters = {}) => {
       const [from, to] = rangeOf(page);
       const { data, count } = await query.range(from, to).throwOnError();
 
-      return { clubs: data as PublicClub[], totalCount: count ?? 0 };
+      return { clubs: data as PublicClubCard[], totalCount: count ?? 0 };
     },
   });
 };

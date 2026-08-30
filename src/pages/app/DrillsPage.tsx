@@ -1,4 +1,5 @@
 import { getRouteApi } from "@tanstack/react-router";
+import { cardClasses } from "@/components/ui/cardStyles";
 import { LuPlus, LuTarget } from "react-icons/lu";
 import PageTitle from "@/components/layout/PageTitle";
 import DrillCard from "@/components/drills/DrillCard";
@@ -101,7 +102,7 @@ export default function DrillsPage() {
             {Array.from({ length: 8 }, (_, i) => (
               <div
                 key={i}
-                className="overflow-hidden rounded-card border border-hairline bg-felt"
+                className={cardClasses({ className: "overflow-hidden" })}
               >
                 {/* Same shape as the card it stands in for, table included, so
                     nothing jumps when the drills arrive. */}

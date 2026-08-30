@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { headlineClasses } from "@/components/layout/publicTitleStyles";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import DrillCard from "@/components/drills/DrillCard";
 import PublicShell from "@/components/layout/PublicShell";
@@ -69,9 +70,7 @@ export default function PublicDrillPage() {
         <div className="lg:col-span-7">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
-                {drill.name}
-              </h1>
+              <h1 className={headlineClasses("display")}>{drill.name}</h1>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-caption text-ink-soft">
                 <DifficultyTag difficulty={drill.difficulty} />
                 <span className="text-ink-ghost">·</span>
@@ -158,8 +157,8 @@ export default function PublicDrillPage() {
         <section className="mt-16">
           <SectionHead title={t("public.publicDrill.related")} />
           <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {related.map((d, i) => (
-              <DrillCard key={d.id} drill={d} public index={i} />
+            {related.map((d) => (
+              <DrillCard key={d.id} drill={d} public />
             ))}
           </div>
         </section>

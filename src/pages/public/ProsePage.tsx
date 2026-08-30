@@ -1,4 +1,5 @@
 import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
+import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import { LEGAL } from "@/content/legal";
 import { ABOUT, CONTACT, PRICING, type ContentDoc } from "@/content/pages";
 import { useT } from "@/i18n";
@@ -35,23 +36,17 @@ export default function ProsePage({ id }: { id: ProseId }) {
 
   return (
     <>
-      <section>
-        <div className="px-4 py-6 sm:px-6 sm:py-8">
-          <h1 className="text-display leading-[1.05] font-semibold tracking-tighter text-ink">
-            {doc.title}
-          </h1>
-          <p className="mt-2 max-w-[46ch] text-h4 text-ink-soft">{doc.lede}</p>
-          {doc.updated && (
-            <p className="mt-3 text-caption text-ink-faint">
-              {t("public.legal.updated", {
-                date: new Date(doc.updated).toLocaleDateString(locale, {
-                  dateStyle: "long",
-                }),
-              })}
-            </p>
-          )}
-        </div>
-      </section>
+      <PublicPageTitle size="display" title={doc.title} lede={doc.lede}>
+        {doc.updated && (
+          <p className="mt-3 text-caption text-ink-faint">
+            {t("public.legal.updated", {
+              date: new Date(doc.updated).toLocaleDateString(locale, {
+                dateStyle: "long",
+              }),
+            })}
+          </p>
+        )}
+      </PublicPageTitle>
 
       <PublicShell>
         {/* A reading measure, not the page width: these are the only pages here

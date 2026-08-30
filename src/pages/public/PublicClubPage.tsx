@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { headlineClasses } from "@/components/layout/publicTitleStyles";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, Outlet, getRouteApi } from "@tanstack/react-router";
 import { LuMapPin, LuX } from "react-icons/lu";
@@ -110,11 +111,8 @@ export default function PublicClubPage() {
       <PublicShell>
         <Outlet />
 
-        <section
-          data-ball={club.theme_color}
-          className="wash wash-soft mt-10 flex flex-col items-center gap-3 rounded-sheet border border-hairline p-10 text-center"
-        >
-          <h2 className="max-w-[24ch] text-display leading-[1.05] font-semibold tracking-tighter text-ink">
+        <section className="wash wash-soft mt-10 flex flex-col items-center gap-3 rounded-sheet border border-hairline p-10 text-center">
+          <h2 className={headlineClasses("display", "max-w-[24ch]")}>
             {t("public.publicClub.joinTitle", { name: club.name })}
           </h2>
           <p className="max-w-[46ch] text-body text-ink-soft">
@@ -253,11 +251,10 @@ export function ClubTournamentsTab() {
             {t(key)}
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {rows.map((tournament, i) => (
+            {rows.map((tournament) => (
               <TournamentCard
                 key={tournament.id}
                 tournament={tournament}
-                index={i}
                 hideClub
               />
             ))}
@@ -375,56 +372,69 @@ function ClubHero({
 }) {
   const { t } = useT();
 
-  // The club's first photo, behind the accent wash rather than instead of it,
-  // so a club with no photos loses nothing. Same order the info tab's gallery
-  // uses, so both agree about which photo leads.
+  // The club's first photo, as the banner above the title. Absent for a club
+  // that has published none, and the hero simply starts at the title. Same
+  // order the info tab's gallery and the directory card use, so all three
+  // agree about which photo leads.
   const { data: storedPhotos = [] } = useQuery(clubPhotosQuery(club.id));
   const cover = orderPhotos(storedPhotos, club.photo_order)[0] ?? null;
 
   return (
-    <section
-      data-ball={club.theme_color}
-      className="wash wash-soft relative overflow-hidden border-b border-hairline"
-    >
+    <section className="border-b border-hairline">
+      {/* The venue as a banner, not as a backdrop.
+          It used to sit behind the whole hero under a veil, which is a bargain
+          that costs both sides: the photo is dimmed to the point of being
+          texture, and the text still has to survive whatever was underneath it.
+          In light mode it was worse — an 80% white veil over a bright room is a
+          pale smear with no edge, and the title had nothing to sit against.
+          Above the title instead, at full strength, with the title on the
+          page's own surface. The photo gets to be a photograph and every ink
+          token keeps the contrast it was measured for. */}
       {cover && (
-        <>
+        <div className="relative h-40 overflow-hidden sm:h-56">
           <img
             src={cover.url}
+            // Decorative: the club's name is the heading directly below.
             alt=""
-            // Decorative: the club's name is right on top of it and is the
-            // heading. A description here would be read out before it.
             aria-hidden
-            className="absolute inset-0 h-full w-full object-cover"
+            className="h-full w-full object-cover"
           />
-          {/* The scrim, and it is not optional. A photo of a bright room puts
-              near-white behind near-white text; this keeps the h1 and the
-              address readable over whatever the club happened to upload, in
-              both themes, without knowing anything about the image. */}
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-t from-felt via-felt/85 to-felt/60"
-          />
-        </>
+        </div>
       )}
-      <div className="relative px-4 pt-10 pb-6 sm:px-6 sm:pt-16 sm:pb-8">
+      {/* `relative` is load-bearing, not decoration. The banner above is
+          positioned (it has to be, to clip the photo), so it paints in the
+          positioned layer above every non-positioned sibling — which cut off
+          the top of the avatar straddling it. Positioning this too puts it
+          back on top, later in document order. The directory card carries the
+          same note for the same reason. */}
+      <div
+        className={`relative px-4 pb-6 sm:px-6 sm:pb-8 ${
+          // The avatar straddles the banner's lower edge, the same move the
+          // directory card makes, so a club reads the same way in both places.
+          cover ? "pt-4 sm:pt-5" : "pt-10 sm:pt-16"
+        }`}
+      >
         {/* Top-aligned, not bottom: the title has a different amount of detail
             under it on a club, a player and a tournament, so aligning the block's
             bottom to the avatar moves the h1 up or down with it — the title
             visibly jumped between the three. Aligning the top pins every profile
             title to the hero's own padding. */}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
-          <div className="w-fit rounded-sheet bg-felt p-1.5">
+          <div
+            className={`w-fit rounded-full bg-pocket p-1.5 ${
+              cover ? "-mt-14 sm:-mt-20" : ""
+            }`}
+          >
             <Avatar
               name={club.name}
               url={club.logo_url}
               mark
-              shape="plate"
               className="h-20 w-20 sm:h-28 sm:w-28"
             />
           </div>
 
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-display leading-[1.05] font-semibold tracking-tighter text-ink">
+            <h1 className={headlineClasses("display", "truncate")}>
               {club.name}
             </h1>
             {where(club) && (
@@ -633,7 +643,7 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {hasHours && (
-          <div className="rounded-card border border-hairline bg-felt p-4">
+          <Card className="p-4">
             <div className="flex items-center justify-between gap-2 pb-2">
               <h3 className="text-body font-medium text-ink">
                 {t("club.schedule.title")}
@@ -680,11 +690,11 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
                 </div>
               ))}
             </dl>
-          </div>
+          </Card>
         )}
 
         {club.tables_info && (
-          <div className="rounded-card border border-hairline bg-felt p-4">
+          <Card className="p-4">
             <h3 className="pb-2 text-body font-medium text-ink">
               {t("club.tablesInfo")}
             </h3>
@@ -693,11 +703,11 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
             <p className="whitespace-pre-line text-body text-ink-soft">
               {club.tables_info}
             </p>
-          </div>
+          </Card>
         )}
 
         {club.phone && (
-          <div className="rounded-card border border-hairline bg-felt p-4">
+          <Card className="p-4">
             <h3 className="pb-2 text-body font-medium text-ink">
               {t("club.phone")}
             </h3>
@@ -710,7 +720,7 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
             >
               {club.phone}
             </a>
-          </div>
+          </Card>
         )}
       </div>
     </section>

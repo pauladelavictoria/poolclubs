@@ -165,13 +165,11 @@ export default function Scoreboard({
         data-pair={side.length > 1}
         className={[
           "scoreboard-half relative flex flex-col items-center justify-center gap-[var(--scoreboard-gap)] p-[var(--scoreboard-gap)]",
-          // The pendant catching this end of the table.
-          // --lamp-strong, and the fade pulled in to 65%: at four metres the
-          // 6% wash was a difference you had to be told about. The rail says
-          // it too — this is the same statement said loudly enough to carry.
-          ahead
-            ? "bg-[radial-gradient(120%_80%_at_50%_100%,var(--lamp-strong),transparent_65%)]"
-            : "",
+          // This end of the table lit. A flat tint of the same hue the rail
+          // below is drawn in, not a fade: at four metres a gradient's soft
+          // edge is a difference you have to be told about, and the whole half
+          // holding one colour is the version that carries across the room.
+          ahead ? "bg-strike-tint" : "",
         ].join(" ")}
       >
         {/* Points, does not act. Edge to edge and 6px: inset and hairline-thin

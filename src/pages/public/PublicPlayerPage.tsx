@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { headlineClasses } from "@/components/layout/publicTitleStyles";
 import { useSuspenseQueries } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import PublicShell from "@/components/layout/PublicShell";
@@ -242,16 +243,8 @@ function PlayerHero({
   url: string;
 }) {
   const { t } = useT();
-  // The wash takes the first club's colour. Somebody in three clubs has no one
-  // accent, and cycling or blending them would say something about a hierarchy
-  // that does not exist.
-  const [first] = person.memberships;
-
   return (
-    <section
-      data-ball={first?.club.theme_color}
-      className="wash wash-soft relative overflow-hidden border-b border-hairline"
-    >
+    <section className="wash wash-soft relative overflow-hidden border-b border-hairline">
       <div className="relative px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
         {/* Top-aligned, like the club and tournament heroes: bottom alignment
             put the h1 wherever the detail under it happened to end, so the title
@@ -265,7 +258,7 @@ function PlayerHero({
               className="h-20 w-20 sm:h-28 sm:w-28"
             />
             <div className="min-w-0">
-              <h1 className="truncate text-display leading-[1.05] font-semibold tracking-tighter text-ink">
+              <h1 className={headlineClasses("display", "truncate")}>
                 {person.name}
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">

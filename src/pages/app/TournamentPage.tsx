@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { dialogClasses } from "@/components/ui/cardStyles";
 import {
   LuGitFork,
   LuList,
@@ -169,7 +170,14 @@ export default function TournamentPage() {
   return (
     <PlayerHighlight>
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        <PageTitle title={tournament.name}>
+        <PageTitle
+          title={tournament.name}
+          // Discipline, format and state, under the title: in the title's row
+          // they competed with the name for the same width and the name lost.
+          subtitle={`${t(`discipline.${tournament.discipline}`)} · ${t(
+            `tournaments.${FORMAT_KEY[tournament.format]}`,
+          )} · ${t(`tournaments.status.${tournament.status}`)}`}
+        >
           {tournament.category !== null && (
             <CategoryBadge category={tournament.category} />
           )}
@@ -183,14 +191,6 @@ export default function TournamentPage() {
             </Button>
           )}
         </PageTitle>
-
-        {/* Discipline, format and state, on their own line: in the title's row
-            they competed with the name for the same width and the name lost. */}
-        <p className="-mt-2 text-caption text-ink-faint">
-          {`${t(`discipline.${tournament.discipline}`)} · ${t(
-            `tournaments.${FORMAT_KEY[tournament.format]}`,
-          )} · ${t(`tournaments.status.${tournament.status}`)}`}
-        </p>
 
         {/* A finished tournament leads with its result: the bracket below is
             then the story of how it got there, not the headline. */}
@@ -499,7 +499,7 @@ export default function TournamentPage() {
 
       <dialog
         ref={editRef}
-        className="sheet m-0 mt-auto max-h-[90dvh] w-full max-w-none sm:max-w-md overflow-y-auto rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+        className={dialogClasses()}
         aria-label={t("tournaments.edit")}
         onClose={() => setIsEditOpen(false)}
         onClick={(e) => {
@@ -544,7 +544,7 @@ export default function TournamentPage() {
 
       <dialog
         ref={recordRef}
-        className="sheet m-0 mt-auto w-full max-w-none sm:max-w-md rounded-t-sheet border border-hairline bg-felt p-5 text-ink sm:m-auto sm:rounded-sheet"
+        className={dialogClasses()}
         aria-label={t("tournaments.record")}
         onClose={() => setPlaying(null)}
         onClick={(e) => {

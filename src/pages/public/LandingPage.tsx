@@ -1,5 +1,6 @@
-import type { CSSProperties } from "react";
 import { Link } from "@tanstack/react-router";
+import { cardClasses } from "@/components/ui/cardStyles";
+import { headlineClasses } from "@/components/layout/publicTitleStyles";
 import {
   LuTrophy,
   LuSwords,
@@ -178,19 +179,17 @@ export default function LandingPage() {
           screenshot is doing work above the fold instead of decorating below
           it. Four text elements at most, and the CTA is visible without
           scrolling at every width. */}
-      <section className="relative">
-        <div className="spot pointer-events-none absolute inset-x-0 top-0 h-[420px]" />
-
-        <div className="relative mx-auto grid max-w-6xl gap-10 px-4 pt-14 pb-20 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:pt-24 lg:pb-28">
+      <section>
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 pt-14 pb-20 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:pt-24 lg:pb-28">
           <div className="lg:col-span-6 lg:pt-6">
             <p className="rise text-caption uppercase tracking-[0.16em] text-ink-faint">
               {t("landing.eyebrow")}
             </p>
             <h1
-              // One step down from the old hero at lg: this headline is a
-              // sentence rather than three words, and at 60px in a six-column
-              // well it went to three lines in English and French.
-              className="rise mt-5 text-4xl font-semibold leading-[1.05] tracking-tighter text-ink md:text-5xl xl:text-6xl"
+              // text-display, not a hand-rolled ramp: the public skin pins
+              // --text-display to clamp(2.25rem, 5vw, 3.75rem), which is what
+              // the three breakpoints spelled out here already resolved to.
+              className={headlineClasses("display", "rise mt-5")}
               style={{ animationDelay: "80ms" }}
             >
               {t("landing.title")}
@@ -258,11 +257,10 @@ export default function LandingPage() {
         </p>
 
         <div className="mt-12 divide-y divide-hairline border-t border-hairline">
-          {SEGMENTS.map(({ title, today, now }, i) => (
+          {SEGMENTS.map(({ title, today, now }) => (
             <article
               key={title}
               className="pop-in grid gap-x-8 gap-y-5 py-8 lg:grid-cols-12"
-              style={{ "--i": i } as CSSProperties}
             >
               <h3 className="text-h3 font-semibold tracking-tight text-ink lg:col-span-4">
                 {t(title)}
@@ -301,12 +299,8 @@ export default function LandingPage() {
             </p>
 
             <ol className="mt-10 flex flex-col gap-7">
-              {STEPS.map(({ icon: Icon, title, body }, i) => (
-                <li
-                  key={title}
-                  className="pop-in flex gap-5"
-                  style={{ "--i": i } as CSSProperties}
-                >
+              {STEPS.map(({ icon: Icon, title, body }) => (
+                <li key={title} className="pop-in flex gap-5">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control border border-hairline bg-felt text-strike">
                     <Icon className="h-5 w-5" aria-hidden />
                   </span>
@@ -362,12 +356,13 @@ export default function LandingPage() {
           ).map(({ icon: Icon, title, body, points, span, art }, i, shown) => (
             <article
               key={title}
-              className={`pop-in flex flex-col overflow-hidden rounded-card border border-hairline bg-felt ${
-                !DRILLS_ENABLED && i === shown.length - 1
-                  ? "lg:col-span-12"
-                  : span
-              }`}
-              style={{ "--i": i } as CSSProperties}
+              className={cardClasses({
+                className: `pop-in flex flex-col overflow-hidden ${
+                  !DRILLS_ENABLED && i === shown.length - 1
+                    ? "lg:col-span-12"
+                    : span
+                }`,
+              })}
             >
               <div className="p-6 sm:p-8">
                 <Icon className="h-5 w-5 text-strike" aria-hidden />
@@ -507,10 +502,9 @@ export default function LandingPage() {
 
       {/* The one place a centred block earns it: the last thing on the page
           is a single decision. */}
-      <section className="relative border-t border-hairline">
-        <div className="spot pointer-events-none absolute inset-x-0 top-0 h-[280px]" />
-        <div className="reveal relative mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 lg:py-28">
-          <h2 className="text-h1 font-semibold tracking-tighter text-ink md:text-display">
+      <section className="border-t border-hairline">
+        <div className="reveal mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 lg:py-28">
+          <h2 className="text-h1 font-semibold text-ink md:text-display">
             {t("landing.finalTitle")}
           </h2>
           <p className="mx-auto mt-4 max-w-[42ch] text-h4 text-ink-soft">
