@@ -46,7 +46,6 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/ranking/daily")({
     context.queryClient.ensureQueryData(
       gamesQuery(context.activeClubId, {
         date: deps.date,
-        mode: "single",
         tz: zoneOf(context.activeClub),
       }),
     ),

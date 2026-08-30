@@ -46,7 +46,6 @@ export default function RankingDailyPage() {
   // of the club's own clock, not the calendar's — see libs/algorithms/day.ts.
   const { data: gamesData, isLoading: gamesLoading } = useGames({
     date: selectedDate,
-    mode: "single",
     tz: zoneOf(activeClub),
   });
   const games = gamesData?.games ?? [];

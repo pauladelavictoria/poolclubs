@@ -45,6 +45,21 @@ const game = (
   discipline: "9ball",
 });
 
+/** The same row with all four seats filled. Sides are (p1 & p1b) v (p2 & p2b). */
+const doubles = (
+  p1: number,
+  p1b: number,
+  s1: number,
+  p2: number,
+  p2b: number,
+  s2: number,
+): Game => ({
+  ...game(p1, s1, p2, s2),
+  player_1b_id: p1b,
+  player_2b_id: p2b,
+  mode: "doubles",
+});
+
 const byId = (rows: ReturnType<typeof tallyDaily>, id: number) =>
   rows.find((r) => r.playerId === id)!;
 
@@ -135,6 +150,68 @@ describe("tallyDaily", () => {
     );
     expect(rows.map((r) => r.playerId)).toEqual([1, 2, 3]);
     expect(rows[0].points >= rows[1].points).toBe(true);
+  });
+
+  it("pays a doubles row like a singles one, to all four", () => {
+    // 1 & 3 beat 2 & 4 five racks to two. Every division is a 2, so the pair
+    // means are equal and the expected margin is 0: 2 + 3 * 0.5 each.
+    const rows = tallyDaily(
+      [doubles(1, 3, 5, 2, 4, 2)],
+      [player(1, 2), player(2, 2), player(3, 2), player(4, 2)],
+    );
+    expect(rows.map((r) => r.playerId).sort()).toEqual([1, 2, 3, 4]);
+    for (const id of [1, 3]) {
+      expect(byId(rows, id).points).toBe(3.5);
+      expect(byId(rows, id).gamesWon).toBe(1);
+      expect(byId(rows, id).last10Games).toEqual([true]);
+    }
+    for (const id of [2, 4]) {
+      expect(byId(rows, id).points).toBe(1);
+      expect(byId(rows, id).gamesWon).toBe(0);
+      expect(byId(rows, id).last10Games).toEqual([false]);
+    }
+    expect(rows.every((r) => r.gamesPlayed === 1)).toBe(true);
+  });
+
+  it("gives the racks to the side, so a partner is not scored as a spectator", () => {
+    const rows = tallyDaily(
+      [doubles(1, 3, 5, 2, 4, 2)],
+      [player(1, 2), player(2, 2), player(3, 2), player(4, 2)],
+    );
+    expect(byId(rows, 3).racksWon).toBe(5);
+    expect(byId(rows, 3).racksLosed).toBe(2);
+    expect(byId(rows, 4).racksWon).toBe(2);
+    expect(byId(rows, 4).racksLosed).toBe(5);
+  });
+
+  it("judges the margin on the pair's mean division, not on the seat that was filled first", () => {
+    // A 1 & 3 pair means 2, and so does a 2 & 2 pair: nothing is expected of
+    // either, so a 5-2 pays 2 + 3 * 0.5. Reading category off player 1 alone
+    // would have expected a rack of them and paid 3.
+    const rows = tallyDaily(
+      [doubles(1, 3, 5, 2, 4, 2)],
+      [player(1, 1), player(3, 3), player(2, 2), player(4, 2)],
+    );
+    expect(byId(rows, 1).points).toBe(3.5);
+    expect(byId(rows, 3).points).toBe(3.5);
+  });
+
+  it("ignores a partner id on a row filed as singles — games has no CHECK to stop one", () => {
+    const stray = { ...game(1, 5, 2, 2), player_1b_id: 3 };
+    const rows = tallyDaily(
+      [stray],
+      [player(1, 2), player(2, 2), player(3, 2)],
+    );
+    expect(rows.map((r) => r.playerId).sort()).toEqual([1, 2]);
+  });
+
+  it("still scores the rest of a doubles row when a partner has left the club", () => {
+    const rows = tallyDaily(
+      [doubles(1, 99, 5, 2, 4, 2)],
+      [player(1, 2), player(2, 2), player(4, 2)],
+    );
+    expect(rows.map((r) => r.playerId).sort()).toEqual([1, 2, 4]);
+    expect(byId(rows, 1).gamesWon).toBe(1);
   });
 
   it("leaves the input array alone — it is react-query's cached data", () => {

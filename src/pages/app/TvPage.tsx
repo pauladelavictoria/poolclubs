@@ -39,10 +39,10 @@ export default function TvPage() {
   const { data: live } = useLiveMatches({ poll: true });
   const { data: players } = usePlayers();
   const { data: gamesData, isLoading: gamesLoading } = useGames(
-    { date: today ?? undefined, mode: "single", tz },
-    // Not until the day is known: without a date this is every single-player
-    // game the club has ever filed, and the wall display would spend its first
-    // render ranking the lot. See the note on useGames' `enabled`.
+    { date: today ?? undefined, tz },
+    // Not until the day is known: without a date this is every game the club has
+    // ever filed, and the wall display would spend its first render ranking the
+    // lot. See the note on useGames' `enabled`.
     { poll: true, enabled: today !== null },
   );
   const ranking = useDailyRanking({

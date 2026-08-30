@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "@tanstack/react-router";
 import { EmptyState } from "@/components/ui/EmptyState";
 import SocialBar from "@/components/social/SocialBar";
-import { LuSwords } from "react-icons/lu";
+import { LuPencil, LuSwords } from "react-icons/lu";
 import { dayLabel, startsNewDay, timeOf } from "@/libs/algorithms/dayLabel";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -53,7 +53,14 @@ function Name({
   );
 }
 
-/** A team's name(s) on the tape. */
+/**
+ * A team's name(s) on the tape, one per line.
+ *
+ * Stacked rather than joined with a slash: the row gives each side half the
+ * width, and two names on one line of it is two truncations — every doubles
+ * result read as "Jesus Sr ... v Vicent R...", which is the same four letters
+ * whoever was playing.
+ */
 function Team({
   id1,
   id2,
@@ -67,12 +74,13 @@ function Team({
 }) {
   return (
     <>
-      <Name player={byId.get(id1)} isPublic={isPublic} />
+      <span className="truncate">
+        <Name player={byId.get(id1)} isPublic={isPublic} />
+      </span>
       {id2 != null && (
-        <>
-          {" / "}
+        <span className="truncate">
           <Name player={byId.get(id2)} isPublic={isPublic} />
-        </>
+        </span>
       )}
     </>
   );
@@ -100,6 +108,12 @@ interface GamesListProps {
    * business, and anon cannot read either table.
    */
   public?: boolean;
+  /**
+   * Show the way in to correcting a result. The club admin's, and off
+   * everywhere else — a tape on a player's page or a wall display is something
+   * to read, and the edit route bounces anyone else anyway.
+   */
+  admin?: boolean;
 }
 
 /**
@@ -121,6 +135,7 @@ export default function GamesList({
   showSocial = true,
   stickyDates = false,
   public: isPublic = false,
+  admin = false,
 }: GamesListProps) {
   const { t, locale } = useT();
   const social = showSocial && !isPublic;
@@ -212,7 +227,9 @@ export default function GamesList({
               >
                 {timeOf(date, locale)}
               </time>
-              <span className={`flex-1 truncate text-right ${side(p1Won)}`}>
+              <span
+                className={`flex min-w-0 flex-1 flex-col text-right ${side(p1Won)}`}
+              >
                 <Team
                   id1={player_1_id}
                   id2={isDoubles ? player_1b_id : undefined}
@@ -229,7 +246,7 @@ export default function GamesList({
                   {p2Score}
                 </span>
               </span>
-              <span className={`flex-1 truncate ${side(p2Won)}`}>
+              <span className={`flex min-w-0 flex-1 flex-col ${side(p2Won)}`}>
                 <Team
                   id1={player_2_id}
                   id2={isDoubles ? player_2b_id : undefined}
@@ -237,9 +254,17 @@ export default function GamesList({
                   isPublic={isPublic}
                 />
               </span>
-              <span className="hidden w-12 shrink-0 text-right text-caption font-medium text-ink-ghost sm:block">
-                {isDoubles ? "2v2" : ""}
-              </span>
+              {admin && (
+                <AppLink
+                  to="/app/$clubSlug/games/$gameId/edit"
+                  params={{ gameId: id }}
+                  aria-label={t("games.edit")}
+                  title={t("games.edit")}
+                  className="shrink-0 p-1 text-ink-ghost transition-colors duration-150 hover:text-ink"
+                >
+                  <LuPencil className="h-3.5 w-3.5" aria-hidden />
+                </AppLink>
+              )}
             </div>
             {social && <SocialBar target={{ gameId: id }} />}
           </React.Fragment>

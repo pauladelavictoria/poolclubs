@@ -68,6 +68,7 @@ import { Route as AppAuthedClubSlugTournamentsIndexRouteImport } from './routes/
 import { Route as AppAuthedClubSlugTournamentsTournamentIdRouteImport } from './routes/app/_authed/$clubSlug/tournaments/$tournamentId'
 import { Route as AppAuthedClubSlugDrillsDrillIdIndexRouteImport } from './routes/app/_authed/$clubSlug/drills/$drillId/index'
 import { Route as AppAuthedClubSlugDrillsDrillIdEditRouteImport } from './routes/app/_authed/$clubSlug/drills/$drillId/edit'
+import { Route as AppAuthedClubSlugGamesGameIdEditRouteImport } from './routes/app/_authed/$clubSlug/games/$gameId/edit'
 import { Route as AppAuthedClubSlugMeTrainingIndexRouteImport } from './routes/app/_authed/$clubSlug/me/training/index'
 import { Route as AppAuthedClubSlugMeTrainingPlanRouteImport } from './routes/app/_authed/$clubSlug/me/training/plan'
 import { Route as AppAuthedClubSlugPlayersPlayerIdIndexRouteImport } from './routes/app/_authed/$clubSlug/players/$playerId/index'
@@ -392,6 +393,12 @@ const AppAuthedClubSlugDrillsDrillIdEditRoute =
     path: '/drills/$drillId/edit',
     getParentRoute: () => AppAuthedClubSlugRouteRoute,
   } as any)
+const AppAuthedClubSlugGamesGameIdEditRoute =
+  AppAuthedClubSlugGamesGameIdEditRouteImport.update({
+    id: '/games/$gameId/edit',
+    path: '/games/$gameId/edit',
+    getParentRoute: () => AppAuthedClubSlugRouteRoute,
+  } as any)
 const AppAuthedClubSlugMeTrainingIndexRoute =
   AppAuthedClubSlugMeTrainingIndexRouteImport.update({
     id: '/me/training/',
@@ -486,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/app/$clubSlug/tables/': typeof AppAuthedClubSlugTablesIndexRoute
   '/app/$clubSlug/tournaments/': typeof AppAuthedClubSlugTournamentsIndexRoute
   '/app/$clubSlug/drills/$drillId/edit': typeof AppAuthedClubSlugDrillsDrillIdEditRoute
+  '/app/$clubSlug/games/$gameId/edit': typeof AppAuthedClubSlugGamesGameIdEditRoute
   '/app/$clubSlug/me/training/plan': typeof AppAuthedClubSlugMeTrainingPlanRoute
   '/app/$clubSlug/players/$playerId/settings': typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
   '/app/$clubSlug/drills/$drillId/': typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
@@ -548,6 +556,7 @@ export interface FileRoutesByTo {
   '/app/$clubSlug/tables': typeof AppAuthedClubSlugTablesIndexRoute
   '/app/$clubSlug/tournaments': typeof AppAuthedClubSlugTournamentsIndexRoute
   '/app/$clubSlug/drills/$drillId/edit': typeof AppAuthedClubSlugDrillsDrillIdEditRoute
+  '/app/$clubSlug/games/$gameId/edit': typeof AppAuthedClubSlugGamesGameIdEditRoute
   '/app/$clubSlug/me/training/plan': typeof AppAuthedClubSlugMeTrainingPlanRoute
   '/app/$clubSlug/players/$playerId/settings': typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
   '/app/$clubSlug/drills/$drillId': typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
@@ -616,6 +625,7 @@ export interface FileRoutesById {
   '/app/_authed/$clubSlug/tables/': typeof AppAuthedClubSlugTablesIndexRoute
   '/app/_authed/$clubSlug/tournaments/': typeof AppAuthedClubSlugTournamentsIndexRoute
   '/app/_authed/$clubSlug/drills/$drillId/edit': typeof AppAuthedClubSlugDrillsDrillIdEditRoute
+  '/app/_authed/$clubSlug/games/$gameId/edit': typeof AppAuthedClubSlugGamesGameIdEditRoute
   '/app/_authed/$clubSlug/me/training/plan': typeof AppAuthedClubSlugMeTrainingPlanRoute
   '/app/_authed/$clubSlug/players/$playerId/settings': typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
   '/app/_authed/$clubSlug/drills/$drillId/': typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
@@ -683,6 +693,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/tables/'
     | '/app/$clubSlug/tournaments/'
     | '/app/$clubSlug/drills/$drillId/edit'
+    | '/app/$clubSlug/games/$gameId/edit'
     | '/app/$clubSlug/me/training/plan'
     | '/app/$clubSlug/players/$playerId/settings'
     | '/app/$clubSlug/drills/$drillId/'
@@ -745,6 +756,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/tables'
     | '/app/$clubSlug/tournaments'
     | '/app/$clubSlug/drills/$drillId/edit'
+    | '/app/$clubSlug/games/$gameId/edit'
     | '/app/$clubSlug/me/training/plan'
     | '/app/$clubSlug/players/$playerId/settings'
     | '/app/$clubSlug/drills/$drillId'
@@ -812,6 +824,7 @@ export interface FileRouteTypes {
     | '/app/_authed/$clubSlug/tables/'
     | '/app/_authed/$clubSlug/tournaments/'
     | '/app/_authed/$clubSlug/drills/$drillId/edit'
+    | '/app/_authed/$clubSlug/games/$gameId/edit'
     | '/app/_authed/$clubSlug/me/training/plan'
     | '/app/_authed/$clubSlug/players/$playerId/settings'
     | '/app/_authed/$clubSlug/drills/$drillId/'
@@ -1245,6 +1258,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthedClubSlugDrillsDrillIdEditRouteImport
       parentRoute: typeof AppAuthedClubSlugRouteRoute
     }
+    '/app/_authed/$clubSlug/games/$gameId/edit': {
+      id: '/app/_authed/$clubSlug/games/$gameId/edit'
+      path: '/games/$gameId/edit'
+      fullPath: '/app/$clubSlug/games/$gameId/edit'
+      preLoaderRoute: typeof AppAuthedClubSlugGamesGameIdEditRouteImport
+      parentRoute: typeof AppAuthedClubSlugRouteRoute
+    }
     '/app/_authed/$clubSlug/me/training/': {
       id: '/app/_authed/$clubSlug/me/training/'
       path: '/me/training'
@@ -1373,6 +1393,7 @@ interface AppAuthedClubSlugRouteRouteChildren {
   AppAuthedClubSlugTablesIndexRoute: typeof AppAuthedClubSlugTablesIndexRoute
   AppAuthedClubSlugTournamentsIndexRoute: typeof AppAuthedClubSlugTournamentsIndexRoute
   AppAuthedClubSlugDrillsDrillIdEditRoute: typeof AppAuthedClubSlugDrillsDrillIdEditRoute
+  AppAuthedClubSlugGamesGameIdEditRoute: typeof AppAuthedClubSlugGamesGameIdEditRoute
   AppAuthedClubSlugMeTrainingPlanRoute: typeof AppAuthedClubSlugMeTrainingPlanRoute
   AppAuthedClubSlugPlayersPlayerIdSettingsRoute: typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
   AppAuthedClubSlugDrillsDrillIdIndexRoute: typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
@@ -1410,6 +1431,8 @@ const AppAuthedClubSlugRouteRouteChildren: AppAuthedClubSlugRouteRouteChildren =
       AppAuthedClubSlugTournamentsIndexRoute,
     AppAuthedClubSlugDrillsDrillIdEditRoute:
       AppAuthedClubSlugDrillsDrillIdEditRoute,
+    AppAuthedClubSlugGamesGameIdEditRoute:
+      AppAuthedClubSlugGamesGameIdEditRoute,
     AppAuthedClubSlugMeTrainingPlanRoute: AppAuthedClubSlugMeTrainingPlanRoute,
     AppAuthedClubSlugPlayersPlayerIdSettingsRoute:
       AppAuthedClubSlugPlayersPlayerIdSettingsRoute,

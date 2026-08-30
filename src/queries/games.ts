@@ -49,6 +49,24 @@ const playedIn = (playerId: number) =>
 const playedInAny = (playerIds: number[]) =>
   SEATS.map((seat) => `${seat}.in.(${playerIds.join(",")})`).join(",");
 
+/** One row, by id. What the editor loads when it is opened on a link rather
+ *  than from the tape, and what its route primes. */
+export const gameQuery = (id: string) =>
+  queryOptions({
+    queryKey: keys.game.one(id),
+    queryFn: async () => {
+      const supabase = getSupabase();
+      const { data } = await supabase
+        .from("games")
+        .select("*")
+        .eq("id", id)
+        .single()
+        .throwOnError();
+
+      return data as Game;
+    },
+  });
+
 // Cache invalidation on inserts/updates lives in libs/browser/realtime.ts — one channel
 // for the app, rather than one per hook instance.
 export const gamesQuery = (
@@ -156,7 +174,9 @@ export const gameDaysQuery = (
         .lt("played_at", to)
         .throwOnError();
 
-      return new Set(data.map((row) => dayKeyOf(Date.parse(row.played_at), tz)));
+      return new Set(
+        data.map((row) => dayKeyOf(Date.parse(row.played_at), tz)),
+      );
     },
     enabled: clubId != null,
   });

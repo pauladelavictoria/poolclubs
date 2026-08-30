@@ -1,8 +1,5 @@
 import type { UseGetGamesFilters } from "@/queries/games";
-import type {
-  DrillLogsFilters,
-  DrillsFilters,
-} from "@/queries/drills";
+import type { DrillLogsFilters, DrillsFilters } from "@/queries/drills";
 import type { PublicClubsFilters } from "@/queries/public/clubs";
 import type { PublicDrillsFilters } from "@/queries/public/drills";
 import type { PublicPlayersFilters } from "@/queries/public/players";
@@ -73,6 +70,14 @@ export const keys = {
      *  result lands on, exactly as it does for `list`. */
     days: (clubId: number | null | undefined, month: string, tz: string) =>
       ["games", "days", clubId, month, tz] as const,
+  },
+
+  /** One game, for the editor. Its own root rather than a member of `games`,
+   *  so saving a correction does not have to refetch every filtered list to
+   *  put the form back — the same split `drill` makes below. */
+  game: {
+    all: ["game"] as const,
+    one: (id?: string) => ["game", id] as const,
   },
 
   drills: {

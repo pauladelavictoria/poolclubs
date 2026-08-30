@@ -2147,6 +2147,14 @@ CREATE POLICY "Challenger can withdraw" ON "public"."challenges" FOR DELETE TO "
 
 
 
+CREATE POLICY "Club admins can delete club games" ON "public"."games" FOR DELETE TO "authenticated" USING ("public"."is_club_admin"("club_id"));
+
+
+
+CREATE POLICY "Club admins can edit club games" ON "public"."games" FOR UPDATE TO "authenticated" USING ("public"."is_club_admin"("club_id")) WITH CHECK ("public"."is_club_admin"("club_id"));
+
+
+
 CREATE POLICY "Creator or admin can delete drills" ON "public"."drills" FOR DELETE TO "authenticated" USING ((("created_by" = "auth"."uid"()) OR "public"."is_drill_admin"()));
 
 
@@ -2184,10 +2192,6 @@ CREATE POLICY "Members can add club games" ON "public"."games" FOR INSERT TO "au
 
 
 CREATE POLICY "Members can clear an abandoned match" ON "public"."live_matches" FOR DELETE TO "authenticated" USING (("public"."is_club_member"("club_id") AND ("updated_at" < ("now"() - '03:00:00'::interval))));
-
-
-
-CREATE POLICY "Members can delete club games" ON "public"."games" FOR DELETE TO "authenticated" USING ("public"."is_club_member"("club_id"));
 
 
 
