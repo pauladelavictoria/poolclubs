@@ -8,6 +8,7 @@ import { usePlayers } from "@/hooks/usePlayers";
 import { useDailyRanking } from "@/hooks/useDailyRanking";
 import PageTitle from "@/components/layout/PageTitle";
 import RankingPeriodTabs from "@/components/ranking/RankingPeriodTabs";
+import DayCalendar from "@/components/ranking/DayCalendar";
 import Ranking, { type ViewMode } from "@/components/ranking/Ranking";
 import GamesList from "@/components/games/GamesList";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -50,10 +51,6 @@ export default function RankingDailyPage() {
   });
   const games = gamesData?.games ?? [];
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) navigate({ search: { date: e.target.value } });
-  };
-
   const { data: players, isLoading: playersLoading } = usePlayers();
   const ranking = useDailyRanking({ games, players });
 
@@ -67,12 +64,13 @@ export default function RankingDailyPage() {
         title={t("ranking.dailyTitle")}
       >
         <RankingPeriodTabs daily />
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={handleDateChange}
-          aria-label={t("ranking.selectDate")}
-          className="h-8 shrink-0 rounded-control border border-hairline bg-pocket px-2 text-body tabular-nums text-ink transition-colors duration-150 hover:border-hairline-strong"
+        {/* `!` because the route's beforeLoad redirects a bare URL to today's
+            before this renders — `date` is optional in validateSearch only so
+            that redirect can happen at all, not because it can be missing here.
+            The date input above tolerates undefined; a month key cannot. */}
+        <DayCalendar
+          selected={selectedDate!}
+          onSelect={(date) => navigate({ search: { date } })}
         />
         <button
           type="button"

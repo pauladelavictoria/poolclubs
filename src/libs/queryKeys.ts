@@ -61,6 +61,11 @@ export const keys = {
         f.category,
         f.mode,
       ] as const,
+    /** Which nights of a month have games at all — the dots on the calendar.
+     *  The zone is in the key because it decides which night a small-hours
+     *  result lands on, exactly as it does for `list`. */
+    days: (clubId: number | null | undefined, month: string, tz: string) =>
+      ["games", "days", clubId, month, tz] as const,
   },
 
   drills: {

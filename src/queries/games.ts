@@ -1,7 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
-import { CLUB_TZ, dayRange } from "@/libs/algorithms/day";
+import { CLUB_TZ, dayKeyOf, dayRange } from "@/libs/algorithms/day";
+import { daysInMonth } from "@/libs/algorithms/monthGrid";
 import type { Game, GameMode } from "@/types";
 
 export type UseGetGamesFilters = {
@@ -113,5 +114,50 @@ export const gamesQuery = (
         totalCount: count ?? null,
       };
     },
+  });
+};
+
+/**
+ * Which nights of a month were played on — the dots on the daily ranking's
+ * calendar, so somebody looking for "the Thursday we had that tournament" can
+ * see where the games are instead of clicking through empty days.
+ *
+ * One column and one month, so the whole answer is a few hundred timestamps at
+ * worst. Bucketed here rather than grouped in SQL because a night runs 06:00 to
+ * 06:00 of the *club's* clock and `dayKeyOf` is where that rule lives — a
+ * `GROUP BY date_trunc('day', played_at)` would file every result between
+ * midnight and six under the wrong night, which is the exact bug the ranges in
+ * libs/algorithms/day.ts were written to fix.
+ *
+ * ponytail: client-side bucketing. Ceiling is a club with thousands of games in
+ * one month; an RPC that takes the start hour is the upgrade.
+ */
+export const gameDaysQuery = (
+  clubId: number | null | undefined,
+  month: string,
+  tz: string = CLUB_TZ,
+) => {
+  const days = daysInMonth(month);
+
+  return queryOptions({
+    queryKey: keys.games.days(clubId, month, tz),
+    queryFn: async () => {
+      const supabase = getSupabase();
+      // The first night of the month to the last, in the club's zone. Not the
+      // calendar month: the last night runs into the small hours of the 1st.
+      const { from } = dayRange(days[0], tz);
+      const { to } = dayRange(days[days.length - 1], tz);
+
+      const { data } = await supabase
+        .from("games")
+        .select("played_at")
+        .eq("club_id", clubId!)
+        .gte("played_at", from)
+        .lt("played_at", to)
+        .throwOnError();
+
+      return new Set(data.map((row) => dayKeyOf(Date.parse(row.played_at), tz)));
+    },
+    enabled: clubId != null,
   });
 };
