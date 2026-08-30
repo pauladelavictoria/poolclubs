@@ -35,6 +35,13 @@ export const keys = {
     for: (code?: string) => ["club-preview", code] as const,
   },
 
+  /** A club's venue photos. Keyed by id rather than slug because the storage
+   *  folder is the id, and the settings page has no slug to hand. */
+  clubPhotos: {
+    all: ["club-photos"] as const,
+    in: (clubId?: number | null) => ["club-photos", clubId] as const,
+  },
+
   /** The cross-club operator dashboard. Not club-scoped — it is every club. */
   operator: {
     clubs: ["operator-clubs"] as const,

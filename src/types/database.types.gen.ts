@@ -1050,6 +1050,7 @@ export type Database = {
           table_id: number
         }[]
       }
+      club_photo_club_id: { Args: { object_name: string }; Returns: number }
       club_preview: {
         Args: { p_slug: string }
         Returns: {

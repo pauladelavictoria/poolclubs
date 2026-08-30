@@ -7,6 +7,7 @@ import { SESSION_KEY, sessionQuery } from "@/queries/session";
 import { clubPreviewQuery } from "@/queries/club";
 import { clubMembersQuery } from "@/queries/players";
 import type { Place } from "@/libs/algorithms/geocode";
+import type { Schedule } from "@/libs/algorithms/schedule";
 import type { BallColor } from "@/types";
 
 export type { ClubPreview } from "@/queries/club";
@@ -73,6 +74,14 @@ export const useManageClub = () => {
          *  result belongs to — see libs/algorithms/day.ts. The database refuses a zone
          *  Postgres does not know (sql/club-timezone.sql). */
         timezone?: string;
+        /** What the club says about itself, on its public page. */
+        description?: string | null;
+        /** A public venue's phone number. Stored as typed — it is rendered as a
+         *  tel: link and dialled, never parsed. */
+        phone?: string | null;
+        /** Opening hours. The column is jsonb with no CHECK, so the shape is
+         *  defended in libs/algorithms/schedule.ts rather than in the database. */
+        schedule?: Schedule;
       }) => {
         if (!activeClubId) throw new Error("no active club");
 
@@ -87,6 +96,9 @@ export const useManageClub = () => {
           lat?: number | null;
           lon?: number | null;
           timezone?: string;
+          description?: string | null;
+          phone?: string | null;
+          schedule?: Schedule;
         } = {};
         if (updates.name !== undefined) patch.name = updates.name.trim();
         if (updates.logoUrl !== undefined) patch.logo_url = updates.logoUrl;
@@ -102,6 +114,13 @@ export const useManageClub = () => {
           patch.lon = place?.lon ?? null;
         }
         if (updates.timezone !== undefined) patch.timezone = updates.timezone;
+        // Empty text is no text: a cleared field should read as unset on the
+        // public page, not as an empty paragraph with a heading over it.
+        if (updates.description !== undefined)
+          patch.description = updates.description?.trim() || null;
+        if (updates.phone !== undefined)
+          patch.phone = updates.phone?.trim() || null;
+        if (updates.schedule !== undefined) patch.schedule = updates.schedule;
 
         await supabase
           .from("clubs")

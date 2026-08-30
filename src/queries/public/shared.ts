@@ -23,6 +23,20 @@
 
 export const CLUB_COLS =
   "id, name, slug, logo_url, theme_color, member_count, created_at, address, city, country, lat, lon";
+
+/**
+ * One club's own page, which is the only place these three are read.
+ *
+ * Deliberately not folded into CLUB_COLS. That string is a card in a list — the
+ * directory asks for 24 of them, the map pins for up to 500, and every public
+ * tournament and player row embeds one. A paragraph of prose and a week of
+ * opening hours on each would grow all seven of those queries to buy nothing:
+ * no card shows any of it.
+ *
+ * These columns need `GRANT SELECT` for anon before this ships — see
+ * sql/club-public-info.sql, which explains why the order is not negotiable.
+ */
+export const CLUB_DETAIL_COLS = `${CLUB_COLS}, description, phone, schedule, timezone`;
 export const PERSON_COLS = "id, slug, name, avatar_url, is_public";
 export const PLAYER_COLS = "id, club_id, category";
 export const DRILL_COLS =

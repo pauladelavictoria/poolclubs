@@ -8,14 +8,22 @@ import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import ClubLogoUpload from "@/components/club/ClubLogoUpload";
 import ClubThemePicker from "@/components/club/ClubThemePicker";
 import ClubLocationPicker from "@/components/club/ClubLocationPicker";
+import ClubScheduleEditor from "@/components/club/ClubScheduleEditor";
+import ClubPhotosUpload from "@/components/club/ClubPhotosUpload";
 import { BallGlyph } from "@/components/ui/Ball";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
 import { CLUB_TZ, DAY_START_HOUR, zoneOf } from "@/libs/algorithms/day";
+import {
+  WEEKDAYS,
+  parseSchedule,
+  type Schedule,
+} from "@/libs/algorithms/schedule";
 import type { Place } from "@/libs/algorithms/geocode";
 import { CLUB_BALL_COLORS, type BallColor } from "@/types";
 import { useT } from "@/i18n";
@@ -97,6 +105,9 @@ export default function ClubInfoPage() {
   const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined);
   const [location, setLocation] = useState<Place | null | undefined>(undefined);
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
+  const [description, setDescription] = useState<string | undefined>(undefined);
+  const [phone, setPhone] = useState<string | undefined>(undefined);
+  const [schedule, setSchedule] = useState<Schedule | undefined>(undefined);
 
   // Admin-only, enforced by the route's beforeLoad before this renders.
 
@@ -117,6 +128,12 @@ export default function ClubInfoPage() {
   const shownPlace = location !== undefined ? location : savedPlace;
   const shownZone = timezone ?? zoneOf(activeClub);
   const shownPublic = isPublic ?? activeClub.is_public;
+  const shownDescription = description ?? activeClub.description ?? "";
+  const shownPhone = phone ?? activeClub.phone ?? "";
+  // Parsed rather than cast: the column is jsonb with no CHECK, so what comes
+  // back is whatever is in the row. See libs/algorithms/schedule.ts.
+  const shownSchedule = schedule ?? parseSchedule(activeClub.schedule);
+  const openDays = WEEKDAYS.filter((d) => shownSchedule[d]?.length).length;
 
   const hasChanges =
     name.trim().length > 0 ||
@@ -124,7 +141,10 @@ export default function ClubInfoPage() {
     color !== undefined ||
     isPublic !== undefined ||
     location !== undefined ||
-    timezone !== undefined;
+    timezone !== undefined ||
+    description !== undefined ||
+    phone !== undefined ||
+    schedule !== undefined;
 
   const saveSettings = () => {
     updateClub.mutate(
@@ -135,6 +155,9 @@ export default function ClubInfoPage() {
         ...(isPublic !== undefined && { isPublic }),
         ...(location !== undefined && { location }),
         ...(timezone !== undefined && { timezone }),
+        ...(description !== undefined && { description }),
+        ...(phone !== undefined && { phone }),
+        ...(schedule !== undefined && { schedule }),
       },
       {
         onSuccess: () => {
@@ -144,6 +167,9 @@ export default function ClubInfoPage() {
           setIsPublic(undefined);
           setLocation(undefined);
           setTimezone(undefined);
+          setDescription(undefined);
+          setPhone(undefined);
+          setSchedule(undefined);
           toast.success(t("common.saved"));
         },
         onError: (err) =>
@@ -225,6 +251,64 @@ export default function ClubInfoPage() {
           <ClubLocationPicker
             value={shownPlace}
             onChange={setLocation}
+            disabled={updateClub.isPending}
+          />
+        </Collapsible>
+
+        {/* Both only ever appear on the public page, so they sit together and
+            after the location rather than up with the name. */}
+        <div className="mt-5 space-y-1.5 border-t border-hairline pt-4">
+          <Label htmlFor="club-description">{t("club.description")}</Label>
+          <Textarea
+            id="club-description"
+            rows={3}
+            maxLength={500}
+            value={shownDescription}
+            placeholder={t("club.descriptionPlaceholder")}
+            disabled={updateClub.isPending}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+
+        <div className="mt-4 space-y-1.5">
+          <Label htmlFor="club-phone">{t("club.phone")}</Label>
+          {/* type="tel" for the phone keypad on a handset. Not validated and
+              not normalised: it is rendered as a tel: link and dialled, never
+              parsed, and every country writes them differently. */}
+          <Input
+            id="club-phone"
+            type="tel"
+            maxLength={30}
+            value={shownPhone}
+            placeholder={t("club.phonePlaceholder")}
+            disabled={updateClub.isPending}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </div>
+
+        {/* Saves itself rather than staging into this form — see the note in
+            ClubPhotosUpload. The one control here that is not part of the
+            Guardar below. */}
+        <Collapsible
+          label={t("club.photos.title")}
+          hint={t("club.photos.hint")}
+          value={t("club.photos.manage")}
+        >
+          <ClubPhotosUpload disabled={updateClub.isPending} />
+        </Collapsible>
+
+        <Collapsible
+          label={t("club.schedule.title")}
+          hint={t("club.schedule.hint")}
+          value={
+            openDays > 0
+              ? t("club.schedule.openDays", { n: String(openDays) })
+              : t("club.schedule.notSet")
+          }
+        >
+          <ClubScheduleEditor
+            value={shownSchedule}
+            onChange={setSchedule}
             disabled={updateClub.isPending}
           />
         </Collapsible>

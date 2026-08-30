@@ -56,8 +56,11 @@ export const DAY_START_HOUR = 6;
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** The club's wall clock for an instant, as "YYYY-MM-DD HH:mm:ss" — sortable,
- *  parseable, and the one locale that formats it that way by default. */
-const wallClock = (ts: number, tz: string) =>
+ *  parseable, and the one locale that formats it that way by default.
+ *
+ *  Exported for libs/algorithms/schedule.ts, which asks the same question of the
+ *  same zone ("what time is it *there*") and must not grow a second answer. */
+export const wallClock = (ts: number, tz: string) =>
   new Intl.DateTimeFormat("sv-SE", {
     timeZone: tz,
     dateStyle: "short",

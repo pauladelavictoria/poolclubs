@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { LuMapPin } from "react-icons/lu";
 import GamesList from "@/components/games/GamesList";
@@ -10,16 +10,25 @@ import { DisciplineBall } from "@/components/ui/Ball";
 import { SectionHead } from "@/components/ui/SectionHead";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { gamesQuery } from "@/queries/games";
+import { clubPhotosQuery } from "@/queries/clubPhotos";
 import {
   publicClubRosterQuery,
   type PublicClub,
+  type PublicClubDetail,
   type PublicPlayer,
 } from "@/queries/public/clubs";
+import { useNow } from "@/hooks/useNow";
+import {
+  WEEKDAYS,
+  isEmpty,
+  isOpenNow,
+  parseSchedule,
+} from "@/libs/algorithms/schedule";
 import {
   publicTournamentsQuery,
   type PublicTournamentListItem,
 } from "@/queries/public/tournaments";
-import { useT } from "@/i18n";
+import { useT, type Key } from "@/i18n";
 
 const route = getRouteApi("/_public/clubs/$slug");
 
@@ -120,6 +129,10 @@ export default function PublicClubPage() {
             />
           )}
         </div>
+
+        <ClubPhotos clubId={club.id} />
+
+        <ClubVisit club={club} />
 
         <section className="mt-10">
           <SectionHead title={t("public.publicClub.tournaments")} />
@@ -316,6 +329,135 @@ function ClubHero({
             </Link>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The venue itself, if the club has published any pictures of it.
+ *
+ * Renders nothing at all when there are none, which is most clubs — the hero
+ * above already carries the club's accent wash and its logo, and an empty
+ * gallery slot under it would be worse than no gallery.
+ *
+ * The same CSS scroll-snap strip the tournaments and the roster use rather than
+ * a carousel dependency: it is four utility classes, it works with a thumb, a
+ * trackpad and a keyboard, and it degrades to a plain scrolling row with no JS.
+ */
+function ClubPhotos({ clubId }: { clubId: number }) {
+  const { t } = useT();
+  const { data: photos = [] } = useQuery(clubPhotosQuery(clubId));
+
+  if (photos.length === 0) return null;
+
+  return (
+    <section className="mt-10">
+      <SectionHead title={t("public.publicClub.photos")} />
+      {/* py-2, not pb-1, for the same reason as the tournament strip above:
+          overflow-x clips vertically too. */}
+      <div className="no-bar -mx-4 mt-2 flex snap-x gap-3 overflow-x-auto px-4 py-2 sm:-mx-6 sm:px-6">
+        {photos.map((photo, i) => (
+          <img
+            key={photo.path}
+            src={photo.url}
+            alt=""
+            // The first is what the page opens on, so it is the one image here
+            // worth blocking layout for; the rest are a scroll away.
+            loading={i === 0 ? "eager" : "lazy"}
+            className="h-48 w-auto max-w-[85vw] shrink-0 snap-start rounded-card border border-hairline bg-felt-raised object-cover sm:h-64"
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * What a stranger needs before turning up: what the club says it is, when it is
+ * open and how to phone it.
+ *
+ * The whole section is absent for a club that has set none of the three, rather
+ * than three empty headings — most clubs will not have filled this in, and the
+ * page above and below it already stands on its own.
+ */
+function ClubVisit({ club }: { club: PublicClubDetail }) {
+  const { t } = useT();
+  const schedule = parseSchedule(club.schedule);
+  const hasHours = !isEmpty(schedule);
+
+  // Null until an effect runs, which is the point: "open now" is `Date.now()`,
+  // and rendering it on the server would be a hydration mismatch that resolves
+  // wrong for a few minutes either side of closing time. The server renders no
+  // pill and the browser fills it in. Same trick useSuggestions uses.
+  const now = useNow();
+  const open = now !== null && hasHours && isOpenNow(schedule, club.timezone, now);
+
+  if (!club.description && !club.phone && !hasHours) return null;
+
+  return (
+    <section className="mt-10">
+      <SectionHead title={t("public.publicClub.visit")} />
+
+      {club.description && (
+        // whitespace-pre-line: the admin typed it in a textarea, so their
+        // paragraph breaks are the only formatting there is.
+        <p className="mt-4 whitespace-pre-line text-body text-ink-soft">
+          {club.description}
+        </p>
+      )}
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        {hasHours && (
+          <div className="rounded-card border border-hairline bg-felt p-4">
+            <div className="flex items-center justify-between gap-2 pb-2">
+              <h3 className="text-body font-medium text-ink">
+                {t("club.schedule.title")}
+              </h3>
+              {now !== null && (
+                <span
+                  className={[
+                    "shrink-0 rounded-full px-2 py-0.5 text-caption font-medium",
+                    open ? "bg-strike text-pocket" : "bg-pocket text-ink-faint",
+                  ].join(" ")}
+                >
+                  {t(open ? "club.schedule.openNow" : "club.schedule.closedNow")}
+                </span>
+              )}
+            </div>
+            <dl className="divide-y divide-hairline">
+              {WEEKDAYS.map((day) => (
+                <div key={day} className="flex justify-between gap-3 py-1.5">
+                  <dt className="text-body text-ink-soft">
+                    {t(`club.schedule.day.${day}` as Key)}
+                  </dt>
+                  <dd className="text-right font-mono text-body tabular-nums text-ink">
+                    {schedule[day]?.length
+                      ? schedule[day]!.map(([f, s]) => `${f}–${s}`).join(", ")
+                      : t("club.schedule.closed")}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+
+        {club.phone && (
+          <div className="rounded-card border border-hairline bg-felt p-4">
+            <h3 className="pb-2 text-body font-medium text-ink">
+              {t("club.phone")}
+            </h3>
+            {/* tel: with the string exactly as typed. Stripping spaces would
+                be a guess about a format that differs by country, and every
+                dialler already ignores them. */}
+            <a
+              href={`tel:${club.phone}`}
+              className="font-mono text-body text-strike transition-colors duration-150 hover:text-strike-light"
+            >
+              {club.phone}
+            </a>
+          </div>
+        )}
       </div>
     </section>
   );

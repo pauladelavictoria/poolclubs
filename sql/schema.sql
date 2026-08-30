@@ -210,6 +210,20 @@ END $$;
 ALTER FUNCTION "public"."claim_device"("p_code" "text") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."club_photo_club_id"("object_name" "text") RETURNS integer
+    LANGUAGE "sql" STABLE STRICT
+    SET "search_path" TO 'public'
+    AS $_$
+  SELECT CASE
+    WHEN (storage.foldername(object_name))[1] ~ '^club-\d+$'
+    THEN substring((storage.foldername(object_name))[1] from 6)::integer
+  END;
+$_$;
+
+
+ALTER FUNCTION "public"."club_photo_club_id"("object_name" "text") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."club_preview"("p_slug" "text") RETURNS TABLE("club_id" integer, "club_name" "text", "player_id" integer, "player_name" "text", "claimable" boolean)
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -2637,6 +2651,12 @@ GRANT ALL ON FUNCTION "public"."claim_device"("p_code" "text") TO "service_role"
 
 
 
+GRANT ALL ON FUNCTION "public"."club_photo_club_id"("object_name" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."club_photo_club_id"("object_name" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."club_photo_club_id"("object_name" "text") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."club_preview"("p_slug" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."club_preview"("p_slug" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."club_preview"("p_slug" "text") TO "service_role";
@@ -2918,6 +2938,22 @@ GRANT SELECT("lat") ON TABLE "public"."clubs" TO "anon";
 
 
 GRANT SELECT("lon") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("phone") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("description") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("schedule") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("timezone") ON TABLE "public"."clubs" TO "anon";
 
 
 

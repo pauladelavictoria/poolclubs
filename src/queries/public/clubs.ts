@@ -2,7 +2,14 @@ import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
 import { flattenPlayer } from "@/queries/players";
-import { CLUB_COLS, PERSON_COLS, PLAYER_COLS, orContains, rangeOf } from "./shared";
+import {
+  CLUB_COLS,
+  CLUB_DETAIL_COLS,
+  PERSON_COLS,
+  PLAYER_COLS,
+  orContains,
+  rangeOf,
+} from "./shared";
 import type { Club, Player } from "@/types";
 
 export type PublicClub = Pick<
@@ -21,6 +28,11 @@ export type PublicClub = Pick<
   | "lat"
   | "lon"
 > & { created_at: string | null };
+
+/** The club's own page, which reads three columns no card does. Everything
+ *  else that embeds a club stays on PublicClub — see CLUB_DETAIL_COLS. */
+export type PublicClubDetail = PublicClub &
+  Pick<Club, "description" | "phone" | "schedule" | "timezone">;
 
 /** One membership, flattened the same way src/queries/players.ts does it, so a
  *  roster row out here is the same shape as a roster row inside a club. */
@@ -153,13 +165,13 @@ export const publicClubQuery = (slug: string) =>
       const supabase = getSupabase();
       const { data } = await supabase
         .from("clubs")
-        .select(CLUB_COLS)
+        .select(CLUB_DETAIL_COLS)
         .eq("slug", slug)
         .eq("is_public", true)
         .maybeSingle()
         .throwOnError();
 
-      return (data as PublicClub | null) ?? null;
+      return (data as PublicClubDetail | null) ?? null;
     },
   });
 
