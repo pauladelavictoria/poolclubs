@@ -78,7 +78,6 @@ export default function TvPage() {
               name={activeClub.name}
               url={activeClub.logo_url}
               mark
-              shape="plate"
               className="h-9 w-9 shrink-0"
             />
           )}

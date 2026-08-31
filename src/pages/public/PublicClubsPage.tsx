@@ -6,7 +6,7 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import { LuUsers } from "react-icons/lu";
+import { LuMapPin, LuUsers } from "react-icons/lu";
 import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
 import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import { Avatar } from "@/components/ui/Avatar";
@@ -257,7 +257,7 @@ export default function PublicClubsPage() {
                 {/* Two across in the narrower left column, and more as the
                     column widens — without the last step a card on a large
                     screen is half a metre of empty tint. */}
-                <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                <div className="mt-8 grid gap-5 sm:grid-cols-2 2xl:grid-cols-3">
                   {clubs.map((club) => (
                     <ClubCard key={club.id} club={club} />
                   ))}
@@ -301,6 +301,7 @@ function ClubCard({ club }: { club: PublicClubCard }) {
   // card's picture is the same one the club's own hero leads with.
   const { data: photos = [] } = useQuery(clubPhotosQuery(club.id));
   const cover = orderPhotos(photos, club.photo_order)[0] ?? null;
+  const place = [club.city, club.country].filter(Boolean).join(", ");
 
   return (
     <Link
@@ -312,7 +313,7 @@ function ClubCard({ club }: { club: PublicClubCard }) {
           fallback used to be the club's colour at full strength; on one accent
           that would be a yellow strip on every photo-less club, in the exact
           colour this app reserves for "act". */}
-      <div className="relative h-20 overflow-hidden bg-felt-raised">
+      <div className="relative h-36 overflow-hidden bg-felt-raised">
         {cover && (
           <img
             src={cover.url}
@@ -337,24 +338,36 @@ function ClubCard({ club }: { club: PublicClubCard }) {
           logo overlapping it. Positioning this too puts it back on top, later in
           document order. It only looked fine for clubs with no logo, because the
           fallback's bg-felt-raised is near enough the band to hide the cut. */}
-      <div className="relative px-3 pb-3">
+      <div className="relative px-4 pb-4">
         {/* `flex w-fit`, never `inline-flex`. An inline-level flex box is aligned
             on its baseline, and a flex container takes the baseline of its first
             item — which is real text for the initial fallback and nothing at all
             for an <img>. That put the two kinds of logo on different lines by a
             few pixels. Block-level takes it out of the line box entirely. */}
-        <div className="-mt-6 flex w-fit rounded-full bg-felt p-1">
+        <div className="-mt-8 flex w-fit rounded-full bg-felt p-1">
           <Avatar
             name={club.name}
             url={club.logo_url}
             mark
-            className="h-11 w-11"
+            className="h-14 w-14"
           />
         </div>
-        <h3 className="mt-2 truncate text-body font-semibold text-ink transition-colors duration-150 group-hover:text-strike">
+        <h3 className="mt-3 truncate text-h4 font-semibold text-ink transition-colors duration-150 group-hover:text-strike">
           {club.name}
         </h3>
-        <p className="mt-0.5 font-mono text-caption tabular-nums text-ink-faint">
+        {/* Where it is, in the reader's order: the city first, the country only
+            as the thing that disambiguates it. Both are optional columns, so
+            the line is skipped rather than left as an empty row. */}
+        {place && (
+          <p className="mt-1 flex items-center gap-1.5 text-caption text-ink-soft">
+            <LuMapPin
+              className="h-3.5 w-3.5 shrink-0 text-ink-faint"
+              aria-hidden
+            />
+            <span className="truncate">{place}</span>
+          </p>
+        )}
+        <p className="mt-1 font-mono text-caption tabular-nums text-ink-faint">
           {t("public.publicClubs.members", { n: club.member_count })}
         </p>
       </div>

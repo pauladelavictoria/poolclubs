@@ -8,6 +8,12 @@ import PlayerLink from "@/components/players/PlayerLink";
  *  the numbering in libs/algorithms/bracket/, which sorts by the same thing. */
 const ORDER: BracketSide[] = ["group", "league", "winners", "losers", "final"];
 
+/** Settled with an empty seat: the opposite side is not undecided, it is
+ *  nobody — the seat was a bye and the match is not going to be played. A
+ *  forfeit has both names, so it is a fixture and stays. */
+export const isBye = (match: TournamentMatch) =>
+  match.winner_id !== null && (match.p1_id === null || match.p2_id === null);
+
 /**
  * The same fixtures as the bracket, as a running order.
  *
@@ -36,13 +42,18 @@ export default function MatchList({
 }) {
   const { t } = useT();
 
-  const sorted = [...matches].sort(
-    (a, b) =>
-      ORDER.indexOf(a.bracket) - ORDER.indexOf(b.bracket) ||
-      a.round - b.round ||
-      (a.group_no ?? 0) - (b.group_no ?? 0) ||
-      a.slot - b.slot,
-  );
+  // A bye is not a fixture: nobody turned up for it and nobody is going to.
+  // Twelve of them above four real openers is how a field of twenty pads out to
+  // a draw of thirty-two, and listing them buries the matches that exist.
+  const sorted = matches
+    .filter((m) => !isBye(m))
+    .sort(
+      (a, b) =>
+        ORDER.indexOf(a.bracket) - ORDER.indexOf(b.bracket) ||
+        a.round - b.round ||
+        (a.group_no ?? 0) - (b.group_no ?? 0) ||
+        a.slot - b.slot,
+    );
 
   const stages: { key: string; label: string; rows: TournamentMatch[] }[] = [];
   for (const match of sorted) {
@@ -125,9 +136,7 @@ function Row({
       : game.player_2_score;
   };
 
-  // Settled with an empty seat: the opposite side is not undecided, it is
-  // nobody — the match was a walkover and is not going to be played.
-  const walkover = played && (match.p1_id === null || match.p2_id === null);
+  const walkover = isBye(match);
 
   const name = (playerId: number | null, slot: 1 | 2) => {
     if (playerId !== null) return nameOf(playerId);
@@ -184,16 +193,27 @@ function Row({
       >
         {nameNode(match.p1_id, 1)}
       </span>
-      <span
-        className={`w-5 text-center font-mono text-body tabular-nums ${tone(match.p1_id)}`}
-      >
-        {score(match.p1_id)}
-      </span>
-      <span
-        className={`w-5 text-center font-mono text-body tabular-nums ${tone(match.p2_id)}`}
-      >
-        {score(match.p2_id)}
-      </span>
+      {played ? (
+        <>
+          <span
+            className={`w-5 text-center font-mono text-body tabular-nums ${tone(match.p1_id)}`}
+          >
+            {score(match.p1_id)}
+          </span>
+          <span
+            className={`w-5 text-center font-mono text-body tabular-nums ${tone(match.p2_id)}`}
+          >
+            {score(match.p2_id)}
+          </span>
+        </>
+      ) : (
+        // Nothing to show yet, and two empty cells leave the row with a hole in
+        // the middle. One dash across both keeps the names hung off a centre.
+        // ponytail: punctuation, so not a translated string.
+        <span className="col-span-2 w-10 text-center font-mono text-body text-ink-ghost">
+          –
+        </span>
+      )}
       <span className={`min-w-0 truncate text-body ${tone(match.p2_id)}`}>
         {nameNode(match.p2_id, 2)}
       </span>

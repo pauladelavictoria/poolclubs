@@ -112,7 +112,10 @@ export default function TournamentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="grid content-start gap-4 sm:grid-cols-2"
+    >
       <div className="space-y-1.5">
         <Label htmlFor="tournament-name">{t("tournaments.name")}</Label>
         <Input
@@ -345,7 +348,7 @@ export default function TournamentForm({
         </p>
       </fieldset>
 
-      <div className="flex justify-end gap-3 pt-2">
+      <div className="flex justify-end gap-3 pt-2 sm:col-span-2">
         <Button
           type="button"
           variant="secondary"

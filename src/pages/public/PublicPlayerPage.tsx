@@ -221,9 +221,13 @@ export default function PublicPlayerPage() {
 
 /**
  * Full-bleed, no photography (a stock pool-hall photo behind a named real
- * person implies it is their room). Colour comes from the club's own wash,
- * type from the category badge, and the two headline numbers plus a last-10
- * form strip are pulled up here rather than left in a card below the fold.
+ * person implies it is their room), and no club wash either: the club and
+ * tournament heroes are the page's own surface under a rule, and a tinted
+ * band here made a player read as a different kind of page than the two it
+ * sits beside. The two headline numbers plus a last-10 form strip are pulled
+ * up here rather than left in a card below the fold. Neither number takes the
+ * accent — with nothing else coloured in the band, one yellow figure read as
+ * a status rather than as the more important of two neutral facts.
  */
 function PlayerHero({
   person,
@@ -244,8 +248,8 @@ function PlayerHero({
 }) {
   const { t } = useT();
   return (
-    <section className="wash wash-soft relative overflow-hidden border-b border-hairline">
-      <div className="relative px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
+    <section className="border-b border-hairline">
+      <div className="px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
         {/* Top-aligned, like the club and tournament heroes: bottom alignment
             put the h1 wherever the detail under it happened to end, so the title
             sat at a different height on each of the three profiles. */}
@@ -296,7 +300,6 @@ function PlayerHero({
                   n: stats.won,
                   total: stats.played,
                 })}
-                tone="good"
               />
               <Stat
                 label={t("players.racksWon")}

@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_public/drills/$drillId")({
     const path = `/drills/${drill.id}`;
     return {
       meta: publicMeta({
-        title: `${drill.name} · Pool drill · PoolClubs`,
+        title: `${drill.name} · Ejercicio de billar · PoolClubs`,
         description: drill.description,
         path,
         origin,

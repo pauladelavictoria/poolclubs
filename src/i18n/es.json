@@ -891,6 +891,8 @@
   "club.tabs.info": "Datos del club",
   "club.tabs.tables": "Mesas",
   "club.tabs.members": "Miembros",
+  "club.listNamed": "Mostrar a {name} en las listas públicas",
+  "club.hideNamed": "Ocultar a {name} de las listas públicas",
   "club.hasAccount": "Tiene cuenta",
   "club.location.set": "Guardada",
   "club.location.notSet": "Sin definir",

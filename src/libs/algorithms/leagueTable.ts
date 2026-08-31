@@ -22,6 +22,13 @@ export type Standing = {
   diff: number;
 };
 
+/** Only the fields a result is read off, so a caller that fetched four columns
+ *  of a fixture rather than the whole row can still build a table. */
+export type ResultMatch = Pick<
+  TournamentMatch,
+  "p1_id" | "p2_id" | "winner_id" | "game"
+>;
+
 const empty = (playerId: number): Standing => ({
   playerId,
   played: 0,
@@ -39,7 +46,7 @@ const empty = (playerId: number): Standing => ({
  */
 export function standings(
   playerIds: number[],
-  matches: TournamentMatch[],
+  matches: ResultMatch[],
 ): Standing[] {
   const rows = new Map(playerIds.map((id) => [id, empty(id)]));
   const row = (id: number) => {

@@ -13,9 +13,9 @@ import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 export const Route = createFileRoute("/_public/pricing")({
   head: ({ match }) => ({
     meta: publicMeta({
-      title: "Pricing · PoolClubs",
+      title: "Precios · PoolClubs",
       description:
-        "Free while in beta, and free forever for the clubs that test it. Players never pay.",
+        "Gratis durante la beta, y gratis para siempre para los clubes que la prueben. Los jugadores nunca pagan.",
       path: "/pricing",
       origin: match.context.origin,
       fallback: "default",

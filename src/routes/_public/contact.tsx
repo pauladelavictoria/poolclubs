@@ -13,9 +13,9 @@ import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 export const Route = createFileRoute("/_public/contact")({
   head: ({ match }) => ({
     meta: publicMeta({
-      title: "Contact · PoolClubs",
+      title: "Contacto · PoolClubs",
       description:
-        "Get in touch about your club, a bug, or a data protection request.",
+        "Escríbenos sobre tu club, un error o una solicitud de protección de datos.",
       path: "/contact",
       origin: match.context.origin,
       fallback: "default",

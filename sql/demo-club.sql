@@ -11,7 +11,7 @@
 -- and nobody believes that from a blank screen.
 --
 -- Ownership: the club and every fake member belong to whichever account is
--- signed in as pauladelavictoria@gmail.com (this repo's operator) — that
+-- signed in as v_operator below (this repo's operator) — that
 -- account must have used the app at least once already, so it has an
 -- auth.users row and a people row to attach the demo club's admin membership
 -- to. Everything else (the 20 members, their games, the tournament, the drill
@@ -40,6 +40,10 @@ BEGIN;
 DO $demo$
 DECLARE
   v_slug          text := 'billar-ruzafa-demo';
+  -- Whose club this is. One place, because a re-run silently handing the demo
+  -- back to a different account is how it stopped showing up in the operator's
+  -- own club switcher once.
+  v_operator      text := 'xnc.xxa@gmail.com';
   v_owner_uuid    uuid;
   v_owner_person  bigint;
   v_club_id       integer;
@@ -137,9 +141,9 @@ BEGIN
   DELETE FROM clubs WHERE slug = v_slug;
 
   -- 1. The operator's own account owns the club.
-  SELECT id INTO v_owner_uuid FROM auth.users WHERE email = 'pauladelavictoria@gmail.com';
+  SELECT id INTO v_owner_uuid FROM auth.users WHERE email = v_operator;
   IF v_owner_uuid IS NULL THEN
-    RAISE EXCEPTION 'no auth.users row for pauladelavictoria@gmail.com — sign into the app with that account first';
+    RAISE EXCEPTION 'no auth.users row for % — sign into the app with that account first', v_operator;
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM drills WHERE name = ANY (v_drill_names)) THEN

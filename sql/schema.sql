@@ -2176,19 +2176,19 @@ CREATE POLICY "Entrant or admin can withdraw" ON "public"."tournament_players" F
 
 
 
-CREATE POLICY "Entrants of public tournaments are readable by anyone" ON "public"."tournament_players" FOR SELECT TO "anon" USING ("public"."is_public_club"("public"."tournament_club"("tournament_id")));
+CREATE POLICY "Entrants of public tournaments are readable by anyone" ON "public"."tournament_players" FOR SELECT TO "authenticated", "anon" USING ("public"."is_public_club"("public"."tournament_club"("tournament_id")));
 
 
 
-CREATE POLICY "Games of public clubs are readable by anyone" ON "public"."games" FOR SELECT TO "anon" USING ("public"."is_public_club"("club_id"));
+CREATE POLICY "Games of public clubs are readable by anyone" ON "public"."games" FOR SELECT TO "authenticated", "anon" USING ("public"."is_public_club"("club_id"));
 
 
 
-CREATE POLICY "Live matches of public clubs are readable by anyone" ON "public"."live_matches" FOR SELECT TO "anon" USING ("public"."is_public_club"("club_id"));
+CREATE POLICY "Live matches of public clubs are readable by anyone" ON "public"."live_matches" FOR SELECT TO "authenticated", "anon" USING ("public"."is_public_club"("club_id"));
 
 
 
-CREATE POLICY "Matches of public tournaments are readable by anyone" ON "public"."tournament_matches" FOR SELECT TO "anon" USING ("public"."is_public_club"("public"."tournament_club"("tournament_id")));
+CREATE POLICY "Matches of public tournaments are readable by anyone" ON "public"."tournament_matches" FOR SELECT TO "authenticated", "anon" USING ("public"."is_public_club"("public"."tournament_club"("tournament_id")));
 
 
 
@@ -2368,27 +2368,27 @@ CREATE POLICY "Participants and the club can score" ON "public"."live_matches" F
 
 
 
-CREATE POLICY "People of public clubs are readable by anyone" ON "public"."people" FOR SELECT TO "anon" USING ("public"."person_in_public_club"("id"));
+CREATE POLICY "People of public clubs are readable by anyone" ON "public"."people" FOR SELECT TO "authenticated", "anon" USING ("public"."person_in_public_club"("id"));
 
 
 
-CREATE POLICY "Players of public clubs are readable by anyone" ON "public"."players" FOR SELECT TO "anon" USING ((("status" = 'active'::"text") AND "public"."is_public_club"("club_id")));
+CREATE POLICY "Players of public clubs are readable by anyone" ON "public"."players" FOR SELECT TO "authenticated", "anon" USING ((("status" = 'active'::"text") AND "public"."is_public_club"("club_id")));
 
 
 
-CREATE POLICY "Public clubs are readable by anyone" ON "public"."clubs" FOR SELECT TO "anon" USING ("is_public");
+CREATE POLICY "Public clubs are readable by anyone" ON "public"."clubs" FOR SELECT TO "authenticated", "anon" USING ("is_public");
 
 
 
-CREATE POLICY "Tables of public clubs are readable by anyone" ON "public"."club_tables" FOR SELECT TO "anon" USING ("public"."is_public_club"("club_id"));
+CREATE POLICY "Tables of public clubs are readable by anyone" ON "public"."club_tables" FOR SELECT TO "authenticated", "anon" USING ("public"."is_public_club"("club_id"));
 
 
 
-CREATE POLICY "The shared drill catalog is readable by anyone" ON "public"."drills" FOR SELECT TO "anon" USING (("club_id" IS NULL));
+CREATE POLICY "The shared drill catalog is readable by anyone" ON "public"."drills" FOR SELECT TO "authenticated", "anon" USING (("club_id" IS NULL));
 
 
 
-CREATE POLICY "Tournaments of public clubs are readable by anyone" ON "public"."tournaments" FOR SELECT TO "anon" USING ("public"."is_public_club"("club_id"));
+CREATE POLICY "Tournaments of public clubs are readable by anyone" ON "public"."tournaments" FOR SELECT TO "authenticated", "anon" USING ("public"."is_public_club"("club_id"));
 
 
 

@@ -47,8 +47,8 @@ export const Route = createFileRoute("/_public/players/$playerSlug")({
       meta: publicMeta({
         title: `${person.name} · PoolClubs`,
         description: clubs.length
-          ? `${person.name} plays for ${listed(clubs)}. Record, win rate and recent matches on PoolClubs.`
-          : `${person.name} on PoolClubs: record, win rate and recent matches.`,
+          ? `${person.name} juega en ${listed(clubs)}. Historial, porcentaje de victorias y últimas partidas.`
+          : `${person.name}: historial, porcentaje de victorias y últimas partidas.`,
         path,
         origin,
         image: person.avatar_url,
@@ -60,8 +60,8 @@ export const Route = createFileRoute("/_public/players/$playerSlug")({
   component: PublicPlayerPage,
 });
 
-/** "A", "A and B", "A, B and C" — a meta description is a sentence. */
+/** "A", "A y B", "A, B y C" — a meta description is a sentence. */
 function listed(names: string[]) {
   if (names.length <= 1) return names[0] ?? "";
-  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
 }

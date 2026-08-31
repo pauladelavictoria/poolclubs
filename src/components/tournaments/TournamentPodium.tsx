@@ -13,14 +13,24 @@ import PlayerLink from "@/components/players/PlayerLink";
  *  a room, which a 28px circle sitting on grey never did. */
 const HEIGHT: Record<number, string> = { 1: "h-20", 2: "h-14", 3: "h-10" };
 
+/** The same three steps at a size a directory tile can hold, where the faces
+ *  are the whole content — see `compact`. */
+const COMPACT_HEIGHT: Record<number, string> = { 1: "h-9", 2: "h-6", 3: "h-4" };
+
 export default function TournamentPodium({
   places,
   byId,
+  compact = false,
 }: {
   places: Places;
   /** A name, a face and the slug the public profile is keyed on — no more, so
    *  the public tournament page can build it from a redacted roster. */
   byId: Map<number, Pick<Player, "name" | "avatar_url" | "slug">>;
+  /** Faces only, at tile size. Names are dropped rather than shrunk — three
+   *  truncated ones say less than three photographs — and with them go the
+   *  profile links, which cannot be nested inside the card that is itself a
+   *  link. The names stay in the accessible name of each step. */
+  compact?: boolean;
 }) {
   const { t } = useT();
 
@@ -47,26 +57,46 @@ export default function TournamentPodium({
   return (
     /* No padding under the steps: they are plinths, and a plinth stands on the
        floor. Every container this goes in clips its own corners. */
-    <div className="flex items-end justify-center gap-2 px-3 pt-6 sm:gap-4">
+    <div
+      className={
+        compact
+          ? "flex items-end justify-center gap-1.5"
+          : "flex items-end justify-center gap-2 px-3 pt-6 sm:gap-4"
+      }
+    >
       {steps.map(({ rank, playerId }) => {
         const player = byId.get(playerId);
         return (
           <div
             key={playerId}
-            className="flex min-w-0 flex-1 basis-0 flex-col items-center gap-2 sm:max-w-40"
+            className={
+              compact
+                ? "flex min-w-0 flex-1 basis-0 flex-col items-center gap-1.5 sm:max-w-16"
+                : "flex min-w-0 flex-1 basis-0 flex-col items-center gap-2 sm:max-w-40"
+            }
           >
             <Avatar
               name={player?.name ?? "—"}
               url={player?.avatar_url ?? undefined}
-              className={rank === 1 ? "h-16 w-16" : "h-12 w-12"}
+              className={
+                compact
+                  ? rank === 1
+                    ? "h-10 w-10"
+                    : "h-8 w-8"
+                  : rank === 1
+                    ? "h-16 w-16"
+                    : "h-12 w-12"
+              }
             />
-            <PlayerLink
-              playerId={playerId}
-              playerSlug={player?.slug}
-              className="line-clamp-2 text-center text-caption font-medium text-ink transition-colors duration-150 hover:text-strike"
-            >
-              {player?.name ?? "—"}
-            </PlayerLink>
+            {!compact && (
+              <PlayerLink
+                playerId={playerId}
+                playerSlug={player?.slug}
+                className="line-clamp-2 text-center text-caption font-medium text-ink transition-colors duration-150 hover:text-strike"
+              >
+                {player?.name ?? "—"}
+              </PlayerLink>
+            )}
             {/* The block itself is the ranking: taller is better, and the
                 object-ball colour repeats it for anyone who cannot compare two
                 heights at a glance — 1 yellow, 2 blue, 3 red, the same three the
@@ -74,8 +104,8 @@ export default function TournamentPodium({
             <div
               className={[
                 "flex w-full items-center justify-center rounded-t-control font-mono font-semibold tabular-nums",
-                rank === 1 ? "text-h2" : "text-h3",
-                HEIGHT[rank],
+                compact ? "text-caption" : rank === 1 ? "text-h2" : "text-h3",
+                (compact ? COMPACT_HEIGHT : HEIGHT)[rank],
                 ballTone(rank).bg,
                 ballTone(rank).fg,
               ].join(" ")}
@@ -84,6 +114,7 @@ export default function TournamentPodium({
             </div>
             <span className="sr-only">
               {t("tournaments.place", { n: rank })}
+              {compact && player ? ` — ${player.name}` : null}
             </span>
           </div>
         );

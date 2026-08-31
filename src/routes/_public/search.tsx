@@ -19,9 +19,8 @@ export const Route = createFileRoute("/_public/search")({
       : null,
   head: ({ match }) => ({
     meta: publicMeta({
-      title: "Search · PoolClubs",
-      description:
-        "Search clubs, players, tournaments and drills across PoolClubs.",
+      title: "Buscar · PoolClubs",
+      description: "Busca clubes, jugadores, torneos y ejercicios.",
       path: "/search",
       origin: match.context.origin,
       fallback: "clubs",

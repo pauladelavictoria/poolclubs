@@ -7,9 +7,9 @@ import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 export const Route = createFileRoute("/_public/about")({
   head: ({ match }) => ({
     meta: publicMeta({
-      title: "About · PoolClubs",
+      title: "Qué es · PoolClubs",
       description:
-        "A tool for pool clubs, built by people who have run tournaments and kept a ranking in a spreadsheet.",
+        "Una herramienta para clubes de billar, hecha por gente que ha organizado torneos y ha llevado un ranking en una hoja de cálculo.",
       path: "/about",
       origin: match.context.origin,
       fallback: "default",

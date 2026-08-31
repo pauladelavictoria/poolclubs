@@ -28,9 +28,9 @@ export const Route = createFileRoute("/_public/players/")({
     context.queryClient.ensureQueryData(publicPlayersQuery(deps)),
   head: ({ match }) => ({
     meta: publicMeta({
-      title: "Players · PoolClubs",
+      title: "Jugadores · PoolClubs",
       description:
-        "Every player on PoolClubs, across every club. Search by name, filter by club or division.",
+        "Todos los jugadores, de todos los clubes. Busca por nombre, filtra por club o división.",
       path: "/players",
       origin: match.context.origin,
       fallback: "players",

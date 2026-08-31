@@ -891,6 +891,8 @@
   "club.tabs.info": "Club info",
   "club.tabs.tables": "Tables",
   "club.tabs.members": "Members",
+  "club.listNamed": "List {name} on the public site",
+  "club.hideNamed": "Hide {name} from the public lists",
   "club.hasAccount": "Has an account",
   "club.location.set": "Saved",
   "club.location.notSet": "Not set",

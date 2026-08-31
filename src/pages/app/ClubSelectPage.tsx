@@ -36,7 +36,6 @@ export default function ClubSelectPage() {
               name={m.club!.name}
               url={m.club!.logo_url}
               mark
-              shape="plate"
               className="h-10 w-10"
             />
             <span className="min-w-0 flex-1 truncate text-body font-medium text-ink">

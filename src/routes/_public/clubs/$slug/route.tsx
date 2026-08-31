@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_public/clubs/$slug")({
     return {
       meta: publicMeta({
         title: `${club.name} · PoolClubs`,
-        description: `${club.name} on PoolClubs: ${club.member_count} members, with rankings, match results and tournaments.`,
+        description: `${club.name}: ${club.member_count} miembros, con rankings, resultados de partidas y torneos.`,
         path,
         origin,
         image: club.logo_url,

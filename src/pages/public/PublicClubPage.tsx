@@ -6,11 +6,7 @@ import { LuMapPin, LuX } from "react-icons/lu";
 import GamesList from "@/components/games/GamesList";
 import ShareButton from "@/components/social/ShareButton";
 import PublicShell from "@/components/layout/PublicShell";
-import {
-  GROUPS,
-  TournamentCard,
-  TournamentRow,
-} from "@/pages/public/PublicTournamentsPage";
+import { GROUPS, TournamentCard } from "@/pages/public/PublicTournamentsPage";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { SectionHead } from "@/components/ui/SectionHead";
@@ -237,7 +233,6 @@ export function ClubTournamentsTab() {
     key,
     rows: all.filter((x) => statuses.includes(x.status)),
   })).filter((group) => group.rows.length > 0);
-  const finished = all.filter((x) => x.status === "done");
 
   if (all.length === 0) {
     return <Empty text={t("public.publicTournaments.emptyTitle")} />;
@@ -250,7 +245,7 @@ export function ClubTournamentsTab() {
           <h2 className="px-1 pb-3 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
             {t(key)}
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {rows.map((tournament) => (
               <TournamentCard
                 key={tournament.id}
@@ -261,25 +256,6 @@ export function ClubTournamentsTab() {
           </div>
         </section>
       ))}
-
-      {/* The archive must not look like the news: rows in one Card, not cards
-          of their own. */}
-      {finished.length > 0 && (
-        <section>
-          <h2 className="px-1 pb-3 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
-            {t("tournaments.finished")}
-          </h2>
-          <Card className="divide-y divide-hairline">
-            {finished.map((tournament) => (
-              <TournamentRow
-                key={tournament.id}
-                tournament={tournament}
-                hideClub
-              />
-            ))}
-          </Card>
-        </section>
-      )}
     </div>
   );
 }
