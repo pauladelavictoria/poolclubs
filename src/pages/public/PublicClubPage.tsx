@@ -190,8 +190,9 @@ export function ClubInfoTab() {
 
   // Read here rather than inside ClubPhotos so the empty case below can see
   // whether there is anything on this tab at all.
+  // slice(1): the leading photo is already the hero's banner
   const { data: storedPhotos = [] } = useQuery(clubPhotosQuery(club.id));
-  const photos = orderPhotos(storedPhotos, club.photo_order);
+  const photos = orderPhotos(storedPhotos, club.photo_order).slice(1);
 
   const hasVisit = Boolean(
     club.description ||
