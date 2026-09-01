@@ -24,6 +24,12 @@ export const useManageDrills = () => {
 
   return {
     createDrill: useMutation({
+      // ponytail: a club drill is visible to every member of that club, and in
+      // the global lobby every player in the app is a member — so a drill made
+      // in there is published to all of them, with nobody but the operator able
+      // to delete it. Left open on purpose rather than pre-emptively locked; if
+      // it is ever abused, exclude the lobby from the `drills` INSERT policy in
+      // sql/schema.sql.
       mutationFn: async (newDrill: DrillInput) => {
         if (!activeClubId) throw new Error("no active club");
 

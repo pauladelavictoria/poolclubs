@@ -43,3 +43,51 @@ export const reactionsQuery = (clubId: number) =>
       return data as Reaction[];
     },
   });
+
+/**
+ * The comments on one tournament, for the public results page.
+ *
+ * Keyed on the tournament rather than the club, because that is all a visitor
+ * has: they may be in no club at all, and the anon policy only opens the rows
+ * whose `tournament_id` is set (sql/schema.sql). The club-wide queries above
+ * would come back with the members' game and drill talk filtered out by RLS
+ * anyway — asking for the tournament is asking the question we mean.
+ */
+export type TournamentComment = Comment & {
+  /** Null when the author plays nowhere public: the row is still readable, the
+   *  person behind it is not, so the thread keeps the comment and loses the
+   *  name. A left join, deliberately — `!inner` would drop the comment. */
+  author: { person: { name: string; slug: string } | null } | null;
+};
+
+export const tournamentCommentsQuery = (tournamentId: number) =>
+  queryOptions({
+    queryKey: keys.comments.onTournament(tournamentId),
+    queryFn: async () => {
+      // The author is embedded rather than looked up against a roster: a
+      // commenter can be from any club, or from none but the lobby, so the
+      // host club's roster cannot name them.
+      const { data } = await getSupabase()
+        .from("comments")
+        .select("*, author:players(person:people(name, slug))")
+        .eq("tournament_id", tournamentId)
+        .order("created_at")
+        .throwOnError();
+
+      return data as unknown as TournamentComment[];
+    },
+  });
+
+export const tournamentReactionsQuery = (tournamentId: number) =>
+  queryOptions({
+    queryKey: keys.reactions.onTournament(tournamentId),
+    queryFn: async () => {
+      const { data } = await getSupabase()
+        .from("reactions")
+        .select("*")
+        .eq("tournament_id", tournamentId)
+        .throwOnError();
+
+      return data as Reaction[];
+    },
+  });

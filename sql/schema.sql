@@ -513,6 +513,17 @@ $$;
 ALTER FUNCTION "public"."is_drill_admin"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."is_global_club"("cid" integer) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT EXISTS (SELECT 1 FROM clubs WHERE id = cid AND slug = 'global');
+$$;
+
+
+ALTER FUNCTION "public"."is_global_club"("cid" integer) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."is_own_person"("pid" bigint) RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -562,11 +573,14 @@ DECLARE
   me BIGINT;
   claimed BIGINT;
   pname TEXT;
+  join_status TEXT;
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'sign in first'; END IF;
 
   SELECT id INTO cid FROM clubs WHERE clubs.slug = lower(btrim(p_slug));
   IF cid IS NULL THEN RAISE EXCEPTION 'unknown club'; END IF;
+
+  join_status := CASE WHEN is_global_club(cid) THEN 'active' ELSE 'pending' END;
 
   SELECT id INTO me FROM people WHERE user_id = uid;
 
@@ -588,7 +602,7 @@ BEGIN
     RETURNING pe.id INTO claimed;
 
     IF claimed IS NOT NULL THEN
-      UPDATE players SET status = 'pending' WHERE person_id = claimed;
+      UPDATE players SET status = join_status WHERE person_id = claimed;
       RETURN cid;
     END IF;
     -- Claimed between the preview and now, or you already had a person: fall
@@ -605,7 +619,7 @@ BEGIN
   END IF;
 
   INSERT INTO players (club_id, person_id, category, status)
-  VALUES (cid, me, 3, 'pending');
+  VALUES (cid, me, 3, join_status);
 
   RETURN cid;
 END $$;
@@ -1164,8 +1178,9 @@ CREATE TABLE IF NOT EXISTS "public"."comments" (
     "drill_log_id" integer,
     "body" "text" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"(),
+    "tournament_id" integer,
     CONSTRAINT "comments_body_check" CHECK ((("char_length"("btrim"("body")) >= 1) AND ("char_length"("btrim"("body")) <= 1000))),
-    CONSTRAINT "comments_check" CHECK (("num_nonnulls"("game_id", "drill_log_id") = 1))
+    CONSTRAINT "comments_check" CHECK (("num_nonnulls"("game_id", "drill_log_id", "tournament_id") = 1))
 );
 
 
@@ -1384,7 +1399,8 @@ CREATE TABLE IF NOT EXISTS "public"."reactions" (
     "drill_log_id" integer,
     "emoji" "text" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    CONSTRAINT "reactions_check" CHECK (("num_nonnulls"("game_id", "drill_log_id") = 1)),
+    "tournament_id" integer,
+    CONSTRAINT "reactions_check" CHECK (("num_nonnulls"("game_id", "drill_log_id", "tournament_id") = 1)),
     CONSTRAINT "reactions_emoji_check" CHECK ((("char_length"("emoji") >= 1) AND ("char_length"("emoji") <= 16)))
 );
 
@@ -1719,6 +1735,10 @@ CREATE INDEX "comments_log_idx" ON "public"."comments" USING "btree" ("drill_log
 
 
 
+CREATE INDEX "comments_tournament_idx" ON "public"."comments" USING "btree" ("tournament_id") WHERE ("tournament_id" IS NOT NULL);
+
+
+
 CREATE INDEX "games_club_played_idx" ON "public"."games" USING "btree" ("club_id", "played_at" DESC);
 
 
@@ -1784,6 +1804,14 @@ CREATE INDEX "reactions_log_idx" ON "public"."reactions" USING "btree" ("drill_l
 
 
 CREATE UNIQUE INDEX "reactions_log_once" ON "public"."reactions" USING "btree" ("author_player_id", "drill_log_id", "emoji") WHERE ("drill_log_id" IS NOT NULL);
+
+
+
+CREATE INDEX "reactions_tournament_idx" ON "public"."reactions" USING "btree" ("tournament_id") WHERE ("tournament_id" IS NOT NULL);
+
+
+
+CREATE UNIQUE INDEX "reactions_tournament_once" ON "public"."reactions" USING "btree" ("author_player_id", "tournament_id", "emoji") WHERE ("tournament_id" IS NOT NULL);
 
 
 
@@ -1888,6 +1916,11 @@ ALTER TABLE ONLY "public"."comments"
 
 ALTER TABLE ONLY "public"."comments"
     ADD CONSTRAINT "comments_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."comments"
+    ADD CONSTRAINT "comments_tournament_id_fkey" FOREIGN KEY ("tournament_id") REFERENCES "public"."tournaments"("id") ON DELETE CASCADE;
 
 
 
@@ -2026,6 +2059,11 @@ ALTER TABLE ONLY "public"."reactions"
 
 
 
+ALTER TABLE ONLY "public"."reactions"
+    ADD CONSTRAINT "reactions_tournament_id_fkey" FOREIGN KEY ("tournament_id") REFERENCES "public"."tournaments"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."tournament_matches"
     ADD CONSTRAINT "tournament_matches_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
 
@@ -2133,6 +2171,14 @@ CREATE POLICY "Admin can update guests in their club" ON "public"."people" FOR U
 
 
 CREATE POLICY "Admin can update tournaments" ON "public"."tournaments" FOR UPDATE TO "authenticated" USING ("public"."is_club_admin"("club_id")) WITH CHECK ("public"."is_club_admin"("club_id"));
+
+
+
+CREATE POLICY "Anyone signed in can comment on a public tournament" ON "public"."comments" FOR INSERT TO "authenticated" WITH CHECK ((("tournament_id" IS NOT NULL) AND "public"."is_public_club"("public"."tournament_club"("tournament_id")) AND ("club_id" = "public"."tournament_club"("tournament_id")) AND "public"."is_own_player"("author_player_id")));
+
+
+
+CREATE POLICY "Anyone signed in can react to a public tournament" ON "public"."reactions" FOR INSERT TO "authenticated" WITH CHECK ((("tournament_id" IS NOT NULL) AND "public"."is_public_club"("public"."tournament_club"("tournament_id")) AND ("club_id" = "public"."tournament_club"("tournament_id")) AND "public"."is_own_player"("author_player_id")));
 
 
 
@@ -2372,6 +2418,14 @@ CREATE POLICY "People of public clubs are readable by anyone" ON "public"."peopl
 
 
 
+CREATE POLICY "Players can delete their own global games" ON "public"."games" FOR DELETE TO "authenticated" USING (("public"."is_global_club"("club_id") AND ("public"."is_own_player"(("player_1_id")::integer) OR "public"."is_own_player"(("player_2_id")::integer) OR "public"."is_own_player"(("player_1b_id")::integer) OR "public"."is_own_player"(("player_2b_id")::integer))));
+
+
+
+CREATE POLICY "Players can fix their own global games" ON "public"."games" FOR UPDATE TO "authenticated" USING (("public"."is_global_club"("club_id") AND ("public"."is_own_player"(("player_1_id")::integer) OR "public"."is_own_player"(("player_2_id")::integer) OR "public"."is_own_player"(("player_1b_id")::integer) OR "public"."is_own_player"(("player_2b_id")::integer)))) WITH CHECK (("public"."is_global_club"("club_id") AND ("public"."is_own_player"(("player_1_id")::integer) OR "public"."is_own_player"(("player_2_id")::integer) OR "public"."is_own_player"(("player_1b_id")::integer) OR "public"."is_own_player"(("player_2b_id")::integer))));
+
+
+
 CREATE POLICY "Players of public clubs are readable by anyone" ON "public"."players" FOR SELECT TO "authenticated", "anon" USING ((("status" = 'active'::"text") AND "public"."is_public_club"("club_id")));
 
 
@@ -2385,6 +2439,14 @@ CREATE POLICY "Tables of public clubs are readable by anyone" ON "public"."club_
 
 
 CREATE POLICY "The shared drill catalog is readable by anyone" ON "public"."drills" FOR SELECT TO "authenticated", "anon" USING (("club_id" IS NULL));
+
+
+
+CREATE POLICY "Tournament comments of public clubs are readable by anyone" ON "public"."comments" FOR SELECT TO "authenticated", "anon" USING ((("tournament_id" IS NOT NULL) AND "public"."is_public_club"("public"."tournament_club"("tournament_id"))));
+
+
+
+CREATE POLICY "Tournament reactions of public clubs are readable by anyone" ON "public"."reactions" FOR SELECT TO "authenticated", "anon" USING ((("tournament_id" IS NOT NULL) AND "public"."is_public_club"("public"."tournament_club"("tournament_id"))));
 
 
 
@@ -2765,6 +2827,12 @@ GRANT ALL ON FUNCTION "public"."is_club_member"("cid" integer) TO "service_role"
 GRANT ALL ON FUNCTION "public"."is_drill_admin"() TO "anon";
 GRANT ALL ON FUNCTION "public"."is_drill_admin"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_drill_admin"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."is_global_club"("cid" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."is_global_club"("cid" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."is_global_club"("cid" integer) TO "service_role";
 
 
 

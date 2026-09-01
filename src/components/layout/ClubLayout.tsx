@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { startRealtime } from "@/libs/browser/realtime";
 import AppHeader from "@/components/layout/AppHeader";
 import JoinRequestBanner from "@/components/layout/JoinRequestBanner";
+import LobbyBanner from "@/components/layout/LobbyBanner";
 import AppPrompts from "@/components/layout/AppPrompts";
 import NavDrawer from "@/components/layout/NavDrawer";
 import NavRail from "@/components/layout/NavRail";
@@ -164,6 +165,7 @@ export default function ClubLayout() {
           {/* Pushed off a full-bleed page rather than pushing its content: the
               banner is an admin's standing to-do, and it is still on every
               other page in the club. */}
+          {!fullBleed && <LobbyBanner />}
           {!fullBleed && <JoinRequestBanner />}
           {/* Install and notifications, one at a time — see AppPrompts. Same
               guard, same reason: a tablet on the rail has no player to ask and
