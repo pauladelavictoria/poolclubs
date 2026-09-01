@@ -17,7 +17,7 @@ import fr from "../src/i18n/fr.json" with { type: "json" };
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const OUT = process.env.SHOT_DIR ?? "screenshots";
-const CLUB = process.env.SHOT_CLUB ?? "billar-ruzafa-demo";
+const CLUB = process.env.SHOT_CLUB ?? "cue-sports-club-demo";
 const AUTH = process.env.SHOT_AUTH ?? ".auth.json";
 const TOURNAMENT = process.env.SHOT_TOURNAMENT ?? "13";
 /**

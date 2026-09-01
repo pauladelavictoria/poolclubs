@@ -4,6 +4,7 @@ import PageTitle from "@/components/layout/PageTitle";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { useT } from "@/i18n";
+import { isRealClub } from "@/libs/algorithms/features";
 
 /**
  * Reached only when someone has more than one active membership — see /app's
@@ -15,7 +16,11 @@ import { useT } from "@/i18n";
 export default function ClubSelectPage() {
   const { t } = useT();
   const { memberships } = useSession();
-  const clubs = memberships.filter((m) => m.status === "active" && m.club);
+  // The global lobby is left out on purpose: this screen only exists to
+  // disambiguate real clubs, and the lobby is one tap away in the club switcher.
+  const clubs = memberships.filter(
+    (m) => m.status === "active" && isRealClub(m.club),
+  );
 
   return (
     <div className="mx-auto max-w-xl space-y-4 px-3 py-6">

@@ -19,8 +19,12 @@ export const usePlayerLookup = () => {
 
   return useMemo(() => {
     const byId = new Map((data ?? []).map((player) => [player.id, player]));
+    // Keyed by the person's slug, which is what an @mention in a comment
+    // carries — see libs/algorithms/mentions.ts.
+    const bySlug = new Map((data ?? []).map((player) => [player.slug, player]));
     return {
       byId,
+      bySlug,
       /** The em dash is what a list shows for someone since removed. */
       nameOf: (id: number) => byId.get(id)?.name ?? "—",
     };

@@ -9,6 +9,7 @@ import { Link, getRouteApi, useRouter } from "@tanstack/react-router";
 import { LuGitFork, LuList } from "react-icons/lu";
 import PublicShell from "@/components/layout/PublicShell";
 import ShareButton from "@/components/social/ShareButton";
+import TournamentSocialBar from "@/components/social/TournamentSocialBar";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
 import MatchList from "@/components/games/MatchList";
@@ -239,6 +240,13 @@ export default function PublicTournamentPage() {
             </div>
           </>
         )}
+
+        {/* Under the results, not beside them: the draw is what the page is
+            for, and the talk about it is what you reach after reading it. */}
+        <TournamentSocialBar
+          tournamentId={tournament.id}
+          clubId={tournament.club_id}
+        />
 
         {tournament.club && (
           <Link

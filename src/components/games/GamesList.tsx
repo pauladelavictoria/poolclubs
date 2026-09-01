@@ -7,6 +7,7 @@ import { LuPencil, LuSwords } from "react-icons/lu";
 import { dayLabel, startsNewDay, timeOf } from "@/libs/algorithms/dayLabel";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
+import { canEditGame } from "@/libs/algorithms/gamePermissions";
 
 const NAME_LINK = "transition-colors duration-150 hover:text-strike";
 
@@ -114,6 +115,15 @@ interface GamesListProps {
    * to read, and the edit route bounces anyone else anyway.
    */
   admin?: boolean;
+  /**
+   * The viewer's own player id, when they may fix the results they played in.
+   * Only the global lobby passes it: there is no admin in there to ask, so a
+   * wrong score would otherwise stick. Mirrors `canEditGame`.
+   */
+  editablePlayerId?: number;
+  /** The club these games belong to, so `canEditGame` can tell the lobby from a
+   *  real club. */
+  clubSlug?: string;
 }
 
 /**
@@ -136,6 +146,8 @@ export default function GamesList({
   stickyDates = false,
   public: isPublic = false,
   admin = false,
+  editablePlayerId,
+  clubSlug,
 }: GamesListProps) {
   const { t, locale } = useT();
   const social = showSocial && !isPublic;
@@ -254,7 +266,7 @@ export default function GamesList({
                   isPublic={isPublic}
                 />
               </span>
-              {admin && (
+              {canEditGame(game, editablePlayerId, clubSlug, admin) && (
                 <AppLink
                   to="/app/$clubSlug/games/$gameId/edit"
                   params={{ gameId: id }}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LuMessageSquare, LuSmilePlus, LuX } from "react-icons/lu";
+import { LuMessageSquare, LuPencil, LuSmilePlus, LuX } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayerLookup } from "@/hooks/usePlayers";
 import {
@@ -11,6 +11,9 @@ import {
 import { Button, IconButton } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { fmt } from "@/libs/algorithms/dayLabel";
+import { CommentBody } from "@/components/social/CommentBody";
+import { MentionPicker } from "@/components/social/MentionPicker";
+import { useMentionPicker } from "@/hooks/useMentionPicker";
 import { REACTIONS, type SocialTarget } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -32,18 +35,47 @@ export default function SocialBar({
 }) {
   const { t, locale } = useT();
   const { player, isClubAdmin } = useAuth();
-  const { nameOf } = usePlayerLookup();
+  const { nameOf, bySlug } = usePlayerLookup();
   const { data: allComments } = useComments();
   const { data: allReactions } = useReactions();
-  const { addComment, deleteComment, toggleReaction } = useSocialActions();
+  const { addComment, deleteComment, editComment, toggleReaction } =
+    useSocialActions();
 
   const [open, setOpen] = useState(false);
   const [picking, setPicking] = useState(false);
   const [draft, setDraft] = useState("");
+  /** Which comment is open for editing, and the text as it is being changed. */
+  const [editing, setEditing] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState("");
 
   const comments = (allComments ?? []).filter((c) => matchesTarget(c, target));
   const reactions = (allReactions ?? []).filter((r) =>
     matchesTarget(r, target),
+  );
+
+  /** A mention resolves against the club roster: inside the club that is who
+   *  the reader can actually open. An unknown slug falls through to the raw
+   *  text — somebody from another club, or a typo. */
+  const mention = (slug: string) => {
+    const person = bySlug.get(slug);
+    if (!person) return null;
+    return (
+      <AppLink
+        to="/app/$clubSlug/players/$playerId"
+        params={{ playerId: person.id }}
+        className="font-medium text-strike hover:text-ink"
+      >
+        @{person.name}
+      </AppLink>
+    );
+  };
+
+  // Who the `@` picker offers: the roster minus the tablets, since a device has
+  // a player row and nobody to read a notification on it.
+  const picker = useMentionPicker(
+    [...bySlug.values()].filter((p) => !p.is_device),
+    draft,
+    setDraft,
   );
 
   const timeFmt = fmt(locale, {
@@ -176,7 +208,7 @@ export default function SocialBar({
             >
               {nameOf(comments[0].author_player_id)}
             </AppLink>{" "}
-            {comments[0].body}
+            <CommentBody body={comments[0].body} mention={mention} />
           </span>
         </div>
       )}
@@ -202,28 +234,107 @@ export default function SocialBar({
                     {timeFmt.format(new Date(c.created_at))}
                   </time>
                 </p>
-                <p className="whitespace-pre-wrap break-words text-body text-ink">
-                  {c.body}
-                </p>
+                {editing === c.id ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (editDraft.trim()) {
+                        editComment.mutate({ id: c.id, body: editDraft });
+                      }
+                      setEditing(null);
+                    }}
+                    className="mt-1 flex gap-2"
+                  >
+                    <Input
+                      autoFocus
+                      value={editDraft}
+                      onChange={(e) => setEditDraft(e.target.value)}
+                      // Escape leaves the comment as it was, which is what
+                      // Escape means everywhere else in the app.
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") setEditing(null);
+                      }}
+                      maxLength={1000}
+                      className="h-9"
+                    />
+                    <Button
+                      type="submit"
+                      variant="accent"
+                      size="sm"
+                      disabled={!editDraft.trim()}
+                      className="shrink-0"
+                    >
+                      {t("common.save")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditing(null)}
+                      className="shrink-0"
+                    >
+                      {t("common.cancel")}
+                    </Button>
+                  </form>
+                ) : (
+                  <p className="whitespace-pre-wrap break-words text-body text-ink">
+                    <CommentBody body={c.body} mention={mention} />
+                  </p>
+                )}
               </div>
-              {(c.author_player_id === player?.id || isClubAdmin) && (
-                <IconButton
-                  type="button"
-                  label={t("common.delete")}
-                  size="sm"
-                  tone="danger"
-                  onClick={() => deleteComment.mutate(c.id)}
-                >
-                  <LuX className="h-4 w-4" />
-                </IconButton>
+              {/* The row's own actions step aside while it is being edited —
+                  the form carries save and cancel itself. */}
+              {editing !== c.id && (
+                <>
+                  {c.author_player_id === player?.id && (
+                    <IconButton
+                      type="button"
+                      label={t("common.edit")}
+                      size="sm"
+                      onClick={() => {
+                        setEditing(c.id);
+                        setEditDraft(c.body);
+                      }}
+                    >
+                      <LuPencil className="h-4 w-4" />
+                    </IconButton>
+                  )}
+                  {(c.author_player_id === player?.id || isClubAdmin) && (
+                    <IconButton
+                      type="button"
+                      label={t("common.delete")}
+                      size="sm"
+                      tone="danger"
+                      onClick={() => deleteComment.mutate(c.id)}
+                    >
+                      <LuX className="h-4 w-4" />
+                    </IconButton>
+                  )}
+                </>
               )}
             </div>
           ))}
 
-          <form onSubmit={submit} className="flex gap-2 pt-1">
+          <form onSubmit={submit} className="relative flex gap-2 pt-1">
+            <MentionPicker
+              id="social-mentions"
+              people={picker.matches}
+              active={picker.active}
+              onHighlight={picker.setHighlight}
+              onPick={picker.pick}
+            />
             <Input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={picker.onKeyDown}
+              aria-autocomplete="list"
+              aria-expanded={picker.matches.length > 0}
+              aria-controls="social-mentions"
+              aria-activedescendant={
+                picker.matches.length
+                  ? `social-mentions-${picker.active}`
+                  : undefined
+              }
               maxLength={1000}
               placeholder={t("social.write")}
               className="h-9"

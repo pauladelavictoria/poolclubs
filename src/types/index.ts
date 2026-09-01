@@ -118,8 +118,13 @@ export type Challenge = Omit<Stamped<Row<"challenges">>, "status"> & {
   status: ChallengeStatus;
 };
 
-/** Exactly one of game_id / drill_log_id is set — enforced by a CHECK. */
-export type SocialTarget = { gameId: string } | { drillLogId: number };
+/** Exactly one of game_id / drill_log_id / tournament_id is set — enforced by a
+ *  CHECK. A tournament is the one target readable outside its club: it is what
+ *  a public results page carries. */
+export type SocialTarget =
+  | { gameId: string }
+  | { drillLogId: number }
+  | { tournamentId: number };
 
 export type Comment = Stamped<Row<"comments">>;
 

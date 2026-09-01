@@ -35,7 +35,12 @@ type PushPayload = {
 const VAPID_SUBJECT = "mailto:hello@poolclubs.app";
 
 const input = z.object({
-  kind: z.enum(["challengeSent", "challengeAnswered", "tournamentOpen"]),
+  kind: z.enum([
+    "challengeSent",
+    "challengeAnswered",
+    "tournamentOpen",
+    "commentMention",
+  ]),
   id: z.number().int().positive(),
 });
 
@@ -164,6 +169,32 @@ async function describe(
       vars: { name: data.name },
       url: `/app/${data.club.slug}/tournaments/${data.id}`,
       tag: `tournament-open:${data.id}`,
+    };
+  }
+
+  if (kind === "commentMention") {
+    const { data } = await supabase
+      .from("comments")
+      .select(
+        `id, tournament_id,
+         club:clubs!inner(name, slug),
+         author:players!inner(person:people!inner(name))`,
+      )
+      .eq("id", id)
+      .maybeSingle();
+    if (!data) return null;
+
+    return {
+      title: data.club.name,
+      key: "notifications.mention",
+      vars: { name: data.author.person.name },
+      // A tournament thread has a public page, and the person mentioned there
+      // may be in no club at all — so that one link, and the club feed for the
+      // threads that only members can read.
+      url: data.tournament_id
+        ? `/tournaments/${data.tournament_id}`
+        : `/app/${data.club.slug}`,
+      tag: `mention:${data.id}`,
     };
   }
 

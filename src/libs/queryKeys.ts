@@ -148,11 +148,24 @@ export const keys = {
   comments: {
     all: ["comments"] as const,
     in: (clubId?: number | null) => ["comments", clubId] as const,
+    // Scoped to one tournament rather than a club: a public visitor knows the
+    // tournament and may not be in the club at all.
+    onTournament: (tournamentId: number) =>
+      ["comments", "tournament", tournamentId] as const,
+  },
+
+  /** People named by an @mention, looked up by slug rather than by club: a
+   *  mention on a public thread can point at somebody from any club. */
+  mentioned: {
+    people: (slugs: readonly string[]) =>
+      ["people", "mentioned", [...slugs].sort().join(",")] as const,
   },
 
   reactions: {
     all: ["reactions"] as const,
     in: (clubId?: number | null) => ["reactions", clubId] as const,
+    onTournament: (tournamentId: number) =>
+      ["reactions", "tournament", tournamentId] as const,
   },
 
   trainingPlan: {
