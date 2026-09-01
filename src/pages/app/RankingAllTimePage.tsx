@@ -29,16 +29,9 @@ export default function RankingAllTimePage() {
           <RankingPeriodTabs daily={false} />
         </PageTitle>
 
-        <div className="flex items-center justify-between gap-3 px-1 pb-3">
-          <h2 className="flex items-baseline gap-2 text-h4 font-semibold text-ink">
-            {t("ranking.standings")}
-            {games.length > 0 && (
-              <span className="text-caption font-normal text-ink-faint">
-                {t("games.count", { n: games.length })}
-              </span>
-            )}
-          </h2>
+        <div className="flex px-1 pb-3 sm:justify-end">
           <Segmented
+            className="max-sm:w-full max-sm:*:flex-1 max-sm:*:justify-center"
             label={t("ranking.view")}
             value={viewMode}
             onChange={setViewMode}

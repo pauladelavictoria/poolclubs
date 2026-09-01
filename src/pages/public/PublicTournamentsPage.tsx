@@ -5,8 +5,9 @@ import { LuCalendar, LuNetwork, LuUsers } from "react-icons/lu";
 import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
 import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import { Avatar } from "@/components/ui/Avatar";
-import { CategoryBadge, DisciplineBall } from "@/components/ui/Ball";
+import { DisciplineBall } from "@/components/ui/Ball";
 import { Card } from "@/components/ui/Card";
+import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterGroup, FilterMenu } from "@/components/ui/FilterMenu";
 import { FilterPills } from "@/components/ui/FilterPills";
@@ -14,6 +15,8 @@ import { Pager } from "@/components/ui/Pager";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";
 import { eventDates } from "@/libs/algorithms/eventDates";
+import { placings, resolveBracket } from "@/libs/algorithms/bracket";
+import { leaguePodium, standings } from "@/libs/algorithms/leagueTable";
 import { PUBLIC_PAGE_SIZE } from "@/queries/public/shared";
 import {
   publicTournamentsQuery,
@@ -37,6 +40,10 @@ const route = getRouteApi("/_public/tournaments/");
 export const GROUPS: { key: Key; statuses: TournamentStatus[] }[] = [
   { key: "tournaments.live", statuses: ["groups", "running"] },
   { key: "tournaments.openTitle", statuses: ["open"] },
+  // The archive is cards too now, not rows in one Card. A finished tournament
+  // has the one thing an open one cannot show — who won it — and a row had
+  // nowhere to put a podium.
+  { key: "tournaments.finished", statuses: ["done"] },
 ];
 
 const STATUSES: TournamentStatus[] = ["open", "running", "done"];
@@ -78,7 +85,6 @@ export default function PublicTournamentsPage() {
     key,
     rows: all.filter((x) => statuses.includes(x.status)),
   })).filter((group) => group.rows.length > 0);
-  const finished = all.filter((x) => x.status === "done");
 
   const filtered =
     Boolean(search.q) ||
@@ -175,7 +181,7 @@ export default function PublicTournamentsPage() {
                   <h2 className="px-1 pb-3 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
                     {t(key)}
                   </h2>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                     {rows.map((tournament) => (
                       <TournamentCard
                         key={tournament.id}
@@ -185,24 +191,6 @@ export default function PublicTournamentsPage() {
                   </div>
                 </section>
               ))}
-
-              {/* The archive must not look like the news: rows in one Card, not
-                cards of their own. */}
-              {finished.length > 0 && (
-                <section>
-                  <h2 className="px-1 pb-3 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
-                    {t("tournaments.finished")}
-                  </h2>
-                  <Card className="divide-y divide-hairline">
-                    {finished.map((tournament) => (
-                      <TournamentRow
-                        key={tournament.id}
-                        tournament={tournament}
-                      />
-                    ))}
-                  </Card>
-                </section>
-              )}
             </div>
             <Pager
               page={page}
@@ -247,16 +235,20 @@ export function TournamentCard({
     >
       {/* No colour band over the card. It was a block of tint carrying one ball
           and, sometimes, one pill — art where the reader wanted the name, and
-          on a card with no date it left half the tile empty. The ball is the
-          discipline and it belongs beside the title it qualifies; everything
-          else about the tournament is a line of text inside. */}
-      <div className="flex flex-1 flex-col gap-2 px-4 pt-4 pb-4">
-        <div className="flex items-center gap-3">
-          <DisciplineBall
-            discipline={tournament.discipline}
-            className="h-8 w-8 shrink-0"
-          />
-          <h3 className="min-w-0 flex-1 truncate text-h4 font-semibold text-ink transition-colors duration-150 group-hover:text-strike">
+          on a card with no date it left half the tile empty. Everything about
+          the tournament is a line of text inside instead. */}
+      <div className="flex flex-1 flex-col px-4 pt-4 pb-4">
+        <div className="flex items-start gap-3">
+          {/* The name leads. The discipline ball used to, and a 32px ball over
+              a 16px club logo made a left edge of two different circles that
+              lined up with nothing; the ball now sits in the footer, at the
+              same size as the club's, where it is one of the facts rather than
+              the first thing read.
+
+              Two lines rather than one truncated: a tournament's name is how
+              somebody recognises it, and "Torneo apertura temporada 2…" is not
+              a name. */}
+          <h3 className="line-clamp-2 min-w-0 flex-1 text-h4 font-semibold text-ink transition-colors duration-150 group-hover:text-strike">
             {tournament.name}
           </h3>
           {live && (
@@ -269,41 +261,66 @@ export function TournamentCard({
             </span>
           )}
         </div>
-        {!hideClub && tournament.club && (
-          <p className="flex items-center gap-1.5 text-caption text-ink-soft">
-            <Avatar
-              name={tournament.club.name}
-              url={tournament.club.logo_url}
-              mark
-              className="h-4 w-4"
-            />
-            <span className="truncate">{tournament.club.name}</span>
-          </p>
-        )}
-        {/* When. The one question a card in a directory of events is asked
-            that the card itself can answer — the fee is a sentence of tiers
-            that only fits, and only matters, on the tournament's own page.
-            Absent for a tournament with no date, which is every one of them
-            until an organiser sets it. */}
-        {when && (
-          <p className="flex items-center gap-1.5 text-caption text-ink-soft">
-            <LuCalendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span className="truncate">{when}</span>
-          </p>
-        )}
-        <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-caption text-ink-faint">
-          <span className="rounded-control border border-hairline bg-pocket px-1.5 py-0.5 font-mono tracking-[0.06em] text-ink-soft uppercase">
-            {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}
-          </span>
-          {tournament.category === null ? (
-            <span>{t("tournaments.combined")}</span>
-          ) : (
-            <CategoryBadge category={tournament.category} />
+        {/* Where and when, in a slot of a fixed height whether or not either
+            exists. Both are optional — most tournaments have no date until an
+            organiser sets one — and letting the block collapse is what put the
+            bottom row of every tile on a different line from its neighbour's. */}
+        <div
+          className={`mt-3 mb-3 space-y-2 ${hideClub ? "min-h-6" : "min-h-14"}`}
+        >
+          {!hideClub && tournament.club && (
+            <p className="flex items-center gap-1.5 text-caption text-ink-soft">
+              <Avatar
+                name={tournament.club.name}
+                url={tournament.club.logo_url}
+                mark
+                className="h-5 w-5"
+              />
+              <span className="truncate">{tournament.club.name}</span>
+            </p>
           )}
-          <span className="ml-auto flex items-center gap-1 font-mono tabular-nums">
-            <LuUsers className="h-3.5 w-3.5" aria-hidden />
-            {entrants(tournament)}
-          </span>
+          {when && (
+            <p className="flex items-center gap-1.5 text-caption text-ink-soft">
+              {/* Boxed to the width of the circle above it, so the date's text
+                  starts on the same line as the club's name. */}
+              <LuCalendar
+                className="h-3.5 w-5 shrink-0 text-ink-faint"
+                aria-hidden
+              />
+              <span className="truncate">{when}</span>
+            </p>
+          )}
+        </div>
+        {/* The bottom of the card, as one block: the podium stands on the
+            footer's rule, and the rule lands on the same line on every tile
+            whether or not there is a podium above it. */}
+        <div className="mt-auto">
+          <CardPodium tournament={tournament} />
+          {/* One line of plain text, not two badges and a label. The format and
+              the category are facts of the same weight as "all divisions",
+              which never had a box around it — three different chromes on one
+              row was most of the noise on these cards, and the boxes were also
+              what made the row sit at a different height on every tile. */}
+          {/* No top margin: the plinths stand ON this rule. The block above
+              is what holds the card's spacing, and `mt-auto` on the block is
+              what keeps the rule on the same line across a row. */}
+          <div className="flex items-center gap-2 border-t border-hairline pt-3 text-caption text-ink-faint">
+            <DisciplineBall
+              discipline={tournament.discipline}
+              className="h-5 w-5 shrink-0"
+            />
+            <span className="min-w-0 truncate">
+              {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}
+              {" · "}
+              {tournament.category === null
+                ? t("tournaments.combined")
+                : `${t("ranking.categoryShort")} ${t("category.short", { n: tournament.category })}`}
+            </span>
+            <span className="ml-auto flex shrink-0 items-center gap-1 font-mono tabular-nums">
+              <LuUsers className="h-3.5 w-3.5" aria-hidden />
+              {entrants(tournament)}
+            </span>
+          </div>
         </div>
       </div>
     </Link>
@@ -311,40 +328,41 @@ export function TournamentCard({
 }
 
 /**
- * The same tournament as a list row rather than a card, for the archive on
- * this page and the blocks on a club profile and on /search where it is one
- * item among several kinds.
+ * Who won it, on the card that says it is over — the one fact an archive is
+ * read for, and the reason the archive is cards now.
+ *
+ * The tournament's own podium at tile size (`compact`): the same three steps,
+ * faces only. Same reading too — see PODIUM_COLS for what it costs (fixtures,
+ * not games).
  */
-export function TournamentRow({
-  tournament,
-  hideClub = false,
-}: {
-  tournament: PublicTournamentListItem;
-  /** On a club's own page the club is the page — repeating it in every row is
-   *  noise. */
-  hideClub?: boolean;
-}) {
-  const { t, locale } = useT();
-  const when = eventDates(tournament.starts_on, tournament.ends_on, locale);
+function CardPodium({ tournament }: { tournament: PublicTournamentListItem }) {
+  const matches = tournament.tournament_matches;
+  // /search asks for a leaner row, and an unfinished draw has no podium to
+  // read: both simply draw nothing.
+  if (tournament.status !== "done" || !matches?.length) return null;
+
+  // An entrant whose row was withheld (a claimed guest, a deleted person) has
+  // no name to draw and simply is not in the map — the step falls back to a
+  // dash rather than dropping out of the podium.
+  const byId = new Map(
+    (tournament.roster ?? []).flatMap(({ player }) =>
+      player?.person ? [[player.id, player.person] as const] : [],
+    ),
+  );
+
+  const resolved = resolveBracket(matches);
+  const places =
+    tournament.format === "league"
+      ? leaguePodium(standings([...byId.keys()], resolved))
+      : placings(resolved);
+
+  if (places.first === null) return null;
 
   return (
-    <Link
-      to="/tournaments/$tournamentId"
-      params={{ tournamentId: String(tournament.id) }}
-      className="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 hover:bg-felt-raised"
-    >
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-body text-ink">{tournament.name}</p>
-        <p className="mt-0.5 truncate text-caption text-ink-faint">
-          {!hideClub && tournament.club ? `${tournament.club.name} · ` : null}
-          {t(`tournaments.status.${tournament.status}`)}
-          {when ? ` · ${when}` : null}
-        </p>
-      </div>
-      <span className="flex shrink-0 items-center gap-1 font-mono text-caption tabular-nums text-ink-faint">
-        <LuUsers className="h-3.5 w-3.5" aria-hidden />
-        {entrants(tournament)}
-      </span>
-    </Link>
+    // Padding on top only: the plinths sit straight on the footer's rule,
+    // which is the floor of this podium.
+    <div className="pt-3">
+      <TournamentPodium places={places} byId={byId} compact />
+    </div>
   );
 }

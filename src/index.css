@@ -926,6 +926,14 @@ button.lift:active {
 }
 /* Light mode's club shades are deep rather than bright, so the same percentage
    lands much heavier against a white card. */
+/* A screenshot has a theme baked into it, so the two versions are both in the
+   markup and the theme picks one. Not prefers-color-scheme: the choice here is
+   a cookie-backed [data-theme], which the media query cannot see. */
+:root[data-theme="dark"] .theme-light-only,
+:root[data-theme="light"] .theme-dark-only {
+  display: none;
+}
+
 :root[data-theme="light"] .wash {
   --wash: 26%;
 }

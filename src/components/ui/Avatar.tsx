@@ -1,10 +1,5 @@
 import { CLUB_BALL_COLORS } from "@/types";
 
-const SHAPE = {
-  circle: "rounded-full",
-  plate: "rounded-sheet",
-} as const;
-
 /** A deterministic pick from the eight ball colours, keyed by `seed` rather
  *  than any club — so a face grid of mostly-null avatar_urls gets real colour
  *  variety instead of twenty-four identical grey circles. */
@@ -25,7 +20,6 @@ export function Avatar({
   url,
   seed,
   mark = false,
-  shape = "circle",
   className = "h-7 w-7",
 }: {
   name: string;
@@ -39,14 +33,10 @@ export function Avatar({
    *  behind the image. It also switches to `object-contain`, because cropping a
    *  face at the edges is fine and cropping a wordmark is not. */
   mark?: boolean;
-  /** A club logo is a mark, not a face — `"plate"` makes it square-ish
-   *  instead of round so a club header and a player header don't read
-   *  identically. */
-  shape?: keyof typeof SHAPE;
   /** Size lives here — pass the height/width utility pair you need. */
   className?: string;
 }) {
-  const ring = `shrink-0 ${SHAPE[shape]} outline outline-1 -outline-offset-1 outline-white/10`;
+  const ring = `shrink-0 rounded-full outline outline-1 -outline-offset-1 outline-white/10`;
 
   if (url) {
     return (

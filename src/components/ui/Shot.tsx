@@ -16,13 +16,26 @@
  *
  * Drop files into `public/art/` and register them below to promote a slot from
  * empty to real artwork — nothing else about a call site changes.
+ *
+ * The product shots there came from scripts/screenshots.mjs, in Spanish, and
+ * every slot reserves the shot's own ratio so `object-cover` has nothing to
+ * crop. Promoting a new one is: pick it out of screenshots/{light,dark}/es,
+ * `sips -Z 2000` it down, register it here, and pass its size at the call site.
  */
 const SHOTS: Record<string, string> = {
   // LandingPage's four, carried over from its local Shot.
-  phone: "",
-  ranking: "",
+  phone: "/art/phone.png",
+  ranking: "/art/ranking.png",
   drill: "",
   challenge: "",
+
+  // LandingPage's tour, one screen each. `club` is a jpeg and the rest are
+  // pngs: it is the only one of them photographic (the club's own photos and a
+  // map tile), and as a png it weighed more than the other three together.
+  tournament: "/art/tournament.png",
+  tv: "/art/tv.png",
+  me: "/art/me.png",
+  club: "/art/club.jpg",
 
   // Empty states, 1/1.
   "empty-clubs": "",
@@ -35,6 +48,24 @@ const SHOTS: Record<string, string> = {
   // these exist, rather than a dashed box standing in for a flourish.
   "player.flourish": "",
   "drill.flourish": "",
+};
+
+/**
+ * The dark-theme twin of a shot, where one exists.
+ *
+ * A screenshot cannot be theme-agnostic the way a drawing can: the light one on
+ * a dark page is a white rectangle in the middle of the room. Both are rendered
+ * and CSS picks, because the theme is a `data-theme` attribute set from a
+ * cookie, not `prefers-color-scheme` — so `<picture>` and a media query would
+ * answer the wrong question.
+ */
+const SHOTS_DARK: Record<string, string> = {
+  phone: "/art/phone-dark.png",
+  ranking: "/art/ranking-dark.png",
+  tournament: "/art/tournament-dark.png",
+  tv: "/art/tv-dark.png",
+  me: "/art/me-dark.png",
+  club: "/art/club-dark.jpg",
 };
 
 export function Shot({
@@ -62,11 +93,14 @@ export function Shot({
   const [w, h] = size;
   const ratio = `${w} / ${h}`;
   const src = SHOTS[name];
+  const darkSrc = SHOTS_DARK[name];
 
   if (src) {
-    return (
+    // Both carry the same alt: the hidden one is `display: none`, which takes it
+    // out of the accessibility tree, so exactly one is ever announced.
+    const image = (source: string, themeClass = "") => (
       <img
-        src={src}
+        src={source}
         alt={alt}
         width={w}
         height={h}
@@ -74,8 +108,17 @@ export function Shot({
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         fetchPriority={priority ? "high" : undefined}
-        className={`w-full object-cover ${className}`}
+        className={`w-full object-cover ${themeClass} ${className}`}
       />
+    );
+
+    if (!darkSrc) return image(src);
+
+    return (
+      <>
+        {image(src, "theme-light-only")}
+        {image(darkSrc, "theme-dark-only")}
+      </>
     );
   }
 

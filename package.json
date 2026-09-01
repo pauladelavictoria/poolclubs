@@ -17,7 +17,8 @@
     "db:dump": "supabase db dump --linked -f sql/schema.sql",
     "db:types": "supabase gen types typescript --linked --schema public > src/types/database.types.gen.ts",
     "start": "node .output/server/index.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",
@@ -58,6 +59,7 @@
     "eslint-plugin-react-refresh": "^0.5.0",
     "globals": "^17.3.0",
     "jsdom": "^30.0.1",
+    "playwright": "^1.62.1",
     "prettier": "^3.9.6",
     "supabase": "^2.113.0",
     "tailwindcss": "^4.1.18",

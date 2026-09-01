@@ -10,9 +10,9 @@ import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 export const Route = createFileRoute("/_public/legal/privacy")({
   head: ({ match }) => ({
     meta: publicMeta({
-      title: "Privacy policy · PoolClubs",
+      title: "Política de privacidad · PoolClubs",
       description:
-        "What PoolClubs processes, why, who can see it, and how to exercise your rights.",
+        "Qué datos trata PoolClubs, por qué, quién puede verlos y cómo ejercer tus derechos.",
       path: "/legal/privacy",
       origin: match.context.origin,
       fallback: "default",

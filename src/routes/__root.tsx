@@ -71,7 +71,7 @@ export const Route = createRootRouteWithContext<{
         {
           name: "description",
           content:
-            "PoolClubs keeps your pool club on the record: Elo rankings, match results, challenges and training plans.",
+            "PoolClubs lleva el registro de tu club de billar: rankings Elo, resultados de partidas, retos y planes de entrenamiento.",
         },
         {
           name: "theme-color",
@@ -88,8 +88,11 @@ export const Route = createRootRouteWithContext<{
         {
           property: "og:description",
           content:
-            "Elo rankings, match results, challenges and training plans for pool clubs.",
+            "Rankings Elo, resultados de partidas, retos y planes de entrenamiento para clubes de billar.",
         },
+        // Set once here, not per route: nothing overrides it, and the head text
+        // every route writes is Spanish whatever the visitor's language is.
+        { property: "og:locale", content: "es_ES" },
         { property: "og:type", content: "website" },
         // The fallback for anything with no card of its own. It used to be
         // /android-chrome-512x512.png — a square PWA icon, which every preview

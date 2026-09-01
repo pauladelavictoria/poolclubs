@@ -9,14 +9,20 @@ export function Segmented<T extends string>({
   onChange,
   options,
   label,
+  className = "",
 }: {
   value: T;
   onChange: (value: T) => void;
   options: { value: T; label: string; icon?: React.ReactNode }[];
   label: string;
+  className?: string;
 }) {
   return (
-    <div role="tablist" aria-label={label} className={segmentedShell}>
+    <div
+      role="tablist"
+      aria-label={label}
+      className={`${segmentedShell} ${className}`}
+    >
       {options.map((option) => {
         const selected = option.value === value;
         return (

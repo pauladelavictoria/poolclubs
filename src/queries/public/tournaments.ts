@@ -12,8 +12,40 @@ import type {
 
 export type PublicTournament = Tournament & { club: PublicClub | null };
 
+/** One fixture, as much of it as a podium reads. `game` is three score columns
+ *  riding on the fixture for the league tie-break — the games table itself is
+ *  never listed. */
+export type PublicPodiumMatch = Pick<
+  TournamentMatch,
+  | "id"
+  | "bracket"
+  | "round"
+  | "p1_id"
+  | "p2_id"
+  | "winner_id"
+  | "winner_to"
+  | "winner_to_slot"
+  | "loser_to"
+  | "loser_to_slot"
+  | "game"
+>;
+
+/** The entrant list with a name attached, so the ids a podium returns can be
+ *  drawn without a second round trip. */
+export type PublicPodiumEntrant = {
+  player: {
+    id: number;
+    person: { name: string; avatar_url: string | null; slug: string } | null;
+  } | null;
+};
+
 export type PublicTournamentListItem = PublicTournament & {
   tournament_players: { count: number }[];
+  /** Optional because only the directory query pays for them: /search builds
+   *  the same card from a leaner select, and a card with no fixtures simply
+   *  draws no podium. */
+  tournament_matches?: PublicPodiumMatch[];
+  roster?: PublicPodiumEntrant[];
 };
 
 type PublicTournamentDetail = PublicTournament & {
@@ -31,6 +63,19 @@ export type PublicTournamentsFilters = {
   page?: number;
 };
 
+/**
+ * What a finished card's podium costs, embedded in the list read rather than
+ * fetched per card: the fixture graph and the entrants' names.
+ *
+ * Deliberately not `tournament_matches(*)` and deliberately not the games: a
+ * knockout podium is a question about who lost to whom, which lives entirely on
+ * the fixtures, and the three score columns here only break ties in a league
+ * table. A tournament's ~14 fixtures are smaller than one of its games rows.
+ */
+const PODIUM_COLS =
+  "tournament_matches(id, bracket, round, p1_id, p2_id, winner_id, winner_to, winner_to_slot, loser_to, loser_to_slot, game:games(player_1_id, player_1_score, player_2_score))," +
+  " roster:tournament_players(player:players(id, person:people(name, avatar_url, slug)))";
+
 export const publicTournamentsQuery = (
   filters: PublicTournamentsFilters = {},
 ) => {
@@ -43,7 +88,7 @@ export const publicTournamentsQuery = (
       let query = supabase
         .from("tournaments")
         .select(
-          `*, club:clubs!inner(${CLUB_COLS}), tournament_players(count)`,
+          `*, club:clubs!inner(${CLUB_COLS}), tournament_players(count), ${PODIUM_COLS}`,
           { count: "exact" },
         )
         .eq("club.is_public", true)

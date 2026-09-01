@@ -23,7 +23,10 @@ type UpdatePlayerInput = {
   name?: string;
   category?: Category;
   /** Listed on the public site. Set by the player themselves in their own
-   *  settings — see sql/schema.sql for what it does and does not hide. */
+   *  settings, or by an admin for a guest with no account — the "Admin can
+   *  update guests in their club" policy is what draws that line, and it is
+   *  the database that enforces it. See sql/schema.sql for what this does and
+   *  does not hide. */
   is_public?: boolean;
 };
 
@@ -31,8 +34,13 @@ export const useManagePlayers = () => {
   const queryClient = useQueryClient();
   const { activeClubId } = useAuth();
 
+  // Both caches: the roster reads `players`, the admin's member list reads
+  // `club-members`, and a rename or a listing flip changes the same row in
+  // both. Without the second one the members page showed the old value until
+  // something else refetched it.
   const onSuccess = () => {
     queryClient.invalidateQueries({ queryKey: keys.players.all });
+    queryClient.invalidateQueries({ queryKey: keys.clubMembers.all });
   };
 
   return {

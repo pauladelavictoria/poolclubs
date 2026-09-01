@@ -24,9 +24,9 @@ export const Route = createFileRoute("/_public/tournaments/")({
     context.queryClient.ensureQueryData(publicTournamentsQuery(deps)),
   head: ({ match }) => ({
     meta: publicMeta({
-      title: "Tournaments · PoolClubs",
+      title: "Torneos · PoolClubs",
       description:
-        "Pool tournaments across every club on PoolClubs — brackets, leagues, entrants and results.",
+        "Torneos de billar de todos los clubes: cuadros, ligas, inscripciones y resultados.",
       path: "/tournaments",
       origin: match.context.origin,
       fallback: "tournaments",

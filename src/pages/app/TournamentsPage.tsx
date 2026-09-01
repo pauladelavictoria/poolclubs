@@ -116,7 +116,7 @@ export default function TournamentsPage() {
 
       <dialog
         ref={dialogRef}
-        className={dialogClasses()}
+        className={dialogClasses({ wide: true })}
         aria-label={t("tournaments.new")}
         onClose={() => setIsModalOpen(false)}
         onClick={(e) => {

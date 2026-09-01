@@ -14,7 +14,8 @@ export const Route = createFileRoute("/_public/legal/aviso-legal")({
   head: ({ match }) => ({
     meta: publicMeta({
       title: "Aviso legal · PoolClubs",
-      description: "Operator information, as required by article 10 LSSI-CE.",
+      description:
+        "Información del titular del sitio, según el artículo 10 de la LSSI-CE.",
       path: "/legal/aviso-legal",
       origin: match.context.origin,
       fallback: "default",

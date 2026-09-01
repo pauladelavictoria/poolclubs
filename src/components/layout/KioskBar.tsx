@@ -88,7 +88,6 @@ export default function KioskBar({
             name={activeClub.name}
             url={activeClub.logo_url}
             mark
-            shape="plate"
             className="h-7 w-7 shrink-0"
           />
         )}

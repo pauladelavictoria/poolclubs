@@ -72,7 +72,10 @@ export function publicMeta({
     { title },
     { name: "description", content: clamped },
     { property: "og:site_name", content: "PoolClubs" },
-    { property: "og:title", content: title },
+    // The " · PoolClubs" suffix belongs in the tab title, not in the card: a
+    // preview renderer already prints og:site_name above the title, so keeping
+    // it here says "PoolClubs" twice in three lines.
+    { property: "og:title", content: title.replace(/ · PoolClubs$/, "") },
     { property: "og:description", content: clamped },
     { property: "og:type", content: "website" },
     { property: "og:url", content: url },

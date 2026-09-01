@@ -1,11 +1,14 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { headlineClasses } from "@/components/layout/publicTitleStyles";
 import { Link, type LinkProps } from "@tanstack/react-router";
-import { LuMenu, LuSearch, LuX } from "react-icons/lu";
+import { LuLogOut, LuMenu, LuSearch, LuX } from "react-icons/lu";
 import ThemeToggle from "@/components/layout/ThemeToggle";
+import { Avatar } from "@/components/ui/Avatar";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useDialog } from "@/hooks/useDialog";
+import { useOutsideClose } from "@/hooks/useOutsideClose";
 import { useSession } from "@/hooks/useAuth";
+import { useSignOut } from "@/hooks/useSignOut";
 import { LANGS, useT } from "@/i18n";
 import type { Key } from "@/i18n";
 import { DRILLS_ENABLED } from "@/libs/algorithms/features";
@@ -52,11 +55,12 @@ export function PublicNav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useDialog(menuOpen);
 
-  // Same destination either way — /app sends you on to your club or to the
-  // login — but the label has to match what actually happens: telling someone
-  // who is already signed in to "sign in" reads as if the session was lost.
-  // The session comes off the root context, resolved on the server, so this is
-  // right in the first paint rather than flipping after hydration.
+  // Signed out it is one button to the login; signed in the corner is your own
+  // avatar, the same as inside the app, with the way in and the way out under
+  // it. The session comes off the root context, resolved on the server, so the
+  // right one is there in the first paint rather than flipping after hydration.
+  // The drawer keeps a plain button either way, so its label still has to match
+  // what pressing it does.
   const enterKey: Key = user ? "auth.openApp" : "auth.signInShort";
 
   return (
@@ -113,12 +117,16 @@ export function PublicNav() {
             <LuSearch className="h-4 w-4" aria-hidden />
           </Link>
 
-          <Link
-            to="/app"
-            className={buttonClasses({ size: "sm", className: "shrink-0" })}
-          >
-            {t(enterKey)}
-          </Link>
+          {user ? (
+            <PublicUserMenu />
+          ) : (
+            <Link
+              to="/app"
+              className={buttonClasses({ size: "sm", className: "shrink-0" })}
+            >
+              {t(enterKey)}
+            </Link>
+          )}
         </div>
       </nav>
 
@@ -183,6 +191,93 @@ export function PublicNav() {
         </div>
       </dialog>
     </header>
+  );
+}
+
+const menuItemClasses =
+  "flex h-10 w-full items-center gap-2.5 px-4 text-body text-ink-soft transition-colors duration-150 hover:bg-felt hover:text-ink";
+
+/**
+ * You, in the public bar: the same corner and the same popover as inside the
+ * app, minus the club-scoped rows — out here there is no club in context, so
+ * the only two things it can offer are the way in and the way out.
+ *
+ * Not ProfileMenu itself: that one reads `useAuth`, which requires a club
+ * route, and its links are club-scoped.
+ */
+function PublicUserMenu() {
+  const { t } = useT();
+  const { user, memberships } = useSession();
+  const signOut = useSignOut();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useOutsideClose(open, ref, () => setOpen(false));
+
+  if (!user) return null;
+
+  // Every membership carries the same person's picture (see getSession), so any
+  // of them answers "what do you look like"; with no club yet, initials do.
+  const avatarUrl = memberships[0]?.avatar_url ?? null;
+  const name = user.fullName || user.email || "?";
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((wasOpen) => !wasOpen)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={t("auth.yourProfile")}
+        title={name}
+        className="flex h-10 w-10 items-center justify-center rounded-full transition-opacity duration-150 hover:opacity-80"
+      >
+        <Avatar name={name} url={avatarUrl} className="h-8 w-8" />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-40 mt-2 w-56 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-card border border-hairline bg-felt-raised"
+        >
+          <div className="border-b border-hairline px-4 py-3">
+            <p className="truncate text-body font-medium text-ink">{name}</p>
+            {user.email && user.fullName && (
+              <p className="truncate text-caption text-ink-faint">
+                {user.email}
+              </p>
+            )}
+          </div>
+
+          <Link
+            to="/app"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={menuItemClasses}
+          >
+            {/* The wordmark's ball, not a lucide glyph: the row goes to this
+                product, and every other icon in this app is a section. */}
+            <img
+              src="/ball.png"
+              alt=""
+              className="h-[18px] w-[18px] shrink-0 rounded-full"
+            />
+            {t("auth.openApp")}
+          </Link>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              signOut.mutate();
+            }}
+            className={menuItemClasses}
+          >
+            <LuLogOut className="h-[18px] w-[18px] shrink-0" aria-hidden />
+            {t("auth.signOut")}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

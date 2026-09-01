@@ -499,7 +499,7 @@ export default function TournamentPage() {
 
       <dialog
         ref={editRef}
-        className={dialogClasses()}
+        className={dialogClasses({ wide: true })}
         aria-label={t("tournaments.edit")}
         onClose={() => setIsEditOpen(false)}
         onClick={(e) => {

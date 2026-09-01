@@ -46,9 +46,9 @@ export const Route = createFileRoute("/_public/clubs/")({
     ]),
   head: ({ match }) => ({
     meta: publicMeta({
-      title: "Pool clubs · PoolClubs",
+      title: "Clubes de billar · PoolClubs",
       description:
-        "Browse pool clubs on PoolClubs. Find a club near you, see its roster, its rankings and its tournaments.",
+        "Explora clubes de billar. Encuentra uno cerca de ti y consulta sus socios, sus rankings y sus torneos.",
       path: "/clubs",
       origin: match.context.origin,
       fallback: "clubs",

@@ -26,13 +26,22 @@ import { useT, type Key } from "@/i18n";
 import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 
 /**
- * The front door, written for a club rather than for a player.
+ * The front door. It has two jobs, and it now does them one after the other
+ * instead of interleaved.
  *
- * The job changed: this page used to introduce the app to whoever landed on it,
- * and it now has to answer "why should our club use this" end to end, because
- * it is the page a club is sent to. So it carries the whole product, explained
- * feature by feature, plus the objections a club actually raises before the
- * first email gets answered.
+ * The page it replaced answered "why should our club use this" end to end and
+ * left the product itself as a single block of feature cards halfway down, so a
+ * reader asking "what is this thing" got an argument before they got a picture.
+ * Now the page is two labelled parts:
+ *
+ *   1. the product, shown. A tour of four real screens, then the feature grid
+ *      for everything the four do not fit, then how to install it.
+ *   2. the case for a club. Who it is for, what adopting it actually costs in
+ *      effort, the objections, the ask.
+ *
+ * The order is deliberate and not the usual funnel: a club is sent this link
+ * cold, and the first question a stranger has is what the thing is. The signup
+ * CTA is above the fold either way, and again at the end.
  *
  * Everything a signed-in member uses lives under /app, which is also the PWA's
  * start URL, so installing the app skips the pitch entirely.
@@ -45,6 +54,53 @@ import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 /** One club colour per ball, in the picker's own order. Drawn rather than
  *  described: the club-branding feature is a row of real balls. */
 const CLUB_BALLS = Object.keys(CLUB_BALL_LABEL) as BallColor[];
+
+/**
+ * The tour: four screens of the running app, one block each.
+ *
+ * Every one is a real screenshot out of scripts/screenshots.mjs, and the four
+ * were picked so that nothing on the page appears twice. The ranking is not
+ * here on purpose: it is already the hero's phone and the first feature card's
+ * shot, which is two more places than any other screen gets.
+ *
+ * `size` is the promoted file's own pixel size, so `object-cover` never crops.
+ */
+const TOUR: {
+  shot: string;
+  title: Key;
+  body: Key;
+  alt: Key;
+  size: [number, number];
+}[] = [
+  {
+    shot: "tournament",
+    title: "landing.t1Title",
+    body: "landing.t1Body",
+    alt: "landing.t1Alt",
+    size: [2000, 1527],
+  },
+  {
+    shot: "tv",
+    title: "landing.t2Title",
+    body: "landing.t2Body",
+    alt: "landing.t2Alt",
+    size: [2000, 1125],
+  },
+  {
+    shot: "me",
+    title: "landing.t3Title",
+    body: "landing.t3Body",
+    alt: "landing.t3Alt",
+    size: [2000, 1250],
+  },
+  {
+    shot: "club",
+    title: "landing.t4Title",
+    body: "landing.t4Body",
+    alt: "landing.t4Alt",
+    size: [2000, 1696],
+  },
+];
 
 const SEGMENTS: { title: Key; today: Key; now: Key }[] = [
   {
@@ -170,6 +226,72 @@ const INSTALL: { icon: typeof LuApple; title: Key; body: Key }[] = [
   },
 ];
 
+/**
+ * The seam between the page's two halves. A rule with a word on it, so the
+ * change of subject is announced rather than left to the background banding,
+ * which the eye reads as rhythm and not as structure.
+ */
+function PartLabel({ label }: { label: Key }) {
+  const { t } = useT();
+
+  return (
+    <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 pt-16 sm:px-6 lg:pt-24">
+      <span className="text-caption uppercase tracking-[0.16em] text-ink-faint">
+        {t(label)}
+      </span>
+      <span className="h-px flex-1 bg-hairline" aria-hidden />
+    </div>
+  );
+}
+
+/**
+ * One screen of the tour. The shot is the block, not an illustration next to
+ * it: it takes seven of the twelve columns, and the copy beside it is a
+ * heading and a sentence.
+ *
+ * It does not bleed past the container the way the hero's phone does. A phone
+ * mockup can run off the edge and only lose its own bezel, but these are whole
+ * desktop screens with the app's nav and headings in them, and clipping one
+ * cuts words in half: "PoolClubs" arrives as "Clubs". Whatever the bleed buys
+ * in width is not worth a screenshot that reads as broken.
+ *
+ * Sides alternate, which is what stops four of these reading as a list.
+ */
+function TourBlock({
+  shot,
+  title,
+  body,
+  alt,
+  size,
+  flipped,
+}: (typeof TOUR)[number] & { flipped: boolean }) {
+  const { t } = useT();
+
+  return (
+    <article className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
+      <div className={`pop-in lg:col-span-7 ${flipped ? "lg:order-2" : ""}`}>
+        <div className="overflow-hidden rounded-sheet border border-hairline bg-felt p-1.5">
+          <Shot
+            name={shot}
+            alt={t(alt)}
+            size={size}
+            className="rounded-[10px]"
+          />
+        </div>
+      </div>
+
+      <div className={`lg:col-span-5 ${flipped ? "lg:order-1" : ""}`}>
+        <h3 className="reveal text-h2 font-semibold leading-tight tracking-tight text-ink">
+          {t(title)}
+        </h3>
+        <p className="reveal mt-4 max-w-[44ch] text-body leading-relaxed text-ink-soft">
+          {t(body)}
+        </p>
+      </div>
+    </article>
+  );
+}
+
 export default function LandingPage() {
   const { t } = useT();
 
@@ -236,7 +358,7 @@ export default function LandingPage() {
               <Shot
                 name="phone"
                 alt={t("landing.altHero")}
-                size={[1170, 2532]}
+                size={[1320, 2289]}
                 priority
                 className="rounded-[14px]"
               />
@@ -245,91 +367,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Who this is for. Three club types as hairline-divided rows rather than
-          three cards: the interesting part is the pair of columns inside each
-          row, and a card box around them would only add weight. */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
-        <h2 className="reveal max-w-[22ch] text-h1 font-semibold leading-tight tracking-tight text-ink">
-          {t("landing.whoTitle")}
+      <PartLabel label="landing.partProduct" />
+
+      {/* The tour. Four screens, alternating sides, and nothing between them
+          but air: the shots are the argument here, so the copy beside each one
+          is a heading and a sentence and stops. */}
+      <section
+        id="tour"
+        className="mx-auto max-w-6xl scroll-mt-8 px-4 pt-10 pb-16 sm:px-6 lg:pt-14 lg:pb-24"
+      >
+        <h2 className="reveal max-w-[20ch] text-h1 font-semibold leading-tight tracking-tight text-ink">
+          {t("landing.tourTitle")}
         </h2>
         <p className="reveal mt-4 max-w-[58ch] text-h4 leading-relaxed text-ink-soft">
-          {t("landing.whoBody")}
+          {t("landing.tourBody")}
         </p>
 
-        <div className="mt-12 divide-y divide-hairline border-t border-hairline">
-          {SEGMENTS.map(({ title, today, now }) => (
-            <article
-              key={title}
-              className="pop-in grid gap-x-8 gap-y-5 py-8 lg:grid-cols-12"
-            >
-              <h3 className="text-h3 font-semibold tracking-tight text-ink lg:col-span-4">
-                {t(title)}
-              </h3>
-              {/* Column labels, not eyebrows: they name which side of the
-                  comparison you are reading, so they separate on colour and
-                  weight rather than on small caps. */}
-              <div className="lg:col-span-4">
-                <p className="text-caption font-medium text-ink-faint">
-                  {t("landing.whoTodayLabel")}
-                </p>
-                <p className="mt-2 text-body text-ink-soft">{t(today)}</p>
-              </div>
-              <div className="lg:col-span-4">
-                <p className="text-caption font-medium text-strike">
-                  {t("landing.whoNowLabel")}
-                </p>
-                <p className="mt-2 text-body text-ink-soft">{t(now)}</p>
-              </div>
-            </article>
+        <div className="mt-14 flex flex-col gap-16 lg:gap-24">
+          {TOUR.map((block, i) => (
+            <TourBlock key={block.shot} {...block} flipped={i % 2 === 1} />
           ))}
-        </div>
-      </section>
-
-      {/* The ask. Not "adopt an app" but "record one night", so the steps are
-          an icon list rather than a milestone chart: four small things, in
-          order, none of them a decision. */}
-      <section className="border-y border-hairline bg-felt/30">
-        <div className="mx-auto grid max-w-6xl gap-x-8 gap-y-12 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:py-24">
-          <div className="lg:col-span-7">
-            <h2 className="reveal max-w-[20ch] text-h1 font-semibold leading-tight tracking-tight text-ink">
-              {t("landing.startTitle")}
-            </h2>
-            <p className="reveal mt-4 max-w-[52ch] text-h4 leading-relaxed text-ink-soft">
-              {t("landing.startBody")}
-            </p>
-
-            <ol className="mt-10 flex flex-col gap-7">
-              {STEPS.map(({ icon: Icon, title, body }) => (
-                <li key={title} className="pop-in flex gap-5">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control border border-hairline bg-felt text-strike">
-                    <Icon className="h-5 w-5" aria-hidden />
-                  </span>
-                  <div>
-                    <h3 className="text-h4 font-semibold text-ink">
-                      {t(title)}
-                    </h3>
-                    <p className="mt-1.5 max-w-[48ch] text-body text-ink-soft">
-                      {t(body)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          {/* The objection that stops every club, answered next to the steps
-              rather than fifty lines further down. */}
-          <aside className="lg:col-span-5 lg:pt-4">
-            <div className="wash wash-soft reveal rounded-card border border-hairline p-7">
-              <LuShieldCheck className="h-6 w-6 text-strike" aria-hidden />
-              <h3 className="mt-4 text-h3 font-semibold tracking-tight text-ink">
-                {t("landing.approveTitle")}
-              </h3>
-              <p className="mt-3 text-body text-ink-soft">
-                {t("landing.approveBody")}
-              </p>
-            </div>
-          </aside>
         </div>
       </section>
 
@@ -445,35 +502,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Eight objections, folded. A club reads the two that worry it and
-          skips the rest, which a stacked list of eight paragraphs does not
-          allow. */}
-      <section className="border-t border-hairline bg-felt/30">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-24">
-          <h2 className="reveal text-h1 font-semibold leading-tight tracking-tight text-ink">
-            {t("landing.faqTitle")}
-          </h2>
-
-          <div className="reveal mt-10 divide-y divide-hairline border-y border-hairline">
-            {FAQ.map(({ q, a }) => (
-              <details key={q} className="group">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-h4 font-medium text-ink [&::-webkit-details-marker]:hidden">
-                  {t(q)}
-                  <LuChevronDown
-                    className="h-4 w-4 shrink-0 text-ink-faint transition-transform duration-200 ease-[var(--ease-out)] group-open:rotate-180"
-                    aria-hidden
-                  />
-                </summary>
-                <p className="pb-6 text-body text-ink-soft">{t(a)}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Install: three platforms separated by hairlines, no card boxes.
-          Three short instructions do not need three containers. */}
-      <section id="install" className="scroll-mt-8">
+      {/* Install closes the product half: the last thing you are told about the
+          thing itself is that having it costs ten seconds. Banded, because the
+          tour and the feature grid above it are both plain and the page needs
+          the change of ground to say the part has ended. */}
+      <section
+        id="install"
+        className="scroll-mt-8 border-y border-hairline bg-felt/30"
+      >
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
           <div className="reveal flex flex-wrap items-end justify-between gap-4">
             <h2 className="text-h2 font-semibold tracking-tight text-ink">
@@ -495,6 +531,123 @@ export default function LandingPage() {
                   {t(body)}
                 </p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <PartLabel label="landing.partClub" />
+
+      {/* Who this is for. Three club types as hairline-divided rows rather than
+          three cards: the interesting part is the pair of columns inside each
+          row, and a card box around them would only add weight. */}
+      <section className="mx-auto max-w-6xl px-4 pt-10 pb-16 sm:px-6 lg:pt-14 lg:pb-24">
+        <h2 className="reveal max-w-[22ch] text-h1 font-semibold leading-tight tracking-tight text-ink">
+          {t("landing.whoTitle")}
+        </h2>
+        <p className="reveal mt-4 max-w-[58ch] text-h4 leading-relaxed text-ink-soft">
+          {t("landing.whoBody")}
+        </p>
+
+        <div className="mt-12 divide-y divide-hairline border-t border-hairline">
+          {SEGMENTS.map(({ title, today, now }) => (
+            <article
+              key={title}
+              className="pop-in grid gap-x-8 gap-y-5 py-8 lg:grid-cols-12"
+            >
+              <h3 className="text-h3 font-semibold tracking-tight text-ink lg:col-span-4">
+                {t(title)}
+              </h3>
+              {/* Column labels, not eyebrows: they name which side of the
+                  comparison you are reading, so they separate on colour and
+                  weight rather than on small caps. */}
+              <div className="lg:col-span-4">
+                <p className="text-caption font-medium text-ink-faint">
+                  {t("landing.whoTodayLabel")}
+                </p>
+                <p className="mt-2 text-body text-ink-soft">{t(today)}</p>
+              </div>
+              <div className="lg:col-span-4">
+                <p className="text-caption font-medium text-strike">
+                  {t("landing.whoNowLabel")}
+                </p>
+                <p className="mt-2 text-body text-ink-soft">{t(now)}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* The ask. Not "adopt an app" but "record one night", so the steps are
+          an icon list rather than a milestone chart: four small things, in
+          order, none of them a decision. */}
+      <section className="border-y border-hairline bg-felt/30">
+        <div className="mx-auto grid max-w-6xl gap-x-8 gap-y-12 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:py-24">
+          <div className="lg:col-span-7">
+            <h2 className="reveal max-w-[20ch] text-h1 font-semibold leading-tight tracking-tight text-ink">
+              {t("landing.startTitle")}
+            </h2>
+            <p className="reveal mt-4 max-w-[52ch] text-h4 leading-relaxed text-ink-soft">
+              {t("landing.startBody")}
+            </p>
+
+            <ol className="mt-10 flex flex-col gap-7">
+              {STEPS.map(({ icon: Icon, title, body }) => (
+                <li key={title} className="pop-in flex gap-5">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control border border-hairline bg-felt text-strike">
+                    <Icon className="h-5 w-5" aria-hidden />
+                  </span>
+                  <div>
+                    <h3 className="text-h4 font-semibold text-ink">
+                      {t(title)}
+                    </h3>
+                    <p className="mt-1.5 max-w-[48ch] text-body text-ink-soft">
+                      {t(body)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* The objection that stops every club, answered next to the steps
+              rather than fifty lines further down. */}
+          <aside className="lg:col-span-5 lg:pt-4">
+            <div className="wash wash-soft reveal rounded-card border border-hairline p-7">
+              <LuShieldCheck className="h-6 w-6 text-strike" aria-hidden />
+              <h3 className="mt-4 text-h3 font-semibold tracking-tight text-ink">
+                {t("landing.approveTitle")}
+              </h3>
+              <p className="mt-3 text-body text-ink-soft">
+                {t("landing.approveBody")}
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      {/* Eight objections, folded. A club reads the two that worry it and
+          skips the rest, which a stacked list of eight paragraphs does not
+          allow. Plain ground: the steps above it are banded, and two banded
+          sections in a row average into one field. */}
+      <section>
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-24">
+          <h2 className="reveal text-h1 font-semibold leading-tight tracking-tight text-ink">
+            {t("landing.faqTitle")}
+          </h2>
+
+          <div className="reveal mt-10 divide-y divide-hairline border-y border-hairline">
+            {FAQ.map(({ q, a }) => (
+              <details key={q} className="group">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-h4 font-medium text-ink [&::-webkit-details-marker]:hidden">
+                  {t(q)}
+                  <LuChevronDown
+                    className="h-4 w-4 shrink-0 text-ink-faint transition-transform duration-200 ease-[var(--ease-out)] group-open:rotate-180"
+                    aria-hidden
+                  />
+                </summary>
+                <p className="pb-6 text-body text-ink-soft">{t(a)}</p>
+              </details>
             ))}
           </div>
         </div>

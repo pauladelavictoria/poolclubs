@@ -24,9 +24,9 @@ export const Route = createFileRoute("/_public/drills/")({
     ),
   head: ({ match }) => ({
     meta: publicMeta({
-      title: "Pool drills · PoolClubs",
+      title: "Ejercicios de billar · PoolClubs",
       description:
-        "A free library of pool practice drills with table diagrams, setup and scoring. Filter by difficulty and by the skill they train.",
+        "Biblioteca gratuita de ejercicios de billar con diagramas de mesa, colocación y puntuación. Filtra por dificultad y por la habilidad que entrenan.",
       path: "/drills",
       origin: match.context.origin,
       fallback: "drills",
