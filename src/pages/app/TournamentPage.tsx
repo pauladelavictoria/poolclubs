@@ -33,6 +33,7 @@ import LeagueTable from "@/components/tournaments/LeagueTable";
 import MatchCard from "@/components/games/MatchCard";
 import MatchList from "@/components/games/MatchList";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
+import SocialBar from "@/components/social/SocialBar";
 import TournamentAdminPanel from "@/components/tournaments/TournamentAdminPanel";
 import PlayGameForm from "@/components/games/PlayGameForm";
 import { PlayerHighlight } from "@/components/players/PlayerLink";
@@ -198,6 +199,11 @@ export default function TournamentPage() {
           <Card className="overflow-hidden">
             <CardHeader title={t("tournaments.results")} />
             <TournamentPodium places={podium} byId={byId} />
+            {/* Same target as the feed card's bar, so it is one thread seen
+                from two places rather than two threads. */}
+            <div className="px-4 pb-3">
+              <SocialBar target={{ tournamentId: tournament.id }} />
+            </div>
           </Card>
         )}
 

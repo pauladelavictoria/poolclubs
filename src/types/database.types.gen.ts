@@ -222,6 +222,7 @@ export type Database = {
           drill_log_id: number | null
           game_id: string | null
           id: number
+          tournament_id: number | null
         }
         Insert: {
           author_player_id: number
@@ -231,6 +232,7 @@ export type Database = {
           drill_log_id?: number | null
           game_id?: string | null
           id?: number
+          tournament_id?: number | null
         }
         Update: {
           author_player_id?: number
@@ -240,6 +242,7 @@ export type Database = {
           drill_log_id?: number | null
           game_id?: string | null
           id?: number
+          tournament_id?: number | null
         }
         Relationships: [
           {
@@ -268,6 +271,13 @@ export type Database = {
             columns: ["game_id"]
             isOneToOne: false
             referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
             referencedColumns: ["id"]
           },
         ]
@@ -710,6 +720,7 @@ export type Database = {
           emoji: string
           game_id: string | null
           id: number
+          tournament_id: number | null
         }
         Insert: {
           author_player_id: number
@@ -719,6 +730,7 @@ export type Database = {
           emoji: string
           game_id?: string | null
           id?: number
+          tournament_id?: number | null
         }
         Update: {
           author_player_id?: number
@@ -728,6 +740,7 @@ export type Database = {
           emoji?: string
           game_id?: string | null
           id?: number
+          tournament_id?: number | null
         }
         Relationships: [
           {
@@ -756,6 +769,13 @@ export type Database = {
             columns: ["game_id"]
             isOneToOne: false
             referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactions_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
             referencedColumns: ["id"]
           },
         ]
@@ -1092,6 +1112,7 @@ export type Database = {
       is_club_device: { Args: { cid: number }; Returns: boolean }
       is_club_member: { Args: { cid: number }; Returns: boolean }
       is_drill_admin: { Args: never; Returns: boolean }
+      is_global_club: { Args: { cid: number }; Returns: boolean }
       is_own_person: { Args: { pid: number }; Returns: boolean }
       is_own_player: { Args: { pid: number }; Returns: boolean }
       is_public_club: { Args: { cid: number }; Returns: boolean }

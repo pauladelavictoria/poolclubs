@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlayerLookup } from "@/hooks/usePlayers";
 import { useTournament, useManageTournaments } from "@/hooks/useTournaments";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
+import SocialBar from "@/components/social/SocialBar";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { CategoryBadge } from "@/components/ui/Ball";
@@ -158,6 +159,10 @@ export function TournamentResultCard({
     <>
       <Head tournament={tournament} label="tournaments.results" />
       <TournamentPodium places={places} byId={byId} />
+      {/* The result is the thing people talk about, so the thread hangs off the
+          tournament itself — not off the final game, which is where it would
+          land if this reused the match card's bar. */}
+      <SocialBar target={{ tournamentId: tournament.id }} preview />
     </>
   );
 }

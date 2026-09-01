@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import ClubSelectPage from "@/pages/app/ClubSelectPage";
+import { isRealClub } from "@/libs/algorithms/features";
 
 /**
  * Outside $clubSlug, like clubs/new: choosing a club is the one thing you do
@@ -9,8 +10,10 @@ import ClubSelectPage from "@/pages/app/ClubSelectPage";
  */
 export const Route = createFileRoute("/app/_authed/select-club")({
   beforeLoad: ({ context }) => {
+    // Real clubs only, same as the signpost: everybody is in the global lobby,
+    // so counting it would make this screen appear for people with one club.
     const active = context.memberships.filter(
-      (m) => m.status === "active" && m.club,
+      (m) => m.status === "active" && isRealClub(m.club),
     );
     if (active.length < 2) throw redirect({ to: "/app" });
   },

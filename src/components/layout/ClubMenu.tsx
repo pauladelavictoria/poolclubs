@@ -4,6 +4,7 @@ import { LuChevronDown, LuCheck, LuPlus } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useOutsideClose } from "@/hooks/useOutsideClose";
 import { useT } from "@/i18n";
+import { isRealClub } from "@/libs/algorithms/features";
 
 /**
  * The club you are in, and the way to a different one: the clubs you're a member
@@ -29,6 +30,12 @@ export default function ClubMenu({ className }: { className?: string }) {
   // Only clubs you are actually in are switchable; a pending request is not a
   // place you can go yet.
   const switchable = memberships.filter((m) => m.status === "active");
+
+  // The lobby stays in the list — it is the only way back to it — but under the
+  // real clubs, because it is where you were before you had one rather than a
+  // club you chose.
+  const clubs = switchable.filter((m) => isRealClub(m.club));
+  const lobby = switchable.filter((m) => !isRealClub(m.club));
 
   return (
     <div ref={ref} className={`relative min-w-0 ${className ?? ""}`}>
@@ -68,7 +75,7 @@ export default function ClubMenu({ className }: { className?: string }) {
           role="menu"
           className="absolute left-0 top-full z-40 mt-2 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-card border border-hairline bg-felt-raised"
         >
-          {switchable.map((m) => (
+          {[...clubs, ...lobby].map((m) => (
             <button
               key={m.club_id}
               type="button"
@@ -77,7 +84,11 @@ export default function ClubMenu({ className }: { className?: string }) {
                 setActiveClub(m.club_id);
                 setOpen(false);
               }}
-              className={menuItem}
+              className={`${menuItem} ${
+                isRealClub(m.club) || clubs.length === 0
+                  ? ""
+                  : "border-t border-hairline"
+              }`}
             >
               <LuCheck
                 className={`h-4 w-4 shrink-0 ${
