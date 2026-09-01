@@ -764,6 +764,7 @@
   "notifications.tournamentOpen": "Inscriptions ouvertes pour {name}",
   "notifications.tournamentAction": "Tu as un match en attente dans {name}",
   "notifications.drillAdded": "Nouveau drill : {name}. À essayer !",
+  "notifications.mention": "{name} vous a mentionné dans un commentaire",
   "notifications.clearAll": "Tout effacer",
   "push.title": "Notifications",
   "push.hint": "Reçois les défis et les nouveaux tournois sur cet appareil, même appli fermée. Chaque appareil s'active séparément.",

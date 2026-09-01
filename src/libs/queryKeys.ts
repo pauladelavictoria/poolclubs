@@ -154,6 +154,13 @@ export const keys = {
       ["comments", "tournament", tournamentId] as const,
   },
 
+  /** People named by an @mention, looked up by slug rather than by club: a
+   *  mention on a public thread can point at somebody from any club. */
+  mentioned: {
+    people: (slugs: readonly string[]) =>
+      ["people", "mentioned", [...slugs].sort().join(",")] as const,
+  },
+
   reactions: {
     all: ["reactions"] as const,
     in: (clubId?: number | null) => ["reactions", clubId] as const,

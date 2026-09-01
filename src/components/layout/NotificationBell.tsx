@@ -6,6 +6,7 @@ import {
   LuTrophy,
   LuNetwork,
   LuTarget,
+  LuAtSign,
 } from "react-icons/lu";
 import {
   useNotifications,
@@ -25,6 +26,7 @@ const ICONS: Record<
   tournamentOpen: LuTrophy,
   tournamentAction: LuNetwork,
   drillAdded: LuTarget,
+  mention: LuAtSign,
 };
 
 /**

@@ -11,6 +11,8 @@ import { useDrills } from "@/hooks/useDrills";
 import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 import { useDrillLogs } from "@/hooks/useDrillLogs";
 import { usePlayerLookup } from "@/hooks/usePlayers";
+import { useComments } from "@/hooks/useSocial";
+import { mentionedSlugs } from "@/libs/algorithms/mentions";
 import { useT } from "@/i18n";
 
 type NotificationKind =
@@ -19,7 +21,8 @@ type NotificationKind =
   | "challengeDeclined"
   | "tournamentOpen"
   | "tournamentAction"
-  | "drillAdded";
+  | "drillAdded"
+  | "mention";
 
 export type AppNotification = {
   /** Stable and unique per underlying event *and* its current state, so an
@@ -168,6 +171,7 @@ export const useNotifications = () => {
   const { data: pendingMatches } = useMyPendingMatches();
   const { data: drills } = useDrills();
   const { data: myDrillLogs } = useDrillLogs({ player_id: player?.id });
+  const { data: comments } = useComments();
 
   // Which notifications have been read is per-device UI state in localStorage,
   // which the server cannot read — so the first render is "nothing read yet" on
@@ -257,6 +261,32 @@ export const useNotifications = () => {
       });
     }
 
+    // Being named in a thread. The comments are already in the cache for the
+    // bars that render them, so this costs a filter and no request — and it is
+    // the record even when the push never arrives (see push.functions.ts).
+    for (const c of comments ?? []) {
+      if (c.author_player_id === player.id) continue;
+      if (!player.slug || !mentionedSlugs(c.body).includes(player.slug))
+        continue;
+
+      list.push({
+        id: `mention:${c.id}`,
+        kind: "mention",
+        needsAction: false,
+        message: t("notifications.mention", {
+          name: nameOf(c.author_player_id),
+        }),
+        // A tournament thread has a page of its own. A game or a drill log does
+        // not — the feed on the dashboard is where that conversation shows.
+        link: c.tournament_id
+          ? {
+              to: "/app/$clubSlug/tournaments/$tournamentId",
+              params: { tournamentId: String(c.tournament_id) },
+            }
+          : { to: "/app/$clubSlug" },
+      });
+    }
+
     const triedDrillIds = new Set(
       (myDrillLogs ?? []).map((log) => log.drill_id),
     );
@@ -287,6 +317,7 @@ export const useNotifications = () => {
     myTournamentIds,
     drills,
     myDrillLogs,
+    comments,
     t,
     nameOf,
   ]);

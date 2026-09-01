@@ -764,6 +764,7 @@
   "notifications.tournamentOpen": "Entries open for {name}",
   "notifications.tournamentAction": "You have a pending match in {name}",
   "notifications.drillAdded": "New drill: {name}. Give it a try!",
+  "notifications.mention": "{name} mentioned you in a comment",
   "notifications.clearAll": "Clear all",
   "push.title": "Notifications",
   "push.hint": "Get challenges and new tournaments on this device, even with the app closed. Each device is turned on separately.",

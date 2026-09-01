@@ -1,10 +1,15 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { LuSmilePlus, LuX } from "react-icons/lu";
+import { LuPencil, LuSmilePlus, LuX } from "react-icons/lu";
 import { matchesTarget, useTournamentSocial } from "@/hooks/useSocial";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { fmt } from "@/libs/algorithms/dayLabel";
+import { CommentBody } from "@/components/social/CommentBody";
+import { MentionPicker } from "@/components/social/MentionPicker";
+import { useMentionPicker } from "@/hooks/useMentionPicker";
+import { publicClubRosterQuery } from "@/queries/public/clubs";
 import { REACTIONS } from "@/types";
 import { useT } from "@/i18n";
 
@@ -34,17 +39,56 @@ export default function TournamentSocialBar({
     reactions,
     canWrite,
     myPlayerId,
+    canModerate,
+    mentionedBySlug,
     addComment,
     deleteComment,
+    editComment,
     toggleReaction,
   } = useTournamentSocial(tournamentId, clubId);
 
   const [picking, setPicking] = useState(false);
   const [draft, setDraft] = useState("");
+  /** Which comment is open for editing, and the text as it is being changed. */
+  const [editing, setEditing] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState("");
 
   const target = { tournamentId };
   const rows = comments.data ?? [];
   const marks = (reactions.data ?? []).filter((r) => matchesTarget(r, target));
+
+  /** Out here a mention links to the public profile — the only page a signed-out
+   *  reader can open. An unresolved slug stays as typed: the person is not in a
+   *  public club, so there is nowhere to send anybody. */
+  const mention = (slug: string) => {
+    const person = mentionedBySlug.get(slug);
+    if (!person) return null;
+    return (
+      <Link
+        to="/players/$playerSlug"
+        params={{ playerSlug: slug }}
+        className="font-medium text-strike hover:text-ink"
+      >
+        @{person.name}
+      </Link>
+    );
+  };
+
+  // Who the `@` picker offers out here: the host club's roster — the same query
+  // the page around this already loaded, so this is a cache read — plus anybody
+  // already in the thread, who may be from another club entirely. Public people
+  // only, since a mention links to a public profile.
+  const roster = useQuery(publicClubRosterQuery(clubId));
+  const mentionable = new Map(
+    [
+      ...(roster.data ?? []).filter((p) => p.is_public),
+      ...rows.flatMap((c) => (c.author?.person ? [c.author.person] : [])),
+    ].map((p) => [
+      p.slug,
+      { slug: p.slug, name: p.name, avatar_url: p.avatar_url },
+    ]),
+  );
+  const picker = useMentionPicker([...mentionable.values()], draft, setDraft);
 
   const timeFmt = fmt(locale, {
     day: "numeric",
@@ -167,38 +211,117 @@ export default function TournamentSocialBar({
                     {timeFmt.format(new Date(c.created_at))}
                   </time>
                 </p>
-                <p className="whitespace-pre-wrap break-words text-body text-ink">
-                  {c.body}
-                </p>
+                {editing === c.id ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (editDraft.trim()) {
+                        editComment.mutate({ id: c.id, body: editDraft });
+                      }
+                      setEditing(null);
+                    }}
+                    className="mt-1 flex gap-2"
+                  >
+                    <Input
+                      autoFocus
+                      value={editDraft}
+                      onChange={(e) => setEditDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") setEditing(null);
+                      }}
+                      maxLength={1000}
+                      className="h-9"
+                    />
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={!editDraft.trim()}
+                      className="shrink-0"
+                    >
+                      {t("common.save")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditing(null)}
+                      className="shrink-0"
+                    >
+                      {t("common.cancel")}
+                    </Button>
+                  </form>
+                ) : (
+                  <p className="whitespace-pre-wrap break-words text-body text-ink">
+                    <CommentBody body={c.body} mention={mention} />
+                  </p>
+                )}
               </div>
-              {c.author_player_id === myPlayerId && (
-                <IconButton
-                  type="button"
-                  label={t("common.delete")}
-                  size="sm"
-                  tone="danger"
-                  onClick={() => deleteComment.mutate(c.id)}
-                >
-                  <LuX className="h-4 w-4" />
-                </IconButton>
+              {/* Same as the club bar: the row's actions step aside while its
+                  form is open. Editing is the author's alone — an admin out
+                  here may remove a comment, never rewrite one. */}
+              {editing !== c.id && (
+                <>
+                  {c.author_player_id === myPlayerId && (
+                    <IconButton
+                      type="button"
+                      label={t("common.edit")}
+                      size="sm"
+                      onClick={() => {
+                        setEditing(c.id);
+                        setEditDraft(c.body);
+                      }}
+                    >
+                      <LuPencil className="h-4 w-4" />
+                    </IconButton>
+                  )}
+                  {(c.author_player_id === myPlayerId || canModerate) && (
+                    <IconButton
+                      type="button"
+                      label={t("common.delete")}
+                      size="sm"
+                      tone="danger"
+                      onClick={() => deleteComment.mutate(c.id)}
+                    >
+                      <LuX className="h-4 w-4" />
+                    </IconButton>
+                  )}
+                </>
               )}
             </div>
           );
         })}
 
         {canWrite ? (
-          <form onSubmit={submit} className="flex gap-2 pt-1">
-            <Input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              maxLength={1000}
-              placeholder={t("social.write")}
-              className="h-9"
-            />
-            <Button type="submit" size="sm" disabled={!draft.trim()}>
-              {t("social.send")}
-            </Button>
-          </form>
+          <>
+            <form onSubmit={submit} className="relative flex gap-2 pt-1">
+              <MentionPicker
+                id="tournament-mentions"
+                people={picker.matches}
+                active={picker.active}
+                onHighlight={picker.setHighlight}
+                onPick={picker.pick}
+              />
+              <Input
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={picker.onKeyDown}
+                aria-autocomplete="list"
+                aria-expanded={picker.matches.length > 0}
+                aria-controls="tournament-mentions"
+                aria-activedescendant={
+                  picker.matches.length
+                    ? `tournament-mentions-${picker.active}`
+                    : undefined
+                }
+                maxLength={1000}
+                placeholder={t("social.write")}
+                className="h-9"
+              />
+              <Button type="submit" size="sm" disabled={!draft.trim()}>
+                {t("social.send")}
+              </Button>
+            </form>
+          </>
         ) : (
           <Link
             to="/app/login"

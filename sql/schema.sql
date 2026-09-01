@@ -876,6 +876,7 @@ CREATE OR REPLACE FUNCTION "public"."push_targets"("p_kind" "text", "p_ref" inte
 DECLARE
   c challenges;
   t tournaments;
+  cm comments;
 BEGIN
   IF p_kind = 'challengeSent' THEN
     SELECT * INTO c FROM challenges ch WHERE ch.id = p_ref;
@@ -922,6 +923,36 @@ BEGIN
         AND NOT p.is_device
         AND (t.category IS NULL OR p.category = t.category)
         AND pe.user_id IS DISTINCT FROM auth.uid();
+
+  ELSIF p_kind = 'commentMention' THEN
+    SELECT * INTO cm FROM comments cc WHERE cc.id = p_ref;
+    -- Only the author of the comment may make it buzz, and only for the body
+    -- as it was written: the slugs are re-read here, so editing the row later
+    -- cannot be used to notify somebody it never named.
+    IF cm.id IS NULL OR NOT is_own_player(cm.author_player_id) THEN
+      RETURN;
+    END IF;
+
+    -- The mention pattern is the one in src/libs/algorithms/mentions.ts. A
+    -- thread on a tournament is readable by anyone, so anybody named in it may
+    -- be told; a thread on a game or a drill log is club-only, so being named
+    -- in one notifies nobody outside that club's active roster.
+    RETURN QUERY
+      SELECT DISTINCT s.endpoint, s.p256dh, s.auth, s.lang
+      FROM regexp_matches(cm.body, '@([a-z0-9]+(?:-[a-z0-9]+)*)', 'g') AS m(parts)
+      JOIN people pe ON pe.slug = m.parts[1]
+      JOIN push_subscriptions s ON s.person_id = pe.id
+      WHERE pe.user_id IS DISTINCT FROM auth.uid()
+        AND (
+          (cm.tournament_id IS NOT NULL AND is_public_club(cm.club_id))
+          OR EXISTS (
+            SELECT 1 FROM players p
+            WHERE p.person_id = pe.id
+              AND p.club_id = cm.club_id
+              AND p.status = 'active'
+              AND NOT p.is_device
+          )
+        );
   END IF;
 END;
 $$;
@@ -2183,6 +2214,10 @@ CREATE POLICY "Anyone signed in can react to a public tournament" ON "public"."r
 
 
 CREATE POLICY "Authenticated users can create clubs" ON "public"."clubs" FOR INSERT TO "authenticated" WITH CHECK (("owner_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "Author can edit their comment" ON "public"."comments" FOR UPDATE TO "authenticated" USING ("public"."is_own_player"("author_player_id")) WITH CHECK (("public"."is_own_player"("author_player_id") AND ("public"."is_club_member"("club_id") OR (("tournament_id" IS NOT NULL) AND "public"."is_public_club"("public"."tournament_club"("tournament_id")) AND ("club_id" = "public"."tournament_club"("tournament_id"))))));
 
 
 

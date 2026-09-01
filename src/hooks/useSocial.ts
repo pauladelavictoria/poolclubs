@@ -5,11 +5,14 @@ import { optimisticList, tempId } from "@/libs/algorithms/optimistic";
 import { keys } from "@/libs/queryKeys";
 import {
   commentsQuery,
+  mentionedPeopleQuery,
   reactionsQuery,
   tournamentCommentsQuery,
   tournamentReactionsQuery,
 } from "@/queries/social";
 import { GLOBAL_CLUB_SLUG } from "@/libs/algorithms/features";
+import { mentionedSlugs } from "@/libs/algorithms/mentions";
+import { sendPush } from "@/libs/server/push.functions";
 import type { Comment, Reaction, SocialTarget } from "@/types";
 
 /** Turns a target into the column trio the tables use. Exactly one is set —
@@ -85,10 +88,14 @@ const useScopedSocialActions = ({
         target: SocialTarget;
         body: string;
       }) => {
-        await supabase
+        const { data } = await supabase
           .from("comments")
           .insert([{ ...base(), ...targetColumns(target), body: body.trim() }])
+          .select("id")
+          .single()
           .throwOnError();
+
+        return data.id;
       },
       // Appended at the end because useComments orders by created_at ascending.
       ...optimisticList<{ target: SocialTarget; body: string }, Comment>(
@@ -106,6 +113,33 @@ const useScopedSocialActions = ({
           },
         ],
       ),
+      // After the spread, as in useChallenges: a push is a nudge for the people
+      // named in the body, never awaited and never surfaced. Who is eligible is
+      // decided by push_targets in sql/schema.sql, not here — this only says
+      // that a body with an @ in it is worth asking about.
+      onSuccess: (id, { body }) => {
+        if (!mentionedSlugs(body).length) return;
+        void sendPush({ data: { kind: "commentMention", id } }).catch(() => {});
+      },
+    }),
+
+    editComment: useMutation({
+      mutationFn: async ({ id, body }: { id: number; body: string }) => {
+        await supabase
+          .from("comments")
+          .update({ body: body.trim() })
+          .eq("id", id)
+          .throwOnError();
+      },
+      ...optimisticList<{ id: number; body: string }, Comment>(
+        queryClient,
+        commentsKey,
+        (rows, { id, body }) =>
+          rows.map((c) => (c.id === id ? { ...c, body: body.trim() } : c)),
+      ),
+      // No push on an edit, deliberately: an @mention added by editing reaches
+      // the bell (useNotifications re-reads the body) and nothing else. Pushing
+      // would let one comment buzz somebody repeatedly by being edited.
     }),
 
     deleteComment: useMutation({
@@ -219,11 +253,19 @@ const signingPlayerId = (
 
 /** What a public tournament page reads and, for a signed-in visitor, writes. */
 export const useTournamentSocial = (tournamentId: number, clubId: number) => {
-  const { memberships } = useSession();
+  const { memberships, user } = useSession();
   const comments = useQuery(tournamentCommentsQuery(tournamentId));
   const reactions = useQuery(tournamentReactionsQuery(tournamentId));
 
   const playerId = signingPlayerId(memberships);
+
+  // One lookup for every slug the thread mentions, so a name arrives even for
+  // someone from a club the reader has never heard of.
+  const slugs = (comments.data ?? []).flatMap((c) => mentionedSlugs(c.body));
+  const mentioned = useQuery(mentionedPeopleQuery([...new Set(slugs)]));
+  const mentionedBySlug = new Map(
+    (mentioned.data ?? []).map((person) => [person.slug, person]),
+  );
 
   const actions = useScopedSocialActions({
     clubId,
@@ -239,10 +281,17 @@ export const useTournamentSocial = (tournamentId: number, clubId: number) => {
     comments,
     reactions,
     canWrite: playerId != null,
-    /** Which comments are the viewer's own, so they can retract one. The host
-     *  club's admin may delete any of them per RLS, but has no button for it
-     *  out here — moderation is still a club-side job. */
+    /** Which comments are the viewer's own, so they can retract one. */
     myPlayerId: playerId,
+    /** The host club's owner may delete anyone's comment — same rule as the
+     *  DELETE policy on `comments` in sql/schema.sql, so a button that shows
+     *  is a button that works. Owner id rather than a role column because
+     *  that is what `isClubAdmin` is elsewhere (routes/app/_authed/$clubSlug). */
+    /** slug -> person, for rendering `@slug` as a name. */
+    mentionedBySlug,
+    canModerate: memberships.some(
+      (m) => m.club_id === clubId && m.club?.owner_id === user?.id,
+    ),
     ...actions,
   };
 };
