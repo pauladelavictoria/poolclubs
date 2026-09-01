@@ -20,6 +20,14 @@ const OUT = process.env.SHOT_DIR ?? "screenshots";
 const CLUB = process.env.SHOT_CLUB ?? "billar-ruzafa-demo";
 const AUTH = process.env.SHOT_AUTH ?? ".auth.json";
 const TOURNAMENT = process.env.SHOT_TOURNAMENT ?? "13";
+/**
+ * Two drills out of the shared catalog, one from each end of it: a beginner
+ * progressive cut and an advanced two-shot pattern, so the pair shows both a
+ * plain diagram and a busy one.
+ */
+const DRILLS = process.env.SHOT_DRILLS?.split(",") ?? ["1", "51"];
+/** Names of the pages to shoot, when you only want some of them again. */
+const ONLY = process.env.SHOT_PAGES?.split(",");
 /** A different club on purpose: the player page is shot on a real roster. */
 const ME_CLUB = process.env.SHOT_ME_CLUB ?? "poolvalencia";
 
@@ -65,6 +73,22 @@ const PAGES = [
     fullPage: true,
     cutBefore: (lang) => DICTS[lang]["public.ctaBand.body"],
   },
+  {
+    // The catalog is fifty-odd tiles grouped by difficulty, so a fullPage shot
+    // is mostly grid. The fold is the page: hero, skill rail, filters, cards.
+    name: "drills",
+    path: "/drills",
+    fullPage: false,
+    viewport: { width: 1440, height: 1100 },
+  },
+  // A drill in full: diagram, setup, scoring, and the related ones under it.
+  // No CtaBand here, so the cut lands on the footer instead.
+  ...DRILLS.map((id) => ({
+    name: `drill-${id}`,
+    path: `/drills/${id}`,
+    fullPage: true,
+    cutBefore: (lang) => DICTS[lang]["public.footer.tagline"],
+  })),
   {
     name: "me",
     path: `/app/${ME_CLUB}/me`,
@@ -228,7 +252,9 @@ async function shoot(browser, spec, { lang, theme, device, storageState }) {
     height: await page
       .getByText(spec.cutBefore(lang))
       .first()
-      .evaluate((el) => el.closest("section").getBoundingClientRect().top + window.scrollY),
+      .evaluate(
+        (el) => el.closest("section, footer").getBoundingClientRect().top + window.scrollY,
+      ),
   };
   // Foldered by theme then language, so a whole set is one directory to hand
   // over rather than a flat list of 78 names to filter by eye.
@@ -243,6 +269,7 @@ async function shoot(browser, spec, { lang, theme, device, storageState }) {
 const storageState = await session();
 const browser = await chromium.launch();
 for (const spec of PAGES) {
+  if (ONLY && !ONLY.includes(spec.name)) continue;
   for (const lang of LANGS)
     for (const theme of THEMES)
       for (const device of Object.keys(VIEWPORTS)) {

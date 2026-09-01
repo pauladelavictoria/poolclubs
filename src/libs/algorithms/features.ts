@@ -8,7 +8,7 @@
  */
 // ponytail: one const, not an env var or a flag service. Flip it here and
 // redeploy; move it to import.meta.env if it ever has to differ per deploy.
-export const DRILLS_ENABLED = false;
+export const DRILLS_ENABLED = true;
 
 /**
  * Whether a path belongs to a feature that is currently hidden.

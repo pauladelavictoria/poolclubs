@@ -17,9 +17,44 @@ Forked from [aluzed/vite-react-ts-supabase](https://github.com/aluzed/vite-react
 
 ---
 
+## 📸 A look at it
+
+Light theme, English, desktop. `node scripts/screenshots.mjs` regenerates the
+whole set — every page below in three languages, both themes, and on a phone.
+
+**The club directory** — `/clubs`
+
+![The club directory](docs/screenshots/clubs.png)
+
+**A club, as anyone can see it** — `/clubs/$slug/info`
+
+![A club's public page](docs/screenshots/club-info.png)
+
+**A tournament bracket** — `/tournaments/$id`
+
+![A tournament bracket](docs/screenshots/tournament.png)
+
+**The drill library** — `/drills`
+
+![The drill library](docs/screenshots/drills.png)
+
+**One drill: diagram, setup, scoring** — `/drills/$id`
+
+![A single drill](docs/screenshots/drill-1.png)
+
+**A club ranking, split by division** — `/app/$clubSlug/ranking`
+
+![A club ranking by division](docs/screenshots/ranking-divisions.png)
+
+**Your own page, on a phone** — `/app/$clubSlug/me`
+
+<img alt="A player's own page on a phone" src="docs/screenshots/me-phone.png" width="360">
+
+---
+
 ## ✨ Key Features
 
-### 🎯 Practice & Drills _(built, currently hidden behind a feature flag — see `src/libs/features.ts`)_
+### 🎯 Practice & Drills _(built, currently hidden behind a feature flag — see [`src/libs/algorithms/features.ts`](src/libs/algorithms/features.ts))_
 
 - **Drill Library:** Create, customize, and browse pool drills (position play, safety shots, cue ball control, and breaking).
 - **Track Results:** Log shot attempts, completion times, success percentages, and personal bests.
