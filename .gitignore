@@ -42,4 +42,4 @@ skills-lock.json
 .netlify
 
 .auth.json
-screenshots/
+/screenshots/
