@@ -5,7 +5,7 @@ import { liveMatchQuery } from "@/queries/live";
 export const Route = createFileRoute("/app/_authed/$clubSlug/live/$liveId")({
   staticData: {
     section: "games",
-    crumbs: [{ labelKey: "nav.today", to: "/app/$clubSlug/today" }],
+    crumbs: [{ labelKey: "nav.night", to: "/app/$clubSlug/night" }],
     // The scoreboard is the screen. Nobody mid-rack wants a tab bar offering
     // them the rankings, and the space it reserves is the space the score
     // should be read from.

@@ -270,7 +270,20 @@ function TourBlock({
   return (
     <article className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
       <div className={`pop-in lg:col-span-7 ${flipped ? "lg:order-2" : ""}`}>
-        <div className="overflow-hidden rounded-sheet border border-hairline bg-felt p-1.5">
+        {/* A mat, not a hairline.
+
+            These are screenshots of a dark app on a dark canvas, and the frame
+            was bg-felt on pocket with a 10%-white edge: three near-blacks, so
+            the shot had no edge at all and read as a hole in the page. Light
+            mode had the mirror of the same problem, a white shot in a white
+            frame on pale blue.
+
+            felt-raised is the one surface that steps the right way in both
+            themes — up from the canvas on dark, down from the shot on light —
+            so the mat is visible either way. The stronger hairline and the
+            page's own lift do the rest; `lift` is a no-op outside the public
+            skin, which is where this lives. */}
+        <div className="lift overflow-hidden rounded-sheet border border-hairline-strong bg-felt-raised p-2">
           <Shot
             name={shot}
             alt={t(alt)}
@@ -303,7 +316,7 @@ export default function LandingPage() {
           scrolling at every width. */}
       <section>
         <div className="mx-auto grid max-w-6xl gap-10 px-4 pt-14 pb-20 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:pt-24 lg:pb-28">
-          <div className="lg:col-span-6 lg:pt-6">
+          <div className="lg:col-span-5 lg:pt-6">
             <p className="rise text-caption uppercase tracking-[0.16em] text-ink-faint">
               {t("landing.eyebrow")}
             </p>
@@ -351,16 +364,43 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* The phone sits slightly off the grid and bleeds past the right
-              edge on desktop: the page reads as wider than the container. */}
-          <div className="lg:col-span-6 lg:-mr-10 xl:-mr-20">
-            <div className="rise mx-auto max-w-[300px] rounded-sheet border border-hairline-strong bg-felt p-2 lg:ml-auto lg:mr-0 lg:max-w-[340px] lg:rotate-[2deg]">
+          {/* The mockup bleeds past the right edge on desktop: the page reads
+              as wider than the container.
+
+              No frame around it, unlike every other Shot on this page. It is
+              already a laptop, a tablet and three phones with their own
+              shadows, and a border and a felt panel behind that is a picture of
+              a screen inside a picture of a screen. Nothing to round off and
+              nothing to pad, so the wrapper is only the bleed and the tilt. */}
+          <div className="relative lg:col-span-7 lg:-mr-10 xl:-mr-24">
+            {/* A slab of the accent behind the devices, running off the right
+                edge of the page.
+
+                The mockup is a transparent cut-out of five screens, and on the
+                page's own background it read as five small dark rectangles
+                floating in a lot of nothing. On the one hue the app has, it
+                reads as one object. `w-screen` rather than a negative offset so
+                it reaches the edge at any width, and it is the only element on
+                the page allowed to: the accent is the app's "act" colour and a
+                second slab of it anywhere else would be competing with the
+                button underneath.
+
+                Inset from the left and short at the top, so the laptop and the
+                phones hang off it instead of sitting inside a frame. */}
+            <div
+              aria-hidden
+              className="absolute inset-y-0 left-6 w-screen rounded-l-sheet bg-strike"
+            />
+
+            {/* Padded in on three sides and hanging off the bottom: the slab is
+                the ground, and the devices breaking its lower edge is what
+                keeps it from looking like a framed picture. */}
+            <div className="rise relative mx-auto -mb-12 max-w-[600px] px-10 pt-10 lg:ml-auto lg:mr-0 lg:max-w-none lg:pr-4">
               <Shot
-                name="phone"
+                name="hero"
                 alt={t("landing.altHero")}
-                size={[1320, 2289]}
+                size={[1400, 1025]}
                 priority
-                className="rounded-[14px]"
               />
             </div>
           </div>

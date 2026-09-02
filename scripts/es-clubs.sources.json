@@ -1,0 +1,650 @@
+{
+  "_note": "Hand-transcribed federation rosters. Every entry came off the `url` of its roster on `fetched`; nothing here is inferred except where `city_from` says so. Phones are kept only when they are a club landline (9xx/8xx) — the rosters also publish officers' mobile numbers, which are personal data and do not belong in a public directory.",
+  "rosters": [
+    {
+      "source": "fcbillar",
+      "name": "Federació Catalana de Billar",
+      "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+      "fetched": "2026-09-01",
+      "clubs": [
+        {
+          "name": "B.C. Granollers",
+          "address": "Carrer Girona, 222",
+          "city": "Granollers"
+        },
+        {
+          "name": "B. La Unió Coral",
+          "address": "Passeig Bertrand, 13",
+          "city": "Sant Feliu de Llobregat",
+          "phone": "936661138"
+        },
+        {
+          "name": "Billar El Masnou",
+          "address": "Carrer Capità Mirambell, 28",
+          "city": "El Masnou",
+          "phone": "935403754"
+        },
+        {
+          "name": "C.B. Borges",
+          "address": "Carrer Catalunya s/n, Pavelló Esportiu Francesc Macià",
+          "city": "Les Borges Blanques"
+        },
+        {
+          "name": "C.B. 2000 Cerdanyola",
+          "address": "Avinguda Guiera, 6",
+          "city": "Cerdanyola del Vallès",
+          "phone": "930427558",
+          "website": "billarcerdanyola.es"
+        },
+        {
+          "name": "C.B. Alba",
+          "address": "Carrer Sant Pau, 13",
+          "city": "Badalona",
+          "phone": "933843405",
+          "website": "clubbillaralba.com"
+        },
+        {
+          "name": "C.B. Banyoles",
+          "address": "Carrer Abeurador, 10",
+          "city": "Banyoles"
+        },
+        {
+          "name": "C.B. Barcelona",
+          "address": "Gran Via de les Corts Catalanes, 595-599",
+          "city": "Barcelona",
+          "phone": "933173641",
+          "website": "clubbillarbarcelona.com"
+        },
+        {
+          "name": "C.B. Blanes",
+          "address": "Plaça d'Espanya, 5",
+          "city": "Blanes",
+          "phone": "972337152"
+        },
+        {
+          "name": "C.B. Canet de Mar",
+          "address": "Rial de Can Godany s/n",
+          "city": "Canet de Mar"
+        },
+        {
+          "name": "C.B. Cardona",
+          "address": "Carrer Generalitat, 1",
+          "city": "Cardona"
+        },
+        {
+          "name": "C.B. Lleida",
+          "address": "Avinguda Navarra s/n, Camp d'Esports",
+          "city": "Lleida",
+          "website": "clubbillarlleida.com"
+        },
+        {
+          "name": "C.B. Lliçà d'Amunt",
+          "address": "Carrer Folch i Torres, 117",
+          "city": "Lliçà d'Amunt"
+        },
+        {
+          "name": "C.B. Llinars",
+          "address": "Carrer Ravalet, 17",
+          "city": "Llinars del Vallès"
+        },
+        {
+          "name": "C.B. Manresa",
+          "address": "Passatge Dipòsits Vells, 4",
+          "city": "Manresa",
+          "phone": "938736051",
+          "website": "cbillarmanresa.eu"
+        },
+        {
+          "name": "C.B. Matadepera",
+          "address": "Carrer Pompeu Fabra s/n, Club de Golf Can Vinyers",
+          "city": "Matadepera"
+        },
+        {
+          "name": "C.B. Mataró",
+          "address": "Passeig Carles Padrós, 12",
+          "city": "Mataró",
+          "phone": "937964557"
+        },
+        {
+          "name": "C.B. Mollet",
+          "address": "Ronda Can Fàbregas, 1",
+          "city": "Mollet del Vallès",
+          "website": "billarmollet.com"
+        },
+        {
+          "name": "C.B. Monforte",
+          "address": "Carrer Sant Antoni Maria Claret, 373",
+          "city": "Barcelona",
+          "phone": "933181019",
+          "website": "clubbillarmonforte.es"
+        },
+        {
+          "name": "C.B. Mont-roig",
+          "address": "Carrer Vinyols, 17",
+          "city": "Mont-roig del Camp"
+        },
+        {
+          "name": "C.B. Olesa",
+          "address": "Plaça Països Catalans, 2",
+          "city": "Olesa de Montserrat",
+          "phone": "937082202"
+        },
+        {
+          "name": "C.B. Prat",
+          "address": "Carrer Lo Gaiter del Llobregat, 24",
+          "city": "El Prat de Llobregat"
+        },
+        {
+          "name": "C.B. Premià",
+          "address": "Carrer Sant Antoni, 60",
+          "city": "Premià de Mar"
+        },
+        {
+          "name": "C.B. Punt d'Atac",
+          "address": "Carrer Capella, 6",
+          "city": "Torredembarra"
+        },
+        {
+          "name": "C.B. Sant Adrià",
+          "address": "Carrer Dr. Barraquer, 6",
+          "city": "Sant Adrià de Besòs",
+          "phone": "933814898",
+          "website": "clubbillarsantadria.com"
+        },
+        {
+          "name": "C.B. Sant Boi",
+          "address": "Carrer Jaume I, 52",
+          "city": "Sant Boi de Llobregat"
+        },
+        {
+          "name": "C.B. Sant Feliu",
+          "address": "Centre Cívic",
+          "city": "Sant Feliu de Codines"
+        },
+        {
+          "name": "C.B. Sants",
+          "address": "Carrer Rector Triadó, 53",
+          "city": "Barcelona"
+        },
+        {
+          "name": "C.B. Tarragona",
+          "address": "Plaça Imperial Tarraco, 1, Estació d'Autobusos",
+          "city": "Tarragona",
+          "phone": "977227795"
+        },
+        {
+          "name": "C.B. Vic",
+          "address": "Carrer Arquebisbe Alemany, 24",
+          "city": "Vic",
+          "website": "clubbillarvic.com"
+        },
+        {
+          "name": "C.B. Vilanova",
+          "address": "Carrer Olesa s/n, Pavelló Plaça de les Casernes",
+          "city": "Vilanova i la Geltrú"
+        },
+        {
+          "name": "S.B. GEiEG",
+          "address": "Carrer Església de Sant Miquel, 18",
+          "city": "Girona",
+          "website": "geieg.cat"
+        },
+        {
+          "name": "S.B. Coral Colón",
+          "address": "Avinguda Onze de Setembre, 125",
+          "city": "Sabadell",
+          "website": "coralcolon.net"
+        },
+        {
+          "name": "S.B. Esplugues L'Avenç",
+          "address": "Carrer Àngel Guimerà, 27",
+          "city": "Esplugues de Llobregat",
+          "phone": "935135445"
+        },
+        {
+          "name": "S.B. Foment Molins",
+          "address": "Passeig del Terraplè, 49",
+          "city": "Molins de Rei"
+        },
+        {
+          "name": "S.B. La Gran Penya",
+          "address": "Rambla Principal, 52",
+          "city": "Vilanova i la Geltrú",
+          "website": "granpenya.cat"
+        },
+        {
+          "name": "S.B. P.E. Centelles",
+          "address": "Carrer Sant Joan, 14",
+          "city": "Centelles"
+        },
+        {
+          "name": "S.E. Casal Cervera",
+          "address": "Plaça Santa Anna, 2",
+          "city": "Cervera"
+        }
+      ]
+    },
+    {
+      "source": "fmb",
+      "name": "Federación Madrileña de Billar",
+      "url": "https://www.federacionmadriddebillar.com/clubes/",
+      "fetched": "2026-09-01",
+      "clubs": [
+        {
+          "name": "Alcalá Billar Club",
+          "address": "Paseo Nuestra Señora del Val, 4, Polideportivo Virgen del Val",
+          "city": "Alcalá de Henares"
+        },
+        {
+          "name": "Club Billar Alcántara",
+          "address": "Calle Alcántara, 48",
+          "city": "Madrid",
+          "phone": "914024079"
+        },
+        {
+          "name": "A.D.D. Billar Alcobendas",
+          "address": "Calle Cáceres s/n, Casa de las Asociaciones",
+          "city": "Alcobendas",
+          "phone": "916511797",
+          "website": "adabillaralcobendas.com"
+        },
+        {
+          "name": "Black Ball Madrid",
+          "address": "Calle Luis I, 86",
+          "city": "Madrid",
+          "phone": "910141339"
+        },
+        {
+          "name": "Peña Billarística Bellas Artes",
+          "address": "Calle Alcalá, 42",
+          "city": "Madrid"
+        },
+        {
+          "name": "Club Billar Getafe",
+          "address": "Avenida Juan de Borbón s/n, Polideportivo Juan de la Cierva",
+          "city": "Getafe"
+        },
+        {
+          "name": "Club Billar Iberia",
+          "address": "Calle Núñez de Balboa, 115",
+          "city": "Madrid"
+        },
+        {
+          "name": "Club Billar Kalima-Rivas Vaciamadrid",
+          "address": "Calle Mirador s/n, Polideportivo Parque del Sureste",
+          "city": "Rivas-Vaciamadrid"
+        },
+        {
+          "name": "Madrid Escuela Nacional",
+          "address": "Calle Alcántara, 48",
+          "city": "Madrid",
+          "phone": "914024079",
+          "website": "menbillar.com"
+        },
+        {
+          "name": "Club Billar Magerit",
+          "address": "Calle Payaso Fofó, 1",
+          "city": "Madrid",
+          "phone": "915545956"
+        },
+        {
+          "name": "Club Billar Móstoles",
+          "address": "Calle Libertad, 36-38, C.C. Ecomóstoles",
+          "city": "Móstoles",
+          "website": "billarclubmostoles.com"
+        },
+        {
+          "name": "Club Billar Perales del Río",
+          "address": "Calle Juan de Mairena s/n, Centro Cultural Julián Marías",
+          "city": "Getafe"
+        },
+        {
+          "name": "Amigos Billar Real Casino",
+          "address": "Calle Aduana, 10",
+          "city": "Madrid"
+        },
+        {
+          "name": "Snooker Madrid",
+          "address": "Carretera de Fuencarral, 74",
+          "city": "Alcobendas"
+        },
+        {
+          "name": "Snooker Valdelasfuentes",
+          "address": "Avenida Miguel de Cervantes s/n, Ciudad Deportiva Valdelasfuentes",
+          "city": "Alcobendas"
+        },
+        {
+          "name": "Tilt Billiard Club",
+          "address": "Paseo de Santa María de la Cabeza, 75",
+          "city": "Madrid",
+          "phone": "914744424"
+        },
+        {
+          "name": "Club Billar Vallecas",
+          "address": "Calle Játiva, 12",
+          "city": "Madrid"
+        },
+        {
+          "name": "Club Billar Billardo",
+          "address": "Calle San Bernardo, 22",
+          "city": "Madrid"
+        }
+      ]
+    },
+    {
+      "source": "fab",
+      "name": "Federación Andaluza de Billar — direcciones de contacto de clubes",
+      "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+      "fetched": "2026-09-01",
+      "dated": "2015-09-18",
+      "_note": "The only club list the FAB publishes, and it is a decade old and covers the three-cushion league only — recorded in `dated` so the age travels with the rows. Half the entries on it are an officer's home address under their own name (\"Sr. D. <name>\", a flat number, a mobile); those are left out entirely. What is kept is the eleven entries that name a venue — a polideportivo, a casino, a casa de la juventud, commercial premises.",
+      "clubs": [
+        {
+          "name": "Club de Billar Bollullos",
+          "address": "Polideportivo Municipal, Calle Nerva s/n",
+          "city": "Bollullos del Condado",
+          "phone": "959412730"
+        },
+        {
+          "name": "Club de Billar Sevilla",
+          "address": "Calle Duque de Rivas, 27 bajo",
+          "city": "Sevilla",
+          "phone": "954769579"
+        },
+        {
+          "name": "Asociación Cordobesa de Billar",
+          "address": "Calle Los Metalúrgicos, Nave 41, Polígono Industrial Pedroches",
+          "city": "Córdoba",
+          "phone": "957438218"
+        },
+        {
+          "name": "Club de Billar Urso",
+          "address": "Casino de Osuna",
+          "city": "Osuna",
+          "phone": "954810519"
+        },
+        {
+          "name": "Club de Billar La Palma",
+          "address": "Casa de la Juventud, Plaza del Punto s/n",
+          "city": "La Palma del Condado"
+        },
+        {
+          "name": "Club de Billar Alcalá",
+          "address": "Calle Oviedo, 7",
+          "city": "Alcalá de Guadaíra",
+          "phone": "955686372"
+        },
+        {
+          "name": "Club de Billar Almonte",
+          "address": "Calle El Cerro, 2, Casino La Paz",
+          "city": "Almonte",
+          "phone": "959407934"
+        },
+        {
+          "name": "C.B. Elio Antonio",
+          "address": "Avenida Océano Atlántico s/n",
+          "city": "Lebrija"
+        },
+        {
+          "name": "Club de Billar Casino Artesanos",
+          "address": "Calle Cánovas del Castillo, 1",
+          "city": "Écija",
+          "phone": "954831038"
+        },
+        {
+          "name": "C.B. Los Amigos",
+          "address": "Polígono Los Cerros, parcela 127",
+          "city": "Úbeda"
+        },
+        {
+          "name": "C.B. Fuengirola",
+          "address": "Avenida Jesús Santos Reim, Edificio Vega II bajo",
+          "city": "Fuengirola"
+        }
+      ]
+    },
+    {
+      "source": "fbcv",
+      "name": "Federació de Billar de la Comunitat Valenciana — Listado de Clubs",
+      "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+      "fetched": "2026-09-01",
+      "dated": "2020-12",
+      "_note": "A spreadsheet, linked from https://www.fbillarcv.org/clubs-de-billar/. It keeps the club's own contact number (TELEFONO) in a different column from the president's (TEL_PRESI), so the club column is taken as published even where it is a mobile, and the officers' columns — names, personal phones, personal emails — are left out entirely. Four rows carry a name and nothing else and are skipped. Two addresses are a flat (a floor-and-door number) rather than a venue; those clubs are kept, their address is not. CLUB DE BILLAR POOLVALENCIA is left out because it already exists in the live database under the slug `poolvalencia` — verify before re-adding.",
+      "clubs": [
+        {
+          "name": "Club de Billar Valencia",
+          "address": "Calle Reina, 68 (Edificio Ateneo Mar)",
+          "city": "Valencia",
+          "phone": "625502137"
+        },
+        {
+          "name": "Club de Billar Ateneo Mercantil de Valencia",
+          "address": "Plaza del Ayuntamiento, 18",
+          "city": "Valencia",
+          "phone": "963521612"
+        },
+        {
+          "name": "Club de Billar Sindicato Agrícola de Puçol",
+          "address": "Calle San Juan, 93",
+          "city": "Puçol"
+        },
+        {
+          "name": "Club de Billar Paiporta",
+          "address": "Plaza Iglesia San Jorge, 7 bajo",
+          "city": "Paiporta",
+          "phone": "963972321"
+        },
+        {
+          "name": "Club de Billar Sueca",
+          "address": "Ronda País Valencià s/n",
+          "city": "Sueca",
+          "phone": "630810638"
+        },
+        {
+          "name": "Club de Billar Almussafes",
+          "address": "Calle Poliesportiu s/n",
+          "city": "Almussafes",
+          "phone": "961794136"
+        },
+        {
+          "name": "Club de Billar Llíria",
+          "address": "Calle Nuestra Señora de Montiel, 7",
+          "city": "Llíria",
+          "phone": "646479212"
+        },
+        {
+          "name": "Club de Billar La Mutua de Chiva",
+          "address": "Calle Antonio Machado, 6",
+          "city": "Chiva",
+          "phone": "633621186"
+        },
+        {
+          "name": "Gandia Billar Club",
+          "address": "Calle Miramar, 13",
+          "city": "Gandia",
+          "phone": "962043599"
+        },
+        {
+          "name": "Club de Billar L'Alcúdia",
+          "city": "L'Alcúdia",
+          "phone": "690180280"
+        },
+        {
+          "name": "Club Billar Villalonga",
+          "address": "Avenida Lorcha, 4",
+          "city": "Villalonga"
+        },
+        {
+          "name": "Club de Billar Alzira",
+          "address": "Ronda Barrablet, 29 A",
+          "city": "Alzira",
+          "phone": "962955133"
+        },
+        {
+          "name": "Club de Billar Vinalesa",
+          "address": "Plaza Castell, 2",
+          "city": "Vinalesa"
+        },
+        {
+          "name": "Club Billar Montcada",
+          "address": "Calle Lluís Vives, 18",
+          "city": "Moncada",
+          "phone": "961300019"
+        },
+        {
+          "name": "Club de Billar Torrent",
+          "address": "Calle Marco, 1",
+          "city": "Torrent",
+          "phone": "961293179"
+        },
+        {
+          "name": "Mislata Club Billar",
+          "address": "Calle Doctor Fleming, 12",
+          "city": "Mislata",
+          "phone": "961848058"
+        },
+        {
+          "name": "Club de Billar Bocairent",
+          "address": "Avenida Diputat Castelló, 15",
+          "city": "Bocairent"
+        },
+        {
+          "name": "Alicante Billar Club",
+          "address": "Calle Devesa, 4",
+          "city": "Alicante",
+          "phone": "965241927"
+        },
+        {
+          "name": "Club de Billar David Betis Florida",
+          "address": "Calle Grado, 8",
+          "city": "Alicante",
+          "phone": "966085051"
+        },
+        {
+          "name": "Club de Billar C.E.E. Idella",
+          "address": "Avenida del Centro Excursionista Eldense s/n",
+          "city": "Elda",
+          "phone": "965385567"
+        },
+        {
+          "name": "Elx Billar Club",
+          "address": "Calle Monóvar, 60",
+          "city": "Elche"
+        },
+        {
+          "name": "Club de Billar José Pérez Ruiz de Callosa",
+          "address": "Plaza de la Navidad s/n (Casa de la Juventud)",
+          "city": "Callosa de Segura"
+        },
+        {
+          "name": "Club de Billar Alcoy",
+          "city": "Alcoy"
+        },
+        {
+          "name": "Club de Billar Casino de Monóvar",
+          "address": "Calle San Juan, 13",
+          "city": "Monóvar",
+          "phone": "965470090"
+        },
+        {
+          "name": "Club Billar Torrevieja",
+          "address": "Polideportivo Cecilio Gallego",
+          "city": "Torrevieja",
+          "phone": "965713701"
+        },
+        {
+          "name": "Club Billar Onil",
+          "address": "Avenida Constitución",
+          "city": "Onil",
+          "phone": "686226582"
+        },
+        {
+          "name": "Club de Billar C.A.M. Villenense",
+          "address": "Casa Cabanes, Las Fuentes, 20",
+          "city": "Villena",
+          "phone": "965800334"
+        },
+        {
+          "name": "Club de Billar Castalla",
+          "address": "Polideportivo Municipal",
+          "city": "Castalla",
+          "phone": "649442174"
+        },
+        {
+          "name": "Club de Billar Casino El Campello",
+          "address": "Plaza Constitución",
+          "city": "El Campello",
+          "phone": "666467547"
+        },
+        {
+          "name": "Novelda Billar Club",
+          "address": "Plaza Santos Médicos s/n",
+          "city": "Novelda",
+          "phone": "652355502"
+        },
+        {
+          "name": "B.C. Benidorm",
+          "address": "Palacio de Deportes, Partida Salto del Agua s/n",
+          "city": "Benidorm",
+          "phone": "652917319"
+        },
+        {
+          "name": "Club de Billar Castellón",
+          "address": "Plaza Puerta del Sol, 1",
+          "city": "Castellón de la Plana",
+          "phone": "964223500"
+        },
+        {
+          "name": "Club de Billar Betxí",
+          "address": "Calle Pius XII, 47",
+          "city": "Betxí"
+        },
+        {
+          "name": "Club Billar La Vall",
+          "address": "Barrio Carmaday s/n",
+          "city": "La Vall d'Uixó"
+        },
+        {
+          "name": "CB. Círculo Mercantil",
+          "address": "Calle Echegaray, 1",
+          "city": "Castellón de la Plana"
+        },
+        {
+          "name": "C.D. OrpesaPool",
+          "address": "Calle Francisco Sevillano, 49",
+          "city": "Oropesa del Mar",
+          "phone": "653976979"
+        }
+      ]
+    },
+    {
+      "source": "rfeb",
+      "name": "Real Federación Española de Billar — organigrama",
+      "url": "https://rfeb.org/organigrama.php?idx=16",
+      "fetched": "2026-09-01",
+      "_note": "Names only; the page carries no addresses. Kept are the clubs whose town is stated in the club's own name — recorded as city_from: \"name\" so the inference is visible. Clubs already covered by the Catalan and Madrid rosters, and those whose town cannot be read off the name, are left out rather than guessed at. Entries the Valencian roster now covers with a real address (Paiporta, Valencia, Gandia, Denia) have been removed from here. Club Billar Teo has since been dropped too: the Cuescore walk found it with a street address in Os Tilos.",
+      "clubs": [
+        {
+          "name": "Club Billar Casino de Cartagena",
+          "city": "Cartagena",
+          "city_from": "name"
+        },
+        {
+          "name": "Club Billar Maracena",
+          "city": "Maracena",
+          "city_from": "name"
+        },
+        {
+          "name": "Club Billar Murcia",
+          "city": "Murcia",
+          "city_from": "name"
+        },
+        {
+          "name": "Club Billar Valladolid",
+          "city": "Valladolid",
+          "city_from": "name"
+        }
+      ]
+    }
+  ]
+}

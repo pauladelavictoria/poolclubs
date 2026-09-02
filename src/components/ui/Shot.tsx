@@ -23,6 +23,14 @@
  * `sips -Z 2000` it down, register it here, and pass its size at the call site.
  */
 const SHOTS: Record<string, string> = {
+  // The landing hero: a device mockup rather than a screenshot, and the one
+  // entry that must not be framed — it carries its own transparent background
+  // and its own shadows. Its twin below swaps the bezels rather than the app
+  // inside them. Both are cropped to one shared alpha bounding box so the pair
+  // is the same size, which is what lets a single `size` reserve the box for
+  // either — see the call site in LandingPage.
+  hero: "/art/poolclubs-hero.png",
+
   // LandingPage's four, carried over from its local Shot.
   phone: "/art/phone.png",
   ranking: "/art/ranking.png",
@@ -60,6 +68,7 @@ const SHOTS: Record<string, string> = {
  * answer the wrong question.
  */
 const SHOTS_DARK: Record<string, string> = {
+  hero: "/art/poolclubs-hero-dark.png",
   phone: "/art/phone-dark.png",
   ranking: "/art/ranking-dark.png",
   tournament: "/art/tournament-dark.png",

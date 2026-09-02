@@ -89,11 +89,13 @@ export const playersQuery = (clubId: number) =>
         .eq("status", "active")
         .throwOnError();
 
-      // The tablet's own account is a member so that RLS will let it score, but
-      // it is not a player: leaving it in would put a face in the roster, a row
-      // in both rankings and a name in every opponent picker.
+      // Two kinds of member that are not players. The tablet's own account is a
+      // member so that RLS will let it score; a caretaker is a member so that
+      // whoever looks after a club can open it at all (see the seeded directory
+      // clubs in sql/clubs-seed-es.sql). Leaving either in would put a face in
+      // the roster, a row in both rankings and a name in every opponent picker.
       return byName((data ?? []).map(flattenPlayer)).filter(
-        (p) => !p.is_device,
+        (p) => !p.is_device && !p.is_caretaker,
       );
     },
   });
