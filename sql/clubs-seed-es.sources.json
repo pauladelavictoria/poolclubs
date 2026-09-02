@@ -1,0 +1,708 @@
+{
+  "b-c-granollers": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "b-la-unio-coral": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "billar-el-masnou": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-borges": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": false
+  },
+  "c-b-2000-cerdanyola": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-alba": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-banyoles": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-barcelona": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-blanes": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-canet-de-mar": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-cardona": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-lleida": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-llica-damunt": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-llinars": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-manresa": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-matadepera": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-mataro": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-mollet": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-monforte": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-mont-roig": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-olesa": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-prat": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-premia": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-punt-datac": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-sant-adria": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-sant-boi": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-sant-feliu": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-sants": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-tarragona": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-vic": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "c-b-vilanova": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": false
+  },
+  "s-b-geieg": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "s-b-coral-colon": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "s-b-esplugues-lavenc": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "s-b-foment-molins": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "s-b-la-gran-penya": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "s-b-p-e-centelles": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "s-e-casal-cervera": {
+    "source": "fcbillar",
+    "url": "https://fcbillar.cat/federacio/llistat-de-clubs-federacio-catalana-de-billar/",
+    "located": true
+  },
+  "alcala-billar-club": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": false
+  },
+  "club-billar-alcantara": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "a-d-d-billar-alcobendas": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "black-ball-madrid": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "pena-billaristica-bellas-artes": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "club-billar-getafe": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "club-billar-iberia": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "club-billar-kalima-rivas-vaciamadrid": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "madrid-escuela-nacional": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "club-billar-magerit": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "club-billar-mostoles": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "club-billar-perales-del-rio": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": false
+  },
+  "amigos-billar-real-casino": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "snooker-madrid": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "snooker-valdelasfuentes": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "tilt-billiard-club": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "club-billar-vallecas": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "club-billar-billardo": {
+    "source": "fmb",
+    "url": "https://www.federacionmadriddebillar.com/clubes/",
+    "located": true
+  },
+  "club-de-billar-bollullos": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": true
+  },
+  "club-de-billar-sevilla": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": true
+  },
+  "asociacion-cordobesa-de-billar": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": false
+  },
+  "club-de-billar-urso": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": true
+  },
+  "club-de-billar-la-palma": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": false
+  },
+  "club-de-billar-alcala": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": true
+  },
+  "club-de-billar-almonte": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": false
+  },
+  "c-b-elio-antonio": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": true
+  },
+  "club-de-billar-casino-artesanos": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": true
+  },
+  "c-b-los-amigos": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": false
+  },
+  "c-b-fuengirola": {
+    "source": "fab",
+    "url": "https://fab.es/2015-16/Liga/Direcciones%20de%20contactos%20clubes.pdf",
+    "dated": "2015-09-18",
+    "located": true
+  },
+  "club-de-billar-valencia": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-ateneo-mercantil-de-valencia": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-sindicato-agricola-de-pucol": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-paiporta": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "club-de-billar-sueca": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-almussafes": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-lliria": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "club-de-billar-la-mutua-de-chiva": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "gandia-billar-club": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "club-de-billar-lalcudia": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-billar-villalonga": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-alzira": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-vinalesa": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-billar-montcada": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "club-de-billar-torrent": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "mislata-club-billar": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-bocairent": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "alicante-billar-club": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-david-betis-florida": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-c-e-e-idella": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "elx-billar-club": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "club-de-billar-jose-perez-ruiz-de-callosa": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "club-de-billar-alcoy": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "club-de-billar-casino-de-monovar": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "club-billar-torrevieja": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-billar-onil": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-c-a-m-villenense": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-castalla": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": false
+  },
+  "club-de-billar-casino-el-campello": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "novelda-billar-club": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "b-c-benidorm": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-castellon": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-de-billar-betxi": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-billar-la-vall": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "cb-circulo-mercantil": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "c-d-orpesapool": {
+    "source": "fbcv",
+    "url": "https://www.fbillarcv.org/wp-content/uploads/2020/12/Listado-de-Clubs-FBCV.xlsx",
+    "dated": "2020-12",
+    "located": true
+  },
+  "club-billar-casino-de-cartagena": {
+    "source": "rfeb",
+    "url": "https://rfeb.org/organigrama.php?idx=16",
+    "city_from": "name",
+    "located": false
+  },
+  "club-billar-maracena": {
+    "source": "rfeb",
+    "url": "https://rfeb.org/organigrama.php?idx=16",
+    "city_from": "name",
+    "located": false
+  },
+  "club-billar-murcia": {
+    "source": "rfeb",
+    "url": "https://rfeb.org/organigrama.php?idx=16",
+    "city_from": "name",
+    "located": false
+  },
+  "club-billar-valladolid": {
+    "source": "rfeb",
+    "url": "https://rfeb.org/organigrama.php?idx=16",
+    "city_from": "name",
+    "located": false
+  },
+  "billiard-school-club-2021": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 10542709,
+    "located": true
+  },
+  "break-run": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 7918595,
+    "located": false
+  },
+  "club-billar-pool-denia-y-la-marina-alta": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 24922291,
+    "located": false
+  },
+  "club-billar-snooker-valencia": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 75577216,
+    "located": true
+  },
+  "club-billar-teo": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 6100628,
+    "located": true
+  },
+  "club-de-billar-adai": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 9347644,
+    "located": true
+  },
+  "club-de-billar-estepona": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 80857591,
+    "located": true
+  },
+  "club-rias-baixas": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 9200228,
+    "located": false
+  },
+  "club-sierra-billiards-valencia-pool": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 46915453,
+    "located": false
+  },
+  "lo-de-eva-pool-food": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 7785744,
+    "located": true
+  },
+  "origen-r": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 51628060,
+    "located": true
+  },
+  "panda-pool-madrid-sede": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 75749539,
+    "located": false
+  },
+  "pool-pontevedra": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 17444335,
+    "located": true
+  },
+  "sala-quince-salon-de-billar-pool": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 3175269,
+    "located": true
+  },
+  "straight-pool-denia": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 38738563,
+    "located": true
+  },
+  "tecno-pool-hotel-lakua": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 6889929,
+    "located": true
+  },
+  "val-minor-pool": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 54276784,
+    "located": true
+  },
+  "val-minor-pool-pontevedra": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 53034532,
+    "located": false
+  },
+  "x-united-sevilla": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 62175754,
+    "located": true
+  },
+  "x-united-store": {
+    "source": "cuescore",
+    "url": "https://api.cuescore.com/",
+    "venueId": 66289621,
+    "located": true
+  }
+}

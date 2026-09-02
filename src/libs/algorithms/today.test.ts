@@ -127,6 +127,42 @@ describe("suggestGroups — who could play whom", () => {
     expect(suggestGroups(queue, 2, met([]), 1).length).toBe(1);
   });
 
+  /**
+   * The property three screens depend on, and the bug that made this test
+   * exist: the ranking-night list, each free table's own page and the scoreboard
+   * all hand out `groups[i]` to `freeTables[i]`. That is only one answer if they
+   * all ask for the same number of groups.
+   *
+   * Asking for one group is not "the first of asking for three" — seeding takes
+   * one player per table before any table is filled, so the count changes the
+   * composition. The scoreboard used to ask for 1 and offer it for a table that
+   * might be second in the club's order, which handed the same pair to two
+   * tablets. Hence useSuggestions owning the count rather than its callers.
+   */
+  it("changes what the first group is when asked for a different number, which is why the count is not a caller's to choose", () => {
+    const queue = [p(1), p(2), p(3), p(4)];
+    const ids = (n: number) =>
+      suggestGroups(queue, 2, met([]), n).map((g) => g.map((x) => x.id));
+
+    expect(ids(1)).toEqual([[1, 2]]);
+    expect(ids(2)).toEqual([
+      [1, 3],
+      [2, 4],
+    ]);
+    // The first group differs, so reading index 0 of the wrong request offers a
+    // pair that the other table is also being offered.
+    expect(ids(1)[0]).not.toEqual(ids(2)[0]);
+  });
+
+  it("gives every free table a group of its own, with nobody in two of them", () => {
+    const queue = [p(1), p(2), p(3), p(4), p(5), p(6)];
+    const groups = suggestGroups(queue, 2, met([]), 3);
+
+    expect(groups.length).toBe(3);
+    const seated = groups.flat().map((x) => x.id);
+    expect(new Set(seated).size).toBe(seated.length);
+  });
+
   it("does not suggest a doubles match from three people", () => {
     expect(suggestGroups([p(1), p(2), p(3)], 4, met([]))).toEqual([]);
   });
@@ -139,9 +175,10 @@ describe("suggestGroups — who could play whom", () => {
     ).map((g) => g.map((x) => x.id));
     expect(sixth.length).toBe(3);
     for (const [a, b] of sixth) {
-      expect(!(a === 5 && b === 6) && !(a === 6 && b === 5), "5 and 6 rematched").toBe(
-        true,
-      );
+      expect(
+        !(a === 5 && b === 6) && !(a === 6 && b === 5),
+        "5 and 6 rematched",
+      ).toBe(true);
     }
   });
 });

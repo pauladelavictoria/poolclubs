@@ -140,6 +140,38 @@ $$;
 ALTER FUNCTION "public"."approved_member_contact"("p_player_id" bigint) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."call_ranking_night"("p_club_id" integer) RETURNS timestamp with time zone
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_last timestamp with time zone;
+  v_now  timestamp with time zone;
+BEGIN
+  IF NOT is_club_admin(p_club_id) THEN
+    RAISE EXCEPTION 'not allowed' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT night_call_at INTO v_last FROM clubs WHERE id = p_club_id FOR UPDATE;
+
+  -- Two hours. Long enough that the second press is somebody wondering whether
+  -- the first worked, short enough that a club playing twice in an evening can
+  -- still call the second half.
+  IF v_last IS NOT NULL AND v_last > now() - interval '2 hours' THEN
+    RAISE EXCEPTION 'called too recently' USING ERRCODE = 'P0001';
+  END IF;
+
+  UPDATE clubs SET night_call_at = now() WHERE id = p_club_id
+    RETURNING night_call_at INTO v_now;
+
+  RETURN v_now;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."call_ranking_night"("p_club_id" integer) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -306,6 +338,8 @@ BEGIN
         SET member_count = (
             SELECT count(*) FROM public.players
             WHERE club_id = cid AND status = 'active'
+              -- A caretaker holds the keys; they do not play here.
+              AND NOT is_caretaker
         )
         WHERE id = cid;
     END LOOP;
@@ -877,6 +911,7 @@ DECLARE
   c challenges;
   t tournaments;
   cm comments;
+  cl clubs;
 BEGIN
   IF p_kind = 'challengeSent' THEN
     SELECT * INTO c FROM challenges ch WHERE ch.id = p_ref;
@@ -953,6 +988,46 @@ BEGIN
               AND NOT p.is_device
           )
         );
+
+  ELSIF p_kind = 'nightCall' THEN
+    -- p_ref is the club, not a row of its own: a call to a ranking night is an
+    -- event with nothing to point at but the club it is at, and clubs.night_call_at
+    -- is when it happened.
+    SELECT * INTO cl FROM clubs c2 WHERE c2.id = p_ref;
+
+    -- Two conditions, and the second is the one that matters. Being an admin is
+    -- who may call; night_call_at inside the last minute is *that* they just
+    -- did, through call_ranking_night, which is where the two-hour limit lives.
+    -- Without it this branch would send a club-wide push on demand, as often as
+    -- it was asked.
+    IF cl.id IS NULL
+       OR NOT is_club_admin(p_ref)
+       OR cl.night_call_at IS NULL
+       OR cl.night_call_at <= now() - interval '1 minute' THEN
+      RETURN;
+    END IF;
+
+    -- The whole active roster except the people it would be telling nothing:
+    -- the tablets, the caretaker who does not play here, and anybody whose face
+    -- is already lit on the board. DISTINCT because push_subscriptions is keyed
+    -- by person, and a person in two clubs has one set of devices.
+    --
+    -- A check-in is never cleared, it expires on being read — the eight hours
+    -- are PRESENT_WINDOW_MS in src/libs/algorithms/night.ts, and this is the
+    -- second copy of that rule. Testing the column for NULL alone would leave
+    -- out everybody who came last week.
+    RETURN QUERY
+      SELECT DISTINCT s.endpoint, s.p256dh, s.auth, s.lang
+      FROM players p
+      JOIN people pe ON pe.id = p.person_id
+      JOIN push_subscriptions s ON s.person_id = p.person_id
+      WHERE p.club_id = p_ref
+        AND p.status = 'active'
+        AND NOT p.is_device
+        AND NOT p.is_caretaker
+        AND (p.present_since IS NULL
+             OR p.present_since <= now() - interval '8 hours')
+        AND pe.user_id IS DISTINCT FROM auth.uid();
   END IF;
 END;
 $$;
@@ -1175,6 +1250,8 @@ CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "timezone" "text" DEFAULT 'Europe/Madrid'::"text" NOT NULL,
     "photo_order" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
     "tables_info" "text",
+    "has_logo" boolean GENERATED ALWAYS AS (("logo_url" IS NOT NULL)) STORED,
+    "night_call_at" timestamp with time zone,
     CONSTRAINT "clubs_country_shape" CHECK ((("country" IS NULL) OR ("country" ~ '^[A-Z]{2}$'::"text"))),
     CONSTRAINT "clubs_latlon_pair" CHECK (((("lat" IS NULL) = ("lon" IS NULL)) AND (("lat" IS NULL) OR ((("lat" >= ('-90'::integer)::double precision) AND ("lat" <= (90)::double precision)) AND (("lon" >= ('-180'::integer)::double precision) AND ("lon" <= (180)::double precision)))))),
     CONSTRAINT "clubs_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
@@ -1183,6 +1260,14 @@ CREATE TABLE IF NOT EXISTS "public"."clubs" (
 
 
 ALTER TABLE "public"."clubs" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."clubs"."has_logo" IS 'Sortable mirror of "logo_url IS NOT NULL": the directory and the map lead with clubs that have one.';
+
+
+
+COMMENT ON COLUMN "public"."clubs"."night_call_at" IS 'When an admin last called the club to a ranking night. Both the rate limit (one call per two hours, in call_ranking_night) and the window push_targets will send a nightCall inside.';
+
 
 
 CREATE SEQUENCE IF NOT EXISTS "public"."clubs_id_seq"
@@ -1388,12 +1473,17 @@ CREATE TABLE IF NOT EXISTS "public"."players" (
     "queued_at" timestamp with time zone,
     "is_device" boolean DEFAULT false NOT NULL,
     "device_table_id" integer,
+    "is_caretaker" boolean DEFAULT false NOT NULL,
     CONSTRAINT "players_queue_check" CHECK ((("queued_table_id" IS NULL) = ("queued_at" IS NULL))),
     CONSTRAINT "players_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text"])))
 );
 
 
 ALTER TABLE "public"."players" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."players"."is_caretaker" IS 'Holds the keys, does not play here: kept out of member_count and out of the roster.';
+
 
 
 ALTER TABLE "public"."players" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
@@ -2770,6 +2860,13 @@ GRANT ALL ON FUNCTION "public"."approved_member_contact"("p_player_id" bigint) T
 
 
 
+REVOKE ALL ON FUNCTION "public"."call_ranking_night"("p_club_id" integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."call_ranking_night"("p_club_id" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."call_ranking_night"("p_club_id" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."call_ranking_night"("p_club_id" integer) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "anon";
 GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."can_score_live_match"("cid" integer, "p1" bigint, "p2" bigint, "p1b" bigint, "p2b" bigint) TO "service_role";
@@ -3111,6 +3208,11 @@ GRANT SELECT("photo_order") ON TABLE "public"."clubs" TO "anon";
 
 
 GRANT SELECT("tables_info") ON TABLE "public"."clubs" TO "anon";
+
+
+
+GRANT SELECT("has_logo") ON TABLE "public"."clubs" TO "anon";
+GRANT SELECT("has_logo") ON TABLE "public"."clubs" TO "authenticated";
 
 
 

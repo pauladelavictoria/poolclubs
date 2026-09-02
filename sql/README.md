@@ -16,6 +16,14 @@ is what the app compiles against. They come from the same place and drift togeth
 the global drill library, one file per source, and a club's worth of plausible
 results to develop against. Apply one with `npm run db:sql sql/drills-seed-ppc.sql`.
 
+**`clubs-seed-es.sql`** is data too, but generated rather than hand-written: real
+Spanish clubs for the public directory, produced by `npm run clubs:es` from
+OpenStreetMap and the federation rosters in `scripts/es-clubs.sources.json`.
+Edit the script and re-run it, never the SQL. `clubs-seed-es.sources.json` beside
+it records where every row came from. Read the header before applying it — it
+needs an owner account to exist first, and it is worth rehearsing with the final
+`COMMIT` changed to `ROLLBACK`.
+
 ## Making a change
 
 Applying a change is manual — write the SQL in a scratch file, run it against the

@@ -118,8 +118,8 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
           end: true,
         },
         {
-          to: "/app/$clubSlug/today",
-          labelKey: "nav.today",
+          to: "/app/$clubSlug/night",
+          labelKey: "nav.night",
           icon: LuLayoutGrid,
           section: "home",
         },

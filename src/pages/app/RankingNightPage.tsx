@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { LuMinus, LuPlus, LuTv } from "react-icons/lu";
+import { LuBellRing, LuMinus, LuPlus, LuTv } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
-import { useCheckIn, useWhoIsHere } from "@/hooks/useNight";
+import { useCallNight, useCheckIn, useWhoIsHere } from "@/hooks/useNight";
 import { useSuggestions, seatsOfGroup } from "@/hooks/useSuggestions";
 import { sideNames } from "@/libs/algorithms/night";
+import { zoneOf } from "@/libs/algorithms/day";
 import StartMatchForm from "@/components/live/StartMatchForm";
+import SuggestedGroup from "@/components/live/SuggestedGroup";
 import PageTitle from "@/components/layout/PageTitle";
 import { AppLink } from "@/components/layout/AppLink";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import ConfirmButton from "@/components/ui/ConfirmButton";
 import { Card } from "@/components/ui/Card";
 import { Label } from "@/components/ui/Label";
 import { Segmented } from "@/components/ui/Segmented";
@@ -28,7 +31,7 @@ import { useT } from "@/i18n";
 import { DISCIPLINES, type ClubTable, type Player } from "@/types";
 
 /**
- * The club night, on one page.
+ * The ranking night, on one page.
  *
  * It used to be two: a grid of tables, and a board by the door for checking in.
  * They were never read apart — you arrive, you tap your face, you look for a
@@ -38,15 +41,32 @@ import { DISCIPLINES, type ClubTable, type Player } from "@/types";
  * Top to bottom in the order the night is thought about: what we are playing,
  * what is on the tables, who could be on one, who is here.
  */
-export default function TodayPage() {
-  const { t } = useT();
-  const { player, isClubAdmin } = useAuth();
+export default function RankingNightPage() {
+  const { t, locale } = useT();
+  const { player, isClubAdmin, activeClub } = useAuth();
   const { data: players, isLoading } = usePlayers();
   const { data: tables } = useClubTables();
   const { data: live } = useLiveMatches();
   const { startMatch } = useManageLiveMatch();
   const checkIn = useCheckIn();
+  const callNight = useCallNight();
   const here = useWhoIsHere();
+
+  /**
+   * When the club was last called, as a clock time.
+   *
+   * Formatted in the club's own zone rather than the reader's, which is what
+   * makes it safe to compute during render: an explicit timeZone gives the
+   * server and the browser the same string, where the default would give
+   * whatever each of them is set to. See libs/algorithms/day.ts.
+   */
+  const calledAt = activeClub?.night_call_at
+    ? new Intl.DateTimeFormat(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: zoneOf(activeClub),
+      }).format(new Date(activeClub.night_call_at))
+    : null;
 
   // From the cookie, so the server renders the bar the club left it on — see
   // libs/algorithms/today.ts.
@@ -68,19 +88,14 @@ export default function TodayPage() {
   const canCheckOthers = isClubAdmin || player?.is_device === true;
 
   const seats = seatsNeeded(setup);
-  // Who could play whom, and on what. Shared with the scoreboard's "next on
-  // this table" offer so the two can never disagree — see hooks/useSuggestions.
+  // Who could play whom, and on what. Shared with each table's own screen and
+  // with the scoreboard's "next on this table" offer, so the three can never
+  // disagree — see hooks/useSuggestions.
   const {
     groups: suggestions,
     freeTables,
     canStart,
-  } = useSuggestions({
-    setup,
-    maxGroups: Math.max(
-      (tables ?? []).filter((tbl) => !matchOn(tbl.id)).length,
-      1,
-    ),
-  });
+  } = useSuggestions({ setup });
 
   const startSuggested = (group: Player[], table: ClubTable) =>
     startMatch.mutate(
@@ -98,7 +113,7 @@ export default function TodayPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-3 py-4">
-      <PageTitle title={t("nav.today")}>
+      <PageTitle title={t("nav.night")}>
         {/* The wall display is a URL somebody types once on a device that then
             never navigates again — but it has to be findable the first time. */}
         <AppLink
@@ -114,7 +129,7 @@ export default function TodayPage() {
           three questions on every match — the start form still opens with these
           and can still be argued with per match. */}
       <section className="space-y-2">
-        <p className="px-1 text-caption text-ink-faint">{t("today.setup")}</p>
+        <p className="px-1 text-caption text-ink-faint">{t("night.setup")}</p>
         <Card className="flex flex-wrap items-end gap-x-4 gap-y-3 p-3">
           <div className="space-y-1.5">
             <Label>{t("live.format")}</Label>
@@ -265,7 +280,7 @@ export default function TodayPage() {
       {suggestions.length > 0 && (
         <section className="space-y-3">
           <h2 className="px-1 text-h4 font-semibold text-ink">
-            {t("today.suggested")}
+            {t("night.suggested")}
           </h2>
 
           <div className="space-y-2">
@@ -277,34 +292,18 @@ export default function TodayPage() {
                   key={group.map((p) => p.id).join("-")}
                   className="flex flex-wrap items-center justify-between gap-3 p-4"
                 >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex shrink-0 -space-x-2">
-                      {group.map((p) => (
-                        <Avatar
-                          key={p.id}
-                          name={p.name}
-                          url={p.avatar_url}
-                          className="h-9 w-9 ring-2 ring-felt"
-                        />
-                      ))}
-                    </div>
-                    <span className="min-w-0 truncate text-body text-ink">
-                      {seats === 4
-                        ? `${group[0].name} & ${group[1].name} — ${group[2].name} & ${group[3].name}`
-                        : `${group[0].name} — ${group[1].name}`}
-                    </span>
-                  </div>
+                  <SuggestedGroup group={group} seats={seats} />
 
                   {table ? (
                     <Button
                       disabled={!canStart(group) || startMatch.isPending}
                       onClick={() => startSuggested(group, table)}
                     >
-                      {t("today.startOn", { name: table.label })}
+                      {t("night.startOn", { name: table.label })}
                     </Button>
                   ) : (
                     <span className="text-caption text-ink-faint">
-                      {t("today.noFreeTable")}
+                      {t("night.noFreeTable")}
                     </span>
                   )}
                 </Card>
@@ -321,14 +320,58 @@ export default function TodayPage() {
           On a phone only your own tap does anything — checking somebody else in
           is refused by the guard in sql/schema.sql. */}
       <section className="space-y-3">
-        <div className="flex items-baseline justify-between gap-3 px-1">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-2 px-1">
           <h2 className="text-h4 font-semibold text-ink">
             {t("tonight.heading")}
           </h2>
-          <span className="text-caption tabular-nums text-ink-faint">
-            {t("tonight.count", { n: here.length })}
-          </span>
+          <div className="flex items-baseline gap-3">
+            <span className="text-caption tabular-nums text-ink-faint">
+              {t("tonight.count", { n: here.length })}
+            </span>
+            {/* Half the club not being here is the reason this button exists,
+                which is why it sits on the headcount rather than at the top of
+                the page. It buzzes every member's phone, so it asks first.
+
+                No two-hour countdown on it: the limit is call_ranking_night's,
+                and a disabled state derived from the clock would differ between
+                the server's render and the browser's. Pressing it too soon is
+                refused and says so. */}
+            {isClubAdmin && (
+              <ConfirmButton
+                size="sm"
+                variant="secondary"
+                confirmLabel={t("night.callConfirm")}
+                disabled={callNight.isPending}
+                onConfirm={() =>
+                  callNight.mutate(undefined, {
+                    onSuccess: () => toast.success(t("night.callSent")),
+                    onError: (err) =>
+                      toast.error(
+                        t(
+                          dbErrorMessage(err, "callNight", {
+                            refused: "night.callTooSoon",
+                            denied: "common.deniedError",
+                          }),
+                        ),
+                      ),
+                  })
+                }
+              >
+                <LuBellRing className="h-4 w-4" aria-hidden />
+                {t("night.call")}
+              </ConfirmButton>
+            )}
+          </div>
         </div>
+
+        {/* Said once, quietly, under the board: the admin who just pressed it
+            wants to know it went, and the next admin to look wants to know it
+            has already gone. */}
+        {calledAt !== null && (
+          <p className="px-1 text-caption text-ink-faint">
+            {t("night.called", { when: calledAt })}
+          </p>
+        )}
 
         {isLoading ? (
           <SkeletonRows rows={4} />

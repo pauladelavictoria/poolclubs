@@ -5,7 +5,7 @@ import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { useAuth } from "@/hooks/useAuth";
 import { useWhoIsHere } from "@/hooks/useNight";
-import { seatsOf } from "@/libs/algorithms/night";
+import { freeTables as freeTablesOf, seatsOf } from "@/libs/algorithms/night";
 import { dayKeyOf, zoneOf } from "@/libs/algorithms/day";
 import { useNow } from "@/hooks/useNow";
 import {
@@ -20,11 +20,19 @@ import type { ClubTable, Player } from "@/types";
 /**
  * Who could play whom, right now.
  *
- * A hook rather than forty lines in a page, because two screens need the same
- * answer and they must not be able to disagree about it: /today offers the
- * night's matches, and the scoreboard offers the next one the moment a result
- * is filed. Two implementations of "whose turn is it" is one of them being
- * wrong in front of the room.
+ * A hook rather than forty lines in a page, because three screens need the same
+ * answer and they must not be able to disagree about it: /night offers the
+ * night's matches, each free table's own page offers the pair assigned to that
+ * table, and the scoreboard offers the next one the moment a result is filed.
+ * Two implementations of "whose turn is it" is one of them being wrong in front
+ * of the room.
+ *
+ * How many groups to make is deliberately *not* a parameter. `suggestGroups`
+ * seeds one player per table before filling any of them, so its output changes
+ * with the count asked for — a caller that asked for one group got a different
+ * answer from a caller that asked for three, and the two screens then named
+ * different pairs for the same table. The count is the free tables, this hook
+ * knows them, and so there is nothing for a caller to get wrong.
  *
  * Everything it reads is already in the cache — the roster, the tables, the live
  * rows, today's results — so this costs no request of its own.
@@ -40,19 +48,21 @@ const NO_GROUPS: Player[][] = [];
 
 export function useSuggestions({
   setup,
-  maxGroups,
   exclude = NO_SEATS,
   enabled = true,
 }: {
   /** What the club is playing. The page owns it, because the page can change
    *  it; see libs/algorithms/today.ts. */
   setup: DaySetup;
-  /** How many matches are wanted — the free tables, in practice. */
-  maxGroups: number;
   /** Kept out of it. The pair who have just this second finished, when the
    *  question is who gets their table next: the row is already deleted, so they
    *  read as idle with the game they just played not yet counted — and they have
-   *  had the table either way. */
+   *  had the table either way.
+   *
+   *  This is the one thing that can still make two screens differ, and it is the
+   *  right way round: the table being handed on excludes its own finishers, the
+   *  other tables do not. It lasts only until today's games refetch, after which
+   *  the sort has them at the back of the queue anyway. */
   exclude?: number[];
   /** ponytail: for a caller that only wants an answer sometimes.
    *
@@ -62,8 +72,14 @@ export function useSuggestions({
    *  score tap and throwing it away. Cheaper than splitting the page in two. */
   enabled?: boolean;
 }): {
+  /** One per free table, in the same order: `groups[i]` is `freeTables[i]`'s. */
   groups: Player[][];
   freeTables: ClubTable[];
+  /** The pair assigned to one particular table, or undefined if that table is
+   *  busy or the room cannot fill it. The whole of what a table's own screen
+   *  needs, and the only way to ask that question without re-deriving the
+   *  position the answer depends on. */
+  groupFor: (tableId: number) => Player[] | undefined;
   /** Whether the signed-in player may start this one. Mirrors
    *  can_score_live_match in sql/schema.sql. */
   canStart: (group: Player[]) => boolean;
@@ -95,11 +111,10 @@ export function useSuggestions({
 
   const seats = seatsNeeded(setup);
 
-  const freeTables = useMemo(() => {
-    const matchOn = (tableId: number) =>
-      (live ?? []).find((m) => m.table_id === tableId);
-    return (tables ?? []).filter((tbl) => !matchOn(tbl.id));
-  }, [tables, live]);
+  const freeTables = useMemo(
+    () => freeTablesOf(tables ?? [], live ?? []),
+    [tables, live],
+  );
 
   /**
    * The night's pairing, rebuilt only when something it reads has moved.
@@ -170,20 +185,28 @@ export function useSuggestions({
     // The queue decides which people are together; the divisions decide who
     // plays with whom. Balanced as the groups are formed, so the names shown
     // and the match started are the same match.
+    // One group per free table — and at least one even when every table is
+    // busy, because "who could be playing" is still worth showing the room
+    // above a "no free table" of its own.
     return suggestGroups(
       idle,
       seats,
       (a, b) => metToday.has(pairKey(a, b)),
-      maxGroups,
+      Math.max(freeTables.length, 1),
     ).map((group) => (seats === 4 ? balanceDoubles(group) : group));
-  }, [enabled, live, gamesToday, here, exclude, seats, maxGroups]);
+  }, [enabled, live, gamesToday, here, exclude, seats, freeTables]);
 
   const canStart = (group: Player[]) =>
     isClubAdmin ||
     player?.is_device === true ||
     group.some((p) => p.id === player?.id);
 
-  return { groups, freeTables, canStart };
+  /** A busy table is not in `freeTables`, so findIndex gives -1 and this gives
+   *  undefined — which is what a table with a match on it should offer. */
+  const groupFor = (tableId: number) =>
+    groups[freeTables.findIndex((table) => table.id === tableId)];
+
+  return { groups, freeTables, groupFor, canStart };
 }
 
 /** The seats a suggested group fills, in the order the row wants them. */

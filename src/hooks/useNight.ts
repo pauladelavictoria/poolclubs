@@ -1,12 +1,15 @@
 import { useMemo } from "react";
+import { useRouter } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/libs/supabase/browser";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { keys } from "@/libs/queryKeys";
+import { SESSION_KEY } from "@/queries/session";
 import { whoIsHere } from "@/libs/algorithms/night";
 import { useNow } from "@/hooks/useNow";
+import { sendPush } from "@/libs/server/push.functions";
 import type { Player } from "@/types";
 
 /**
@@ -59,5 +62,47 @@ export const useCheckIn = () => {
     },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: keys.players.all }),
+  });
+};
+
+/**
+ * Calling the club in: one tap, and every member who is not already here gets
+ * told the ranking night is on.
+ *
+ * The RPC is what does it. It records the call on the club row and refuses a
+ * second one inside two hours — in the database, not here, because an admin may
+ * write their own club row under RLS and a rate limit the page owned would last
+ * exactly as long as one page reload. See sql/schema.sql, `call_ranking_night`.
+ *
+ * The push is fired after and never awaited, the way every other one in the app
+ * is (useChallenges, useTournaments): whether the club's phones actually buzzed
+ * is not the admin's problem to be shown an error about, and push_targets
+ * decides who was even eligible. The bell derives the same event from
+ * `night_call_at`, which is the durable half.
+ */
+export const useCallNight = () => {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const { activeClubId } = useAuth();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!activeClubId) throw new Error("no active club");
+      const { data } = await supabase
+        .rpc("call_ranking_night", { p_club_id: activeClubId })
+        .throwOnError();
+      return data;
+    },
+    onSuccess: async () => {
+      // The club row carries night_call_at and it rides on the session, so the
+      // button's own "called just now" state comes from re-reading that.
+      await queryClient.invalidateQueries({ queryKey: SESSION_KEY });
+      await router.invalidate();
+
+      if (activeClubId)
+        void sendPush({ data: { kind: "nightCall", id: activeClubId } }).catch(
+          () => {},
+        );
+    },
   });
 };

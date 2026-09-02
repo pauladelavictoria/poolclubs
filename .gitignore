@@ -43,3 +43,12 @@ skills-lock.json
 
 .auth.json
 /screenshots/
+
+# Overpass answers cached by scripts/es-clubs.mjs
+.osm-cache.json
+
+# Raw Cuescore venues cached by scripts/es-clubs-cuescore.mjs
+.cuescore-cache.json
+
+# Geocoder answers cached by scripts/es-clubs.mjs
+.geocode-cache.json

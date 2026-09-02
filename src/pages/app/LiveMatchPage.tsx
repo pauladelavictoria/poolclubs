@@ -8,11 +8,11 @@ import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatch, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
 import { seatsOf } from "@/libs/algorithms/night";
-import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { readTodaySetup } from "@/libs/prefs";
 import { seatsNeeded } from "@/libs/algorithms/today";
 import Scoreboard from "@/components/live/Scoreboard";
+import SuggestedGroup from "@/components/live/SuggestedGroup";
 import { AppLink, useAppNavigate } from "@/components/layout/AppLink";
 import { Button, IconButton } from "@/components/ui/Button";
 import ConfirmButton from "@/components/ui/ConfirmButton";
@@ -53,16 +53,19 @@ export default function LiveMatchPage() {
     tableId: number;
     seats: number[];
   } | null>(null);
-  // The club's setting as it stands. Read, not owned: /today is where it is
+  // The club's setting as it stands. Read, not owned: /night is where it is
   // changed, and a scoreboard arguing with it would be a second answer.
   const setup = readTodaySetup();
   const seats = seatsNeeded(setup);
   // Only once this match has been filed and its table is free. Mid-rack there
   // is nothing on screen to offer, and every score tap re-renders this page —
   // see the note on useSuggestions' `enabled`.
-  const { groups, canStart } = useSuggestions({
+  //
+  // Asked for this table by name rather than "the first suggestion": with two
+  // tables free the first suggestion belongs to whichever of them the club
+  // lists first, and offering it here handed the same pair to two screens.
+  const { groupFor, canStart } = useSuggestions({
     setup,
-    maxGroups: 1,
     exclude: freed?.seats,
     enabled: freed !== null,
   });
@@ -76,7 +79,7 @@ export default function LiveMatchPage() {
   // players were at the bar is a ghost row holding a table.
   if (freed !== null) {
     const table = (tables ?? []).find((tbl) => tbl.id === freed.tableId);
-    const group = groups[0];
+    const group = groupFor(freed.tableId);
 
     // Nobody waiting, or the table is gone: there is nothing to offer and this
     // page has no match left to show.
@@ -98,22 +101,8 @@ export default function LiveMatchPage() {
             <p className="text-caption font-medium uppercase tracking-wide text-ink-faint">
               {t("live.nextTitle", { name: table.label })}
             </p>
-            <div className="mt-3 flex items-center gap-3">
-              <div className="flex shrink-0 -space-x-2">
-                {group.map((p) => (
-                  <Avatar
-                    key={p.id}
-                    name={p.name}
-                    url={p.avatar_url}
-                    className="h-9 w-9 ring-2 ring-felt"
-                  />
-                ))}
-              </div>
-              <p className="min-w-0 text-body font-medium text-ink">
-                {seats === 4
-                  ? `${group[0].name} & ${group[1].name} — ${group[2].name} & ${group[3].name}`
-                  : `${group[0].name} — ${group[1].name}`}
-              </p>
+            <div className="mt-3">
+              <SuggestedGroup group={group} seats={seats} />
             </div>
           </div>
 
@@ -151,7 +140,7 @@ export default function LiveMatchPage() {
                   )
                 }
               >
-                {t("today.startOn", { name: table.label })}
+                {t("night.startOn", { name: table.label })}
               </Button>
             )}
           </div>

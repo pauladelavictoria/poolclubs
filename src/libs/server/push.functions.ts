@@ -40,7 +40,10 @@ const input = z.object({
     "challengeAnswered",
     "tournamentOpen",
     "commentMention",
+    "nightCall",
   ]),
+  /** The row the event is about — for `nightCall`, the club itself: being
+   *  called to a ranking night points at nothing smaller. */
   id: z.number().int().positive(),
 });
 
@@ -169,6 +172,26 @@ async function describe(
       vars: { name: data.name },
       url: `/app/${data.club.slug}/tournaments/${data.id}`,
       tag: `tournament-open:${data.id}`,
+    };
+  }
+
+  if (kind === "nightCall") {
+    const { data } = await supabase
+      .from("clubs")
+      .select("id, name, slug, night_call_at")
+      .eq("id", id)
+      .maybeSingle();
+    if (!data?.night_call_at) return null;
+
+    return {
+      title: data.name,
+      key: "notifications.nightCall",
+      vars: {},
+      url: `/app/${data.slug}/night`,
+      // The moment, not the club: a second call two hours later is a second
+      // thing to be told, and a tag of just the club would have it silently
+      // replace the first on a phone nobody had picked up.
+      tag: `night-call:${data.id}:${data.night_call_at}`,
     };
   }
 

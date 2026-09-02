@@ -119,6 +119,14 @@ export const publicClubsQuery = (filters: PublicClubsFilters = {}) => {
           .lte("lon", east);
       }
 
+      // A club that has published a logo leads, whichever sort is chosen: its
+      // card carries a mark rather than an initial, and a page of those is what
+      // a directory should open with. The chosen sort then orders within each
+      // group — so "name" reads alphabetically twice, logos first, rather than
+      // alphabetically once. Ordering by logo_url directly cannot do this; see
+      // the note on clubs.has_logo in sql/schema.sql.
+      query = query.order("has_logo", { ascending: false });
+
       if (sort === "name") query = query.order("name");
       else if (sort === "new")
         query = query.order("created_at", { ascending: false });
@@ -161,6 +169,9 @@ export const publicClubPinsQuery = () =>
         .select("id, name, slug, address, city, logo_url, lat, lon")
         .eq("is_public", true)
         .not("lat", "is", null)
+        // Logos first, so that if the cap below ever bites, the pins it drops
+        // are the generic teardrops and not the clubs that drew themselves.
+        .order("has_logo", { ascending: false })
         // A hard cap, not a page: past this the map is a solid mass of pins
         // anyway. Worth revisiting with clustering if the directory ever gets
         // near it — at which point this silently stops showing every club.
