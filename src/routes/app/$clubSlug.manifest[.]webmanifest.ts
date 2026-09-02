@@ -61,7 +61,20 @@ export const Route = createFileRoute("/app/$clubSlug/manifest.webmanifest")({
           description: `${club.name} en PoolClubs.`,
           lang: "es",
           start_url: `/app/${club.slug}`,
-          scope: `/app/${club.slug}`,
+          // Scope is /app, wider than start_url, which a manifest is allowed to
+          // do — scope only has to contain start_url. It has to be wider: the
+          // auth guard redirects to /app/login and the club picker to
+          // /app/select-club, and under a /app/<slug> scope both of those count
+          // as leaving the app, so an installed PWA launching without a valid
+          // session cookie dropped straight into the browser and the standalone
+          // window showed nothing at all.
+          //
+          // ponytail: `id` is what keeps two club PWAs apart now that they share
+          // a scope, and Chrome below 96 ignores it — on a tablet that old, a
+          // second club installed over the first. Fine for a tablet that lives
+          // on one club's rail. Upgrade path if that stops being true: move
+          // login and the picker under /app/<slug>/ and narrow this back.
+          scope: "/app",
           display: "standalone",
           theme_color: accent,
           background_color: "#090b0e",
