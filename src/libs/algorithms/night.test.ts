@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { LiveMatch, Player } from "@/types";
+import type { ClubTable, LiveMatch, Player } from "@/types";
 import {
   ABANDON_AFTER_MS,
   PRESENT_WINDOW_MS,
   bump,
+  freeTables,
   isAbandoned,
   isMatchOver,
   isPresent,
@@ -182,6 +183,32 @@ describe("seatsOfSide / seatsOf", () => {
   it("seats everyone in the match, doubles or singles", () => {
     expect(seatsOf(pairs)).toEqual([1, 11, 2, 22]);
     expect(seatsOf(match())).toEqual([1, 2]);
+  });
+});
+
+describe("freeTables", () => {
+  const table = (id: number): ClubTable => ({
+    id,
+    club_id: 1,
+    label: `T${id}`,
+    sort_order: id,
+  });
+
+  it("is every table with no live row pointing at it", () => {
+    expect(
+      freeTables([table(1), table(2), table(3)], [match({ table_id: 2 })]).map(
+        (t) => t.id,
+      ),
+    ).toEqual([1, 3]);
+  });
+
+  it("keeps the club's own order, which is what makes the i'th group the i'th table's", () => {
+    const tables = [table(3), table(1), table(2)];
+    expect(freeTables(tables, []).map((t) => t.id)).toEqual([3, 1, 2]);
+  });
+
+  it("ignores a match that is on no table at all", () => {
+    expect(freeTables([table(1)], [match({ table_id: null })]).length).toBe(1);
   });
 });
 

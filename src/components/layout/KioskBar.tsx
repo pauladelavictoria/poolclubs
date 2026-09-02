@@ -2,7 +2,9 @@ import { useRef, useState } from "react";
 import {
   LuEllipsisVertical,
   LuExpand,
+  LuMoon,
   LuShrink,
+  LuSun,
   LuTrash2,
   LuUnlink,
 } from "react-icons/lu";
@@ -19,6 +21,7 @@ import { pickerClasses } from "@/components/ui/buttonStyles";
 import { unpinKiosk } from "@/libs/browser/kiosk";
 import { useFullscreen } from "@/hooks/useFullscreen";
 import { useOutsideClose } from "@/hooks/useOutsideClose";
+import { setTheme, useTheme } from "@/libs/theme/theme";
 import { LANGS, useT, type Lang } from "@/i18n";
 
 /**
@@ -62,6 +65,8 @@ export default function KioskBar({
   const { abandonMatch } = useManageLiveMatch();
   const appNavigate = useAppNavigate();
   const { isFullscreen, toggle } = useFullscreen(containerRef);
+  // Showing the theme you are not in, the same way ThemeToggle does.
+  const nextTheme = useTheme() === "dark" ? "light" : "dark";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useOutsideClose(menuOpen, menuRef, () => setMenuOpen(false));
@@ -198,6 +203,30 @@ export default function KioskBar({
             </div>
           )}
         </div>
+
+        {/* Light or dark, on the bar rather than behind the dots.
+
+            The language picker is setup — set once when the tablet is mounted —
+            but the theme is not: the same rail is a bright room at six and a
+            dark one at eleven, and whoever is squinting at the board wants it in
+            one tap, not three. It sits beside fullscreen because those two are
+            the pair that are about the screen rather than about the match.
+
+            Not ThemeToggle: that is the pill built for the row of language
+            buttons it lives in elsewhere, and this row is icon buttons. Same
+            store either way, so the two can never disagree. */}
+        <IconButton
+          label={t(`theme.${nextTheme}`)}
+          title={t(`theme.${nextTheme}`)}
+          size="sm"
+          onClick={() => setTheme(nextTheme)}
+        >
+          {nextTheme === "light" ? (
+            <LuSun className="h-4 w-4" aria-hidden />
+          ) : (
+            <LuMoon className="h-4 w-4" aria-hidden />
+          )}
+        </IconButton>
 
         <IconButton
           label={t(isFullscreen ? "common.close" : "ranking.tvMode")}

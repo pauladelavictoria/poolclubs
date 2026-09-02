@@ -5,7 +5,7 @@ import { clubTablesQuery, liveMatchesQuery } from "@/queries/live";
 export const Route = createFileRoute("/app/_authed/$clubSlug/tables/$tableId")({
   staticData: {
     section: "home",
-    crumbs: [{ labelKey: "nav.today", to: "/app/$clubSlug/today" }],
+    crumbs: [{ labelKey: "nav.night", to: "/app/$clubSlug/night" }],
     // A tablet pinned here shows this and nothing else, and even unpinned the
     // page is a scoreboard — neither wants a tab bar under it.
     fullBleed: true,

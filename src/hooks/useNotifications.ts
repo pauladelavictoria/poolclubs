@@ -12,6 +12,8 @@ import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 import { useDrillLogs } from "@/hooks/useDrillLogs";
 import { usePlayerLookup } from "@/hooks/usePlayers";
 import { useComments } from "@/hooks/useSocial";
+import { useNow } from "@/hooks/useNow";
+import { isPresent } from "@/libs/algorithms/night";
 import { mentionedSlugs } from "@/libs/algorithms/mentions";
 import { useT } from "@/i18n";
 
@@ -22,7 +24,12 @@ type NotificationKind =
   | "tournamentOpen"
   | "tournamentAction"
   | "drillAdded"
-  | "mention";
+  | "mention"
+  | "nightCall";
+
+/** How long "the club has been called" stays worth saying. The same two hours
+ *  call_ranking_night refuses a second call inside — see sql/schema.sql. */
+const NIGHT_CALL_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 export type AppNotification = {
   /** Stable and unique per underlying event *and* its current state, so an
@@ -162,8 +169,9 @@ function remember(kind: "seen" | "dismissed", ids: readonly string[]) {
  * played it's a new id and shows up again.
  */
 export const useNotifications = () => {
-  const { player } = useAuth();
+  const { player, activeClub } = useAuth();
   const { t } = useT();
+  const now = useNow();
   const { nameOf } = usePlayerLookup();
   const { data: challenges } = useChallenges();
   const { data: tournaments } = useTournaments();
@@ -287,6 +295,44 @@ export const useNotifications = () => {
       });
     }
 
+    /**
+     * The club has been called to a ranking night.
+     *
+     * Derived from one column on the club row rather than a table of its own —
+     * there is nothing to store but when it happened, and the row rides on the
+     * session already. This is the path for everybody who declined push or
+     * cannot have it (on iOS it needs a home-screen install at all, see
+     * usePushNotifications), and it is why the call is worth recording rather
+     * than only sending.
+     *
+     * Two hours, the same window call_ranking_night refuses a second call
+     * inside, so the bell says "the night is on" for exactly as long as that
+     * claim is the club's latest.
+     *
+     * ponytail: no realtime. `night_call_at` refreshes with the session, so a
+     * tab left open finds out on its next navigation. The push is the timely
+     * channel; this is the durable one.
+     */
+    const calledAt = activeClub?.night_call_at;
+    if (
+      calledAt &&
+      now !== null &&
+      now - new Date(calledAt).getTime() < NIGHT_CALL_WINDOW_MS &&
+      // Already at the club, so there is nothing to be called to. The same test
+      // push_targets makes before it sends — see sql/schema.sql.
+      !isPresent(player, now)
+    ) {
+      list.push({
+        // The moment, so a second call is a second unread rather than one the
+        // reader has already dismissed.
+        id: `night-call:${calledAt}`,
+        kind: "nightCall",
+        needsAction: false,
+        message: t("notifications.nightCall"),
+        link: { to: "/app/$clubSlug/night" },
+      });
+    }
+
     const triedDrillIds = new Set(
       (myDrillLogs ?? []).map((log) => log.drill_id),
     );
@@ -318,6 +364,8 @@ export const useNotifications = () => {
     drills,
     myDrillLogs,
     comments,
+    activeClub,
+    now,
     t,
     nameOf,
   ]);

@@ -7,6 +7,7 @@ import {
   LuNetwork,
   LuTarget,
   LuAtSign,
+  LuBellRing,
 } from "react-icons/lu";
 import {
   useNotifications,
@@ -27,6 +28,7 @@ const ICONS: Record<
   tournamentAction: LuNetwork,
   drillAdded: LuTarget,
   mention: LuAtSign,
+  nightCall: LuBellRing,
 };
 
 /**

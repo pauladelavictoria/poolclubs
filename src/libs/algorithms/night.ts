@@ -1,4 +1,4 @@
-import type { LiveMatch, Player } from "@/types";
+import type { ClubTable, LiveMatch, Player } from "@/types";
 
 /**
  * The club night's rules, as plain functions.
@@ -18,8 +18,15 @@ import type { LiveMatch, Player } from "@/types";
  */
 export const ABANDON_AFTER_MS = 3 * 60 * 60 * 1000;
 
-/** A check-in lasts an evening, not a day. Nobody is still at the club eight
- *  hours after they said they were. */
+/**
+ * A check-in lasts an evening, not a day. Nobody is still at the club eight
+ * hours after they said they were.
+ *
+ * The column is never cleared, so this is what makes it expire — and the same
+ * eight hours are written into the `nightCall` branch of push_targets in
+ * sql/schema.sql, which must not tell somebody to come to a club they are
+ * standing in. Drift and the call goes out to the room it is calling.
+ */
 export const PRESENT_WINDOW_MS = 8 * 60 * 60 * 1000;
 
 export const isPresent = (player: Player, now: number) =>
@@ -81,6 +88,24 @@ export const seatsOf = (match: LiveMatch): number[] => [
   ...seatsOfSide(match, 1),
   ...seatsOfSide(match, 2),
 ];
+
+/**
+ * The tables with nothing on them, in the club's own order.
+ *
+ * Occupancy is the live row's existence and nothing else — there is no status
+ * column, and the partial unique index `live_matches_one_per_table` in
+ * sql/schema.sql is what makes that a lock rather than a convention.
+ *
+ * One function rather than the same filter in four components, because the
+ * order of this list is load-bearing: the night's suggestions are handed out
+ * one per free table, by position, and two screens disagreeing about which
+ * table is second is two tablets offering the same pair.
+ */
+export const freeTables = (
+  tables: ClubTable[],
+  matches: LiveMatch[],
+): ClubTable[] =>
+  tables.filter((table) => !matches.some((m) => m.table_id === table.id));
 
 /**
  * Who is at the club right now.

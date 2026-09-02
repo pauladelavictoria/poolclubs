@@ -6,8 +6,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
+import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
 import Scoreboard from "@/components/live/Scoreboard";
 import StartMatchForm from "@/components/live/StartMatchForm";
+import SuggestedGroup from "@/components/live/SuggestedGroup";
 import { AppLink, useAppNavigate } from "@/components/layout/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -15,8 +17,11 @@ import { dialogClasses } from "@/components/ui/cardStyles";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { useDialog } from "@/hooks/useDialog";
 import { pinKiosk, readKioskTable } from "@/libs/browser/kiosk";
+import { readTodaySetup } from "@/libs/prefs";
+import { seatsNeeded } from "@/libs/algorithms/today";
 import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
+import type { Player } from "@/types";
 
 const route = getRouteApi("/app/_authed/$clubSlug/tables/$tableId");
 
@@ -39,6 +44,19 @@ export default function TablePage() {
   const { startMatch } = useManageLiveMatch();
   const appNavigate = useAppNavigate();
 
+  // The club's setting as it stands. Read, not owned: /night is where it is
+  // changed, and a table arguing with it would be a second answer.
+  const setup = readTodaySetup();
+  const seats = seatsNeeded(setup);
+  /** Whether this table has a match on it, asked before the roster has loaded
+   *  so the suggestion can be skipped while one is being played — the hook is at
+   *  the top of the component and the pairing is not free. */
+  const busy = (live ?? []).some((m) => m.table_id === id);
+  // Who the night says is next on *this* table. Positional, and derived from the
+  // same list every other screen reads, so no two tables offer the same pair —
+  // see hooks/useSuggestions.
+  const { groupFor, canStart } = useSuggestions({ setup, enabled: !busy });
+
   const [starting, setStarting] = useState(false);
   const dialogRef = useDialog(starting);
   const close = () => setStarting(false);
@@ -58,6 +76,27 @@ export default function TablePage() {
   const seat = (seatId: number | null) =>
     seatId === null ? undefined : roster.find((p) => p.id === seatId);
   const pinned = readKioskTable() === id;
+  const next = groupFor(id);
+
+  /** The offer, taken. Same shape as every other way a match is started, so the
+   *  row the button makes is the match the names above it described. */
+  const startNext = (group: Player[]) =>
+    startMatch.mutate(
+      {
+        ...seatsOfGroup(group, seats),
+        tableId: id,
+        discipline: setup.discipline,
+        raceTo: setup.raceTo,
+      },
+      {
+        // Straight onto the board. A tablet on the rail is where this was
+        // tapped, and the next thing anybody wants from it is the score.
+        onSuccess: (row) =>
+          appNavigate("/app/$clubSlug/live/$liveId", { liveId: row.id }),
+        onError: (err) =>
+          toast.error(t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS))),
+      },
+    );
 
   // A pinned tablet is this table's scorer, not its audience. Watch mode is for
   // somebody who opened the table from the list on their own phone; the device
@@ -128,8 +167,41 @@ export default function TablePage() {
               </h2>
             </div>
 
+            {/* Whoever the night has put on this table, already here rather than
+                waiting for somebody to walk over and pick from a list. This is
+                the whole of "the next players appear on the tablet": the row is
+                deleted when the last match was filed, realtime says so, and the
+                card below fills itself in.
+
+                Still an offer and never an auto-start — see the note in
+                LiveMatchPage. */}
+            {next && (
+              <div className="space-y-3 border-t border-hairline pt-4">
+                <p className="text-caption font-medium uppercase tracking-wide text-ink-faint">
+                  {t("night.nextUp")}
+                </p>
+                <SuggestedGroup group={next} seats={seats} />
+                {canStart(next) && (
+                  <Button
+                    className="w-full"
+                    disabled={startMatch.isPending}
+                    onClick={() => startNext(next)}
+                  >
+                    {t("night.startOn", { name: table.label })}
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Kept whatever the offer says: the room is allowed to disagree
+                with the queue, and somebody who has just walked in is not in it
+                at all yet. */}
             <div className="flex justify-end">
-              <Button onClick={() => setStarting(true)} disabled={!player}>
+              <Button
+                variant={next ? "ghost" : "primary"}
+                onClick={() => setStarting(true)}
+                disabled={!player}
+              >
                 {t("live.playHere")}
               </Button>
             </div>
