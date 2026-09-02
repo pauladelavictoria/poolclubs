@@ -5,9 +5,11 @@ import { isSafePath } from "@/libs/algorithms/nextPath";
 
 /**
  * Stays at /app/login rather than moving to /login, even though it has nothing
- * to do with a club: public/site.webmanifest pins the PWA's scope to /app, and a
- * sign-in page outside that scope would open in the browser instead of the
- * installed app.
+ * to do with a club: both manifests pin the PWA's scope to /app — site.webmanifest
+ * and the per-club one in $clubSlug.manifest[.]webmanifest.ts — and a sign-in page
+ * outside that scope opens in the browser instead of the installed app. The club
+ * manifest used to scope itself to /app/<slug>, which broke exactly that: the
+ * guard above sends every session-less launch here, and here was out of scope.
  */
 export const Route = createFileRoute("/app/login")({
   validateSearch: z.object({
