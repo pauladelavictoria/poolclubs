@@ -1,12 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseServer } from "@/libs/supabase/server";
 import { CLUB_THEME_PALETTE } from "@/libs/theme/clubTheme";
+import { pngSize } from "@/libs/algorithms/pngSize";
 import type { BallColor } from "@/types";
 
-function pngDimensions(base64: string): string {
-  const buf = Buffer.from(base64, "base64");
-  return `${buf.readUInt32BE(16)}x${buf.readUInt32BE(20)}`;
-}
 export const Route = createFileRoute("/app/$clubSlug/manifest.webmanifest")({
   server: {
     handlers: {
@@ -24,13 +21,17 @@ export const Route = createFileRoute("/app/$clubSlug/manifest.webmanifest")({
           CLUB_THEME_PALETTE[club.theme_color as BallColor].dark.base;
 
         const logoBase64 = club.logo_url?.split(",")[1];
+        // Null covers both "no logo" and "a logo these bytes say is not a PNG",
+        // and the two want the same treatment: leave the icon out rather than
+        // describe it wrongly, and let the fallbacks below carry the install.
+        const logoSize = logoBase64 ? pngSize(logoBase64) : null;
 
         const icons = [
-          ...(logoBase64
+          ...(logoSize
             ? [
                 {
                   src: `/api/clubs/${club.slug}/logo`,
-                  sizes: pngDimensions(logoBase64),
+                  sizes: logoSize,
                   type: "image/png",
                 },
               ]
@@ -50,7 +51,7 @@ export const Route = createFileRoute("/app/$clubSlug/manifest.webmanifest")({
             // dialog picks a `purpose: "maskable"` icon over any plain one
             // regardless of size or list order — which is why the club logo
             // above never showed up once this was marked maskable too.
-            ...(logoBase64 ? {} : { purpose: "maskable" }),
+            ...(logoSize ? {} : { purpose: "maskable" }),
           },
         ];
 

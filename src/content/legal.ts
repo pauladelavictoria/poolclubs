@@ -351,7 +351,7 @@ const termsEs: LegalDoc = {
     {
       heading: "5. Beta y gratuidad",
       body: [
-        "El servicio está en beta abierta y es gratuito. Los jugadores no pagan nunca.",
+        "El servicio está en beta abierta. Los jugadores no pagan nunca; para los clubes es gratuito durante la beta.",
         "Los clubes que participan en la beta conservan el servicio gratis de forma permanente, también cuando exista una cuota para nuevos clubes.",
         "Si en el futuro un club con cuota deja de pagar, sus datos no se borran: el club pasa a modo lectura y su página pública sigue en pie.",
       ],
@@ -429,7 +429,7 @@ const termsEn: LegalDoc = {
     {
       heading: "5. Beta and pricing",
       body: [
-        "The service is in open beta and free. Players never pay.",
+        "The service is in open beta. Players never pay; for clubs it is free during the beta.",
         "Clubs taking part in the beta keep the service free permanently, including after a fee exists for new clubs.",
         "If a paying club later stops paying, its data is not deleted: the club becomes read-only and its public page stays up.",
       ],
@@ -507,7 +507,7 @@ const termsFr: LegalDoc = {
     {
       heading: "5. Bêta et gratuité",
       body: [
-        "Le service est en bêta ouverte et gratuit. Les joueurs ne paient jamais.",
+        "Le service est en bêta ouverte. Les joueurs ne paient jamais ; pour les clubs, c'est gratuit pendant la bêta.",
         "Les clubs qui participent à la bêta conservent le service gratuitement de façon permanente, y compris après l'apparition d'un tarif pour les nouveaux clubs.",
         "Si un club payant cesse un jour de payer, ses données ne sont pas supprimées : le club passe en lecture seule et sa page publique reste en ligne.",
       ],
