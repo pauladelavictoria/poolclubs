@@ -130,10 +130,15 @@ export default function MapCanvas({
             longitude={pin.lon}
             latitude={pin.lat}
             anchor={pin.imageUrl ? "center" : "bottom"}
-            // Markers are siblings in source order, so a hovered one would grow
-            // underneath the pins after it. Lifting only the hovered pin is
-            // enough; nothing else here stacks.
-            style={hovered?.id === pin.id ? { zIndex: 10 } : { zIndex: 0 }}
+            // Markers are siblings in source order, so without a z-index a pin
+            // grows underneath whichever pins come after it. Three layers, and
+            // the order is the point: a club that has published a logo draws its
+            // logo as the pin, and that is worth more of the map than a generic
+            // teardrop — in Barcelona and Valencia the plain pins overlap it
+            // into invisibility otherwise. Hover still wins over both.
+            style={{
+              zIndex: hovered?.id === pin.id ? 20 : pin.imageUrl ? 10 : 0,
+            }}
             draggable={!!onMovePin}
             onClick={() => onSelectPin?.(pin)}
             onDragStart={() => setHovered(null)}

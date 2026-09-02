@@ -151,6 +151,7 @@ export type Database = {
           country: string | null
           created_at: string | null
           description: string | null
+          has_logo: boolean | null
           id: number
           is_public: boolean
           lat: number | null
@@ -173,6 +174,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           description?: string | null
+          has_logo?: boolean | null
           id?: number
           is_public?: boolean
           lat?: number | null
@@ -195,6 +197,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           description?: string | null
+          has_logo?: boolean | null
           id?: number
           is_public?: boolean
           lat?: number | null
@@ -614,6 +617,7 @@ export type Database = {
           club_id: number
           device_table_id: number | null
           id: number
+          is_caretaker: boolean
           is_device: boolean
           person_id: number
           present_since: string | null
@@ -626,6 +630,7 @@ export type Database = {
           club_id: number
           device_table_id?: number | null
           id?: number
+          is_caretaker?: boolean
           is_device?: boolean
           person_id: number
           present_since?: string | null
@@ -638,6 +643,7 @@ export type Database = {
           club_id?: number
           device_table_id?: number | null
           id?: number
+          is_caretaker?: boolean
           is_device?: boolean
           person_id?: number
           present_since?: string | null

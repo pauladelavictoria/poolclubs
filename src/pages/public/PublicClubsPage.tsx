@@ -273,6 +273,21 @@ export default function PublicClubsPage() {
           </div>
         </div>
 
+        {/* ODbL. Part of this directory was seeded from OpenStreetMap (see
+            scripts/es-clubs.mjs), and the licence asks for the credit. The
+            map's own control credits the tiles, which is a different thing
+            from crediting the club rows. */}
+        <p className="mt-10 text-caption text-ink-faint">
+          <a
+            href="https://www.openstreetmap.org/copyright"
+            target="_blank"
+            rel="noreferrer"
+            className="underline decoration-hairline underline-offset-2 transition-colors hover:text-ink-soft"
+          >
+            {t("public.publicClubs.dataCredit")}
+          </a>
+        </p>
+
         <CtaBand />
       </PublicShell>
     </>

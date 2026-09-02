@@ -588,6 +588,7 @@
   "public.publicClubs.tieToMap": "Solo esta zona",
   "public.publicClubs.noneInView": "Ningún club en esta zona",
   "public.publicClubs.noneInViewHint": "Aleja o mueve el mapa, o desmarca «Solo esta zona».",
+  "public.publicClubs.dataCredit": "Parte de los datos de los clubes proviene de OpenStreetMap © sus colaboradores (ODbL)",
   "public.publicClub.tournaments": "Torneos activos",
   "public.publicClub.visit": "Visitar el club",
   "public.publicClub.photos": "El local",

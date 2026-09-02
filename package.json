@@ -18,7 +18,9 @@
     "db:types": "supabase gen types typescript --linked --schema public > src/types/database.types.gen.ts",
     "start": "node .output/server/index.mjs",
     "test": "vitest run",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "clubs:es": "node scripts/es-clubs.mjs",
+    "clubs:es:mine": "node scripts/es-clubs-cuescore.mjs"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",

@@ -588,6 +588,7 @@
   "public.publicClubs.tieToMap": "Only this area",
   "public.publicClubs.noneInView": "No clubs in this area",
   "public.publicClubs.noneInViewHint": "Zoom out or move the map, or untick “Only this area”.",
+  "public.publicClubs.dataCredit": "Some club data comes from OpenStreetMap © its contributors (ODbL)",
   "public.publicClub.tournaments": "Active tournaments",
   "public.publicClub.visit": "Visiting",
   "public.publicClub.photos": "The venue",

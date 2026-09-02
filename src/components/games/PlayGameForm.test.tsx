@@ -24,6 +24,7 @@ const player = (id: number, name: string): Player => ({
   queued_table_id: null,
   queued_at: null,
   is_device: false,
+  is_caretaker: false,
   device_table_id: null,
 });
 
