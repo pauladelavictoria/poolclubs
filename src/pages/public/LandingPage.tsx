@@ -500,7 +500,7 @@ export default function LandingPage() {
                   <Shot
                     name="drill"
                     alt={t("landing.altDrill")}
-                    size={[1200, 900]}
+                    size={[2000, 1527]}
                     className="rounded-t-card border-x border-t border-hairline"
                   />
                 </div>

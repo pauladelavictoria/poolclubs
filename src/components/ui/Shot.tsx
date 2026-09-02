@@ -34,7 +34,7 @@ const SHOTS: Record<string, string> = {
   // LandingPage's four, carried over from its local Shot.
   phone: "/art/phone.png",
   ranking: "/art/ranking.png",
-  drill: "",
+  drill: "/art/drill.png",
   challenge: "",
 
   // LandingPage's tour, one screen each. `club` is a jpeg and the rest are
@@ -71,6 +71,7 @@ const SHOTS_DARK: Record<string, string> = {
   hero: "/art/poolclubs-hero-dark.png",
   phone: "/art/phone-dark.png",
   ranking: "/art/ranking-dark.png",
+  drill: "/art/drill-dark.png",
   tournament: "/art/tournament-dark.png",
   tv: "/art/tv-dark.png",
   me: "/art/me-dark.png",
