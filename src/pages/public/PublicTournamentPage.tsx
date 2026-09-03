@@ -528,7 +528,10 @@ function TournamentEntry({
     ) : null;
   }
 
-  if (!entered && !eligible) {
+  // A tournament with no category takes anybody who has a division, and a
+  // membership always has one — so ineligible here always means a division
+  // tournament, and the copy always has a division to name.
+  if (!entered && !eligible && tournament.category) {
     return (
       <p className="max-w-[24ch] text-caption text-ink-faint">
         {t("tournaments.notEligible", {

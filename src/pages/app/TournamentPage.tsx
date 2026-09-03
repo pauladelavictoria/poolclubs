@@ -378,11 +378,11 @@ export default function TournamentPage() {
               <EmptyState
                 title={t("tournaments.noEntrants")}
                 hint={
-                  canEnter
-                    ? t("tournaments.noEntrantsHint")
-                    : t("tournaments.notEligible", {
+                  !canEnter && tournament.category
+                    ? t("tournaments.notEligible", {
                         category: t(`category.${tournament.category}`),
                       })
+                    : t("tournaments.noEntrantsHint")
                 }
               />
             ) : (
