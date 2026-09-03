@@ -36,16 +36,18 @@ export const Route = createFileRoute("/_public/tournaments/$tournamentId")({
     const id = Number(params.tournamentId);
     if (!Number.isInteger(id) || id < 1) throw notFound();
 
-    const tournament = await context.queryClient.ensureQueryData(
-      publicTournamentQuery(id),
-    );
+    const tournament = await context.queryClient.query({
+      ...publicTournamentQuery(id),
+      staleTime: "static",
+    });
     if (!tournament) throw notFound();
 
     // The roster is what turns entrant ids and fixture slots into names. Without
     // it the bracket renders as numbers.
-    await context.queryClient.ensureQueryData(
-      publicClubRosterQuery(tournament.club_id),
-    );
+    await context.queryClient.query({
+      ...publicClubRosterQuery(tournament.club_id),
+      staleTime: "static",
+    });
 
     return { tournament, origin: context.origin };
   },

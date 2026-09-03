@@ -26,15 +26,15 @@ export const useSessionRefresh = () => {
   const router = useRouter();
 
   return useCallback(async () => {
-    // fetchQuery with the options, not invalidateQueries with the key: the
+    // query() with the options, not invalidateQueries with the key: the
     // session is hydrated out of the SSR payload, so its cache entry arrives
-    // with data but no queryFn — the client never called ensureQueryData,
+    // with data but no queryFn — the client never fetched it itself,
     // because the root's beforeLoad resolved on the server. Refetching by key
     // alone threw "Missing queryFn" and left the stale session in place, which
     // is why a club that changed its name or colour kept the old one until the
     // page was reloaded. Passing the options is what supplies the function, and
     // staleTime 0 overrides the query's own Infinity for this one call.
-    await queryClient.fetchQuery({ ...sessionQuery(), staleTime: 0 });
+    await queryClient.query({ ...sessionQuery(), staleTime: 0 });
     await router.invalidate();
   }, [queryClient, router]);
 };

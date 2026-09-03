@@ -15,13 +15,14 @@ export const Route = createFileRoute("/_public/drills/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(
-      publicDrillsQuery({
+    context.queryClient.query({
+      ...publicDrillsQuery({
         q: deps.q,
         difficulty: deps.difficulty,
         skill_type: deps.skill,
       }),
-    ),
+      staleTime: "static",
+    }),
   head: ({ match }) => ({
     meta: publicMeta({
       title: "Ejercicios de billar · PoolClubs",

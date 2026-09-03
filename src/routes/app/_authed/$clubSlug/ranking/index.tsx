@@ -7,6 +7,9 @@ import { gamesQuery } from "@/queries/games";
 export const Route = createFileRoute("/app/_authed/$clubSlug/ranking/")({
   staticData: { section: "ranking" },
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(gamesQuery(context.activeClubId)),
+    context.queryClient.query({
+      ...gamesQuery(context.activeClubId),
+      staleTime: "static",
+    }),
   component: RankingAllTimePage,
 });

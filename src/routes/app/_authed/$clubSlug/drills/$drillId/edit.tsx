@@ -18,9 +18,10 @@ export const Route = createFileRoute(
   // drill, not of the club. Checked here rather than after render, which is
   // where the old <Navigate> did it.
   loader: async ({ context, params }) => {
-    const drill = await context.queryClient.ensureQueryData(
-      drillQuery(Number(params.drillId)),
-    );
+    const drill = await context.queryClient.query({
+      ...drillQuery(Number(params.drillId)),
+      staleTime: "static",
+    });
 
     const isAdmin = context.player.id === ADMIN_PLAYER_ID;
     if (!canEditDrill(drill.created_by, context.user.id, isAdmin)) {

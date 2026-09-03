@@ -8,9 +8,10 @@ export const Route = createFileRoute("/_public/drills/$drillId")({
     const id = Number(params.drillId);
     if (!Number.isInteger(id) || id < 1) throw notFound();
 
-    const drill = await context.queryClient.ensureQueryData(
-      publicDrillQuery(id),
-    );
+    const drill = await context.queryClient.query({
+      ...publicDrillQuery(id),
+      staleTime: "static",
+    });
     // Club-owned drills fall in here too: the query is restricted to the shared
     // catalog, so a club's own drill is a 404 rather than a redirect to sign in.
     if (!drill) throw notFound();
@@ -18,9 +19,10 @@ export const Route = createFileRoute("/_public/drills/$drillId")({
     // Related drills. Unpaginated over the shared catalog, so it is small, and
     // it parallelises with nothing else on this route — it depends on the
     // skill_type the drill fetch above just resolved.
-    await context.queryClient.ensureQueryData(
-      publicDrillsQuery({ skill_type: drill.skill_type }),
-    );
+    await context.queryClient.query({
+      ...publicDrillsQuery({ skill_type: drill.skill_type }),
+      staleTime: "static",
+    });
 
     return { drill, origin: context.origin };
   },

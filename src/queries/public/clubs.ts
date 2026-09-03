@@ -92,13 +92,13 @@ export const publicClubsQuery = (filters: PublicClubsFilters = {}) => {
         .neq("slug", GLOBAL_CLUB_SLUG);
 
       // Name or where it is: "Madrid" is as likely a search for a club as its
-      // name is, and the address, the city and the country are all places that
-      // word can live. A plain substring on each — near enough for a directory
-      // this size, and it needs no geocoding of the term.
+      // name is. City and country only, not the street address — a term that
+      // matched a house number or a street name pulled in clubs the reader had
+      // never asked about.
       if (q?.trim()) {
         const term = orContains(q);
         query = query.or(
-          ["name", "address", "city", "country"]
+          ["name", "city", "country"]
             .map((col) => `${col}.ilike.${term}`)
             .join(","),
         );

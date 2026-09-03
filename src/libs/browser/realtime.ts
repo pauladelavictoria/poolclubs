@@ -133,7 +133,25 @@ const invalidateTournaments = (queryClient: QueryClient) => () => {
 let channel: RealtimeChannel | null = null;
 let channelClubId: number | null = null;
 
-export function startRealtime(queryClient: QueryClient, clubId: number) {
+type RealtimeOptions = {
+  queryClient: QueryClient;
+  clubId: number;
+  /** The reader's own player row in this club, so the one membership change
+   *  that has to reach the session — being approved — can be told apart from
+   *  the forty that do not. */
+  playerId: number;
+  /** useSessionRefresh: re-reads the session and re-runs the loaders. The
+   *  session is not a cache this file can invalidate — the root primes it with
+   *  staleTime "static", which wins over isInvalidated. */
+  refreshSession: () => Promise<void>;
+};
+
+export function startRealtime({
+  queryClient,
+  clubId,
+  playerId,
+  refreshSession,
+}: RealtimeOptions) {
   if (channel && channelClubId === clubId) return;
 
   // Switching club. Not awaited: the new channel has a name of its own, so
@@ -173,13 +191,25 @@ export function startRealtime(queryClient: QueryClient, clubId: number) {
 
   const tournaments = invalidateTournaments(queryClient);
 
+  /** Whether this channel has ever been anything but SUBSCRIBED — see the
+   *  subscribe callback at the bottom. */
+  let wasDown = false;
+
   channel = supabase
     .channel(`db-changes:${clubId}`)
-    .on(
-      "postgres_changes",
-      onTable("players"),
-      invalidate(queryClient, keys.players.all),
-    )
+    .on("postgres_changes", onTable("players"), (payload) => {
+      queryClient.invalidateQueries({ queryKey: keys.players.all });
+      // Approved, promoted, or made a device: the membership rides on the
+      // session, which every route guard is built from, so a change to my own
+      // row has to re-read it. Somebody else's does not — that would be a
+      // getUser() and a roster select per member who joins.
+      // Both halves: an update carries the whole row in `new`, a delete —
+      // being removed from the club — carries only the primary key in `old`.
+      const changed = payload.new as { id?: number };
+      const gone = payload.old as { id?: number };
+      if (changed.id === playerId || gone.id === playerId)
+        void refreshSession();
+    })
     // Same cache as players, because that is where a person's name and face are
     // read from: the roster query embeds people and flattens it. Without this a
     // rename or a new avatar would not reach the other members until a reload.
@@ -267,7 +297,24 @@ export function startRealtime(queryClient: QueryClient, clubId: number) {
     // exactly like a quiet club. Every screen then runs on whatever refetch it
     // happens to have — 30 seconds on the wall display — and nothing says so.
     .subscribe((status, err) => {
-      if (status === "SUBSCRIBED") return;
-      console.warn(`realtime: ${status}`, err ?? "");
+      if (status !== "SUBSCRIBED") {
+        wasDown = true;
+        console.warn(`realtime: ${status}`, err ?? "");
+        return;
+      }
+
+      // Rejoined after a drop. Whatever happened while the socket was gone is
+      // unknowable — the patch-only caches (comments, reactions, live rows)
+      // have no other way back, and a display bolted to a wall has no focus
+      // event and no thumb to refresh with, so without this it would sit on the
+      // pre-drop state for as long as it stays up.
+      //
+      // ponytail: refetch everything rather than work out what was missed. It
+      // costs one round of queries per drop, and a drop is rare.
+      if (wasDown) {
+        wasDown = false;
+        void queryClient.invalidateQueries();
+        void refreshSession();
+      }
     });
 }

@@ -13,8 +13,9 @@ export const Route = createFileRoute(
     }
   },
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(
-      trainingPlanQuery(Number(params.playerId)),
-    ),
+    context.queryClient.query({
+      ...trainingPlanQuery(Number(params.playerId)),
+      staleTime: "static",
+    }),
   component: TrainingPlanPage,
 });

@@ -21,7 +21,10 @@ export const Route = createFileRoute("/_public/tournaments/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(publicTournamentsQuery(deps)),
+    context.queryClient.query({
+      ...publicTournamentsQuery(deps),
+      staleTime: "static",
+    }),
   head: ({ match }) => ({
     meta: publicMeta({
       title: "Torneos · PoolClubs",

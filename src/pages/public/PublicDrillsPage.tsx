@@ -44,6 +44,11 @@ const SKILL_BALL: Record<DrillSkillType, BallColor> = Object.fromEntries(
  * selected, so the rail's counts stay live rather than collapsing to whichever
  * skill happens to be active.
  */
+/** Drill cards are square boards — small enough to pack tight, so the grid
+ *  keeps adding columns. Shared with /search. */
+export const DRILL_GRID =
+  "grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6";
+
 export default function PublicDrillsPage() {
   const { t } = useT();
   const search = route.useSearch();
@@ -188,7 +193,7 @@ export default function PublicDrillsPage() {
             />
           </Card>
         ) : search.difficulty ? (
-          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+          <div className={`mt-8 ${DRILL_GRID}`}>
             {shown.map((drill) => (
               <DrillCard key={drill.id} drill={drill} public />
             ))}
@@ -200,7 +205,7 @@ export default function PublicDrillsPage() {
                 <h2 className="px-1 pb-3 text-caption font-medium tracking-[0.08em] text-ink-faint uppercase">
                   {t(`difficulty.${difficulty}`)}
                 </h2>
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                <div className={DRILL_GRID}>
                   {rows.map((drill) => (
                     <DrillCard key={drill.id} drill={drill} public />
                   ))}

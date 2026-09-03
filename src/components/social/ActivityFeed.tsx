@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useGames } from "@/hooks/useGames";
+import { FEED_PAGE_SIZE } from "@/queries/games";
 import { useDrillLogs } from "@/hooks/useDrillLogs";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useDrills } from "@/hooks/useDrills";
@@ -25,7 +26,11 @@ import { rank, type FeedItem } from "./feed/types";
  * The club's home timeline: matches and drill results in one stream, newest
  * first, each carrying its own reactions and comments.
  */
-export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
+export default function ActivityFeed({
+  pageSize = FEED_PAGE_SIZE,
+}: {
+  pageSize?: number;
+}) {
   const { t, locale } = useT();
   // How far back the feed currently reaches. Widening the window rather than
   // stitching pages together: the sources are three lists merged by time, and

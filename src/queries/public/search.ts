@@ -2,8 +2,15 @@ import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
 import { DRILLS_ENABLED } from "@/libs/algorithms/features";
-import { CLUB_COLS, DRILL_COLS, PERSON_COLS, contains, orContains } from "./shared";
-import { type PublicClub } from "./clubs";
+import {
+  CLUB_CARD_COLS,
+  CLUB_COLS,
+  DRILL_COLS,
+  PERSON_COLS,
+  contains,
+  orContains,
+} from "./shared";
+import { type PublicClubCard } from "./clubs";
 import { MEMBERSHIPS, type PublicPersonWithClubs } from "./players";
 import { type PublicTournamentListItem } from "./tournaments";
 import type { Drill } from "@/types";
@@ -13,7 +20,7 @@ import { GLOBAL_CLUB_SLUG } from "@/libs/algorithms/features";
 const SEARCH_LIMIT = 5;
 
 type PublicSearchResults = {
-  clubs: PublicClub[];
+  clubs: PublicClubCard[];
   people: PublicPersonWithClubs[];
   tournaments: PublicTournamentListItem[];
   drills: Drill[];
@@ -35,13 +42,15 @@ export const publicSearchQuery = (q: string) =>
       const [clubs, people, tournaments, drills] = await Promise.all([
         supabase
           .from("clubs")
-          .select(CLUB_COLS)
+          // The card cols, not the plain ones: /search shows the same club card
+          // the directory does, and that card leads with the venue photo.
+          .select(CLUB_CARD_COLS)
           .eq("is_public", true)
           // Not a venue — see publicClubsQuery.
           .neq("slug", GLOBAL_CLUB_SLUG)
           // Name or location, the same rule the clubs directory searches by.
           .or(
-            ["name", "address", "city", "country"]
+            ["name", "city", "country"]
               .map((col) => `${col}.ilike.${orContains(q)}`)
               .join(","),
           )
@@ -81,7 +90,7 @@ export const publicSearchQuery = (q: string) =>
       ]);
 
       return {
-        clubs: clubs.data as PublicClub[],
+        clubs: clubs.data as PublicClubCard[],
         people: people.data as unknown as PublicPersonWithClubs[],
         tournaments: tournaments.data as unknown as PublicTournamentListItem[],
         // Hidden feature: the read still runs (one branch beats reshaping the

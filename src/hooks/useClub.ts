@@ -184,7 +184,7 @@ export const useJoinOrCreateClub = () => {
    */
   const settle = async (clubId: number) => {
     await queryClient.invalidateQueries({ queryKey: SESSION_KEY });
-    const session = await queryClient.fetchQuery(sessionQuery());
+    const session = await queryClient.query(sessionQuery());
     await router.invalidate();
 
     const slug = session?.memberships.find((m) => m.club_id === clubId)?.club

@@ -13,12 +13,13 @@ export const Route = createFileRoute(
     crumbs: [{ labelKey: "players.title", to: "/app/$clubSlug/players" }],
   },
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(
-      gamesQuery(context.activeClubId, {
+    context.queryClient.query({
+      ...gamesQuery(context.activeClubId, {
         playerId: Number(params.playerId),
         pageSize: PLAYER_GAMES_LIMIT,
       }),
-    ),
+      staleTime: "static",
+    }),
   component: PlayerRoute,
 });
 

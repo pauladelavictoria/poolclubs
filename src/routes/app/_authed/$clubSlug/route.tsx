@@ -55,9 +55,10 @@ export const Route = createFileRoute("/app/_authed/$clubSlug")({
   // on their own round trip.
   loader: ({ context }) => {
     if (!context.isMember) return;
-    void context.queryClient.ensureQueryData(
-      playersQuery(context.activeClubId),
-    );
+    void context.queryClient.query({
+      ...playersQuery(context.activeClubId),
+      staleTime: "static",
+    });
   },
 
   component: ClubLayout,

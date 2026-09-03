@@ -19,7 +19,7 @@ export const Route = createFileRoute("/app/join/$slug")({
   // page renders ("that link doesn't work"), not an error boundary.
   loader: ({ context, params }) => {
     void context.queryClient
-      .ensureQueryData(clubPreviewQuery(params.slug))
+      .query({ ...clubPreviewQuery(params.slug), staleTime: "static" })
       .catch(() => null);
   },
 

@@ -10,13 +10,15 @@ export const Route = createFileRoute("/_public/clubs/$slug/")({
   // notFound() if there wasn't one — so this reads it rather than the id being
   // plumbed down through loader data.
   loader: async ({ context, params }) => {
-    const club = await context.queryClient.ensureQueryData(
-      publicClubQuery(params.slug),
-    );
+    const club = await context.queryClient.query({
+      ...publicClubQuery(params.slug),
+      staleTime: "static",
+    });
     if (!club) return;
-    await context.queryClient.ensureQueryData(
-      publicTournamentsQuery({ clubId: club.id }),
-    );
+    await context.queryClient.query({
+      ...publicTournamentsQuery({ clubId: club.id }),
+      staleTime: "static",
+    });
   },
   component: ClubTournamentsTab,
 });

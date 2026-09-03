@@ -9,9 +9,10 @@ import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 
 export const Route = createFileRoute("/_public/players/$playerSlug")({
   loader: async ({ context, params }) => {
-    const person = await context.queryClient.ensureQueryData(
-      publicPersonQuery(params.playerSlug),
-    );
+    const person = await context.queryClient.query({
+      ...publicPersonQuery(params.playerSlug),
+      staleTime: "static",
+    });
     // Unknown slug, or every one of their clubs is hidden or their memberships
     // are still pending — all of them are a 404 out here, and for the same
     // reason: none is a public profile.
@@ -26,13 +27,17 @@ export const Route = createFileRoute("/_public/players/$playerSlug")({
     // answer is one RPC returning the merged history, not a cache here.
     await Promise.all(
       person.memberships.flatMap((m) => [
-        context.queryClient.ensureQueryData(publicClubRosterQuery(m.club.id)),
-        context.queryClient.ensureQueryData(
-          gamesQuery(m.club.id, {
+        context.queryClient.query({
+          ...publicClubRosterQuery(m.club.id),
+          staleTime: "static",
+        }),
+        context.queryClient.query({
+          ...gamesQuery(m.club.id, {
             playerId: m.id,
             pageSize: PUBLIC_PLAYER_GAMES_LIMIT,
           }),
-        ),
+          staleTime: "static",
+        }),
       ]),
     );
 

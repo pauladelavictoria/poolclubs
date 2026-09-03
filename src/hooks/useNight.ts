@@ -1,12 +1,10 @@
 import { useMemo } from "react";
-import { useRouter } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/libs/supabase/browser";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, useSessionRefresh } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { keys } from "@/libs/queryKeys";
-import { SESSION_KEY } from "@/queries/session";
 import { whoIsHere } from "@/libs/algorithms/night";
 import { useNow } from "@/hooks/useNow";
 import { sendPush } from "@/libs/server/push.functions";
@@ -81,8 +79,7 @@ export const useCheckIn = () => {
  * `night_call_at`, which is the durable half.
  */
 export const useCallNight = () => {
-  const queryClient = useQueryClient();
-  const router = useRouter();
+  const refreshSession = useSessionRefresh();
   const { activeClubId } = useAuth();
 
   return useMutation({
@@ -96,8 +93,12 @@ export const useCallNight = () => {
     onSuccess: async () => {
       // The club row carries night_call_at and it rides on the session, so the
       // button's own "called just now" state comes from re-reading that.
-      await queryClient.invalidateQueries({ queryKey: SESSION_KEY });
-      await router.invalidate();
+      //
+      // useSessionRefresh, not invalidateQueries + router.invalidate: the root
+      // primes the session with staleTime "static", and static wins over
+      // isInvalidated inside isStaleByTime — the loader would hand the same
+      // cached session straight back and the button would never light up.
+      await refreshSession();
 
       if (activeClubId)
         void sendPush({ data: { kind: "nightCall", id: activeClubId } }).catch(
