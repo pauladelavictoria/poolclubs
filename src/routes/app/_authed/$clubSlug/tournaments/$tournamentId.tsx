@@ -12,12 +12,16 @@ export const Route = createFileRoute(
   },
   loader: async ({ context, params }) => {
     await Promise.all([
-      context.queryClient.ensureQueryData(
-        tournamentQuery(Number(params.tournamentId)),
-      ),
+      context.queryClient.query({
+        ...tournamentQuery(Number(params.tournamentId)),
+        staleTime: "static",
+      }),
       // The seeding and the league tables are drawn from club Elo, so the page
       // needs the whole games list as well as the fixtures.
-      context.queryClient.ensureQueryData(gamesQuery(context.activeClubId)),
+      context.queryClient.query({
+        ...gamesQuery(context.activeClubId),
+        staleTime: "static",
+      }),
     ]);
   },
   component: TournamentPage,

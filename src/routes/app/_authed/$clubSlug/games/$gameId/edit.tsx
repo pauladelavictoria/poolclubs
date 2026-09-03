@@ -19,9 +19,10 @@ export const Route = createFileRoute(
   // The game is fetched before the check, not after, because who may edit it
   // depends on who is sitting in it.
   loader: async ({ context, params }) => {
-    const game = await context.queryClient.ensureQueryData(
-      gameQuery(params.gameId),
-    );
+    const game = await context.queryClient.query({
+      ...gameQuery(params.gameId),
+      staleTime: "static",
+    });
 
     if (
       !canEditGame(

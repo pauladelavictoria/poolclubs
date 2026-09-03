@@ -15,16 +15,20 @@ import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
  */
 export const Route = createFileRoute("/_public/clubs/$slug")({
   loader: async ({ context, params }) => {
-    const club = await context.queryClient.ensureQueryData(
-      publicClubQuery(params.slug),
-    );
+    const club = await context.queryClient.query({
+      ...publicClubQuery(params.slug),
+      staleTime: "static",
+    });
     // No such club, or it opted out. Indistinguishable on purpose: whether a
     // private club exists is itself private.
     if (!club) throw notFound();
 
     // Only what the frame itself draws: the roster is the hero's face pile, so
     // a page that paints without it paints wrong. Each tab loads its own.
-    await context.queryClient.ensureQueryData(publicClubRosterQuery(club.id));
+    await context.queryClient.query({
+      ...publicClubRosterQuery(club.id),
+      staleTime: "static",
+    });
 
     return { club, origin: context.origin };
   },

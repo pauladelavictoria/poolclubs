@@ -13,7 +13,7 @@ import { NotFound } from "@/components/layout/NotFound";
  *
  * The QueryClient is created here rather than imported so each request gets its
  * own cache — see libs/queryClient.ts. It goes into the router context, which is
- * how loaders reach it: `context.queryClient.ensureQueryData(...)`.
+ * how loaders reach it: `context.queryClient.query(...)`.
  */
 export function getRouter() {
   const queryClient = makeQueryClient();

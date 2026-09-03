@@ -7,6 +7,9 @@ import { gamesQuery } from "@/queries/games";
 export const Route = createFileRoute("/app/_authed/$clubSlug/players/")({
   // The roster itself is primed by the club layout; the cards also show Elo.
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(gamesQuery(context.activeClubId)),
+    context.queryClient.query({
+      ...gamesQuery(context.activeClubId),
+      staleTime: "static",
+    }),
   component: PlayersPage,
 });

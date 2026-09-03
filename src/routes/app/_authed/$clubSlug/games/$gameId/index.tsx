@@ -11,6 +11,9 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/games/$gameId/")({
   // opened from a link is one row, and the feed the reader came from may not
   // have it cached.
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(gameQuery(params.gameId)),
+    context.queryClient.query({
+      ...gameQuery(params.gameId),
+      staleTime: "static",
+    }),
   component: GameDetailPage,
 });

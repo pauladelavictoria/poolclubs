@@ -25,7 +25,10 @@ export const Route = createFileRoute("/_public/players/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(publicPlayersQuery(deps)),
+    context.queryClient.query({
+      ...publicPlayersQuery(deps),
+      staleTime: "static",
+    }),
   head: ({ match }) => ({
     meta: publicMeta({
       title: "Jugadores · PoolClubs",

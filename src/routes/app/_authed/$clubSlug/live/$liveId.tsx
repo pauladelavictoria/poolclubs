@@ -18,6 +18,9 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/live/$liveId")({
   // Often the first thing a tab loads — both players open this link straight
   // from a message — so the match itself is primed rather than waited for.
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(liveMatchQuery(params.liveId)),
+    context.queryClient.query({
+      ...liveMatchQuery(params.liveId),
+      staleTime: "static",
+    }),
   component: LiveMatchPage,
 });

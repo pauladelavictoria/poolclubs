@@ -41,8 +41,14 @@ export const Route = createFileRoute("/_public/clubs/")({
    */
   loader: ({ context, deps }) =>
     Promise.all([
-      context.queryClient.ensureQueryData(publicClubsQuery(deps)),
-      context.queryClient.ensureQueryData(publicClubPinsQuery()),
+      context.queryClient.query({
+        ...publicClubsQuery(deps),
+        staleTime: "static",
+      }),
+      context.queryClient.query({
+        ...publicClubPinsQuery(),
+        staleTime: "static",
+      }),
     ]),
   head: ({ match }) => ({
     meta: publicMeta({

@@ -13,8 +13,9 @@ export const Route = createFileRoute(
     }
   },
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(
-      drillLogsQuery({ player_id: Number(params.playerId) }),
-    ),
+    context.queryClient.query({
+      ...drillLogsQuery({ player_id: Number(params.playerId) }),
+      staleTime: "static",
+    }),
   component: TrainingProgressPage,
 });

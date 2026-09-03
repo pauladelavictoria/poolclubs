@@ -16,11 +16,12 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/drills/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(
-      drillsQuery(context.activeClubId, {
+    context.queryClient.query({
+      ...drillsQuery(context.activeClubId, {
         difficulty: deps.difficulty,
         skill_type: deps.skill,
       }),
-    ),
+      staleTime: "static",
+    }),
   component: DrillsPage,
 });

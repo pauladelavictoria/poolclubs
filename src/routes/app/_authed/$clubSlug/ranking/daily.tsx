@@ -43,12 +43,13 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/ranking/daily")({
   // Same filters as the component's own hook, zone included, or the loader
   // primes a key nothing reads.
   loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(
-      gamesQuery(context.activeClubId, {
+    context.queryClient.query({
+      ...gamesQuery(context.activeClubId, {
         date: deps.date,
         tz: zoneOf(context.activeClub),
       }),
-    ),
+      staleTime: "static",
+    }),
 
   component: RankingDailyPage,
 });

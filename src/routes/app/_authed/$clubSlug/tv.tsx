@@ -14,12 +14,14 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/tv")({
   staticData: { section: "home", fullBleed: true },
   loader: ({ context }) =>
     Promise.all([
-      context.queryClient.ensureQueryData(
-        liveMatchesQuery(context.activeClubId),
-      ),
-      context.queryClient.ensureQueryData(
-        clubTablesQuery(context.activeClubId),
-      ),
+      context.queryClient.query({
+        ...liveMatchesQuery(context.activeClubId),
+        staleTime: "static",
+      }),
+      context.queryClient.query({
+        ...clubTablesQuery(context.activeClubId),
+        staleTime: "static",
+      }),
     ]),
   component: TvPage,
 });

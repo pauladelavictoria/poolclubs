@@ -15,7 +15,10 @@ export const Route = createFileRoute("/_public/search")({
   // result set that means nothing.
   loader: ({ context, deps }) =>
     deps.q?.trim()
-      ? context.queryClient.ensureQueryData(publicSearchQuery(deps.q))
+      ? context.queryClient.query({
+          ...publicSearchQuery(deps.q),
+          staleTime: "static",
+        })
       : null,
   head: ({ match }) => ({
     meta: publicMeta({

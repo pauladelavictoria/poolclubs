@@ -26,8 +26,9 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/games/")({
     category: search.category,
   }),
   loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(
-      gamesQuery(context.activeClubId, { ...deps, pageSize: PAGE_SIZE }),
-    ),
+    context.queryClient.query({
+      ...gamesQuery(context.activeClubId, { ...deps, pageSize: PAGE_SIZE }),
+      staleTime: "static",
+    }),
   component: GamesPage,
 });

@@ -33,11 +33,14 @@ export const Route = createRootRouteWithContext<{
     // and it also covers the public /drills pages a search engine already has.
     if (isHiddenPath(location.pathname)) throw notFound();
 
-    // ensureQueryData rather than calling the server function directly: root
+    // query() rather than calling the server function directly: root
     // beforeLoad runs on every navigation, and this way the session costs one
     // round trip per page load instead of one per link. Sign-in and sign-out
     // invalidate the key explicitly.
-    const session = await context.queryClient.ensureQueryData(sessionQuery());
+    const session = await context.queryClient.query({
+      ...sessionQuery(),
+      staleTime: "static",
+    });
 
     return {
       session,

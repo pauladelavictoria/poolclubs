@@ -15,7 +15,7 @@ import { challengesQuery } from "@/queries/challenges";
 it("primes exactly the keys the lobby reads", async () => {
   const primed: unknown[] = [];
   const queryClient = {
-    ensureQueryData: vi.fn(async (o: { queryKey: unknown }) => {
+    query: vi.fn(async (o: { queryKey: unknown }) => {
       primed.push(o.queryKey);
     }),
   };

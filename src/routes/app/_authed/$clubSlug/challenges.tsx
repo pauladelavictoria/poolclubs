@@ -7,6 +7,9 @@ import { challengesQuery } from "@/queries/challenges";
 export const Route = createFileRoute("/app/_authed/$clubSlug/challenges")({
   staticData: { section: "games" },
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(challengesQuery(context.activeClubId)),
+    context.queryClient.query({
+      ...challengesQuery(context.activeClubId),
+      staleTime: "static",
+    }),
   component: ChallengesPage,
 });

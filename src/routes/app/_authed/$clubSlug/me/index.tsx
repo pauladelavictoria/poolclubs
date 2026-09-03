@@ -13,12 +13,13 @@ import { gamesQuery } from "@/queries/games";
  */
 export const Route = createFileRoute("/app/_authed/$clubSlug/me/")({
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(
-      gamesQuery(context.activeClubId, {
+    context.queryClient.query({
+      ...gamesQuery(context.activeClubId, {
         playerId: context.player.id,
         pageSize: PLAYER_GAMES_LIMIT,
       }),
-    ),
+      staleTime: "static",
+    }),
   component: MeRoute,
 });
 

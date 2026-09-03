@@ -19,10 +19,14 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/drills/$drillId/")(
     loader: async ({ context, params }) => {
       const drillId = Number(params.drillId);
       await Promise.all([
-        context.queryClient.ensureQueryData(drillQuery(drillId)),
-        context.queryClient.ensureQueryData(
-          drillLogsQuery({ drill_id: drillId }),
-        ),
+        context.queryClient.query({
+          ...drillQuery(drillId),
+          staleTime: "static",
+        }),
+        context.queryClient.query({
+          ...drillLogsQuery({ drill_id: drillId }),
+          staleTime: "static",
+        }),
       ]);
     },
     component: DrillDetailPage,

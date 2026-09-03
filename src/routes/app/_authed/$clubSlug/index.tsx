@@ -14,16 +14,29 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/")({
     // In parallel, and awaited: this is the first paint, so the page is worth
     // waiting for rather than streaming four spinners.
     await Promise.all([
-      context.queryClient.ensureQueryData(
-        gamesQuery(clubId, { pageSize: FEED_PAGE_SIZE }),
-      ),
-      context.queryClient.ensureQueryData(tournamentsQuery(clubId)),
-      context.queryClient.ensureQueryData(challengesQuery(clubId)),
-      context.queryClient.ensureQueryData(
-        myTournamentIdsQuery(context.player.id, clubId),
-      ),
+      context.queryClient.query({
+        ...gamesQuery(clubId, { pageSize: FEED_PAGE_SIZE }),
+        staleTime: "static",
+      }),
+      context.queryClient.query({
+        ...tournamentsQuery(clubId),
+        staleTime: "static",
+      }),
+      context.queryClient.query({
+        ...challengesQuery(clubId),
+        staleTime: "static",
+      }),
+      context.queryClient.query({
+        ...myTournamentIdsQuery(context.player.id, clubId),
+        staleTime: "static",
+      }),
       ...(DRILLS_ENABLED
-        ? [context.queryClient.ensureQueryData(drillsQuery(clubId))]
+        ? [
+            context.queryClient.query({
+              ...drillsQuery(clubId),
+              staleTime: "static",
+            }),
+          ]
         : []),
     ]);
   },
