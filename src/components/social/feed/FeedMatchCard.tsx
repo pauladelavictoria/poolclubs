@@ -9,10 +9,14 @@ import Side from "./Side";
 export default function FeedMatchCard({
   game,
   tournament,
+  detail = false,
 }: {
   game: Game;
   /** Set when the game was filed as a tournament fixture. */
   tournament?: Pick<Tournament, "id" | "name">;
+  /** This card *is* the page rather than a row of the feed: the thread opens
+   *  with it, and the time stops being a link to where the reader already is. */
+  detail?: boolean;
 }) {
   const { t, locale } = useT();
 
@@ -39,12 +43,28 @@ export default function FeedMatchCard({
         <p className="text-caption font-medium uppercase tracking-[0.08em] text-strike">
           {isDoubles ? t("games.doubles") : t("games.single")}
         </p>
-        <time
-          dateTime={game.played_at}
-          className="shrink-0 font-mono text-caption tabular-nums text-ink-ghost"
-        >
-          {timeOf(new Date(game.played_at), locale)}
-        </time>
+        {/* The time doubles as the way into the result's own page — the card
+            cannot be one big link, because half of it already is one (the
+            names, the bracket, every button on the social bar). */}
+        {detail ? (
+          <time
+            dateTime={game.played_at}
+            className="shrink-0 font-mono text-caption tabular-nums text-ink-ghost"
+          >
+            {timeOf(new Date(game.played_at), locale)}
+          </time>
+        ) : (
+          <AppLink
+            to="/app/$clubSlug/games/$gameId"
+            params={{ gameId: game.id }}
+            aria-label={t("games.openResult")}
+            className="shrink-0 font-mono text-caption tabular-nums text-ink-ghost transition-colors duration-150 hover:text-strike"
+          >
+            <time dateTime={game.played_at}>
+              {timeOf(new Date(game.played_at), locale)}
+            </time>
+          </AppLink>
+        )}
       </div>
 
       {/* The score is the focal element; the two sides mirror around it, so the
@@ -68,7 +88,11 @@ export default function FeedMatchCard({
       </div>
 
       <div className="mt-3 border-t border-hairline pt-2">
-        <SocialBar target={{ gameId: game.id }} preview />
+        <SocialBar
+          target={{ gameId: game.id }}
+          preview={!detail}
+          defaultOpen={detail}
+        />
       </div>
     </>
   );

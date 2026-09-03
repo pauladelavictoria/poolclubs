@@ -72,6 +72,7 @@ import { Route as AppAuthedClubSlugTournamentsIndexRouteImport } from './routes/
 import { Route as AppAuthedClubSlugTournamentsTournamentIdRouteImport } from './routes/app/_authed/$clubSlug/tournaments/$tournamentId'
 import { Route as AppAuthedClubSlugDrillsDrillIdIndexRouteImport } from './routes/app/_authed/$clubSlug/drills/$drillId/index'
 import { Route as AppAuthedClubSlugDrillsDrillIdEditRouteImport } from './routes/app/_authed/$clubSlug/drills/$drillId/edit'
+import { Route as AppAuthedClubSlugGamesGameIdIndexRouteImport } from './routes/app/_authed/$clubSlug/games/$gameId/index'
 import { Route as AppAuthedClubSlugGamesGameIdEditRouteImport } from './routes/app/_authed/$clubSlug/games/$gameId/edit'
 import { Route as AppAuthedClubSlugMeTrainingIndexRouteImport } from './routes/app/_authed/$clubSlug/me/training/index'
 import { Route as AppAuthedClubSlugMeTrainingPlanRouteImport } from './routes/app/_authed/$clubSlug/me/training/plan'
@@ -417,6 +418,12 @@ const AppAuthedClubSlugDrillsDrillIdEditRoute =
     path: '/drills/$drillId/edit',
     getParentRoute: () => AppAuthedClubSlugRouteRoute,
   } as any)
+const AppAuthedClubSlugGamesGameIdIndexRoute =
+  AppAuthedClubSlugGamesGameIdIndexRouteImport.update({
+    id: '/games/$gameId/',
+    path: '/games/$gameId/',
+    getParentRoute: () => AppAuthedClubSlugRouteRoute,
+  } as any)
 const AppAuthedClubSlugGamesGameIdEditRoute =
   AppAuthedClubSlugGamesGameIdEditRouteImport.update({
     id: '/games/$gameId/edit',
@@ -525,6 +532,7 @@ export interface FileRoutesByFullPath {
   '/app/$clubSlug/me/training/plan': typeof AppAuthedClubSlugMeTrainingPlanRoute
   '/app/$clubSlug/players/$playerId/settings': typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
   '/app/$clubSlug/drills/$drillId/': typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
+  '/app/$clubSlug/games/$gameId/': typeof AppAuthedClubSlugGamesGameIdIndexRoute
   '/app/$clubSlug/me/training/': typeof AppAuthedClubSlugMeTrainingIndexRoute
   '/app/$clubSlug/players/$playerId/': typeof AppAuthedClubSlugPlayersPlayerIdIndexRoute
   '/app/$clubSlug/players/$playerId/training/plan': typeof AppAuthedClubSlugPlayersPlayerIdTrainingPlanRoute
@@ -591,6 +599,7 @@ export interface FileRoutesByTo {
   '/app/$clubSlug/me/training/plan': typeof AppAuthedClubSlugMeTrainingPlanRoute
   '/app/$clubSlug/players/$playerId/settings': typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
   '/app/$clubSlug/drills/$drillId': typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
+  '/app/$clubSlug/games/$gameId': typeof AppAuthedClubSlugGamesGameIdIndexRoute
   '/app/$clubSlug/me/training': typeof AppAuthedClubSlugMeTrainingIndexRoute
   '/app/$clubSlug/players/$playerId': typeof AppAuthedClubSlugPlayersPlayerIdIndexRoute
   '/app/$clubSlug/players/$playerId/training/plan': typeof AppAuthedClubSlugPlayersPlayerIdTrainingPlanRoute
@@ -664,6 +673,7 @@ export interface FileRoutesById {
   '/app/_authed/$clubSlug/me/training/plan': typeof AppAuthedClubSlugMeTrainingPlanRoute
   '/app/_authed/$clubSlug/players/$playerId/settings': typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
   '/app/_authed/$clubSlug/drills/$drillId/': typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
+  '/app/_authed/$clubSlug/games/$gameId/': typeof AppAuthedClubSlugGamesGameIdIndexRoute
   '/app/_authed/$clubSlug/me/training/': typeof AppAuthedClubSlugMeTrainingIndexRoute
   '/app/_authed/$clubSlug/players/$playerId/': typeof AppAuthedClubSlugPlayersPlayerIdIndexRoute
   '/app/_authed/$clubSlug/players/$playerId/training/plan': typeof AppAuthedClubSlugPlayersPlayerIdTrainingPlanRoute
@@ -736,6 +746,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/me/training/plan'
     | '/app/$clubSlug/players/$playerId/settings'
     | '/app/$clubSlug/drills/$drillId/'
+    | '/app/$clubSlug/games/$gameId/'
     | '/app/$clubSlug/me/training/'
     | '/app/$clubSlug/players/$playerId/'
     | '/app/$clubSlug/players/$playerId/training/plan'
@@ -802,6 +813,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/me/training/plan'
     | '/app/$clubSlug/players/$playerId/settings'
     | '/app/$clubSlug/drills/$drillId'
+    | '/app/$clubSlug/games/$gameId'
     | '/app/$clubSlug/me/training'
     | '/app/$clubSlug/players/$playerId'
     | '/app/$clubSlug/players/$playerId/training/plan'
@@ -874,6 +886,7 @@ export interface FileRouteTypes {
     | '/app/_authed/$clubSlug/me/training/plan'
     | '/app/_authed/$clubSlug/players/$playerId/settings'
     | '/app/_authed/$clubSlug/drills/$drillId/'
+    | '/app/_authed/$clubSlug/games/$gameId/'
     | '/app/_authed/$clubSlug/me/training/'
     | '/app/_authed/$clubSlug/players/$playerId/'
     | '/app/_authed/$clubSlug/players/$playerId/training/plan'
@@ -1332,6 +1345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthedClubSlugDrillsDrillIdEditRouteImport
       parentRoute: typeof AppAuthedClubSlugRouteRoute
     }
+    '/app/_authed/$clubSlug/games/$gameId/': {
+      id: '/app/_authed/$clubSlug/games/$gameId/'
+      path: '/games/$gameId'
+      fullPath: '/app/$clubSlug/games/$gameId/'
+      preLoaderRoute: typeof AppAuthedClubSlugGamesGameIdIndexRouteImport
+      parentRoute: typeof AppAuthedClubSlugRouteRoute
+    }
     '/app/_authed/$clubSlug/games/$gameId/edit': {
       id: '/app/_authed/$clubSlug/games/$gameId/edit'
       path: '/games/$gameId/edit'
@@ -1488,6 +1508,7 @@ interface AppAuthedClubSlugRouteRouteChildren {
   AppAuthedClubSlugMeTrainingPlanRoute: typeof AppAuthedClubSlugMeTrainingPlanRoute
   AppAuthedClubSlugPlayersPlayerIdSettingsRoute: typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
   AppAuthedClubSlugDrillsDrillIdIndexRoute: typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
+  AppAuthedClubSlugGamesGameIdIndexRoute: typeof AppAuthedClubSlugGamesGameIdIndexRoute
   AppAuthedClubSlugMeTrainingIndexRoute: typeof AppAuthedClubSlugMeTrainingIndexRoute
   AppAuthedClubSlugPlayersPlayerIdIndexRoute: typeof AppAuthedClubSlugPlayersPlayerIdIndexRoute
   AppAuthedClubSlugPlayersPlayerIdTrainingPlanRoute: typeof AppAuthedClubSlugPlayersPlayerIdTrainingPlanRoute
@@ -1529,6 +1550,8 @@ const AppAuthedClubSlugRouteRouteChildren: AppAuthedClubSlugRouteRouteChildren =
       AppAuthedClubSlugPlayersPlayerIdSettingsRoute,
     AppAuthedClubSlugDrillsDrillIdIndexRoute:
       AppAuthedClubSlugDrillsDrillIdIndexRoute,
+    AppAuthedClubSlugGamesGameIdIndexRoute:
+      AppAuthedClubSlugGamesGameIdIndexRoute,
     AppAuthedClubSlugMeTrainingIndexRoute:
       AppAuthedClubSlugMeTrainingIndexRoute,
     AppAuthedClubSlugPlayersPlayerIdIndexRoute:

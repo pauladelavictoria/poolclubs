@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { headlineClasses } from "@/components/layout/publicTitleStyles";
 import {
   useMutation,
@@ -19,6 +19,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/ui/Ball";
+import { Fact } from "@/components/ui/Fact";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHead } from "@/components/ui/SectionHead";
 import { Segmented } from "@/components/ui/Segmented";
@@ -329,9 +330,12 @@ function TournamentHero({
             line up down the columns — a ragged left edge is what made the old
             run-on hard to scan. Fields with nothing in them are absent, not
             blank: most tournaments open before anyone has dated them. */}
-        <dl className="mt-8 grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 sm:gap-x-8 lg:grid-cols-3 xl:grid-cols-4">
           {tournament.club && (
-            <Fact label={t("public.publicTournament.hostedBy")}>
+            <Fact
+              className="col-span-2 sm:col-span-1"
+              label={t("public.publicTournament.hostedBy")}
+            >
               <Link
                 to="/clubs/$slug"
                 params={{ slug: tournament.club.slug }}
@@ -370,9 +374,22 @@ function TournamentHero({
               </span>
             </Fact>
           )}
-          {when && <Fact label={t("tournaments.dates")}>{when}</Fact>}
+          {/* Both of these run long — a date range, and a fee the club wrote in
+              its own words — so on a phone they take the whole row rather than
+              half of one and lose their tail to the truncation. */}
+          {when && (
+            <Fact
+              className="col-span-2 sm:col-span-1"
+              label={t("tournaments.dates")}
+            >
+              {when}
+            </Fact>
+          )}
           {tournament.entry_fee && (
-            <Fact label={t("tournaments.entryFee")}>
+            <Fact
+              className="col-span-2 sm:col-span-1"
+              label={t("tournaments.entryFee")}
+            >
               {tournament.entry_fee}
             </Fact>
           )}
@@ -413,18 +430,6 @@ function TournamentHero({
         ) : null}
       </div>
     </section>
-  );
-}
-
-/** One labelled field in the header's definition list. A <div> per pair so the
- *  grid places the label and its value together — a bare dt/dt/dd/dd sequence
- *  in a grid puts them in whatever cells come next. */
-function Fact({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-caption text-ink-faint">{label}</dt>
-      <dd className="mt-1 truncate text-body text-ink">{children}</dd>
-    </div>
   );
 }
 
@@ -526,7 +531,9 @@ function TournamentEntry({
   if (!entered && !eligible) {
     return (
       <p className="max-w-[24ch] text-caption text-ink-faint">
-        {t("tournaments.notEligible")}
+        {t("tournaments.notEligible", {
+          category: t(`category.${tournament.category}`),
+        })}
       </p>
     );
   }

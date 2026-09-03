@@ -27,11 +27,15 @@ import { AppLink } from "@/components/layout/AppLink";
 export default function SocialBar({
   target,
   preview = false,
+  defaultOpen = false,
 }: {
   target: SocialTarget;
   /** Feed cards show the first comment without a tap — a thread nobody can see
    *  is a thread nobody joins. */
   preview?: boolean;
+  /** The thread already open. For a page that is one result and nothing else:
+   *  there the thread is the rest of the page, not a thing to reveal. */
+  defaultOpen?: boolean;
 }) {
   const { t, locale } = useT();
   const { player, isClubAdmin } = useAuth();
@@ -41,7 +45,7 @@ export default function SocialBar({
   const { addComment, deleteComment, editComment, toggleReaction } =
     useSocialActions();
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [picking, setPicking] = useState(false);
   const [draft, setDraft] = useState("");
   /** Which comment is open for editing, and the text as it is being changed. */

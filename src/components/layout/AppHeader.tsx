@@ -1,5 +1,5 @@
 import { LuChevronLeft, LuMenu } from "react-icons/lu";
-import { AppLink } from "@/components/layout/AppLink";
+import { useRouter } from "@tanstack/react-router";
 import ClubMenu from "@/components/layout/ClubMenu";
 import NotificationBell from "@/components/layout/NotificationBell";
 import ProfileMenu from "@/components/layout/ProfileMenu";
@@ -32,12 +32,35 @@ export default function AppHeader({
   onMenu?: () => void;
 }) {
   const { t } = useT();
+  const router = useRouter();
   const { crumbs } = useRouteMeta();
 
-  // The trail's last entry is what the chevron goes back to. It carries the
-  // route's own pattern plus the parameters to fill it, so the link is checked
-  // rather than string-built.
+  // The trail's last entry is where the chevron goes when there is nowhere to
+  // go back *to*. It carries the route's own pattern plus the parameters to
+  // fill it, so the target is checked rather than string-built.
   const back = crumbs[crumbs.length - 1];
+
+  /**
+   * Back means back, and the trail is only the fallback.
+   *
+   * The chevron used to be a link to the trail's last crumb, which is where
+   * the route sits in the app rather than where the reader came from: a result
+   * opened from the lobby sent them to /games on the way out, and the same for
+   * a drill, a player, every leaf with a parent. So: the history entry if there
+   * is one, and the crumb when this is the first page of the session — a shared
+   * link, a reload, a notification.
+   *
+   * Decided on the press rather than on render, because whether history has an
+   * entry is not something the server can know, and branching on it while
+   * drawing would be two different chevrons across hydration.
+   */
+  const goBack = () => {
+    if (router.history.canGoBack()) {
+      router.history.back();
+      return;
+    }
+    if (back) void router.navigate({ to: back.to, params: back.params });
+  };
 
   return (
     // pt clears the status bar: viewport-fit=cover puts the page under it, and
@@ -56,15 +79,14 @@ export default function AppHeader({
         )}
 
         {back && (
-          <AppLink
-            to={back.to}
-            params={back.params}
-            viewTransition
+          <button
+            type="button"
+            onClick={goBack}
             aria-label={t("common.back")}
             className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-ink-soft transition-colors duration-150 hover:bg-felt-raised hover:text-ink md:hidden"
           >
             <LuChevronLeft className="h-5 w-5" aria-hidden />
-          </AppLink>
+          </button>
         )}
 
         <ClubMenu className="flex-1" />

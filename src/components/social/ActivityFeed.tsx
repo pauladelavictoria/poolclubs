@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { LuActivity, LuTrophy } from "react-icons/lu";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Segmented } from "@/components/ui/Segmented";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useGames } from "@/hooks/useGames";
 import { useDrillLogs } from "@/hooks/useDrillLogs";
@@ -20,7 +19,7 @@ import DrillCreatedRow from "./feed/DrillCreatedRow";
 import DrillRow from "./feed/DrillRow";
 import FeedMatchCard from "./feed/FeedMatchCard";
 import TournamentGamesCard from "./feed/TournamentGamesCard";
-import { kindOf, rank, type FeedItem, type FeedKind } from "./feed/types";
+import { rank, type FeedItem } from "./feed/types";
 
 /**
  * The club's home timeline: matches and drill results in one stream, newest
@@ -32,7 +31,6 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
   // stitching pages together: the sources are three lists merged by time, and
   // page 2 of one of them is not page 2 of the feed.
   const [limit, setLimit] = useState(pageSize);
-  const [kind, setKind] = useState<FeedKind>("all");
   const sentinel = useRef<HTMLDivElement>(null);
   const {
     data: gamesData,
@@ -91,19 +89,13 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
     .sort((a, b) => b.at.localeCompare(a.at) || rank(a) - rank(b))
     .slice(0, limit);
 
-  const filtered = merged.filter(
-    (item) => kind === "all" || kindOf(item) === kind,
-  );
-
   const items = groupTournamentRuns(
-    filtered,
+    merged,
     (game) => gameTournaments?.get(game.id)?.id,
   );
 
   // A full window means there may be more behind it; a short one is the end of
-  // the club's history. Measured before the filter: a filtered feed of three
-  // rows still has the rest of the history behind it, and scrolling has to keep
-  // widening the window to reach it.
+  // the club's history.
   const hasMore = merged.length >= limit;
 
   useEffect(() => {
@@ -121,38 +113,11 @@ export default function ActivityFeed({ pageSize = 20 }: { pageSize?: number }) {
 
   return (
     <div className="space-y-3">
-      {/* Title and filter on one line, drawn before the rows load: the heading
-          is the section, and a section that appears late shifts the page under
-          whoever is already reading it. Wrapping rather than shrinking — five
-          tabs and a heading do not both fit on a phone, and a squeezed tab strip
-          reads worse than a second line. The strip scrolls inside its own box
-          past that, so the page itself never scrolls sideways. */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-1">
-        <h2 className="text-h4 font-semibold text-ink">
-          {t("dashboard.activity")}
-        </h2>
-        <div className="-mx-1 max-w-full overflow-x-auto px-1 py-0.5">
-          <Segmented<FeedKind>
-            value={kind}
-            onChange={setKind}
-            label={t("feed.filter")}
-            options={[
-              { value: "all", label: t("feed.all") },
-              { value: "matches", label: t("feed.matchResults") },
-              ...(DRILLS_ENABLED
-                ? [
-                    { value: "newDrills" as const, label: t("feed.newDrills") },
-                    {
-                      value: "drillResults" as const,
-                      label: t("feed.drillResults"),
-                    },
-                  ]
-                : []),
-              { value: "tournaments", label: t("feed.tournamentResults") },
-            ]}
-          />
-        </div>
-      </div>
+      {/* Drawn before the rows load: a section heading that appears late shifts
+          the page under whoever is already reading it. */}
+      <h2 className="px-1 pb-1 text-h4 font-semibold text-ink">
+        {t("dashboard.activity")}
+      </h2>
 
       {isLoading && <SkeletonRows rows={6} />}
 
