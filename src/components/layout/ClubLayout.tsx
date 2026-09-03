@@ -146,7 +146,8 @@ export default function ClubLayout() {
             <AppHeader onMenu={() => setIsDrawerOpen(true)} />
           </div>
         )}
-        {/* Clear the bottom tab bar on phones, including the home-indicator inset.
+        {/* Clear the bottom tab bar wherever it renders — every width below
+            --breakpoint-pinned — including the home-indicator inset.
             The pt is for the pinned case: with no bar above it, the page's own
             py-4 is all there is between the first heading and the window. */}
         <main
@@ -159,7 +160,7 @@ export default function ClubLayout() {
                 // still has to be cleared — with the tab bar gone, the home
                 // indicator is what the bottom edge runs into.
                 "overflow-hidden pb-[env(safe-area-inset-bottom)]"
-              : "overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0",
+              : "overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] pinned:pb-0",
           ].join(" ")}
         >
           {/* Pushed off a full-bleed page rather than pushing its content: the

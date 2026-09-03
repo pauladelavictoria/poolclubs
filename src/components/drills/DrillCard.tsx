@@ -12,9 +12,17 @@ interface DrillCardProps {
    *  the route it sits under, so it cannot be used where there is no club in the
    *  path — this picks the public URL instead. */
   public?: boolean;
+  /** Table lying down instead of standing up. For a row of cards rather than a
+   *  grid of them: a portrait table in a carousel card is two thirds of the
+   *  screen tall on its own. */
+  landscape?: boolean;
 }
 
-export default function DrillCard({ drill, public: isPublic }: DrillCardProps) {
+export default function DrillCard({
+  drill,
+  public: isPublic,
+  landscape,
+}: DrillCardProps) {
   const { t } = useT();
 
   const className = cardClasses({
@@ -29,14 +37,14 @@ export default function DrillCard({ drill, public: isPublic }: DrillCardProps) {
 
   const body = (
     <>
-      {/* Portrait, and edge to edge: the table is what you are choosing
-          between, so it gets the whole width instead of sitting inside a
-          second frame. */}
+      {/* Edge to edge: the table is what you are choosing between, so it gets
+          the whole width instead of sitting inside a second frame. Standing up
+          by default — a phone is portrait, so that is the bigger table. */}
       <PoolTableDiagram
         ballPositions={drill.ball_positions}
         shotPaths={drill.shot_paths}
         compact
-        portrait
+        portrait={!landscape}
         className={
           isPublic
             ? "rounded-none transition-transform duration-300 ease-[var(--ease-out)] group-hover:scale-[1.03]"

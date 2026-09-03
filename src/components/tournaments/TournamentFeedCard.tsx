@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { placings, resolveBracket } from "@/libs/algorithms/bracket";
 import { leaguePodium, standings } from "@/libs/algorithms/leagueTable";
+import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import { runMutation } from "@/libs/browser/mutationToast";
 import { FORMAT_KEY, type Tournament } from "@/types";
 import { useT, type Key } from "@/i18n";
@@ -66,9 +67,9 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
 
   const entrants = (detail?.tournament_players ?? []).map((e) => e.player_id);
   const entered = player ? entrants.includes(player.id) : false;
-  // A single-division tournament is only open to that division.
-  const canEnter =
-    tournament.category === null || player?.category === tournament.category;
+  // A single-division tournament is only open to that division. Same predicate
+  // the lobby filters its open list with — see libs/algorithms/tournamentEntry.
+  const canEnter = canEnterTournament(tournament.category, player?.category);
 
   const toggle = async () => {
     const tournamentId = tournament.id;
@@ -105,7 +106,9 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
           {entrants.length === 0
             ? canEnter
               ? t("tournaments.noEntrants")
-              : t("tournaments.notEligible")
+              : t("tournaments.notEligible", {
+                  category: t(`category.${tournament.category}`),
+                })
             : t("tournaments.entrants", { n: entrants.length })}
         </p>
         {entrants.length > 0 && (

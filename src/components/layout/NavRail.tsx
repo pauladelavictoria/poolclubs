@@ -4,10 +4,12 @@ import { PRIMARY_NAV } from "@/components/layout/navItems";
 import { useT } from "@/i18n";
 
 /**
- * Primary navigation on phones: a bottom tab bar, because this app gets used
- * one-handed at the table with a cue in the other hand. Desktops navigate from
- * the drawer instead — pinned open where there is room for it, one hamburger
- * away where there isn't (see the club layout route).
+ * Primary navigation everywhere the nav column isn't pinned: a bottom tab bar,
+ * because this app gets used one-handed at the table with a cue in the other
+ * hand. It used to stop at `md`, which left every width from a tablet to a
+ * 1360px laptop — the whole range below --breakpoint-pinned — with no nav on
+ * screen at all, only the header's hamburger. One breakpoint, so the bar hands
+ * over to the pinned column and to nothing else.
  *
  * The active tab wears the club's accent. Colour alone was the whole affordance
  * once, which left the one tab without a hue of its own reading as barely
@@ -42,7 +44,7 @@ export default function NavRail({ onMore }: { onMore: () => void }) {
         // Named so it is snapshotted apart from the root: inside it, the bar
         // cross-fades with the page it isn't part of.
         "[view-transition-name:nav]",
-        "fixed inset-x-0 bottom-0 z-40 flex items-stretch md:hidden",
+        "fixed inset-x-0 bottom-0 z-40 flex items-stretch pinned:hidden",
         "border-t border-hairline bg-felt/90 backdrop-blur-xl",
         "pb-[env(safe-area-inset-bottom)]",
       ].join(" ")}

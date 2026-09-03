@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
+import { LuMailCheck } from "react-icons/lu";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -38,12 +39,19 @@ export default function LoginPage() {
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [busy, setBusy] = useState(false);
-  // One slot for both the error and the "check your inbox" note — only one of
-  // the two is ever on screen. Seeded from the URL so a dead confirmation link
-  // arrives here saying so, rather than dropping the person on a blank sign-in
-  // form that looks like the account was never created. An initialiser rather
-  // than an effect: the language comes from a cookie, so server and client
-  // agree, and there is no flash of the wrong thing.
+  // Set once a mail is out and there is nothing left to do on this page but go
+  // read it — either the sign-up confirmation or a password reset. It holds the
+  // address rather than a boolean because the address is the whole point of the
+  // screen it switches to: the one thing to check for a typo.
+  const [sent, setSent] = useState<{ email: string; reset?: boolean } | null>(
+    null,
+  );
+  // Errors only, now that the two "we sent you a mail" messages have a screen
+  // of their own. Seeded from the URL so a dead confirmation link arrives here
+  // saying so, rather than dropping the person on a blank sign-in form that
+  // looks like the account was never created. An initialiser rather than an
+  // effect: the language comes from a cookie, so server and client agree, and
+  // there is no flash of the wrong thing.
   const [note, setNote] = useState<{ text: string; ok?: boolean } | null>(
     search.error ? { text: t("auth.badLink") } : null,
   );
@@ -79,14 +87,19 @@ export default function LoginPage() {
 
     setBusy(true);
     setNote(null);
-    try {
-      await requestPasswordReset({ data: { email: field.value } });
-    } finally {
-      // Always the same answer, whatever happened: whether an address has an
-      // account is what a stranger typing addresses in here wants to find out.
-      setNote({ text: t("auth.resetSent"), ok: true });
-      setBusy(false);
-    }
+    // Swallowed, not handled: nothing below branches on the outcome, so the
+    // failure has nowhere to be reported to and would only escape as an
+    // unhandled rejection.
+    await requestPasswordReset({ data: { email: field.value } }).catch(
+      () => {},
+    );
+    // Always the same answer, whatever happened: whether an address has an
+    // account is what a stranger typing addresses in here wants to find out.
+    // The screen echoes the address back, which gives that away to nobody — it
+    // is what they just typed — but the sentence around it stays conditional,
+    // because only that sentence knows anything.
+    setSent({ email: field.value, reset: true });
+    setBusy(false);
   };
 
   const submitEmail = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -122,7 +135,7 @@ export default function LoginPage() {
       // With email confirmation on there is a user but no session yet; the
       // confirmation link comes back through /auth/callback.
       if (result.needsConfirmation) {
-        setNote({ text: t("auth.checkInbox"), ok: true });
+        setSent({ email });
         return;
       }
       await arrive();
@@ -134,6 +147,54 @@ export default function LoginPage() {
       setBusy(false);
     }
   };
+
+  /**
+   * A mail is out and the only thing left to do is go and read it, so nothing
+   * on the form behind this is worth looking at. Both messages used to be one
+   * caption wedged between the password field and the submit button, where they
+   * read as a validation error on a form that still looked unsubmitted — so
+   * they take the whole screen instead, and say the one thing there is to do.
+   *
+   * One screen for both mails. They differ only in the sentence either side of
+   * the address, and the reset one stays conditional: it must not say an
+   * account was found.
+   */
+  if (sent) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center px-4">
+        <Card className="w-full max-w-sm p-7 text-center">
+          <LuMailCheck className="mx-auto h-12 w-12 text-ink" aria-hidden />
+          <h1 className="mt-5 text-h2 font-semibold text-ink">
+            {t("auth.confirmTitle")}
+          </h1>
+          <p className="mt-4 text-body text-ink-soft">
+            {t(sent.reset ? "auth.resetSentTo" : "auth.confirmSentTo")}
+          </p>
+          {/* On its own line and unshortened: this is what someone checks when
+              the mail never turns up, and a typo here is the usual reason. */}
+          <p className="mt-1 text-body font-semibold break-all text-ink">
+            {sent.email}
+          </p>
+          <p className="mt-4 text-body text-ink-soft">
+            {t(sent.reset ? "auth.resetOpen" : "auth.confirmOpen")}
+          </p>
+          <p className="mt-6 border-t border-hairline pt-4 text-caption text-ink-faint">
+            {t("auth.confirmSpam")}
+          </p>
+          <button
+            type="button"
+            className="mt-4 text-caption text-ink-soft underline underline-offset-2"
+            onClick={() => {
+              setSent(null);
+              setMode("signin");
+            }}
+          >
+            {t("auth.confirmBack")}
+          </button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-dvh items-center justify-center px-4">

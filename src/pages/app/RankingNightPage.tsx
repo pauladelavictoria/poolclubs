@@ -223,7 +223,7 @@ export default function RankingNightPage() {
                       params={{ tableId: String(table.id) }}
                       className="min-w-0 truncate text-h4 font-semibold text-ink hover:text-strike"
                     >
-                      {t("tables.named", { name: table.label })}
+                      {table.label}
                     </AppLink>
                     {match ? (
                       <span className="flex items-center gap-1.5 text-caption text-strike">

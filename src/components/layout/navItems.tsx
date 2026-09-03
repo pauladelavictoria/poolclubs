@@ -9,7 +9,7 @@ import {
   LuHouse,
   LuClipboardList,
   LuChartColumn,
-  LuLayoutGrid,
+  LuLampCeiling,
 } from "react-icons/lu";
 import type { LinkProps } from "@tanstack/react-router";
 import type { Key } from "@/i18n";
@@ -120,7 +120,11 @@ export const NAV_SECTIONS: { headingKey: Key; items: NavItem[] }[] = [
         {
           to: "/app/$clubSlug/night",
           labelKey: "nav.night",
-          icon: LuLayoutGrid,
+          // The lamp over the table, not a grid of squares: the grid was left
+          // over from when this page was the tables and nothing else, and next
+          // to five other outline glyphs it read as "dashboard". The night is
+          // the room with the light on.
+          icon: LuLampCeiling,
           section: "home",
         },
         {

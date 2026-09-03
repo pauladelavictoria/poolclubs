@@ -27,6 +27,7 @@ import {
   type BracketIndex,
 } from "@/libs/algorithms/bracket";
 import { groupStandings, standings } from "@/libs/algorithms/leagueTable";
+import { eventDates, isUpcoming } from "@/libs/algorithms/eventDates";
 import PageTitle from "@/components/layout/PageTitle";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
@@ -45,6 +46,7 @@ import { Button, IconButton } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
 import { Select } from "@/components/ui/Select";
 import { CategoryBadge } from "@/components/ui/Ball";
+import { Fact } from "@/components/ui/Fact";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useDialog } from "@/hooks/useDialog";
@@ -56,7 +58,7 @@ import { AppLink } from "@/components/layout/AppLink";
 const route = getRouteApi("/app/_authed/$clubSlug/tournaments/$tournamentId");
 
 export default function TournamentPage() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const { tournamentId: tournamentIdParam } = route.useParams();
   const tournamentId = Number(tournamentIdParam);
 
@@ -168,20 +170,12 @@ export default function TournamentPage() {
   const raceOf = (match: TournamentMatch) =>
     raceFor(match, tournament, matches);
 
+  const when = eventDates(tournament.starts_on, tournament.ends_on, locale);
+
   return (
     <PlayerHighlight>
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        <PageTitle
-          title={tournament.name}
-          // Discipline, format and state, under the title: in the title's row
-          // they competed with the name for the same width and the name lost.
-          subtitle={`${t(`discipline.${tournament.discipline}`)} · ${t(
-            `tournaments.${FORMAT_KEY[tournament.format]}`,
-          )} · ${t(`tournaments.status.${tournament.status}`)}`}
-        >
-          {tournament.category !== null && (
-            <CategoryBadge category={tournament.category} />
-          )}
+        <PageTitle title={tournament.name}>
           {/* Two people meet at a table and want it recorded there and then, so
               this is next to the tournament's name rather than buried beside a
               fixture. */}
@@ -192,6 +186,98 @@ export default function TournamentPage() {
             </Button>
           )}
         </PageTitle>
+
+        {/* The terms of the thing, each one named.
+            This was a run-on subtitle — "9-ball · League · Entries open" — and
+            a page that told you none of what an entrant actually needs to know:
+            when it runs, what it costs, what a match is played to. Every one of
+            those was already on the row, unread. Same definition list the
+            public page leads with, so a member and a visitor read the same
+            facts in the same shape. */}
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-hairline py-4 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-4">
+          {/* First, across the phone's whole width, and present even when
+              empty: "when" is the question an open tournament is opened to
+              answer, "nobody has said yet" is a real answer to it, and a date
+              range is the one value here that will not share a narrow row
+              without being cut in half. */}
+          <Fact
+            className="col-span-2 sm:col-span-1"
+            label={t(
+              isUpcoming(tournament.starts_on) && !tournament.ends_on
+                ? "tournaments.startsOn"
+                : "tournaments.dates",
+            )}
+          >
+            {when ?? (
+              <span className="text-ink-faint">
+                {t("tournaments.notDated")}
+              </span>
+            )}
+          </Fact>
+
+          <Fact label={t("tournaments.statusLabel")}>
+            {t(`tournaments.status.${tournament.status}`)}
+          </Fact>
+          <Fact label={t("tournaments.format")}>
+            {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}
+          </Fact>
+          <Fact label={t("tournaments.discipline")}>
+            {t(`discipline.${tournament.discipline}`)}
+          </Fact>
+          <Fact label={t("tournaments.category")}>
+            {tournament.category === null ? (
+              t("tournaments.combined")
+            ) : (
+              <CategoryBadge category={tournament.category} />
+            )}
+          </Fact>
+
+          {/* What a match is. The number carries its unit — a bare "7" under a
+              label leaves the reader to guess whether it is racks, frames or
+              minutes. The base race always; the deeper ones only where the
+              organiser set them apart, since a flat draw would otherwise say
+              the same number three times. */}
+          <Fact label={t("tournaments.raceTo")}>
+            {t("tournaments.raceN", { n: tournament.race_to })}
+          </Fact>
+          {!!tournament.race_semi && (
+            <Fact label={t("tournaments.raceSemi")}>
+              {t("tournaments.raceN", { n: tournament.race_semi })}
+            </Fact>
+          )}
+          {!!tournament.race_final && (
+            <Fact label={t("tournaments.raceFinal")}>
+              {t("tournaments.raceN", { n: tournament.race_final })}
+            </Fact>
+          )}
+
+          {/* Meaningless in a straight knockout, where a pair meets once by
+              construction. */}
+          {tournament.format !== "double_elim" && (
+            <Fact label={t("tournaments.legs")}>
+              {t(
+                tournament.legs === 2
+                  ? "tournaments.legs2"
+                  : "tournaments.legs1",
+              )}
+            </Fact>
+          )}
+          {tournament.format === "group_knockout" &&
+            tournament.advance !== null && (
+              <Fact label={t("tournaments.advance")}>
+                {t("tournaments.advanceN", { n: tournament.advance })}
+              </Fact>
+            )}
+
+          {tournament.entry_fee && (
+            <Fact
+              className="col-span-2 sm:col-span-1"
+              label={t("tournaments.entryFee")}
+            >
+              {tournament.entry_fee}
+            </Fact>
+          )}
+        </dl>
 
         {/* A finished tournament leads with its result: the bracket below is
             then the story of how it got there, not the headline. */}
@@ -294,7 +380,9 @@ export default function TournamentPage() {
                 hint={
                   canEnter
                     ? t("tournaments.noEntrantsHint")
-                    : t("tournaments.notEligible")
+                    : t("tournaments.notEligible", {
+                        category: t(`category.${tournament.category}`),
+                      })
                 }
               />
             ) : (

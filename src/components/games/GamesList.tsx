@@ -17,11 +17,12 @@ const NAME_LINK = "transition-colors duration-150 hover:text-strike";
 type GamesListPlayer = Pick<Player, "id" | "name" | "slug">;
 
 /**
- * One player's name on the tape, as a tap to their page.
+ * One player's name on the tape.
  *
- * The two branches are the whole reason this list takes a `public` flag: AppLink
- * reads $clubSlug out of the route it is rendered under, so on a public page —
- * which has no club in its path — it throws rather than degrading.
+ * Inside the club it is text, not a link: the row itself opens the result now,
+ * and a row full of links to somewhere else is a row you cannot tap. The public
+ * tape keeps the names as links, because out there the result has no page of
+ * its own to go to.
  */
 function Name({
   player,
@@ -44,13 +45,7 @@ function Name({
       {player.name}
     </Link>
   ) : (
-    <AppLink
-      to="/app/$clubSlug/players/$playerId"
-      params={{ playerId: player.id }}
-      className={NAME_LINK}
-    >
-      {player.name}
-    </AppLink>
+    <>{player.name}</>
   );
 }
 
@@ -230,55 +225,75 @@ export default function GamesList({
                 {dayLabel(date, t, locale)}
               </h3>
             )}
-            <div
-              className={`flex items-center gap-3 rounded-control border bg-pocket px-3 py-2 transition-colors duration-150 hover:bg-felt-raised ${accent}`}
-            >
-              <time
-                dateTime={played_at}
-                className="hidden w-12 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
-              >
-                {timeOf(date, locale)}
-              </time>
-              <span
-                className={`flex min-w-0 flex-1 flex-col text-right ${side(p1Won)}`}
-              >
-                <Team
-                  id1={player_1_id}
-                  id2={isDoubles ? player_1b_id : undefined}
-                  byId={byId}
-                  isPublic={isPublic}
-                />
-              </span>
-              <span className="shrink-0 font-mono text-h4 font-semibold tabular-nums">
-                <span className={p1Won ? "text-ink" : "text-ink-faint"}>
-                  {p1Score}
-                </span>
-                <span className="px-1 text-ink-ghost">-</span>
-                <span className={p2Won ? "text-ink" : "text-ink-faint"}>
-                  {p2Score}
-                </span>
-              </span>
-              <span className={`flex min-w-0 flex-1 flex-col ${side(p2Won)}`}>
-                <Team
-                  id1={player_2_id}
-                  id2={isDoubles ? player_2b_id : undefined}
-                  byId={byId}
-                  isPublic={isPublic}
-                />
-              </span>
-              {canEditGame(game, editablePlayerId, clubSlug, admin) && (
-                <AppLink
-                  to="/app/$clubSlug/games/$gameId/edit"
-                  params={{ gameId: id }}
-                  aria-label={t("games.edit")}
-                  title={t("games.edit")}
-                  className="shrink-0 p-1 text-ink-ghost transition-colors duration-150 hover:text-ink"
+            {/* Row and thread in one pill: the bar used to be a loose sibling
+                under the row, which on a tape of short results read as two
+                floating buttons belonging to nothing. */}
+            <div className={`rounded-control border bg-pocket ${accent}`}>
+              <div className="relative flex items-center gap-3 px-3 py-2 transition-colors duration-150 hover:bg-felt-raised">
+                {/* The row is the tap, and it covers the row rather than
+                    wrapping it: the pencil is a link too, and a link inside a
+                    link is not a thing. Anything that must stay clickable sits
+                    above this on the z axis. Off on the public tape, which has
+                    no page for a result to open. */}
+                {!isPublic && (
+                  <AppLink
+                    to="/app/$clubSlug/games/$gameId"
+                    params={{ gameId: id }}
+                    aria-label={t("games.openResult")}
+                    className="absolute inset-0 rounded-control"
+                  />
+                )}
+                <time
+                  dateTime={played_at}
+                  className="hidden w-12 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
                 >
-                  <LuPencil className="h-3.5 w-3.5" aria-hidden />
-                </AppLink>
+                  {timeOf(date, locale)}
+                </time>
+                <span
+                  className={`flex min-w-0 flex-1 flex-col text-right ${side(p1Won)}`}
+                >
+                  <Team
+                    id1={player_1_id}
+                    id2={isDoubles ? player_1b_id : undefined}
+                    byId={byId}
+                    isPublic={isPublic}
+                  />
+                </span>
+                <span className="shrink-0 font-mono text-h4 font-semibold tabular-nums">
+                  <span className={p1Won ? "text-ink" : "text-ink-faint"}>
+                    {p1Score}
+                  </span>
+                  <span className="px-1 text-ink-ghost">-</span>
+                  <span className={p2Won ? "text-ink" : "text-ink-faint"}>
+                    {p2Score}
+                  </span>
+                </span>
+                <span className={`flex min-w-0 flex-1 flex-col ${side(p2Won)}`}>
+                  <Team
+                    id1={player_2_id}
+                    id2={isDoubles ? player_2b_id : undefined}
+                    byId={byId}
+                    isPublic={isPublic}
+                  />
+                </span>
+                {canEditGame(game, editablePlayerId, clubSlug, admin) && (
+                  <AppLink
+                    to="/app/$clubSlug/games/$gameId/edit"
+                    params={{ gameId: id }}
+                    aria-label={t("games.edit")}
+                    title={t("games.edit")}
+                    className="relative shrink-0 p-1 text-ink-ghost transition-colors duration-150 hover:text-ink"
+                  >
+                    <LuPencil className="h-3.5 w-3.5" aria-hidden />
+                  </AppLink>
+                )}
+              </div>
+              {social && (
+                <div className="border-t border-hairline px-2 py-1.5">
+                  <SocialBar target={{ gameId: id }} />
+                </div>
               )}
             </div>
-            {social && <SocialBar target={{ gameId: id }} />}
           </React.Fragment>
         );
       })}
