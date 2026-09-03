@@ -1,19 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { cardClasses } from "@/components/ui/cardStyles";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { LuSearch } from "react-icons/lu";
 import DrillCard from "@/components/drills/DrillCard";
 import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
 import PublicPageTitle from "@/components/layout/PublicPageTitle";
-import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
-import { CategoryBadge } from "@/components/ui/Ball";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { ClubCard } from "@/pages/public/PublicClubsPage";
+import { DRILL_GRID } from "@/pages/public/PublicDrillsPage";
+import { GRID, PersonRow } from "@/pages/public/PublicPlayersPage";
 import { TournamentCard } from "@/pages/public/PublicTournamentsPage";
 import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";
 import { publicSearchQuery } from "@/queries/public/search";
-import type { Category } from "@/types";
 import { useT } from "@/i18n";
 import type { Key } from "@/i18n";
 
@@ -24,9 +23,9 @@ const route = getRouteApi("/_public/search");
 const SUGGESTIONS = ["8ball", "league", "potting"];
 
 /**
- * One box over all four kinds of thing, each shown in its own shape rather
- * than a fifth uniform list: a club rail, player rows, a stack of tournament
- * cards, a real drill grid.
+ * One box over all four kinds of thing, each shown in the same card its own
+ * directory uses: club cards, player cards, tournament cards, drill cards —
+ * so a hit here looks like the thing it is, not like a search-only variant.
  *
  * Each block shows the first few and hands off to that section with the query
  * already applied, rather than trying to be a fifth ranked list — "did you mean a
@@ -147,33 +146,11 @@ export default function SearchPage() {
                 to="/clubs"
                 term={term}
               >
-                <div className="no-bar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+                {/* The directory's own grid, one row of it: at five results
+                    a rail would scroll horizontally for no reason. */}
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {data.clubs.map((club) => (
-                    <Link
-                      key={club.id}
-                      to="/clubs/$slug"
-                      params={{ slug: club.slug }}
-                      className={cardClasses({
-                        interactive: true,
-                        className:
-                          "lift flex w-44 shrink-0 snap-start flex-col items-center gap-2 p-4 text-center",
-                      })}
-                    >
-                      <Avatar
-                        name={club.name}
-                        url={club.logo_url}
-                        mark
-                        className="h-12 w-12"
-                      />
-                      <span className="w-full truncate text-body font-medium text-ink">
-                        {club.name}
-                      </span>
-                      <span className="font-mono text-caption tabular-nums text-ink-faint">
-                        {t("public.publicClubs.members", {
-                          n: club.member_count,
-                        })}
-                      </span>
-                    </Link>
+                    <ClubCard key={club.id} club={club} />
                   ))}
                 </div>
               </Block>
@@ -185,49 +162,11 @@ export default function SearchPage() {
                 to="/players"
                 term={term}
               >
-                <Card className="divide-y divide-hairline">
-                  {data.people.map((person) => {
-                    // One hit per person, so the clubs are a list and the
-                    // division is the strongest of them — same reading as the
-                    // directory row in PublicPlayersPage.
-                    const [first] = person.memberships;
-                    return (
-                      <Link
-                        key={person.id}
-                        to="/players/$playerSlug"
-                        params={{ playerSlug: person.slug }}
-                        className="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 hover:bg-felt-raised"
-                      >
-                        <Avatar
-                          name={person.name}
-                          url={person.avatar_url}
-                          seed={person.id}
-                          className="h-9 w-9"
-                        />
-                        <span className="min-w-0 flex-1 truncate text-body text-ink">
-                          {person.name}
-                          {person.memberships.length > 0 && (
-                            <span className="text-ink-faint">
-                              {" · "}
-                              {person.memberships
-                                .map((m) => m.club.name)
-                                .join(", ")}
-                            </span>
-                          )}
-                        </span>
-                        {first && (
-                          <CategoryBadge
-                            category={
-                              Math.min(
-                                ...person.memberships.map((m) => m.category),
-                              ) as Category
-                            }
-                          />
-                        )}
-                      </Link>
-                    );
-                  })}
-                </Card>
+                <div className={GRID}>
+                  {data.people.map((person) => (
+                    <PersonRow key={person.id} person={person} />
+                  ))}
+                </div>
               </Block>
             )}
 
@@ -254,7 +193,7 @@ export default function SearchPage() {
                 to="/drills"
                 term={term}
               >
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                <div className={DRILL_GRID}>
                   {data.drills.map((drill) => (
                     <DrillCard key={drill.id} drill={drill} public />
                   ))}

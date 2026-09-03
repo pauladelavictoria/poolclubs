@@ -310,7 +310,7 @@ export default function PublicClubsPage() {
  * If the directory ever gets long enough for that to matter, the fix is a
  * clubs.cover_url column written at upload time, not a batching layer here.
  */
-function ClubCard({ club }: { club: PublicClubCard }) {
+export function ClubCard({ club }: { club: PublicClubCard }) {
   const { t } = useT();
   // Reconciled against the bucket and against the club's stored order, so the
   // card's picture is the same one the club's own hero leads with.

@@ -12,7 +12,7 @@ import { PageSkeleton } from "@/components/ui/Skeleton";
 import ClubOnboardingPage from "@/pages/app/ClubOnboardingPage";
 import ClubThemeStyle from "@/components/club/ClubThemeStyle";
 import { useRouteMeta } from "@/libs/routeMeta";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, useSessionRefresh } from "@/hooks/useAuth";
 import { readKioskTable } from "@/libs/browser/kiosk";
 import KioskBar from "@/components/layout/KioskBar";
 
@@ -26,20 +26,26 @@ const route = getRouteApi("/app/_authed/$clubSlug");
  */
 export default function ClubLayout() {
   const { activeClub, activeClubId, isMember } = route.useRouteContext();
+  const { player } = useAuth();
   const queryClient = useQueryClient();
+  const refreshSession = useSessionRefresh();
 
   // The app's one realtime channel, opened here rather than at the root because
   // this is the highest place that knows which club to ask for — see
   // libs/browser/realtime.ts. Switching club is a navigation, so this component stays
   // mounted and the effect re-runs with the new id.
   useEffect(() => {
-    startRealtime(queryClient, activeClubId);
-  }, [queryClient, activeClubId]);
+    startRealtime({
+      queryClient,
+      clubId: activeClubId,
+      playerId: player.id,
+      refreshSession,
+    });
+  }, [queryClient, activeClubId, player.id, refreshSession]);
 
   // A page that is the whole screen — the live scoreboard — keeps neither the
   // tab bar nor the room reserved for it. See RouteMeta.fullBleed.
   const { fullBleed, bareOnDevice } = useRouteMeta();
-  const { player } = useAuth();
   // The club's own tablet, on a page that says it wants the display to itself.
   // Not the same thing as a pinned kiosk, which is answered above and has its
   // own bar: this is the tablet that was simply signed in as the club.

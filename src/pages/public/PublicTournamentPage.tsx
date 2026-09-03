@@ -39,9 +39,9 @@ import {
 import { eventDates } from "@/libs/algorithms/eventDates";
 import { runMutation } from "@/libs/browser/mutationToast";
 import { supabase } from "@/libs/supabase/browser";
-import { keys } from "@/libs/queryKeys";
 import { useSession } from "@/hooks/useAuth";
 import { publicClubRosterQuery } from "@/queries/public/clubs";
+import { publicTournamentQuery } from "@/queries/public/tournaments";
 import type { PublicTournament } from "@/queries/public/tournaments";
 import { FORMAT_KEY, type TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
@@ -493,8 +493,15 @@ function TournamentEntry({
     onSuccess: async () => {
       // Both halves, for the reason useAuth's refresh gives: the query holds the
       // entrants, the route's loader holds the copy this page renders.
-      await queryClient.invalidateQueries({
-        queryKey: keys.public.tournament(tournament.id),
+      //
+      // Refetched by passing the options with staleTime 0, not by invalidating
+      // the key: the loader primes this query with staleTime "static", nothing
+      // on the page observes it, and static beats isInvalidated inside
+      // isStaleByTime — so an invalidate here refetched nothing and the entrant
+      // list kept the field it was rendered with.
+      await queryClient.query({
+        ...publicTournamentQuery(tournament.id),
+        staleTime: 0,
       });
       await router.invalidate();
     },

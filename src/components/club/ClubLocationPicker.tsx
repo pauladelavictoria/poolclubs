@@ -49,8 +49,6 @@ export default function ClubLocationPicker({
     queryKey: keys.places.for(term),
     queryFn: () => searchPlaces({ data: { q: term } }),
     enabled: term.length >= MIN_QUERY,
-    // The same address searched twice in one sitting is the same answer.
-    staleTime: 5 * 60_000,
   });
 
   const pick = (place: Place) => {

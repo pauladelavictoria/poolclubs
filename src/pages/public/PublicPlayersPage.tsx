@@ -24,7 +24,7 @@ const route = getRouteApi("/_public/players/");
 
 /** Cards are narrow enough to fit two or three across, so a page of thirty
  *  people is scanned rather than scrolled. */
-const GRID =
+export const GRID =
   "grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5";
 
 /**
@@ -252,7 +252,7 @@ function groupByLetter(people: PublicPersonWithClubs[]) {
  * whole game history, and a page of thirty people from thirty clubs cannot fetch
  * thirty histories to print one number each.
  */
-function PersonRow({ person }: { person: PublicPersonWithClubs }) {
+export function PersonRow({ person }: { person: PublicPersonWithClubs }) {
   return (
     <Link
       to="/players/$playerSlug"

@@ -62,7 +62,4 @@ export const clubPhotosQuery = (clubId: number | null | undefined) =>
         });
     },
     enabled: clubId != null,
-    // Photos change when an admin changes them, which is rarely and never while
-    // somebody is looking at the public page.
-    staleTime: 5 * 60_000,
   });

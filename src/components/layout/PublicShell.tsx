@@ -118,7 +118,23 @@ export function PublicNav() {
           </Link>
 
           {user ? (
-            <PublicUserMenu />
+            <>
+              {/* Signed in, the way back into the app was one click deep in the
+                  avatar popover. Spelled out here from md up, where there is
+                  room; on a phone the drawer's footer button is the same link,
+                  and the popover row stays either way. */}
+              <Link
+                to="/app"
+                className={buttonClasses({
+                  variant: "secondary",
+                  size: "sm",
+                  className: "hidden shrink-0 md:inline-flex",
+                })}
+              >
+                {t(enterKey)}
+              </Link>
+              <PublicUserMenu />
+            </>
           ) : (
             <Link
               to="/app"
@@ -200,7 +216,8 @@ const menuItemClasses =
 /**
  * You, in the public bar: the same corner and the same popover as inside the
  * app, minus the club-scoped rows — out here there is no club in context, so
- * the only two things it can offer are the way in and the way out.
+ * what is left is who you are and the way out. The way *in* is its own button
+ * in the bar.
  *
  * Not ProfileMenu itself: that one reads `useAuth`, which requires a club
  * route, and its links are club-scoped.
@@ -248,21 +265,10 @@ function PublicUserMenu() {
             )}
           </div>
 
-          <Link
-            to="/app"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className={menuItemClasses}
-          >
-            {/* The wordmark's ball, not a lucide glyph: the row goes to this
-                product, and every other icon in this app is a section. */}
-            <img
-              src="/ball.png"
-              alt=""
-              className="h-[18px] w-[18px] shrink-0 rounded-full"
-            />
-            {t("auth.openApp")}
-          </Link>
+          {/* No "go to the app" row: the bar spells that out next to the avatar
+              from md up, and on a phone the drawer's footer button does. A
+              popover under a button that says the same thing is one menu the
+              reader has to open to learn nothing. */}
           <button
             type="button"
             role="menuitem"
