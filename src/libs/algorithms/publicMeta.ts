@@ -12,21 +12,31 @@
  * of read from `window`, which does not exist while this runs.
  */
 
-/** Fallback card art per section, for entities with no image of their own. Real
- *  1200×630 files still to be added — until they are, these 404 and the crawler
- *  falls back to no image, which is the same as omitting the tag. */
-type OgFallback =
-  "default" | "clubs" | "players" | "tournaments" | "drills";
+/** Fallback card art per section, for entities with no image of their own.
+ *
+ *  Only the default card exists so far (public/og/default.png, 1200×630). The
+ *  four sections point at it rather than at files that are not there: a card
+ *  with the product in it beats the empty rectangle a 404 renders as, and the
+ *  day /og/clubs.png is drawn, one line here picks it up. */
+type OgFallback = "default" | "clubs" | "players" | "tournaments" | "drills";
+
+const DEFAULT_IMAGE = "/og/default.png";
 
 const FALLBACK_IMAGE: Record<OgFallback, string> = {
   /** The pages that are not a section of the directory: the landing page and the
    *  prose pages (pricing, about, contact, legal). */
-  default: "/og/default.png",
-  clubs: "/og/clubs.png",
-  players: "/og/players.png",
-  tournaments: "/og/tournaments.png",
-  drills: "/og/drills.png",
+  default: DEFAULT_IMAGE,
+  clubs: DEFAULT_IMAGE,
+  players: DEFAULT_IMAGE,
+  tournaments: DEFAULT_IMAGE,
+  drills: DEFAULT_IMAGE,
 };
+
+/** The size of every file in FALLBACK_IMAGE. Declaring it lets a preview
+ *  renderer lay the card out before the image has downloaded, which is the
+ *  difference between a wide card and a small one in the feeds that give up
+ *  waiting. Omitted for a club logo or an avatar, whose size we do not know. */
+const FALLBACK_SIZE = { width: "1200", height: "630" } as const;
 
 /** Long descriptions are truncated by every preview renderer anyway, and a
  *  sentence cut mid-word reads as a bug rather than a limit. */
@@ -80,6 +90,13 @@ export function publicMeta({
     { property: "og:type", content: "website" },
     { property: "og:url", content: url },
     { property: "og:image", content: imageUrl },
+    { property: "og:image:alt", content: title.replace(/ · PoolClubs$/, "") },
+    ...(ownImage
+      ? []
+      : [
+          { property: "og:image:width", content: FALLBACK_SIZE.width },
+          { property: "og:image:height", content: FALLBACK_SIZE.height },
+        ]),
     // summary_large_image only pays off with a wide card. A club logo is square,
     // so it gets the small one and fills it rather than being letterboxed.
     {
