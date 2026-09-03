@@ -67,6 +67,16 @@ export const gameQuery = (id: string) =>
     },
   });
 
+/**
+ * The lobby's window onto the tape.
+ *
+ * The matches block, the activity feed under it and the route loader that
+ * primes them all ask for this many rows, which is what makes them one
+ * request instead of three: `pageSize` is part of the query key, so a loader
+ * priming a different number primes a key nobody reads.
+ */
+export const FEED_PAGE_SIZE = 20;
+
 // Cache invalidation on inserts/updates lives in libs/browser/realtime.ts — one channel
 // for the app, rather than one per hook instance.
 export const gamesQuery = (

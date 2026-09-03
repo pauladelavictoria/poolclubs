@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import DashboardPage from "@/pages/app/DashboardPage";
-import { gamesQuery } from "@/queries/games";
-import { tournamentsQuery } from "@/queries/tournaments";
+import { FEED_PAGE_SIZE, gamesQuery } from "@/queries/games";
+import { drillsQuery } from "@/queries/drills";
+import { myTournamentIdsQuery, tournamentsQuery } from "@/queries/tournaments";
 import { challengesQuery } from "@/queries/challenges";
+import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 
 /** The lobby: where the four sections show up. */
 export const Route = createFileRoute("/app/_authed/$clubSlug/")({
@@ -12,9 +14,17 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/")({
     // In parallel, and awaited: this is the first paint, so the page is worth
     // waiting for rather than streaming four spinners.
     await Promise.all([
-      context.queryClient.ensureQueryData(gamesQuery(clubId)),
+      context.queryClient.ensureQueryData(
+        gamesQuery(clubId, { pageSize: FEED_PAGE_SIZE }),
+      ),
       context.queryClient.ensureQueryData(tournamentsQuery(clubId)),
       context.queryClient.ensureQueryData(challengesQuery(clubId)),
+      context.queryClient.ensureQueryData(
+        myTournamentIdsQuery(context.player.id, clubId),
+      ),
+      ...(DRILLS_ENABLED
+        ? [context.queryClient.ensureQueryData(drillsQuery(clubId))]
+        : []),
     ]);
   },
   component: DashboardPage,

@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useDrills } from "@/hooks/useDrills";
 import { useGames } from "@/hooks/useGames";
+import { FEED_PAGE_SIZE } from "@/queries/games";
 import {
   useMyTournamentIds,
   useTournaments,
@@ -53,7 +54,7 @@ export default function DashboardPage() {
   const { data: myTournamentIds } = useMyTournamentIds();
   // The same window the feed below asks for, so the two share one request and
   // this block is free.
-  const { data: gamesData } = useGames({ pageSize: 20 });
+  const { data: gamesData } = useGames({ pageSize: FEED_PAGE_SIZE });
   const { data: drills } = useDrills();
 
   // Everything still to come. A finished tournament is the feed's business — it
