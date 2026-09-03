@@ -59,7 +59,10 @@ export default function AppHeader({
       router.history.back();
       return;
     }
-    if (back) void router.navigate({ to: back.to, params: back.params });
+    // Same cast CancelLink makes, for the same reason: a crumb's `to` is the
+    // union of every route, so the router can't infer which params go with it.
+    if (back)
+      void router.navigate({ to: back.to, params: back.params as never });
   };
 
   return (

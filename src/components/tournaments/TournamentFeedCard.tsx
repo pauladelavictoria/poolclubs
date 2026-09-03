@@ -104,11 +104,11 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
       <div className="mt-3 border-t border-hairline pt-2">
         <p className="text-caption text-ink-faint">
           {entrants.length === 0
-            ? canEnter
-              ? t("tournaments.noEntrants")
-              : t("tournaments.notEligible", {
+            ? !canEnter && tournament.category
+              ? t("tournaments.notEligible", {
                   category: t(`category.${tournament.category}`),
                 })
+              : t("tournaments.noEntrants")
             : t("tournaments.entrants", { n: entrants.length })}
         </p>
         {entrants.length > 0 && (
