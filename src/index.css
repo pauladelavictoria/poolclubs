@@ -322,6 +322,27 @@ html[data-theme="light"]:has([data-public]) {
     scroll-behavior: smooth;
   }
 
+  /* A horizontal scroller is clipped on screen, but Chrome on Android still
+     counts its full content width — a carousel of cards is ~2100px of it —
+     towards the document's minimum width. It then works out the page cannot be
+     shown at that width, clamps the minimum page scale at its floor of 0.25 and
+     sizes the initial containing block to viewport ÷ 0.25: four times the phone,
+     in both axes. The page itself keeps laying out at 413px, so the damage lands
+     on everything positioned against that block — the tab bar (`fixed inset-x-0
+     bottom-0`) ends up four viewports wide and a screen and a half below the
+     fold, with empty canvas where the app should be. Desktop Chrome never does
+     this, which is why it only ever showed up on a phone.
+
+     Containment is what takes the scroller's contents out of that sum. `content`
+     — layout, paint and style, deliberately not `size` — is the weakest one that
+     works: `inline-size` alone does not, and the height still comes from the
+     cards. Applied to the utility rather than to each carousel, because the next
+     scroller someone adds would otherwise bring the bug back with it. */
+  .overflow-x-auto,
+  .overflow-x-scroll {
+    contain: content;
+  }
+
   /* Flat canvas. There was a lamp cone gradient across the top of the document
      here; it was atmosphere, not information, and atmosphere applied to every
      page is what makes a product look like a demo of itself. Depth is surface
