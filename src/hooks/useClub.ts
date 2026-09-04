@@ -6,7 +6,10 @@ import { keys } from "@/libs/queryKeys";
 import { SESSION_KEY, sessionQuery } from "@/queries/session";
 import { clubPreviewQuery } from "@/queries/club";
 import { clubMembersQuery } from "@/queries/players";
-import { sendMemberApprovedMail } from "@/libs/server/mail.functions";
+import {
+  sendJoinRequestMail,
+  sendMemberApprovedMail,
+} from "@/libs/server/mail.functions";
 import type { Place } from "@/libs/algorithms/geocode";
 import type { Schedule } from "@/libs/algorithms/schedule";
 import type { BallColor } from "@/types";
@@ -232,6 +235,13 @@ export const useJoinOrCreateClub = () => {
             display_name: displayName?.trim() || undefined,
           })
           .throwOnError();
+
+        // Tell the admin somebody is waiting. Fired here rather than from a
+        // trigger, and never awaited, for the same reasons approveMember above
+        // fires its mail that way. The send decides for itself whether there
+        // is anything pending to tell them about (sql/schema.sql), so a join
+        // that landed active — the global club — sends nothing.
+        void sendJoinRequestMail({ data: { clubId: data } }).catch(() => {});
 
         return settle(data);
       },

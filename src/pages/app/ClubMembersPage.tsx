@@ -46,7 +46,7 @@ export default function ClubMembersPage() {
   const { origin } = getRouteApi("__root__").useRouteContext();
   const { data: members, isLoading } = useClubMembers();
   const { removeMember } = useManageClub();
-  const { createPlayer, updatePlayer } = useManagePlayers();
+  const { createPlayer, updatePlayer, hideMember } = useManagePlayers();
 
   const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,27 +81,32 @@ export default function ClubMembersPage() {
    * Listed on the public site, or not — flipped straight from the row, like
    * the same switch in a member's own settings.
    *
-   * Guests only, and the database is what says so: `is_public` lives on the
-   * person, and the "Admin can update guests in their club" policy lets an
-   * admin write it only for people with no account. Somebody who signed up
-   * owns their own listing, in their settings; an admin hiding them would be
-   * overruling a privacy choice that was theirs to make.
+   * Two paths, because an admin's reach over this differs by who is behind the
+   * row, and the database is what says so. A guest has nobody behind it, so an
+   * admin flips `is_public` both ways under the "Admin can update guests in
+   * their club" policy. Somebody who signed up owns their listing: an admin may
+   * take them off the public site — a club runs its own public page — but only
+   * they can put themselves back, in their own settings. hide_member() is what
+   * enforces that, and it is why hiding is not just an update with `false`.
    */
-  const togglePublic = (m: Player) =>
+  const togglePublic = (m: Player) => {
+    const onError = (err: unknown) =>
+      toast.error(
+        t(
+          dbErrorMessage(err, "updatePlayer", {
+            denied: "common.deniedError",
+            fallback: "players.updateError",
+          }),
+        ),
+      );
+
+    if (m.user_id) return hideMember.mutate(m.person_id, { onError });
+
     updatePlayer.mutate(
       { id: m.id, personId: m.person_id, is_public: !m.is_public },
-      {
-        onError: (err) =>
-          toast.error(
-            t(
-              dbErrorMessage(err, "updatePlayer", {
-                denied: "common.deniedError",
-                fallback: "players.updateError",
-              }),
-            ),
-          ),
-      },
+      { onError },
     );
+  };
 
   const closeModal = () => {
     setEditingPlayer(null);
@@ -231,14 +236,26 @@ export default function ClubMembersPage() {
                     ? t("club.owner")
                     : t("category.short", { n: m.category })}
                 </span>
-                {user && !m.user_id && (
+                {/* Hidden and theirs to unhide: the icon still shows the
+                    state, because an admin looking for why somebody is missing
+                    from the club page should find the answer on this row —
+                    but there is nothing here for an admin to press. */}
+                {user && (
                   <IconButton
                     label={t(
-                      m.is_public ? "club.hideNamed" : "club.listNamed",
+                      m.is_public
+                        ? "club.hideNamed"
+                        : m.user_id
+                          ? "club.hiddenByThem"
+                          : "club.listNamed",
                       { name: m.name },
                     )}
                     onClick={() => togglePublic(m)}
-                    disabled={updatePlayer.isPending}
+                    disabled={
+                      updatePlayer.isPending ||
+                      hideMember.isPending ||
+                      (!!m.user_id && !m.is_public)
+                    }
                   >
                     {m.is_public ? (
                       <LuEye className="h-[18px] w-[18px]" />

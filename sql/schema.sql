@@ -490,6 +490,27 @@ END $$;
 ALTER FUNCTION "public"."finish_live_match"("p_id" "uuid") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."hide_member"("p_person_id" bigint) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  -- Despite the name, this asks only "does the caller admin a club this person
+  -- plays in" — the guest half of that policy is its own `user_id IS NULL`.
+  -- Which is exactly the test wanted here, for members with an account too.
+  IF NOT person_is_admins_guest(p_person_id) THEN
+    RAISE EXCEPTION 'not allowed' USING ERRCODE = '42501';
+  END IF;
+
+  -- One column, one direction. No branch on the current value: hiding
+  -- something already hidden is not an error worth raising.
+  UPDATE people SET is_public = false WHERE id = p_person_id;
+END $$;
+
+
+ALTER FUNCTION "public"."hide_member"("p_person_id" bigint) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."is_club_admin"("cid" integer) RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -660,6 +681,30 @@ END $$;
 
 
 ALTER FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."join_request_admin_contact"("p_club_id" integer) RETURNS TABLE("email" "text", "name" "text", "club_name" "text", "club_slug" "text")
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT u.email::text, pe.name, c.name, c.slug
+  FROM players pl
+  JOIN people pe ON pe.id = pl.person_id
+  JOIN clubs  c  ON c.id  = pl.club_id
+  -- Admin is the owner, which is what is_club_admin tests. One recipient.
+  JOIN auth.users u ON u.id = c.owner_id
+  WHERE pl.club_id = p_club_id
+    -- The caller is the person who asked. Nobody can run this for anybody else.
+    AND pe.user_id = auth.uid()
+    AND pl.status = 'pending'
+    -- The club's own tablet is a player row with no human behind it, and it is
+    -- never pending anyway — spelled out so the intent is not mistaken for an
+    -- oversight.
+    AND pl.is_device = false;
+$$;
+
+
+ALTER FUNCTION "public"."join_request_admin_contact"("p_club_id" integer) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."live_match_guard"() RETURNS "trigger"
@@ -2938,6 +2983,13 @@ GRANT ALL ON FUNCTION "public"."finish_live_match"("p_id" "uuid") TO "service_ro
 
 
 
+REVOKE ALL ON FUNCTION "public"."hide_member"("p_person_id" bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."hide_member"("p_person_id" bigint) TO "anon";
+GRANT ALL ON FUNCTION "public"."hide_member"("p_person_id" bigint) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."hide_member"("p_person_id" bigint) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."is_club_admin"("cid" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."is_club_admin"("cid" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_club_admin"("cid" integer) TO "service_role";
@@ -2989,6 +3041,13 @@ GRANT ALL ON FUNCTION "public"."is_public_club"("cid" integer) TO "service_role"
 GRANT ALL ON FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."join_club"("p_slug" "text", "claim_player_id" integer, "display_name" "text") TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."join_request_admin_contact"("p_club_id" integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."join_request_admin_contact"("p_club_id" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."join_request_admin_contact"("p_club_id" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."join_request_admin_contact"("p_club_id" integer) TO "service_role";
 
 
 

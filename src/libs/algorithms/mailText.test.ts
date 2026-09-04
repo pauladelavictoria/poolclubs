@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { memberApprovedMail } from "./mailText";
+import { joinRequestMail, memberApprovedMail } from "./mailText";
 
 const mail = (over: Partial<Parameters<typeof memberApprovedMail>[0]> = {}) =>
   memberApprovedMail({
@@ -56,5 +56,39 @@ describe("memberApprovedMail", () => {
     expect(mail({ clubName: "Ases & Bolas" }).subject).toBe(
       "Ya eres miembro de Ases & Bolas",
     );
+  });
+});
+
+const request = (over: Partial<Parameters<typeof joinRequestMail>[0]> = {}) =>
+  joinRequestMail({
+    name: "Ana",
+    clubName: "Billar de los jueves",
+    clubSlug: "billar-jueves",
+    ...over,
+  });
+
+describe("joinRequestMail", () => {
+  it("names who is asking and which club, because that is the decision", () => {
+    expect(request().subject).toBe("Ana quiere entrar en Billar de los jueves");
+  });
+
+  it("links to the club, where the approve button lives", () => {
+    const url = "https://poolclubs.app/app/billar-jueves";
+    expect(request().html).toContain(`href="${url}"`);
+    expect(request().text).toContain(url);
+  });
+
+  it("tells the admin why they are getting it, not the requester's version", () => {
+    const { text } = request();
+    expect(text).toContain("administras este club");
+    expect(text).not.toContain("<");
+  });
+
+  it("escapes a requester name that contains markup", () => {
+    // The one field an attacker controls: they type their own display name at
+    // join time and it lands in a club admin's inbox.
+    const html = request({ name: '<script>alert("x")</script>' }).html;
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
   });
 });

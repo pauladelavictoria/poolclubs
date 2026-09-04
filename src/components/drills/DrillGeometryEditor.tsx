@@ -1,5 +1,11 @@
 import type { Dispatch, SetStateAction } from "react";
-import { LuMoveRight, LuTrash2, LuUndo2 } from "react-icons/lu";
+import {
+  LuCircle,
+  LuMoveRight,
+  LuSquare,
+  LuTrash2,
+  LuUndo2,
+} from "react-icons/lu";
 import PoolTableDiagram from "@/components/drills/PoolTableDiagram";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -10,27 +16,101 @@ import { Label } from "@/components/ui/Label";
 import {
   BALLS,
   BALL_COLORS,
+  CIRCLE_SPAWN_RADIUS,
   LABEL_TAGS,
+  RECT_SPAWN_HALF,
   snap,
 } from "@/libs/algorithms/drillGeometry";
 import {
   ARROW_SPAWN_LENGTH,
   BALL_RADIUS,
   useDrillGeometryEditor,
+  type ShapeSource,
+  type SpawnSource,
 } from "@/hooks/useDrillGeometryEditor";
 import { useTablePortrait } from "@/hooks/useMedia";
+import type { IconType } from "react-icons";
 import type { BallPosition, ShotPath } from "@/types";
-import { useT } from "@/i18n";
-
-type BallEntry = (typeof BALLS)[number];
+import { useT, type Key } from "@/i18n";
 
 const PALETTE_ITEM_CLASSES = [
   "h-9 w-9 shrink-0 cursor-grab touch-none rounded-full p-0.5",
   "transition-colors duration-150 active:cursor-grabbing",
 ].join(" ");
 
+/** The shape tools, in toolbar order. Their spawn sizes live in
+ *  drillGeometry — this is only what they look like and what they are called. */
+const SHAPE_TOOLS = [
+  { source: "arrow", label: "drillForm.arrow", Icon: LuMoveRight },
+  { source: "circle", label: "drillForm.circle", Icon: LuCircle },
+  { source: "rect", label: "drillForm.rect", Icon: LuSquare },
+] as const satisfies {
+  source: ShapeSource;
+  label: Key;
+  Icon: IconType;
+}[];
+
 /**
- * The table: a toolbar of balls and an arrow to drag out, the felt itself,
+ * What is under the pointer mid-drag: the ball, arrow, circle or rectangle
+ * about to be dropped, at the size it will land.
+ *
+ * Drawn from the same constants as spawnShape rather than from a real shape,
+ * because there is nothing in the arrays yet — the felt clamping is the one
+ * thing it does not repeat, so a ghost near a rail is a touch off where the
+ * shape settles.
+ */
+function Ghost({
+  source,
+  at,
+}: {
+  source: SpawnSource;
+  at: { x: number; y: number };
+}) {
+  const line = {
+    stroke: "rgba(255,255,255,0.5)",
+    strokeWidth: 0.5,
+    fill: "none",
+  };
+
+  if (source === "arrow")
+    return (
+      <line
+        x1={at.x - ARROW_SPAWN_LENGTH / 2}
+        y1={at.y}
+        x2={at.x + ARROW_SPAWN_LENGTH / 2}
+        y2={at.y}
+        {...line}
+      />
+    );
+
+  if (source === "circle")
+    return <circle cx={at.x} cy={at.y} r={CIRCLE_SPAWN_RADIUS} {...line} />;
+
+  if (source === "rect")
+    return (
+      <rect
+        x={at.x - RECT_SPAWN_HALF.w}
+        y={at.y - RECT_SPAWN_HALF.h}
+        width={RECT_SPAWN_HALF.w * 2}
+        height={RECT_SPAWN_HALF.h * 2}
+        {...line}
+      />
+    );
+
+  return (
+    <circle
+      cx={snap(at.x)}
+      cy={snap(at.y)}
+      r={BALL_RADIUS}
+      fill={BALL_COLORS[source.color] ?? source.color}
+      opacity={0.6}
+    />
+  );
+}
+
+/**
+ * The table: a toolbar of balls and the shape tools to drag out, the felt
+ * itself,
  * and an inspector for whatever is selected. `balls`/`paths` are controlled —
  * DrillForm owns them, since it is what submits them.
  */
@@ -73,7 +153,11 @@ export default function DrillGeometryEditor({
 
   return (
     <Card className="overflow-hidden">
-      <div className="flex items-start gap-2 border-b border-hairline p-2">
+      {/* Stacked on a phone, one row from `sm` up. Undo and Erase carry text
+          and cannot shrink, so side by side they took ~230px of a 375px screen
+          and left the palette two balls wide — seventeen drag sources in nine
+          rows, pushing the table itself off the fold. */}
+      <div className="flex flex-col gap-2 border-b border-hairline p-2 sm:flex-row sm:items-start">
         {/* Wraps rather than scrolls: a scrolling row of touch-none drag
             sources leaves nowhere to swipe on a phone. */}
         <div className="flex min-w-0 flex-1 flex-wrap gap-1">
@@ -114,23 +198,26 @@ export default function DrillGeometryEditor({
             className="mx-1 w-px shrink-0 self-stretch bg-hairline"
           />
 
-          <button
-            type="button"
-            aria-label={t("drillForm.arrow")}
-            className={[
-              PALETTE_ITEM_CLASSES,
-              "flex items-center justify-center text-ink-soft hover:bg-felt-raised hover:text-ink",
-            ].join(" ")}
-            onPointerDown={(e) => startSpawn(e, "arrow")}
-            onPointerMove={moveSpawn}
-            onPointerUp={commitSpawn}
-            onPointerCancel={cancelSpawn}
-          >
-            <LuMoveRight className="h-5 w-5" aria-hidden />
-          </button>
+          {SHAPE_TOOLS.map(({ source, label, Icon }) => (
+            <button
+              key={source}
+              type="button"
+              aria-label={t(label)}
+              className={[
+                PALETTE_ITEM_CLASSES,
+                "flex items-center justify-center text-ink-soft hover:bg-felt-raised hover:text-ink",
+              ].join(" ")}
+              onPointerDown={(e) => startSpawn(e, source)}
+              onPointerMove={moveSpawn}
+              onPointerUp={commitSpawn}
+              onPointerCancel={cancelSpawn}
+            >
+              <Icon className="h-5 w-5" aria-hidden />
+            </button>
+          ))}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center justify-end gap-1">
           <Button
             type="button"
             variant="ghost"
@@ -165,28 +252,7 @@ export default function DrillGeometryEditor({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
         >
-          {ghost &&
-            (spawn!.source === "arrow" ? (
-              <line
-                x1={ghost.x - ARROW_SPAWN_LENGTH / 2}
-                y1={ghost.y}
-                x2={ghost.x + ARROW_SPAWN_LENGTH / 2}
-                y2={ghost.y}
-                stroke="rgba(255,255,255,0.5)"
-                strokeWidth={0.5}
-              />
-            ) : (
-              <circle
-                cx={snap(ghost.x)}
-                cy={snap(ghost.y)}
-                r={BALL_RADIUS}
-                fill={
-                  BALL_COLORS[(spawn!.source as BallEntry).color] ??
-                  (spawn!.source as BallEntry).color
-                }
-                opacity={0.6}
-              />
-            ))}
+          {ghost && <Ghost source={spawn!.source} at={ghost} />}
         </PoolTableDiagram>
 
         <p className="mt-2 text-caption text-ink-faint">

@@ -8,7 +8,10 @@ import {
   TABLE_W,
   UNIT_X,
   UNIT_Y,
+  handlePoints,
   isStriped,
+  radiusOf,
+  rectOf,
   type Selection,
 } from "@/libs/algorithms/drillGeometry";
 import { useTheme } from "@/libs/theme/theme";
@@ -59,6 +62,8 @@ export default function PoolTableDiagram({
   children,
 }: PoolTableDiagramProps) {
   const fontSize = compact ? 0 : 2.5;
+  const selectedShape =
+    selected?.kind === "path" ? shotPaths[selected.index] : undefined;
   // Two copies of the artwork rather than one filtered: the dark table is lit
   // by a lamp over a dim room, the light one is the same table in daylight, and
   // a brightness filter gives neither.
@@ -170,10 +175,55 @@ export default function PoolTableDiagram({
           <circle cx={70} cy={25} r={0.35} fill="#f4f2ec3d" />
           <circle cx={75} cy={25} r={0.35} fill="#f4f2ec3d" />
 
-          {/* Shot paths */}
+          {/* Shot paths: an arrow, a circle or a rectangle. All three are two
+              points in the same array — see ShotPath — and all three wear the
+              same stroke, so only the element differs. */}
           {shotPaths.map((path, i) => {
             const isSelected =
               selected?.kind === "path" && selected.index === i;
+            // Shared by all three. Never spread onto <line>'s coordinates, so
+            // the arrow keeps its marker and the shapes go without one.
+            const stroke = {
+              stroke: isSelected
+                ? SELECTED_STROKE
+                : path.type === "dashed"
+                  ? "rgba(255,255,100,0.5)"
+                  : "rgba(255,255,255,0.4)",
+              strokeWidth: isSelected ? 0.7 : 0.5,
+              strokeDasharray: path.type === "dashed" ? "2 1" : undefined,
+              fill: "none",
+            };
+
+            // ponytail: the felt's two axes are scaled 5% apart (UNIT_X vs
+            // UNIT_Y), so this comes out as an ellipse 5% wide of a true
+            // circle. Below noticing at diagram size; the fix, if it ever
+            // matters, is drawing it in a group that undoes the ratio the way
+            // the ball labels do.
+            if (path.shape === "circle")
+              return (
+                <circle
+                  key={`path-${i}`}
+                  cx={path.x1}
+                  cy={path.y1}
+                  r={radiusOf(path)}
+                  {...stroke}
+                />
+              );
+
+            if (path.shape === "rect") {
+              const { x, y, w, h } = rectOf(path);
+              return (
+                <rect
+                  key={`path-${i}`}
+                  x={x}
+                  y={y}
+                  width={w}
+                  height={h}
+                  {...stroke}
+                />
+              );
+            }
+
             return (
               <line
                 key={`path-${i}`}
@@ -181,15 +231,7 @@ export default function PoolTableDiagram({
                 y1={path.y1}
                 x2={path.x2}
                 y2={path.y2}
-                stroke={
-                  isSelected
-                    ? SELECTED_STROKE
-                    : path.type === "dashed"
-                      ? "rgba(255,255,100,0.5)"
-                      : "rgba(255,255,255,0.4)"
-                }
-                strokeWidth={isSelected ? 0.7 : 0.5}
-                strokeDasharray={path.type === "dashed" ? "2 1" : undefined}
+                {...stroke}
                 markerEnd={
                   path.type === "dashed"
                     ? "url(#arrowhead-dashed)"
@@ -198,6 +240,27 @@ export default function PoolTableDiagram({
               />
             );
           })}
+
+          {/* Resize handles on the selected shape. Drawn after every path so
+              they sit on top of one, and only in the editor — `selected` is an
+              editor-only prop. The whole outline resizes, not just these
+              points; the dots are what says the shape can be resized at all,
+              which nothing on screen did before. */}
+          {selectedShape && (
+            <g>
+              {handlePoints(selectedShape).map((h, i) => (
+                <circle
+                  key={`handle-${i}`}
+                  cx={h.x}
+                  cy={h.y}
+                  r={0.9}
+                  fill={SELECTED_STROKE}
+                  stroke="rgba(0,0,0,0.45)"
+                  strokeWidth={0.15}
+                />
+              ))}
+            </g>
+          )}
 
           {/* Ball bodies. Clipped as one layer rather than one ball at a time:
               the clip is in felt coordinates, and each ball group carries its

@@ -1,25 +1,41 @@
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import {
+  ARROW_SPAWN_LENGTH,
   BALLS,
   BALL_RADIUS,
   clampBall,
+  distanceToOutline,
   hitTest,
   isOnFelt,
   pointToUnits,
+  rectGrabAt,
   snap,
+  spawnShape,
+  type RectGrab,
   type Selection,
 } from "@/libs/algorithms/drillGeometry";
 import type { BallPosition, ShotPath } from "@/types";
 
 type BallEntry = (typeof BALLS)[number];
-/** What is being dragged out of the toolbar. */
-export type SpawnSource = BallEntry | "arrow";
+/** What is being dragged out of the toolbar: a ball, or one of the shapes.
+ *  The shapes are the strings, which is how the two are told apart below. */
+export type SpawnSource = BallEntry | ShapeSource;
+export type ShapeSource = "arrow" | "circle" | "rect";
 
-/** An arrow dropped from the toolbar starts this long, then you drag its ends. */
-const ARROW_SPAWN_LENGTH = 16;
 /** Past this many px a press counts as a drag rather than a tap. */
 const DRAG_THRESHOLD = 4;
-/** Grab radius for a path endpoint; further in and the whole line moves. */
+/** Grab radius for a path endpoint or a shape's outline; further in and the
+ *  whole thing moves instead.
+ *
+ *  ponytail: a shape shrunk smaller than this is all outline and no inside, so
+ *  it can only be resized, not moved. Undo and delete both still reach it, and
+ *  the fix if it ever bites is a minimum size in spawnShape's units. */
 const ENDPOINT_GRAB = 2;
 /** Where a tapped item lands when there is no drop point: middle of the felt. */
 const FELT_CENTRE = { x: 50, y: 25 };
@@ -60,6 +76,11 @@ export function useDrillGeometryEditor({
     | null
     | { kind: "ball"; index: number }
     | { kind: "path"; index: number; end: 1 | 2 }
+    /** A rectangle corner or side, as the stored coordinates it writes. */
+    | ({ kind: "rect"; index: number } & RectGrab)
+    /** A circle's rim: the pointer becomes the rim point, so the radius is
+     *  however far it is from the centre. */
+    | { kind: "circle"; index: number }
     | { kind: "path-move"; index: number; last: { x: number; y: number } }
   >(null);
 
@@ -143,23 +164,18 @@ export function useDrillGeometryEditor({
     if (!flight) return;
 
     // A tap drops onto the selected ball if there is one, else the centre
+    const shape = typeof flight.source === "string" ? flight.source : null;
     const fallback =
-      flight.source !== "arrow" && selected?.kind === "ball"
-        ? balls[selected.index]
-        : FELT_CENTRE;
+      !shape && selected?.kind === "ball" ? balls[selected.index] : FELT_CENTRE;
     const target = flight.moved ? flight.pos : fallback;
     if (!target) return; // dragged off the table: nothing to do
 
     pushHistory();
 
-    if (flight.source === "arrow") {
-      const half = ARROW_SPAWN_LENGTH / 2;
-      const cx = Math.min(100 - half, Math.max(half, snap(target.x)));
-      const cy = snap(target.y);
-      setPaths((prev) => [
-        ...prev,
-        { x1: cx - half, y1: cy, x2: cx + half, y2: cy, type: "solid" },
-      ]);
+    // An arrow, a circle or a rectangle: where it lands and how big it starts
+    // are geometry, so they live in drillGeometry rather than here.
+    if (shape) {
+      setPaths((prev) => [...prev, spawnShape(shape, target)]);
       setSelected({ kind: "path", index: paths.length });
       return;
     }
@@ -212,12 +228,34 @@ export function useDrillGeometryEditor({
       return;
     }
     const path = paths[hit.index];
+    const move = { kind: "path-move", index: hit.index, last: p } as const;
+
+    // A closed shape resizes from its whole outline and moves from its inside.
+    // Anything narrower does not work in practice: the two points a shape is
+    // stored as are one arbitrary spot on the rim and two of the four corners,
+    // and nothing on screen says which — so every other grab silently moved
+    // the shape instead of resizing it.
+    if (path.shape === "circle") {
+      drag.current =
+        distanceToOutline(path, p) <= ENDPOINT_GRAB
+          ? { kind: "circle", index: hit.index }
+          : move;
+      return;
+    }
+
+    if (path.shape === "rect") {
+      const grab = rectGrabAt(path, p, ENDPOINT_GRAB);
+      drag.current = grab ? { kind: "rect", index: hit.index, ...grab } : move;
+      return;
+    }
+
+    // An arrow: two real, visible handles.
     const d1 = Math.hypot(p.x - path.x1, p.y - path.y1);
     const d2 = Math.hypot(p.x - path.x2, p.y - path.y2);
     drag.current =
       Math.min(d1, d2) <= ENDPOINT_GRAB
         ? { kind: "path", index: hit.index, end: d1 <= d2 ? 1 : 2 }
-        : { kind: "path-move", index: hit.index, last: p };
+        : move;
   };
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -244,6 +282,34 @@ export function useDrillGeometryEditor({
               ? { ...path, x1: x, y1: y }
               : { ...path, x2: x, y2: y }
             : path,
+        ),
+      );
+      return;
+    }
+
+    // Resizing a rectangle: whichever of the four stored numbers this grab
+    // owns — two for a corner, one for a side. rectOf reads the corners in
+    // either order, so pulling one past the other flips the rectangle rather
+    // than turning it inside out.
+    if (active.kind === "rect") {
+      const patch = {
+        ...(active.ax ? { [active.ax]: snap(p.x) } : {}),
+        ...(active.ay ? { [active.ay]: snap(p.y) } : {}),
+      };
+      setPaths((prev) =>
+        prev.map((path, i) =>
+          i === active.index ? { ...path, ...patch } : path,
+        ),
+      );
+      return;
+    }
+
+    // Resizing a circle: the rim point goes where the pointer is, and the
+    // radius is the distance from the centre it never moved.
+    if (active.kind === "circle") {
+      setPaths((prev) =>
+        prev.map((path, i) =>
+          i === active.index ? { ...path, x2: snap(p.x), y2: snap(p.y) } : path,
         ),
       );
       return;

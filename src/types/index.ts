@@ -163,12 +163,22 @@ export type BallPosition = {
   label?: string;
 };
 
+/**
+ * A line, a circle or a rectangle, all in the one `shot_paths` array.
+ *
+ * Two points is enough for all three, so the shapes needed no new column and
+ * no migration: no `shape` is the arrow every existing drill is made of, a
+ * circle reads (x1,y1) as its centre and (x2,y2) as a point on its rim, and a
+ * rectangle reads them as opposite corners. `type` stays the stroke, so a
+ * dashed circle is a circle with `type: "dashed"`.
+ */
 export type ShotPath = {
   x1: number;
   y1: number;
   x2: number;
   y2: number;
   type?: "solid" | "dashed";
+  shape?: "circle" | "rect";
 };
 
 /** ball_positions and shot_paths are jsonb — only the drill editor writes them,
