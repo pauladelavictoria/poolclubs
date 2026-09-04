@@ -1104,6 +1104,15 @@ export type Database = {
           table_id: number
         }[]
       }
+      club_claim_contact: {
+        Args: { p_slug: string }
+        Returns: {
+          club_name: string
+          club_slug: string
+          email: string
+          name: string
+        }[]
+      }
       club_photo_club_id: { Args: { object_name: string }; Returns: number }
       club_preview: {
         Args: { p_slug: string }

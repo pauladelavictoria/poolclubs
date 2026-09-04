@@ -194,7 +194,7 @@ const FEATURES: Feature[] = [
   },
 ];
 
-/** Eight questions is past the point where a stacked list reads, so they fold.
+/** Nine questions is past the point where a stacked list reads, so they fold.
  *  Native <details>: keyboard and screen-reader behaviour for free, and it
  *  works before hydration, which matters on the page a stranger arrives at. */
 const FAQ: { q: Key; a: Key }[] = [
@@ -206,6 +206,7 @@ const FAQ: { q: Key; a: Key }[] = [
   { q: "landing.q6", a: "landing.a6" },
   { q: "landing.q7", a: "landing.a7" },
   { q: "landing.q8", a: "landing.a8" },
+  { q: "landing.q9", a: "landing.a9" },
 ];
 
 const INSTALL: { icon: typeof LuApple; title: Key; body: Key }[] = [

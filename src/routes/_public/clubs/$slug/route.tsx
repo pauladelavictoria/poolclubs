@@ -1,6 +1,10 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import PublicClubPage from "@/pages/public/PublicClubPage";
-import { publicClubQuery, publicClubRosterQuery } from "@/queries/public/clubs";
+import {
+  publicClubUnclaimedQuery,
+  publicClubQuery,
+  publicClubRosterQuery,
+} from "@/queries/public/clubs";
 import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 
 /**
@@ -15,10 +19,19 @@ import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
  */
 export const Route = createFileRoute("/_public/clubs/$slug")({
   loader: async ({ context, params }) => {
-    const club = await context.queryClient.query({
-      ...publicClubQuery(params.slug),
-      staleTime: "static",
-    });
+    // Both by slug and both awaited together: the claim test does not need the
+    // club row, so making it wait for one would put two round trips in the way
+    // of the first paint instead of one.
+    const [club, unclaimed] = await Promise.all([
+      context.queryClient.query({
+        ...publicClubQuery(params.slug),
+        staleTime: "static",
+      }),
+      context.queryClient.query({
+        ...publicClubUnclaimedQuery(params.slug),
+        staleTime: "static",
+      }),
+    ]);
     // No such club, or it opted out. Indistinguishable on purpose: whether a
     // private club exists is itself private.
     if (!club) throw notFound();
@@ -30,7 +43,7 @@ export const Route = createFileRoute("/_public/clubs/$slug")({
       staleTime: "static",
     });
 
-    return { club, origin: context.origin };
+    return { club, unclaimed, origin: context.origin };
   },
   head: ({ loaderData }) => {
     // Undefined while the match is pending or errored — the root's own head is

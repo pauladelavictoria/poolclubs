@@ -207,6 +207,35 @@ export const publicClubQuery = (slug: string) =>
   });
 
 /**
+ * Whether this club is still waiting for whoever actually runs it.
+ *
+ * True for an imported directory entry — the Spanish federation seed owns
+ * every club it created as admin@poolclubs.app, which is that seed's own marker
+ * for "nobody has claimed this yet" (sql/clubs-seed-es.sql). The test lives in
+ * club_claim_contact rather than out here, because a public page cannot be
+ * shown who owns a club without being shown an account id.
+ *
+ * A row means unclaimed, and that is all this keeps: the row also carries the
+ * caller's own address, which only the server function that mails the claim
+ * has any use for.
+ */
+export const publicClubUnclaimedQuery = (slug: string) =>
+  queryOptions({
+    queryKey: [...keys.public.all, "unclaimed", slug] as const,
+    queryFn: async () => {
+      // Not throwOnError, unlike everything else here: this is the one query
+      // the club page can do without. It runs in the page's loader, so a
+      // deploy that lands before sql/club-claim.sql is applied would turn
+      // every club page into an error rather than a page with no claim band.
+      const { data } = await getSupabase().rpc("club_claim_contact", {
+        p_slug: slug,
+      });
+
+      return (data ?? []).length > 0;
+    },
+  });
+
+/**
  * Every active member of a public club — including the ones who opted out of
  * being listed.
  *

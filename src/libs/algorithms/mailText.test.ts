@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { joinRequestMail, memberApprovedMail } from "./mailText";
+import { clubClaimMail, joinRequestMail, memberApprovedMail } from "./mailText";
 
 const mail = (over: Partial<Parameters<typeof memberApprovedMail>[0]> = {}) =>
   memberApprovedMail({
@@ -89,6 +89,43 @@ describe("joinRequestMail", () => {
     // join time and it lands in a club admin's inbox.
     const html = request({ name: '<script>alert("x")</script>' }).html;
     expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+});
+
+const claim = (over: Partial<Parameters<typeof clubClaimMail>[0]> = {}) =>
+  clubClaimMail({
+    name: "Ana",
+    email: "ana@example.com",
+    clubName: "C.B. Granollers",
+    clubSlug: "c-b-granollers",
+    ...over,
+  });
+
+describe("clubClaimMail", () => {
+  it("names who is claiming and which club, because that is the whole mail", () => {
+    expect(claim().subject).toBe("Ana reclama C.B. Granollers");
+  });
+
+  it("carries the address the club has to be transferred to", () => {
+    const { text, html } = claim();
+    expect(text).toContain("ana@example.com");
+    expect(html).toContain("ana@example.com");
+  });
+
+  it("links to the public club page, which is the one both sides have seen", () => {
+    const url = "https://poolclubs.app/clubs/c-b-granollers";
+    expect(claim().html).toContain(`href="${url}"`);
+    expect(claim().text).toContain(url);
+  });
+
+  it("escapes a claimer's name and address, both typed by them", () => {
+    const html = claim({
+      name: '<script>alert("x")</script>',
+      email: '"><b>x</b>@example.com',
+    }).html;
+    expect(html).not.toContain("<script>");
+    expect(html).not.toContain("<b>");
     expect(html).toContain("&lt;script&gt;");
   });
 });

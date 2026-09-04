@@ -25,6 +25,10 @@ const SITE = "https://poolclubs.app";
 /** Must be a domain verified in Resend, or every send fails with a 403. */
 export const MAIL_FROM = "PoolClubs <hola@poolclubs.app>";
 
+/** Us. The one mail here that is not to a member or an admin but to whoever
+ *  runs the site, because only they can hand a club over. */
+export const MAIL_OPS = "hola@poolclubs.app";
+
 /** Names and club names are typed by people. They land inside an HTML
  *  attribute and inside element text, so they are escaped for both. */
 const escapeHtml = (value: string) =>
@@ -199,6 +203,52 @@ export function joinRequestMail({ name, clubName, clubSlug }: JoinRequested) {
       url,
       cta: `Abrir ${club}`,
       note: "Recibes este correo porque administras este club en PoolClubs.",
+    }),
+  };
+}
+
+export type ClubClaim = {
+  /** Whoever is claiming, by the name on their account. */
+  name: string;
+  /** Their address, which is the whole point of the mail: the club gets
+   *  transferred to the account behind it. */
+  email: string;
+  clubName: string;
+  clubSlug: string;
+};
+
+/**
+ * "Somebody says this club is theirs." To us, not to a member — the clubs in
+ * the imported directory are owned by admin@poolclubs.app and transferring one
+ * is a hand operation (see sql/clubs-seed-es.sql), so the mail exists to start
+ * that conversation rather than to complete anything.
+ *
+ * The link is the public club page, which is the one both sides have seen.
+ */
+export function clubClaimMail({ name, email, clubName, clubSlug }: ClubClaim) {
+  const url = `${SITE}/clubs/${encodeURIComponent(clubSlug)}`;
+  const club = escapeHtml(clubName);
+  const who = escapeHtml(name);
+  const address = escapeHtml(email);
+
+  return {
+    subject: `${name} reclama ${clubName}`,
+    text: [
+      "Hola,",
+      "",
+      `${name} (${email}) dice que ${clubName} es su club y pide que se le transfiera.`,
+      "",
+      url,
+      "",
+      "Recibes este correo porque administras PoolClubs.",
+    ].join("\n"),
+    html: shell({
+      heading: `${who} reclama ${club}`,
+      lead: `${who} (${address}) dice que ${club} es su club y pide que se le
+              transfiera la propiedad.`,
+      url,
+      cta: `Ver ${club}`,
+      note: "Recibes este correo porque administras PoolClubs.",
     }),
   };
 }

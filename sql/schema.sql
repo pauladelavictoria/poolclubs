@@ -272,6 +272,27 @@ END $$;
 ALTER FUNCTION "public"."claim_device"("p_code" "text") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."club_claim_contact"("p_slug" "text") RETURNS TABLE("email" "text", "name" "text", "club_name" "text", "club_slug" "text")
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT
+    (SELECT u.email::text FROM auth.users u WHERE u.id = auth.uid()),
+    (SELECT pe.name FROM people pe WHERE pe.user_id = auth.uid() ORDER BY pe.id LIMIT 1),
+    c.name,
+    c.slug
+  FROM clubs c
+  JOIN auth.users owner ON owner.id = c.owner_id
+  WHERE c.slug = p_slug
+    -- A hidden club has no public page to claim it from.
+    AND c.is_public
+    AND owner.email = 'admin@poolclubs.app';
+$$;
+
+
+ALTER FUNCTION "public"."club_claim_contact"("p_slug" "text") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."club_photo_club_id"("object_name" "text") RETURNS integer
     LANGUAGE "sql" STABLE STRICT
     SET "search_path" TO 'public'
@@ -2933,6 +2954,13 @@ GRANT ALL ON FUNCTION "public"."can_touch_player"("pid" integer) TO "service_rol
 REVOKE ALL ON FUNCTION "public"."claim_device"("p_code" "text") FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."claim_device"("p_code" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."claim_device"("p_code" "text") TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."club_claim_contact"("p_slug" "text") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."club_claim_contact"("p_slug" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."club_claim_contact"("p_slug" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."club_claim_contact"("p_slug" "text") TO "service_role";
 
 
 

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { getSupabaseServer } from "@/libs/supabase/server";
 import {
   MAIL_FROM,
+  MAIL_OPS,
+  clubClaimMail,
   joinRequestMail,
   memberApprovedMail,
 } from "@/libs/algorithms/mailText";
@@ -110,6 +112,53 @@ export const sendJoinRequestMail = createServerFn({ method: "POST" })
     );
   });
 
+const claimInput = z.object({ slug: z.string().min(1) });
+
+/**
+ * "This club is mine." Sent to us rather than to a member, because the clubs in
+ * the imported directory belong to admin@poolclubs.app and handing one over is
+ * a hand operation — see the header of sql/clubs-seed-es.sql.
+ *
+ * The slug is all it takes, again: club_claim_contact answers only for a club
+ * still owned by that account, and the address it returns is auth.uid()'s own,
+ * so the claim can never be filed under somebody else's name. A signed-out
+ * caller gets a row with no email and this sends nothing — the page sends them
+ * to sign up first, and this is the second lock on that door.
+ */
+export const sendClubClaimMail = createServerFn({ method: "POST" })
+  .validator(claimInput)
+  .handler(async ({ data }): Promise<null> => {
+    const say = logger(`clubClaim@${data.slug}`);
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return say("no RESEND_API_KEY in this build");
+
+    const supabase = getSupabaseServer();
+    const { data: rows, error } = await supabase.rpc("club_claim_contact", {
+      p_slug: data.slug,
+    });
+    if (error) return say(`contact lookup failed: ${error.message}`);
+
+    const contact = rows?.[0];
+    // No such club, already claimed, or nobody signed in to claim it.
+    if (!contact?.email) return say("not claimable, or not signed in");
+
+    return send(
+      apiKey,
+      MAIL_OPS,
+      say,
+      clubClaimMail({
+        name: contact.name ?? contact.email,
+        email: contact.email,
+        clubName: contact.club_name,
+        clubSlug: contact.club_slug,
+      }),
+      // So that replying to it lands on the person claiming the club, which is
+      // the next thing that has to happen.
+      contact.email,
+    );
+  });
+
 /** One POST with a bearer token. fetch, not the resend SDK: a dependency for
  *  this would be a dependency to keep up to date. */
 async function send(
@@ -117,6 +166,7 @@ async function send(
   to: string,
   say: (reason: string) => null,
   body: { subject: string; html: string; text: string },
+  replyTo?: string,
 ) {
   const response = await fetch(RESEND_ENDPOINT, {
     method: "POST",
@@ -130,6 +180,7 @@ async function send(
       subject: body.subject,
       html: body.html,
       text: body.text,
+      ...(replyTo ? { reply_to: [replyTo] } : {}),
     }),
   });
 

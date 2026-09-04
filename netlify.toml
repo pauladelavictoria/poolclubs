@@ -29,3 +29,8 @@
 #                    line and does nothing, which is what dev and CI do. The
 #                    From domain has to be verified in Resend or every send
 #                    comes back 403.
+
+# And the analytics beacon, same place:
+#   VITE_CF_BEACON_TOKEN — Cloudflare Web Analytics site token. Public by
+#                          design; without it __root renders no beacon tag at
+#                          all, so dev and previews stay out of the numbers.
