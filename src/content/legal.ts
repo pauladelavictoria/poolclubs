@@ -38,6 +38,11 @@ export const SUBPROCESSORS = [
   { name: "Netlify", role: "hosting, CDN", region: "US/global" },
   { name: "Google", role: "sign-in with Google (OAuth)", region: "US/global" },
   {
+    name: "Cloudflare",
+    role: "cookieless audience measurement (Web Analytics)",
+    region: "US/global",
+  },
+  {
     name: "OpenStreetMap / Photon",
     role: "address search on maps",
     region: "EU",
@@ -56,7 +61,7 @@ export type LegalDoc = {
 
 export type LegalDocId = "privacy" | "terms" | "aviso-legal";
 
-const UPDATED = "2026-08-17";
+const UPDATED = "2026-09-04";
 
 const providerList = SUBPROCESSORS.map(
   (p) => `${p.name} — ${p.role} (${p.region})`,
@@ -128,7 +133,7 @@ const privacyEs: LegalDoc = {
       heading: "8. Cookies y almacenamiento local",
       body: [
         "Solo usamos cookies y almacenamiento estrictamente necesarios: la sesión de acceso, el idioma y el tema claro u oscuro.",
-        "No usamos cookies de analítica ni de publicidad, y por eso no verás un banner de consentimiento. Si algún día añadimos analítica basada en cookies, pediremos consentimiento antes.",
+        "Medimos las visitas con Cloudflare Web Analytics, que no usa cookies ni almacenamiento en tu navegador y no crea un identificador de usuario: cuenta páginas vistas, no personas. Por eso no verás un banner de consentimiento. Si algún día añadimos analítica basada en cookies, pediremos consentimiento antes.",
       ],
     },
     {
@@ -212,7 +217,7 @@ const privacyEn: LegalDoc = {
       heading: "8. Cookies and local storage",
       body: [
         "We only use strictly necessary cookies and storage: the sign-in session, the language and the light or dark theme.",
-        "No analytics or advertising cookies, which is why you see no consent banner. If we ever add cookie-based analytics, we will ask for consent first.",
+        "We count visits with Cloudflare Web Analytics, which uses no cookies and no browser storage and builds no user identifier: it counts page views, not people. That is why you see no consent banner. If we ever add cookie-based analytics, we will ask for consent first.",
       ],
     },
     {
@@ -296,7 +301,7 @@ const privacyFr: LegalDoc = {
       heading: "8. Cookies et stockage local",
       body: [
         "Nous n'utilisons que des cookies et un stockage strictement nécessaires : la session de connexion, la langue et le thème clair ou sombre.",
-        "Aucun cookie de mesure d'audience ni de publicité, d'où l'absence de bandeau de consentement. Si nous ajoutons un jour une mesure d'audience à base de cookies, nous demanderons votre consentement au préalable.",
+        "Nous mesurons l'audience avec Cloudflare Web Analytics, qui n'utilise ni cookies ni stockage dans votre navigateur et ne crée aucun identifiant d'utilisateur : il compte des pages vues, pas des personnes. D'où l'absence de bandeau de consentement. Si nous ajoutons un jour une mesure d'audience à base de cookies, nous demanderons votre consentement au préalable.",
       ],
     },
     {

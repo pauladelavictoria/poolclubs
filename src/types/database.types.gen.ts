@@ -1104,6 +1104,15 @@ export type Database = {
           table_id: number
         }[]
       }
+      club_claim_contact: {
+        Args: { p_slug: string }
+        Returns: {
+          club_name: string
+          club_slug: string
+          email: string
+          name: string
+        }[]
+      }
       club_photo_club_id: { Args: { object_name: string }; Returns: number }
       club_preview: {
         Args: { p_slug: string }
@@ -1118,6 +1127,7 @@ export type Database = {
       club_slug_reserved: { Args: never; Returns: string[] }
       create_club: { Args: { club_name: string }; Returns: number }
       finish_live_match: { Args: { p_id: string }; Returns: string }
+      hide_member: { Args: { p_person_id: number }; Returns: undefined }
       is_club_admin: { Args: { cid: number }; Returns: boolean }
       is_club_device: { Args: { cid: number }; Returns: boolean }
       is_club_member: { Args: { cid: number }; Returns: boolean }
@@ -1133,6 +1143,15 @@ export type Database = {
           p_slug: string
         }
         Returns: number
+      }
+      join_request_admin_contact: {
+        Args: { p_club_id: number }
+        Returns: {
+          club_name: string
+          club_slug: string
+          email: string
+          name: string
+        }[]
       }
       operator_clubs: {
         Args: never

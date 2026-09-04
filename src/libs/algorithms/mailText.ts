@@ -1,13 +1,12 @@
 /**
- * The one transactional email this app sends itself.
+ * The transactional emails this app sends itself.
  *
  * Spanish only, and deliberately, for exactly the reason the three Supabase
  * auth templates are (see supabase/templates/README.md): Spanish is the app's
  * source language, and there is nowhere to read a recipient's preference from.
  * A push knows, because push_subscriptions.lang was recorded on the recipient's
- * own device; a brand-new member has no device and no row. So the copy lives
- * here rather than in the i18n dictionaries, next to the markup it fills, the
- * same way the auth templates hold theirs.
+ * own device; a brand-new member has no device and no row, and the admin being
+ * told about them is not the one reading the screen.
  *
  * ponytail: the upgrade, if it is ever wanted, is a `lang` column on `people`
  * written at sign-up — not a lookup, which would be empty in this exact case.
@@ -26,6 +25,10 @@ const SITE = "https://poolclubs.app";
 /** Must be a domain verified in Resend, or every send fails with a 403. */
 export const MAIL_FROM = "PoolClubs <hola@poolclubs.app>";
 
+/** Us. The one mail here that is not to a member or an admin but to whoever
+ *  runs the site, because only they can hand a club over. */
+export const MAIL_OPS = "hola@poolclubs.app";
+
 /** Names and club names are typed by people. They land inside an HTML
  *  attribute and inside element text, so they are escaped for both. */
 const escapeHtml = (value: string) =>
@@ -35,6 +38,86 @@ const escapeHtml = (value: string) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+
+/**
+ * The envelope every mail here shares: header, heading, one paragraph, the
+ * button, the copy-this-link fallback and the footer note.
+ *
+ * `heading`, `lead`, `cta` and `note` are already-escaped HTML — every caller
+ * runs its people-typed values through escapeHtml first, because some of them
+ * sit inside a sentence rather than being the whole of it.
+ */
+function shell({
+  heading,
+  lead,
+  url,
+  cta,
+  note,
+}: {
+  heading: string;
+  lead: string;
+  url: string;
+  cta: string;
+  note: string;
+}) {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f5f9;margin:0;padding:24px 12px;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid rgba(9,11,14,0.1);border-radius:14px;">
+        <tr>
+          <td style="padding:32px 32px 24px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding-right:10px;" valign="middle">
+                  <img src="${SITE}/ball.png" width="32" height="32" alt="" style="display:block;width:32px;height:32px;border:0;border-radius:16px;">
+                </td>
+                <td valign="middle" style="font-size:18px;font-weight:600;color:#12161c;letter-spacing:-0.01em;">
+                  PoolClubs
+                </td>
+              </tr>
+            </table>
+
+            <h1 style="margin:24px 0 0 0;font-size:22px;line-height:1.3;font-weight:600;color:#12161c;">
+              ${heading}
+            </h1>
+
+            <p style="margin:12px 0 0 0;font-size:15px;line-height:1.55;color:#49525e;">
+              ${lead}
+            </p>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 0 0;">
+              <tr>
+                <td align="center" bgcolor="#966c00" style="border-radius:10px;">
+                  <a href="${url}"
+                     style="display:inline-block;padding:12px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">
+                    ${cta}
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:24px 0 0 0;font-size:13px;line-height:1.55;color:#69727e;">
+              Si el botón no funciona, copia esta dirección en tu navegador:<br>
+              <span style="color:#49525e;word-break:break-all;">${url}</span>
+            </p>
+
+            <p style="margin:24px 0 0 0;padding-top:20px;border-top:1px solid rgba(9,11,14,0.1);font-size:13px;line-height:1.55;color:#69727e;">
+              ${note} ¿Dudas? Escríbenos a
+              <a href="mailto:hola@poolclubs.app" style="color:#966c00;text-decoration:underline;">hola@poolclubs.app</a>.
+            </p>
+
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
+}
+
+/** The club's own page, which is where both mails point. */
+const clubUrl = (clubSlug: string) =>
+  `${SITE}/app/${encodeURIComponent(clubSlug)}`;
 
 export type MemberApproved = {
   /** The new member's display name in that club. */
@@ -55,7 +138,7 @@ export function memberApprovedMail({
   clubName,
   clubSlug,
 }: MemberApproved) {
-  const url = `${SITE}/app/${encodeURIComponent(clubSlug)}`;
+  const url = clubUrl(clubSlug);
   const club = escapeHtml(clubName);
   const who = escapeHtml(name);
 
@@ -70,60 +153,102 @@ export function memberApprovedMail({
       "",
       "Recibes este correo porque pediste entrar en este club en PoolClubs.",
     ].join("\n"),
-    html: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f5f9;margin:0;padding:24px 12px;">
-  <tr>
-    <td align="center">
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid rgba(9,11,14,0.1);border-radius:14px;">
-        <tr>
-          <td style="padding:32px 32px 24px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    html: shell({
+      heading: `Ya eres miembro de ${club}`,
+      lead: `Hola ${who}: un administrador ha aprobado tu entrada. Ya puedes
+              registrar partidos, ver el ranking y apuntarte a los torneos.`,
+      url,
+      cta: `Abrir ${club}`,
+      note: "Recibes este correo porque pediste entrar en este club en PoolClubs.",
+    }),
+  };
+}
 
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-              <tr>
-                <td style="padding-right:10px;" valign="middle">
-                  <img src="${SITE}/ball.png" width="32" height="32" alt="" style="display:block;width:32px;height:32px;border:0;border-radius:16px;">
-                </td>
-                <td valign="middle" style="font-size:18px;font-weight:600;color:#12161c;letter-spacing:-0.01em;">
-                  PoolClubs
-                </td>
-              </tr>
-            </table>
+export type JoinRequested = {
+  /** Whoever just asked, by the name their request carries. */
+  name: string;
+  clubName: string;
+  clubSlug: string;
+};
 
-            <h1 style="margin:24px 0 0 0;font-size:22px;line-height:1.3;font-weight:600;color:#12161c;">
-              Ya eres miembro de ${club}
-            </h1>
+/**
+ * "Somebody wants in." The other half of memberApprovedMail, to the admin who
+ * has to decide.
+ *
+ * Same link, for the same reason: JoinRequestBanner sits above every page under
+ * the club, so opening the club *is* opening the request — there is no separate
+ * requests screen to deep-link to, and inventing one for the mail would be a
+ * second place for approve to live.
+ */
+export function joinRequestMail({ name, clubName, clubSlug }: JoinRequested) {
+  const url = clubUrl(clubSlug);
+  const club = escapeHtml(clubName);
+  const who = escapeHtml(name);
 
-            <p style="margin:12px 0 0 0;font-size:15px;line-height:1.55;color:#49525e;">
-              Hola ${who}: un administrador ha aprobado tu entrada. Ya puedes
-              registrar partidos, ver el ranking y apuntarte a los torneos.
-            </p>
+  return {
+    subject: `${name} quiere entrar en ${clubName}`,
+    text: [
+      "Hola,",
+      "",
+      `${name} ha pedido entrar en ${clubName}. Puedes aprobar o rechazar la solicitud desde el club; hasta entonces no ve el ranking ni puede registrar partidos.`,
+      "",
+      url,
+      "",
+      "Recibes este correo porque administras este club en PoolClubs.",
+    ].join("\n"),
+    html: shell({
+      heading: `${who} quiere entrar en ${club}`,
+      lead: `Puedes aprobar o rechazar la solicitud desde el club. Hasta
+              entonces no ve el ranking ni puede registrar partidos.`,
+      url,
+      cta: `Abrir ${club}`,
+      note: "Recibes este correo porque administras este club en PoolClubs.",
+    }),
+  };
+}
 
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 0 0;">
-              <tr>
-                <td align="center" bgcolor="#966c00" style="border-radius:10px;">
-                  <a href="${url}"
-                     style="display:inline-block;padding:12px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">
-                    Abrir ${club}
-                  </a>
-                </td>
-              </tr>
-            </table>
+export type ClubClaim = {
+  /** Whoever is claiming, by the name on their account. */
+  name: string;
+  /** Their address, which is the whole point of the mail: the club gets
+   *  transferred to the account behind it. */
+  email: string;
+  clubName: string;
+  clubSlug: string;
+};
 
-            <p style="margin:24px 0 0 0;font-size:13px;line-height:1.55;color:#69727e;">
-              Si el botón no funciona, copia esta dirección en tu navegador:<br>
-              <span style="color:#49525e;word-break:break-all;">${url}</span>
-            </p>
+/**
+ * "Somebody says this club is theirs." To us, not to a member — the clubs in
+ * the imported directory are owned by admin@poolclubs.app and transferring one
+ * is a hand operation (see sql/clubs-seed-es.sql), so the mail exists to start
+ * that conversation rather than to complete anything.
+ *
+ * The link is the public club page, which is the one both sides have seen.
+ */
+export function clubClaimMail({ name, email, clubName, clubSlug }: ClubClaim) {
+  const url = `${SITE}/clubs/${encodeURIComponent(clubSlug)}`;
+  const club = escapeHtml(clubName);
+  const who = escapeHtml(name);
+  const address = escapeHtml(email);
 
-            <p style="margin:24px 0 0 0;padding-top:20px;border-top:1px solid rgba(9,11,14,0.1);font-size:13px;line-height:1.55;color:#69727e;">
-              Recibes este correo porque pediste entrar en este club en
-              PoolClubs. ¿Dudas? Escríbenos a
-              <a href="mailto:hola@poolclubs.app" style="color:#966c00;text-decoration:underline;">hola@poolclubs.app</a>.
-            </p>
-
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>`,
+  return {
+    subject: `${name} reclama ${clubName}`,
+    text: [
+      "Hola,",
+      "",
+      `${name} (${email}) dice que ${clubName} es su club y pide que se le transfiera.`,
+      "",
+      url,
+      "",
+      "Recibes este correo porque administras PoolClubs.",
+    ].join("\n"),
+    html: shell({
+      heading: `${who} reclama ${club}`,
+      lead: `${who} (${address}) dice que ${club} es su club y pide que se le
+              transfiera la propiedad.`,
+      url,
+      cta: `Ver ${club}`,
+      note: "Recibes este correo porque administras PoolClubs.",
+    }),
   };
 }

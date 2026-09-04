@@ -25,8 +25,9 @@ type UpdatePlayerInput = {
   /** Listed on the public site. Set by the player themselves in their own
    *  settings, or by an admin for a guest with no account — the "Admin can
    *  update guests in their club" policy is what draws that line, and it is
-   *  the database that enforces it. See sql/schema.sql for what this does and
-   *  does not hide. */
+   *  the database that enforces it. An admin *hiding* somebody who does have
+   *  an account goes through hideMember below instead. See sql/schema.sql for
+   *  what this does and does not hide. */
   is_public?: boolean;
 };
 
@@ -101,6 +102,27 @@ export const useManagePlayers = () => {
             .eq("id", personId)
             .throwOnError();
         }
+      },
+      onSuccess,
+    }),
+
+    /**
+     * Taking a member off the public site, whether or not they have an account.
+     *
+     * An RPC rather than a people update, and one that only ever writes false:
+     * a club runs its own public page and may hide anybody on it, but
+     * re-listing somebody who opted out is theirs alone, in their settings.
+     * That asymmetry cannot be written as a policy — see hide_member in
+     * sql/schema.sql — which is also why the caller cannot pass a value.
+     *
+     * Guests still flip both ways through updatePlayer above: nobody's choice
+     * is being overruled there, because there is nobody behind the row.
+     */
+    hideMember: useMutation({
+      mutationFn: async (personId: number) => {
+        await supabase
+          .rpc("hide_member", { p_person_id: personId })
+          .throwOnError();
       },
       onSuccess,
     }),

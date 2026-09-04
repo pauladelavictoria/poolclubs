@@ -143,7 +143,23 @@ export const Route = createRootRouteWithContext<{
         },
         { rel: "icon", href: "/favicon.ico" },
       ],
-      scripts: [{ children: THEME_BOOT }],
+      scripts: [
+        { children: THEME_BOOT },
+        // Cloudflare Web Analytics. No cookies and no local storage, which is
+        // what keeps the privacy page's "no consent banner" line true, and it
+        // counts SPA route changes by itself — it listens to the pushState the
+        // router already does, so there is nothing to call from app code and no
+        // per-page hook. No token (dev, CI, a fork) means no tag at all.
+        ...(CF_BEACON_TOKEN
+          ? [
+              {
+                src: "https://static.cloudflareinsights.com/beacon.min.js",
+                defer: true,
+                "data-cf-beacon": JSON.stringify({ token: CF_BEACON_TOKEN }),
+              },
+            ]
+          : []),
+      ],
     };
   },
 
@@ -163,6 +179,10 @@ export const Route = createRootRouteWithContext<{
     </RootDocument>
   ),
 });
+
+/** Set in the Netlify UI; public by design, like the Supabase anon key — the
+ *  token only says which site a hit belongs to. */
+const CF_BEACON_TOKEN = import.meta.env.VITE_CF_BEACON_TOKEN;
 
 /**
  * The server cannot see `prefers-color-scheme` — it is not in the request — so a
