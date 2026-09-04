@@ -199,7 +199,16 @@ export default function TablePage() {
             <div className="flex justify-end">
               <Button
                 variant={next ? "ghost" : "primary"}
-                onClick={() => setStarting(true)}
+                // The tap that starts a match is also the club's one reliable
+                // user gesture, so it is what takes the browser's chrome away.
+                // ponytail: document fullscreen, not the kiosk shell — nothing
+                // here has that ref, and the shell already fills the screen.
+                onClick={() => {
+                  void document.documentElement.requestFullscreen?.().catch(
+                    () => {},
+                  );
+                  setStarting(true);
+                }}
                 disabled={!player}
               >
                 {t("live.playHere")}
