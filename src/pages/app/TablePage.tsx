@@ -203,10 +203,14 @@ export default function TablePage() {
                 // user gesture, so it is what takes the browser's chrome away.
                 // ponytail: document fullscreen, not the kiosk shell — nothing
                 // here has that ref, and the shell already fills the screen.
-                onClick={() => {
-                  void document.documentElement.requestFullscreen?.().catch(
-                    () => {},
-                  );
+                //
+                // Awaited, and only then the dialog: the top layer paints in
+                // the order things entered it, so a fullscreen element that
+                // arrives *after* showModal() covers the dialog with the page.
+                onClick={async () => {
+                  await document.documentElement
+                    .requestFullscreen?.()
+                    .catch(() => {});
                   setStarting(true);
                 }}
                 disabled={!player}
