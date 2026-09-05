@@ -563,6 +563,8 @@
   "public.ctaBand.body": "Añade tu club, invita a tus habituales y que el ranking hable por vosotros. Si ya aparece en el directorio, ábrelo y reclámalo.",
   "public.cta.signIn": "Entrar",
   "public.cta.joinClub": "Unirme a este club",
+  "public.cta.openClub": "Abrir este club",
+  "public.cta.membershipPending": "Solicitud pendiente",
   "public.share.label": "Compartir",
   "public.share.copied": "Enlace copiado",
   "public.share.copyError": "No se pudo copiar el enlace",

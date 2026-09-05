@@ -1775,6 +1775,7 @@ CREATE TABLE IF NOT EXISTS "public"."players" (
     "is_device" boolean DEFAULT false NOT NULL,
     "device_table_id" integer,
     "is_caretaker" boolean DEFAULT false NOT NULL,
+    "joined_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     CONSTRAINT "players_queue_check" CHECK ((("queued_table_id" IS NULL) = ("queued_at" IS NULL))),
     CONSTRAINT "players_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text", 'rejected'::"text", 'left'::"text"])))
 );
@@ -1784,6 +1785,10 @@ ALTER TABLE "public"."players" OWNER TO "postgres";
 
 
 COMMENT ON COLUMN "public"."players"."is_caretaker" IS 'Holds the keys, does not play here: kept out of member_count and out of the roster.';
+
+
+
+COMMENT ON COLUMN "public"."players"."joined_at" IS 'When the membership row was created. The notification feed hides anything older — see src/hooks/useNotifications.ts.';
 
 
 

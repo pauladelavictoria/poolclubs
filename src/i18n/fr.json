@@ -563,6 +563,8 @@
   "public.ctaBand.body": "Ajoutez votre club, invitez vos habitués et laissez le classement parler pour vous. S'il est déjà dans l'annuaire, ouvrez-le et réclamez-le.",
   "public.cta.signIn": "Se connecter",
   "public.cta.joinClub": "Rejoindre ce club",
+  "public.cta.openClub": "Ouvrir ce club",
+  "public.cta.membershipPending": "Demande en attente",
   "public.share.label": "Partager",
   "public.share.copied": "Lien copié",
   "public.share.copyError": "Impossible de copier le lien",

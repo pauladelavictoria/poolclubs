@@ -563,6 +563,8 @@
   "public.ctaBand.body": "Add your club, invite your regulars, and let the ranking do the talking. If it is already in the directory, open it and claim it.",
   "public.cta.signIn": "Sign in",
   "public.cta.joinClub": "Join this club",
+  "public.cta.openClub": "Open this club",
+  "public.cta.membershipPending": "Membership pending",
   "public.share.label": "Share",
   "public.share.copied": "Link copied",
   "public.share.copyError": "Could not copy the link",
