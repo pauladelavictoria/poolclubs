@@ -344,7 +344,7 @@ export default function LandingPage() {
               {/* One label for one intent, and it is the label the footer and
                   the directories' CTA band already use. */}
               <Link
-                to="/app/clubs/new"
+                to="/clubs/new"
                 className={buttonClasses({ className: "group px-5" })}
               >
                 {t("public.footer.startClub")}
@@ -706,7 +706,7 @@ export default function LandingPage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
-              to="/app/clubs/new"
+              to="/clubs/new"
               className={buttonClasses({ className: "group px-5" })}
             >
               {t("public.footer.startClub")}

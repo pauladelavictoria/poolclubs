@@ -8,8 +8,7 @@ type Ranked = Pick<Player, "id" | "name" | "category">;
 
 // ponytail: recomputed from every game in the club on each render, because
 // nothing persists a rating (there is no elo column — see sql/schema.sql). Fine
-// for a club's season; the global lobby is the case that outgrows it, since its
-// game list never stops growing. Materialise a rating per player when it does.
+// for a club's season. Materialise a rating per player if one ever outgrows it.
 export const useEloRanking = ({
   games,
   players,

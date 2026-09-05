@@ -7,6 +7,7 @@ import PushToggle from "@/components/players/PushToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useManagePlayers } from "@/hooks/useManagePlayers";
+import { useLeaveClub } from "@/hooks/useClub";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { changePassword } from "@/libs/server/auth.functions";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -24,10 +25,12 @@ export default function PlayerSettingsPage() {
   const { playerId } = route.useParams();
   const playerIdNum = Number(playerId);
 
-  const { user, refreshMemberships } = useAuth();
+  const { user, refreshMemberships, activeClub, activeClubId, isClubAdmin } =
+    useAuth();
   const { data: players, isLoading: isLoadingPlayers } = usePlayers();
   const player = players?.find((p) => p.id === playerIdNum);
   const { updatePlayer } = useManagePlayers();
+  const leaveClub = useLeaveClub();
 
   // Synced from `player` on load, then left alone — an in-flight edit
   // shouldn't be clobbered by a background refetch of the same row.
@@ -265,6 +268,46 @@ export default function PlayerSettingsPage() {
           </Link>
         )}
       </Card>
+
+      {/* Not offered to the owner: leave_club refuses them, because a club whose
+          owner has walked out has nobody who can approve anybody. Better absent
+          than present and always failing. */}
+      {!isClubAdmin && activeClub && (
+        <Card className="p-4">
+          <p className="text-body font-medium text-ink">
+            {t("club.leaveTitle")}
+          </p>
+          <p className="mt-1 text-body text-ink-faint">
+            {t("club.leaveHint")}
+          </p>
+          <div className="mt-4 flex justify-end">
+            <Button
+              variant="secondary"
+              className="text-accent-red"
+              disabled={leaveClub.isPending}
+              onClick={() => {
+                if (!confirm(t("club.leaveConfirm", { club: activeClub.name })))
+                  return;
+                leaveClub.mutate(activeClubId, {
+                  onSuccess: () =>
+                    toast.success(t("club.leftToast", { club: activeClub.name })),
+                  onError: (err) =>
+                    toast.error(
+                      t(
+                        dbErrorMessage(err, "leaveClub", {
+                          denied: "common.deniedError",
+                          refused: "club.leaveOwnerError",
+                        }),
+                      ),
+                    ),
+                });
+              }}
+            >
+              {leaveClub.isPending ? t("common.saving") : t("club.leave")}
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

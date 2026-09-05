@@ -18,7 +18,7 @@ import { useT } from "@/i18n";
  *
  * A sibling of SocialBar rather than a mode of it: that one resolves names off
  * the club roster and links into /app/$clubSlug, and neither holds out here —
- * a commenter can be from any club, or from none but the global lobby, and the
+ * a commenter can be from any club, and the
  * reader may be signed out entirely. Sharing the component would have meant
  * threading every one of those through it as a prop.
  *

@@ -121,9 +121,9 @@ describe("sortPlayedMatches", () => {
 
 describe("eligibleToAdd", () => {
   const players = [
-    { id: 1, category: 1 as const },
-    { id: 2, category: 2 as const },
-    { id: 3, category: 1 as const },
+    { id: 1, category: 1 as const, name: "Ana" },
+    { id: 2, category: 2 as const, name: "Bea" },
+    { id: 3, category: 1 as const, name: "Carla" },
   ];
 
   it("excludes players already entered", () => {
@@ -140,5 +140,18 @@ describe("eligibleToAdd", () => {
     expect(eligibleToAdd(players, null, []).map((p) => p.id)).toEqual([
       1, 2, 3,
     ]);
+  });
+
+  // One row standing for whoever walked in that night: a bracket entry for it
+  // would be several different strangers playing under one name.
+  it("never offers the guest placeholder, in any division", () => {
+    const withGuest = [
+      ...players,
+      { id: 4, category: 1 as const, name: "_Invitado" },
+    ];
+    expect(eligibleToAdd(withGuest, null, []).map((p) => p.id)).toEqual([
+      1, 2, 3,
+    ]);
+    expect(eligibleToAdd(withGuest, 1, []).map((p) => p.id)).toEqual([1, 3]);
   });
 });

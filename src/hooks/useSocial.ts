@@ -10,7 +10,6 @@ import {
   tournamentCommentsQuery,
   tournamentReactionsQuery,
 } from "@/queries/social";
-import { GLOBAL_CLUB_SLUG } from "@/libs/algorithms/features";
 import { mentionedSlugs } from "@/libs/algorithms/mentions";
 import { sendPush } from "@/libs/server/push.functions";
 import type { Comment, Reaction, SocialTarget } from "@/types";
@@ -237,19 +236,13 @@ export const useSocialActions = () => {
  * tournament.
  *
  * ponytail: a person with three memberships has three player ids and no
- * principled way to pick one out here, so this prefers the global lobby — the
- * row everybody has, and the least club-flavoured thing to sign with. It only
- * decides which id lands in `author_player_id`; the comment renders under the
- * person either way. The real fix is `author_person_id`, which is the wider
+ * principled way to pick one out here, so this takes the first active one. It
+ * only decides which id lands in `author_player_id`; the comment renders under
+ * the person either way. The real fix is `author_person_id`, which is the wider
  * person-keying migration this deliberately does not do.
  */
-const signingPlayerId = (
-  memberships: { id: number; status: string; club?: { slug: string } | null }[],
-) => {
-  const active = memberships.filter((m) => m.status === "active");
-  const lobby = active.find((m) => m.club?.slug === GLOBAL_CLUB_SLUG);
-  return (lobby ?? active[0])?.id;
-};
+const signingPlayerId = (memberships: { id: number; status: string }[]) =>
+  memberships.find((m) => m.status === "active")?.id;
 
 /** What a public tournament page reads and, for a signed-in visitor, writes. */
 export const useTournamentSocial = (tournamentId: number, clubId: number) => {

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { operatorClubsQuery, type OperatorClub } from "@/queries/operator";
+import ClubRequestList from "@/components/layout/ClubRequestList";
 import { useT } from "@/i18n";
 
 /**
@@ -54,6 +55,10 @@ export default function OperatorPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
       <PageTitle title={t("ops.title")} subtitle={t("ops.lede")} />
+
+      {/* Above the table on purpose: the table is the thing to read, this is
+          the thing to do. */}
+      <ClubRequestList />
 
       <Card className="overflow-hidden">
         {isLoading ? (

@@ -3,7 +3,6 @@ import { getRequestUrl } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { getSupabaseServer } from "@/libs/supabase/server";
 import { isSafePath } from "@/libs/algorithms/nextPath";
-import { GLOBAL_CLUB_SLUG } from "@/libs/algorithms/features";
 import { flattenPlayer } from "@/queries/players";
 import type { Membership } from "@/types";
 
@@ -65,38 +64,15 @@ export const getSession = createServerFn({ method: "GET" }).handler(
     // returning every player row in the database when the user has no person
     // yet — a filter on an embedded column is not on its own a filter on the
     // parent.
-    const rosterRows = () =>
-      supabase
-        .from("players")
-        .select("*, person:people!inner(*), club:clubs(*)")
-        .eq("person.user_id", user.id);
-
-    let { data: rows } = await rosterRows();
-
-    // Nobody signs up into nothing. An account with no membership at all is
-    // brand new, so it joins the global lobby right here and lands in a working
-    // app instead of on a "create a club" wall. join_club creates the person row
-    // as well, which is what makes them visible to the public directory — until
-    // then the account is an auth.users row and nothing else.
-    //
-    // This is the one place it can live: the session is what every route guard
-    // is built from, so joining anywhere else would leave the membership missing
-    // from the context that had already been resolved. It runs once per account
-    // and never again.
-    //
-    // Anonymous users are the exception — those are unpaired tablets on their
-    // way through /app/pair, and claim_device gives them their real membership
-    // moments later.
-    if (!rows?.length && !user.is_anonymous) {
-      const { error } = await supabase.rpc("join_club", {
-        p_slug: GLOBAL_CLUB_SLUG,
-      });
-      // Logged, not thrown: a lobby that could not be joined is a degraded
-      // session, not a failed one, and the signpost still has somewhere to send
-      // them.
-      if (error) console.error("join global club failed", error.message);
-      else ({ data: rows } = await rosterRows());
-    }
+    const { data: rows } = await supabase
+      .from("players")
+      .select("*, person:people!inner(*), club:clubs(*)")
+      .eq("person.user_id", user.id)
+      // A club you left is not one of yours. The row survives so the games you
+      // played survive with it (see leave_club in sql/schema.sql), but nothing
+      // in the app should treat it as a membership — the club reads as one you
+      // are not in, and the invite link works again from scratch.
+      .neq("status", "left");
 
     // flattenPlayer keeps every field it does not recognise, so `club` rides
     // through untouched — a Membership is a Player with a club on it.

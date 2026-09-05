@@ -14,7 +14,6 @@ import { type PublicClubCard } from "./clubs";
 import { MEMBERSHIPS, type PublicPersonWithClubs } from "./players";
 import { type PublicTournamentListItem } from "./tournaments";
 import type { Drill } from "@/types";
-import { GLOBAL_CLUB_SLUG } from "@/libs/algorithms/features";
 
 /** How many of each kind /search shows before handing off to that section. */
 const SEARCH_LIMIT = 5;
@@ -47,7 +46,6 @@ export const publicSearchQuery = (q: string) =>
           .select(CLUB_CARD_COLS)
           .eq("is_public", true)
           // Not a venue — see publicClubsQuery.
-          .neq("slug", GLOBAL_CLUB_SLUG)
           // Name or location, the same rule the clubs directory searches by.
           .or(
             ["name", "city", "country"]

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { clubClaimMail, joinRequestMail, memberApprovedMail } from "./mailText";
+import {
+  clubApprovedMail,
+  clubClaimMail,
+  clubRequestMail,
+  joinRequestMail,
+  memberApprovedMail,
+} from "./mailText";
 
 const mail = (over: Partial<Parameters<typeof memberApprovedMail>[0]> = {}) =>
   memberApprovedMail({
@@ -126,6 +132,87 @@ describe("clubClaimMail", () => {
     }).html;
     expect(html).not.toContain("<script>");
     expect(html).not.toContain("<b>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+});
+
+const newClub = (over: Partial<Parameters<typeof clubRequestMail>[0]> = {}) =>
+  clubRequestMail({
+    name: "Ana",
+    email: "ana@example.com",
+    clubName: "Billar de los jueves",
+    city: "Girona",
+    country: "ES",
+    note: "Seis mesas, unos 40 socios.",
+    ...over,
+  });
+
+describe("clubRequestMail", () => {
+  it("says who wants what, in the subject", () => {
+    expect(newClub().subject).toBe("Ana pide dar de alta Billar de los jueves");
+  });
+
+  it("links to the operator page, where the Approve button is", () => {
+    const url = "https://poolclubs.app/app/ops";
+    expect(newClub().html).toContain(`href="${url}"`);
+    expect(newClub().text).toContain(url);
+  });
+
+  it("carries the place and the note, so the request can be judged without a reply", () => {
+    const { text, html } = newClub();
+    expect(text).toContain("Girona, ES");
+    expect(text).toContain("Seis mesas");
+    expect(html).toContain("Girona, ES");
+  });
+
+  it("reads correctly with neither place nor note, which are both optional", () => {
+    const { text } = newClub({ city: null, country: null, note: null });
+    expect(text).toContain("Ana (ana@example.com) pide que se dé de alta");
+    expect(text).not.toContain("()");
+  });
+
+  it("escapes the name, the address, the club and the note — every one of them typed by the requester", () => {
+    const html = newClub({
+      name: "<script>alert(1)</script>",
+      email: '"><b>x</b>@example.com',
+      clubName: "<i>club</i>",
+      note: "<img src=x onerror=1>",
+    }).html;
+    expect(html).not.toContain("<script>");
+    expect(html).not.toContain("<b>");
+    expect(html).not.toContain("<i>");
+    // Not a bare "<img": the layout's own logo is one.
+    expect(html).not.toContain("<img src=x");
+    expect(html).toContain("&lt;script&gt;");
+  });
+});
+
+const approved = (over: Partial<Parameters<typeof clubApprovedMail>[0]> = {}) =>
+  clubApprovedMail({
+    name: "Ana",
+    clubName: "Billar de los jueves",
+    clubSlug: "billar-jueves",
+    ...over,
+  });
+
+describe("clubApprovedMail", () => {
+  it("leads with the club, which is the news", () => {
+    expect(approved().subject).toBe("Billar de los jueves ya está en PoolClubs");
+  });
+
+  it("links to the club itself, the first thing they have to open", () => {
+    const url = "https://poolclubs.app/app/billar-jueves";
+    expect(approved().html).toContain(`href="${url}"`);
+    expect(approved().text).toContain(url);
+  });
+
+  it("keeps markup out of the plain text alternative", () => {
+    expect(approved().text).not.toContain("<");
+  });
+
+  it("escapes a club name the requester chose", () => {
+    const html = approved({ clubName: "<script>alert(1)</script>" }).html;
+    expect(html).not.toContain("<script>");
     expect(html).toContain("&lt;script&gt;");
   });
 });

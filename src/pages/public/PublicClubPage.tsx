@@ -121,8 +121,12 @@ export default function PublicClubPage() {
             <p className="max-w-[46ch] text-body text-ink-soft">
               {t("public.publicClub.joinBody")}
             </p>
+            {/* The club's own invite link, which is public now — signed out
+                it previews the club and offers a sign-up that comes back to
+                it, so there is nothing to gate here. */}
             <Link
-              to="/app"
+              to="/app/join/$slug"
+              params={{ slug: club.slug }}
               className={buttonClasses({ className: "mt-2 px-6" })}
             >
               {t("public.cta.joinClub")}
@@ -515,7 +519,11 @@ function ClubHero({
 
           <div className="flex shrink-0 items-center gap-2">
             <ShareButton title={club.name} url={url} />
-            <Link to="/app" className={buttonClasses({ size: "sm" })}>
+            <Link
+              to="/app/join/$slug"
+              params={{ slug: club.slug }}
+              className={buttonClasses({ size: "sm" })}
+            >
               {t("public.cta.joinClub")}
             </Link>
           </div>

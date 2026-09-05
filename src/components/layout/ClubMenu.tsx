@@ -1,16 +1,16 @@
 import { useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { LuChevronDown, LuCheck, LuPlus } from "react-icons/lu";
+import { LuChevronDown, LuCheck } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useOutsideClose } from "@/hooks/useOutsideClose";
 import { useT } from "@/i18n";
-import { isRealClub } from "@/libs/algorithms/features";
 
 /**
  * The club you are in, and the way to a different one: the clubs you're a member
- * of, and starting a new one. Only that — the club's own front page is the first
- * line of the nav below, because going home and changing club are different
- * errands and it read as a trick to find one inside the other.
+ * of. Only that — the club's own front page is the first line of the nav below,
+ * because going home and changing club are different errands and it read as a
+ * trick to find one inside the other. Starting a club is not here either: clubs
+ * are asked for at /clubs/new and added by hand, so there is nothing to put
+ * behind a "new club" row.
  *
  * One control, mounted in one place at a time — the top of the pinned nav column
  * on a wide screen, the app bar on anything narrower. It used to be a link in
@@ -30,12 +30,6 @@ export default function ClubMenu({ className }: { className?: string }) {
   // Only clubs you are actually in are switchable; a pending request is not a
   // place you can go yet.
   const switchable = memberships.filter((m) => m.status === "active");
-
-  // The lobby stays in the list — it is the only way back to it — but under the
-  // real clubs, because it is where you were before you had one rather than a
-  // club you chose.
-  const clubs = switchable.filter((m) => isRealClub(m.club));
-  const lobby = switchable.filter((m) => !isRealClub(m.club));
 
   return (
     <div ref={ref} className={`relative min-w-0 ${className ?? ""}`}>
@@ -75,7 +69,7 @@ export default function ClubMenu({ className }: { className?: string }) {
           role="menu"
           className="absolute left-0 top-full z-40 mt-2 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-card border border-hairline bg-felt-raised"
         >
-          {[...clubs, ...lobby].map((m) => (
+          {switchable.map((m) => (
             <button
               key={m.club_id}
               type="button"
@@ -84,11 +78,7 @@ export default function ClubMenu({ className }: { className?: string }) {
                 setActiveClub(m.club_id);
                 setOpen(false);
               }}
-              className={`${menuItem} ${
-                isRealClub(m.club) || clubs.length === 0
-                  ? ""
-                  : "border-t border-hairline"
-              }`}
+              className={menuItem}
             >
               <LuCheck
                 className={`h-4 w-4 shrink-0 ${
@@ -99,16 +89,6 @@ export default function ClubMenu({ className }: { className?: string }) {
               <span className="min-w-0 flex-1 truncate">{m.club?.name}</span>
             </button>
           ))}
-
-          <Link
-            to="/app/clubs/new"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className={`${menuItem} border-t border-hairline`}
-          >
-            <LuPlus className="h-4 w-4 shrink-0" aria-hidden />
-            {t("club.create")}
-          </Link>
         </div>
       )}
     </div>

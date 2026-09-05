@@ -163,21 +163,24 @@ export const Route = createRootRouteWithContext<{
     };
   },
 
-  errorComponent: (props) => (
-    <RootDocument>
-      <RouteError {...props} />
-    </RootDocument>
-  ),
-  notFoundComponent: () => (
-    <RootDocument>
-      <NotFound />
-    </RootDocument>
-  ),
-  component: () => (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
-  ),
+  // The document is the shell, not the component.
+  //
+  // It used to be wrapped around all three of these instead, which renders it
+  // once in the ordinary case and *twice* the moment a route throws: the shell
+  // had already begun streaming from `component` when the not-found boundary
+  // swapped in a second copy of it. The 404 went out carrying two <Scripts />
+  // — two client entries — and hydration died trying to remove a <script> that
+  // was not where React had left it ("NotFoundError: Failed to execute
+  // 'removeChild' on 'Node'"), taking the page down to the error screen.
+  //
+  // shellComponent is rendered outside CatchBoundary and CatchNotFound (see
+  // MatchView in @tanstack/react-router), so it happens exactly once whatever
+  // the tree underneath resolves to.
+  shellComponent: RootDocument,
+
+  errorComponent: (props) => <RouteError {...props} />,
+  notFoundComponent: () => <NotFound />,
+  component: () => <Outlet />,
 });
 
 /** Set in the Netlify UI; public by design, like the Supabase anon key — the

@@ -68,8 +68,13 @@ export type Category = 1 | 2 | 3;
 
 export const CATEGORIES = [1, 2, 3] as const satisfies readonly Category[];
 
-/** 'pending' until the club owner approves the join request. */
-export type PlayerStatus = "pending" | "active";
+/** 'pending' until the club owner decides. Rejecting sets 'rejected' rather
+ *  than deleting the row: somebody who was turned down has to be told so, and
+ *  told how to ask again — a missing row is indistinguishable from never having
+ *  asked. 'left' is the member's own way out — also a status and not a delete,
+ *  because games cascade from players and a game belongs to both sides. See
+ *  PendingClubPanel and join_club/leave_club in sql/schema.sql. */
+export type PlayerStatus = "pending" | "active" | "rejected" | "left";
 
 /** The human. One row per person, however many clubs they play in — see
  *  sql/schema.sql. Name, face and public listing live here and nowhere else. */

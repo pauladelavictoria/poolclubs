@@ -19,20 +19,3 @@ export const DRILLS_ENABLED = true;
  */
 export const isHiddenPath = (pathname: string) =>
   !DRILLS_ENABLED && /(^|\/)(drills|training)(\/|$)/.test(pathname);
-
-/**
- * The lobby every player lands in before they belong to a real club: an
- * ordinary club row, so the whole app works inside it with no special cases
- * (see sql/schema.sql, `is_global_club`).
- *
- * It is matched by slug rather than id everywhere. The id is a sequence value
- * that differs between the live project and any local one, and a constant the
- * SQL and the TypeScript both have to agree on is a constant that eventually
- * disagrees.
- */
-export const GLOBAL_CLUB_SLUG = "global";
-
-/** A real club, i.e. not the global lobby. The signpost, the club switcher and
- *  the public directory all mean this when they count clubs. */
-export const isRealClub = (club?: { slug: string } | null) =>
-  !!club && club.slug !== GLOBAL_CLUB_SLUG;

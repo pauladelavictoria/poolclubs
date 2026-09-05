@@ -67,8 +67,8 @@ export const tournamentCommentsQuery = (tournamentId: number) =>
     queryKey: keys.comments.onTournament(tournamentId),
     queryFn: async () => {
       // The author is embedded rather than looked up against a roster: a
-      // commenter can be from any club, or from none but the lobby, so the
-      // host club's roster cannot name them.
+      // commenter can be from any club, so the host club's roster cannot name
+      // them.
       const { data } = await getSupabase()
         .from("comments")
         .select("*, author:players(person:people(name, slug, avatar_url))")
@@ -98,8 +98,8 @@ export const tournamentReactionsQuery = (tournamentId: number) =>
  * The names behind the @mentions in a public thread.
  *
  * The club queries resolve a mention off the roster they already have; out here
- * there is no roster, and the person mentioned may belong to any club or to the
- * global lobby. Slugs are unique (people_slug_key), so this is one `in` lookup
+ * there is no roster, and the person mentioned may belong to any club. Slugs
+ * are unique (people_slug_key), so this is one `in` lookup
  * for the whole thread — and RLS decides what comes back: a person who is not
  * in a public club is simply absent, and the mention stays as typed.
  */

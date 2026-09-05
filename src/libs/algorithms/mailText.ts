@@ -115,7 +115,7 @@ function shell({
 </table>`;
 }
 
-/** The club's own page, which is where both mails point. */
+/** The club's own page, which is where the club-facing mails point. */
 const clubUrl = (clubSlug: string) =>
   `${SITE}/app/${encodeURIComponent(clubSlug)}`;
 
@@ -249,6 +249,103 @@ export function clubClaimMail({ name, email, clubName, clubSlug }: ClubClaim) {
       url,
       cta: `Ver ${club}`,
       note: "Recibes este correo porque administras PoolClubs.",
+    }),
+  };
+}
+
+export type ClubRequested = {
+  /** Whoever is asking, by the name on their account. */
+  name: string;
+  /** Their address. The club gets handed to the account behind it, and the mail
+   *  replies to it. */
+  email: string;
+  clubName: string;
+  city: string | null;
+  country: string | null;
+  note: string | null;
+};
+
+/**
+ * "Somebody wants a club." To us, not to a member: clubs are not created from
+ * inside the app any more, so this is the only way one comes into existence and
+ * it exists to put the request in front of a person.
+ *
+ * The link is the operator page, where the Approve button is.
+ */
+export function clubRequestMail({
+  name,
+  email,
+  clubName,
+  city,
+  country,
+  note,
+}: ClubRequested) {
+  const url = `${SITE}/app/ops`;
+  const where = [city, country].filter(Boolean).join(", ");
+  const club = escapeHtml(clubName);
+  const who = escapeHtml(name);
+  const address = escapeHtml(email);
+
+  return {
+    subject: `${name} pide dar de alta ${clubName}`,
+    text: [
+      "Hola,",
+      "",
+      `${name} (${email}) pide que se dé de alta ${clubName}${where ? ` (${where})` : ""}.`,
+      ...(note ? ["", note] : []),
+      "",
+      url,
+      "",
+      "Recibes este correo porque administras PoolClubs.",
+    ].join("\n"),
+    html: shell({
+      heading: `${who} pide dar de alta ${club}`,
+      lead: `${who} (${address}) pide que se dé de alta ${club}${
+        where ? ` (${escapeHtml(where)})` : ""
+      }.${note ? ` «${escapeHtml(note)}»` : ""}`,
+      url,
+      cta: "Ver las solicitudes",
+      note: "Recibes este correo porque administras PoolClubs.",
+    }),
+  };
+}
+
+export type ClubApproved = {
+  /** Whoever asked for it, by the name on their account. */
+  name: string;
+  clubName: string;
+  clubSlug: string;
+};
+
+/**
+ * "Your club is up." The answer to clubRequestMail, and the first time the
+ * person has a club to open — so the link is the club itself, as it is in
+ * memberApprovedMail.
+ */
+export function clubApprovedMail({ name, clubName, clubSlug }: ClubApproved) {
+  const url = clubUrl(clubSlug);
+  const club = escapeHtml(clubName);
+  const who = escapeHtml(name);
+
+  return {
+    subject: `${clubName} ya está en PoolClubs`,
+    text: [
+      `Hola ${name},`,
+      "",
+      `Hemos dado de alta ${clubName}. Eres su administrador: invita a tus socios, crea las mesas y empieza a registrar partidos.`,
+      "",
+      url,
+      "",
+      "Recibes este correo porque pediste dar de alta este club en PoolClubs.",
+    ].join("\n"),
+    html: shell({
+      heading: `${club} ya está en PoolClubs`,
+      lead: `Hola ${who}: hemos dado de alta ${club} y eres su administrador.
+              Invita a tus socios, crea las mesas y empieza a registrar
+              partidos.`,
+      url,
+      cta: `Abrir ${club}`,
+      note: "Recibes este correo porque pediste dar de alta este club en PoolClubs.",
     }),
   };
 }
