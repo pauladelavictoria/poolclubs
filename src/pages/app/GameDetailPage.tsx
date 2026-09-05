@@ -2,7 +2,6 @@ import { getRouteApi } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useGame } from "@/hooks/useAddGame";
 import { useGameTournaments } from "@/hooks/useTournaments";
-import { canEditGame } from "@/libs/algorithms/gamePermissions";
 import { fmt } from "@/libs/algorithms/dayLabel";
 import PageTitle from "@/components/layout/PageTitle";
 import FeedMatchCard from "@/components/social/feed/FeedMatchCard";
@@ -27,7 +26,7 @@ const route = getRouteApi("/app/_authed/$clubSlug/games/$gameId/");
 export default function GameDetailPage() {
   const { t, locale } = useT();
   const { gameId } = route.useParams();
-  const { player, isClubAdmin, activeClub } = useAuth();
+  const { isClubAdmin } = useAuth();
 
   const { data: game, isLoading } = useGame(gameId);
   // The same lookup the feed uses, asked for one game: a fixture belongs to its
@@ -80,7 +79,7 @@ export default function GameDetailPage() {
         title={t("games.detailTitle")}
         subtitle={<span suppressHydrationWarning>{played}</span>}
       >
-        {canEditGame(game, player?.id, activeClub?.slug, isClubAdmin) && (
+        {isClubAdmin && (
           <AppLink
             to="/app/$clubSlug/games/$gameId/edit"
             params={{ gameId: game.id }}

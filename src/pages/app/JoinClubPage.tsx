@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { useSession } from "@/hooks/useAuth";
-import { useClubPreview, useJoinOrCreateClub } from "@/hooks/useClub";
+import { useClubPreview, useJoinClub } from "@/hooks/useClub";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import PageTitle from "@/components/layout/PageTitle";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -11,23 +11,34 @@ import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { buttonClasses } from "@/components/ui/buttonStyles";
+import { loginLink } from "@/libs/algorithms/nextPath";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useT } from "@/i18n";
 
 const route = getRouteApi("/app/join/$slug");
 
 /**
- * The invite link. Signed out, the route bounces through login and comes back
- * here via the ?next= round-trip.
+ * The invite link, in three states.
  *
- * The claim list is the whole point: a club that predates accounts is full of
- * player rows with nobody attached, and the person arriving is usually one of
+ * Signed out it is a preview and a way in: the club's name, and a sign-up that
+ * comes back to the club's own URL carrying ?join=1 — which is what the
+ * confirmation mail links to, so the address in the mail is the club rather than
+ * this page. $clubSlug bounces that back here with ?auto=1 and the request is
+ * filed without another tap.
+ *
+ * Signed in, the claim list is the point: a club that predates accounts is full
+ * of player rows with nobody attached, and the person arriving is usually one of
  * them. Picking yourself keeps your history instead of starting a duplicate.
+ * Somebody signing up from the link does not get that choice — there is nobody
+ * to show the list to before the account exists — so they join as new and an
+ * admin can merge them.
  */
 export default function JoinClubPage() {
   const { t } = useT();
   const navigate = useNavigate();
   const { slug } = route.useParams();
+  const { auto } = route.useSearch();
   // useSession rather than useAuth: this runs before there is a club.
   const { user, memberships } = useSession();
   const {
@@ -35,7 +46,7 @@ export default function JoinClubPage() {
     isLoading: previewLoading,
     isError,
   } = useClubPreview(slug);
-  const { joinClub } = useJoinOrCreateClub();
+  const { joinClub } = useJoinClub();
 
   const [claimId, setClaimId] = useState("");
   // Left empty the RPC uses the OAuth full_name, so no state to sync with auth.
@@ -45,7 +56,6 @@ export default function JoinClubPage() {
   // a second Juan García is simply a second person.
   const [name, setName] = useState("");
 
-  // Signed in by the time this renders — the route's beforeLoad saw to it.
   const already = memberships.find((m) => m.club_id === preview?.clubId);
 
   const submit = () => {
@@ -56,8 +66,8 @@ export default function JoinClubPage() {
         displayName: claimId ? undefined : name,
       },
       {
-        // joinClub navigates once the session has been re-read; a pending
-        // membership has no club to address yet, so that lands on /app.
+        // joinClub navigates to the club once the session has been re-read;
+        // pending or not, that is where the answer is shown.
         onSuccess: () => toast.success(t("club.requestSent")),
         onError: (err) =>
           toast.error(
@@ -71,6 +81,19 @@ export default function JoinClubPage() {
       },
     );
   };
+
+  // ?auto=1 is the sign-up round trip coming back: the intent was expressed
+  // before the account existed, so file it as soon as there is a session and a
+  // club to file against. The ref, not `isPending`, is what stops a second run —
+  // the mutation is not pending yet on the render that starts it. join_club is
+  // idempotent anyway (sql/schema.sql); this keeps it from being asked twice.
+  const fired = useRef(false);
+  useEffect(() => {
+    if (!auto || !user || !preview || already || fired.current) return;
+    fired.current = true;
+    submit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, user, preview, already]);
 
   return (
     <>
@@ -93,6 +116,25 @@ export default function JoinClubPage() {
               }
             />
           </Card>
+        ) : !user ? (
+          <Card className="overflow-hidden">
+            <CardHeader title={preview.clubName} />
+            <div className="space-y-4 p-5">
+              <p className="text-body text-ink-soft">{t("club.joinSignIn")}</p>
+              {/* A plain anchor, not a Link: signing in is a full page load
+                  either way — the session lands in a cookie the router has
+                  already read — and the ?next= has to survive the OAuth round
+                  trip in the URL. */}
+              <a
+                href={loginLink(`/app/${slug}?join=1`)}
+                className={buttonClasses({ className: "w-full" })}
+              >
+                {t("club.joinSignInCta")}
+              </a>
+            </div>
+          </Card>
+        ) : auto ? (
+          <Skeleton className="h-52 w-full rounded-card" />
         ) : already ? (
           <Card>
             <EmptyState

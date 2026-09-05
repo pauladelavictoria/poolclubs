@@ -36,3 +36,61 @@ export const operatorClubsQuery = () =>
       return data ?? [];
     },
   });
+
+/**
+ * A club somebody has asked us to add, before anybody has decided.
+ *
+ * Read straight off the table rather than through a function: the RLS policies
+ * on `club_requests` already say who sees what — your own rows, and every row
+ * for the operator — so a SECURITY DEFINER wrapper would only restate them.
+ */
+export type ClubRequest = {
+  id: number;
+  name: string;
+  city: string | null;
+  country: string | null;
+  note: string | null;
+  requested_by: string;
+  status: "open" | "approved" | "rejected";
+  club_id: number | null;
+  created_at: string;
+  decided_at: string | null;
+};
+
+export const clubRequestsQuery = () =>
+  queryOptions({
+    queryKey: keys.operator.clubRequests,
+    queryFn: async (): Promise<ClubRequest[]> => {
+      const { data, error } = await getSupabase()
+        .from("club_requests")
+        .select("*")
+        .eq("status", "open")
+        .order("created_at", { ascending: true });
+
+      if (error) throw new Error(error.message);
+      return (data ?? []) as ClubRequest[];
+    },
+  });
+
+/**
+ * The caller's own request, if they have one waiting.
+ *
+ * Same table, same policies, and no operator gate — this is the half of it that
+ * answers "did that go through?" on the public page. Signed out it reads
+ * nothing, which is the empty array.
+ */
+export const myClubRequestQuery = () =>
+  queryOptions({
+    queryKey: keys.myClubRequest,
+    queryFn: async (): Promise<ClubRequest | null> => {
+      const { data, error } = await getSupabase()
+        .from("club_requests")
+        .select("*")
+        .eq("status", "open")
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      return (data as ClubRequest | null) ?? null;
+    },
+  });

@@ -78,10 +78,8 @@ export const playersQuery = (clubId: number) =>
       const supabase = getSupabase();
       // ponytail: the whole roster, unpaged. A club is a few dozen people, and
       // every consumer — the rankings, the opponent pickers, the name lookup
-      // behind every result — wants all of them at once. The global lobby is
-      // the one club this does not hold for: it grows without bound, so page it
-      // or move the pickers to a server-side search before the lobby is a few
-      // thousand people.
+      // behind every result — wants all of them at once. Page it, or move the
+      // pickers to a server-side search, if a club ever runs to thousands.
       const { data } = await supabase
         .from("players")
         .select(PLAYER_SELECT)

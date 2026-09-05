@@ -96,11 +96,24 @@ export const useManagePlayers = () => {
           personPatch.is_public = person.is_public;
 
         if (Object.keys(personPatch).length > 0) {
-          await supabase
+          // .select(), and the row count checked: an UPDATE that no policy lets
+          // through does not fail, it matches nothing — PostgREST answers 204
+          // and throwOnError has nothing to throw. Silently, the caller toasts
+          // success over a name that never changed. Reading the row back is
+          // what turns "not allowed" from a lie into an error.
+          const { data: changed } = await supabase
             .from("people")
             .update(personPatch)
             .eq("id", personId)
+            .select("id")
             .throwOnError();
+
+          if (!changed?.length) {
+            throw {
+              code: "42501",
+              message: `people row ${personId} was not updated: no policy allows it`,
+            };
+          }
         }
       },
       onSuccess,

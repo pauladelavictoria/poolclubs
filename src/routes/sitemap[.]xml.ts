@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseServer } from "@/libs/supabase/server";
 import { DRILLS_ENABLED } from "@/libs/algorithms/features";
-import { GLOBAL_CLUB_SLUG } from "@/libs/algorithms/features";
 
 /**
  * The sitemap, built per request from what is actually public.
@@ -35,8 +34,6 @@ export const Route = createFileRoute("/sitemap.xml")({
             .from("clubs")
             .select("slug")
             .eq("is_public", true)
-            // The lobby has no public page to crawl — see publicClubQuery.
-            .neq("slug", GLOBAL_CLUB_SLUG)
             .order("member_count", { ascending: false })
             .limit(MAX_PER_KIND),
           // people, not players: one URL per person, which is what the public

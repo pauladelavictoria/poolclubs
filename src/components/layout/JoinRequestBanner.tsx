@@ -17,7 +17,7 @@ export default function JoinRequestBanner() {
   const { t } = useT();
   const { isClubAdmin } = useAuth();
   const { data: members } = useClubMembers();
-  const { approveMember, removeMember } = useManageClub();
+  const { approveMember, rejectMember } = useManageClub();
 
   if (!isClubAdmin) return null;
   const pending = (members ?? []).filter((m) => m.status === "pending");
@@ -60,11 +60,11 @@ export default function JoinRequestBanner() {
               size="sm"
               variant="ghost"
               onClick={() =>
-                removeMember.mutate(m.id, {
+                rejectMember.mutate(m.id, {
                   onError: (err) =>
                     toast.error(
                       t(
-                        dbErrorMessage(err, "removeMember", {
+                        dbErrorMessage(err, "rejectMember", {
                           denied: "common.deniedError",
                         }),
                       ),

@@ -1,32 +1,32 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { toast } from "react-toastify";
 import { LuUsers } from "react-icons/lu";
 import { useSession } from "@/hooks/useAuth";
-import { useJoinOrCreateClub } from "@/hooks/useClub";
-import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import PageTitle from "@/components/layout/PageTitle";
 import CancelLink from "@/components/layout/CancelLink";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useT } from "@/i18n";
 
 /**
- * What a signed-in user with no club sees. Two ways in: start one, or type the
- * slug a friend sent. The box just navigates to /join/:slug so there is one
- * join implementation, not two.
+ * What a signed-in user with no club sees. Two ways in: the invite link a member
+ * sent you, or asking us to add your club.
+ *
+ * The box just navigates to /join/:slug so there is one join implementation, not
+ * two. And asking for a club leaves the app entirely — /clubs/new is a public
+ * page, because most people asking for one arrive from the marketing side and
+ * have never seen the app.
  */
 export default function ClubOnboardingPage() {
   const { t } = useT();
   const navigate = useNavigate();
-  // useSession, not useAuth: this page also renders at /app/clubs/new, where
+  // useSession, not useAuth: this page also renders at /app/clubs/none, where
   // there is no club in the URL to read one from.
   const { memberships } = useSession();
-  const { createClub } = useJoinOrCreateClub();
 
-  const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
 
   const pending = memberships.filter((m) => m.status === "pending");
@@ -34,24 +34,6 @@ export default function ClubOnboardingPage() {
   // brand new account this page is the start of the app, with nothing behind
   // it, and the route sits outside $clubSlug so there is no crumb either.
   const home = memberships.find((m) => m.status === "active")?.club?.slug;
-
-  const submitCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    createClub.mutate(name, {
-      // createClub's own mutationFn navigates to the new club once the session
-      // has been re-read and its slug is known — see useJoinOrCreateClub.
-      onSuccess: () => toast.success(t("club.created")),
-      onError: (err) =>
-        toast.error(
-          t(
-            dbErrorMessage(err, "createClub", {
-              denied: "common.deniedError",
-            }),
-          ),
-        ),
-    });
-  };
 
   return (
     <>
@@ -77,32 +59,6 @@ export default function ClubOnboardingPage() {
             </div>
           </Card>
         )}
-
-        <Card className="overflow-hidden">
-          <CardHeader title={t("club.createTitle")} />
-          <form onSubmit={submitCreate} className="space-y-3 p-5">
-            <div className="space-y-1.5">
-              <Label htmlFor="club-name">{t("club.name")}</Label>
-              <Input
-                id="club-name"
-                value={name}
-                maxLength={60}
-                placeholder={t("club.namePlaceholder")}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <p className="text-caption text-ink-faint">
-              {t("club.createHint")}
-            </p>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={!name.trim() || createClub.isPending}
-            >
-              {createClub.isPending ? t("common.saving") : t("club.create")}
-            </Button>
-          </form>
-        </Card>
 
         <Card className="overflow-hidden">
           <CardHeader title={t("club.joinTitle")} />
@@ -140,6 +96,27 @@ export default function ClubOnboardingPage() {
               {t("club.join")}
             </Button>
           </form>
+        </Card>
+
+        <Card className="overflow-hidden">
+          <CardHeader title={t("clubRequest.title")} />
+          <div className="space-y-3 p-5">
+            <p className="text-body text-ink-soft">
+              {t("clubRequest.appHint")}
+            </p>
+            {/* A plain anchor: /clubs/new is outside the app's route tree as far
+                as the installed PWA is concerned, and this is a deliberate step
+                out of it. */}
+            <a
+              href="/clubs/new"
+              className={buttonClasses({
+                variant: "secondary",
+                className: "w-full",
+              })}
+            >
+              {t("clubRequest.cta")}
+            </a>
+          </div>
         </Card>
 
         {home && (

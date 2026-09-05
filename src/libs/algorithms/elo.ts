@@ -4,6 +4,7 @@
  * Pure so it can be checked without a renderer — see elo.test.ts. The daily
  * board is a simpler tally instead, in libs/algorithms/dailyScore.ts.
  */
+import { isPlaceholderPlayer } from "./placeholderPlayer";
 import type { Category, DailyRankingEntry, Game, Player } from "@/types";
 
 const INITIAL_RATING = 500;
@@ -30,7 +31,7 @@ export function eloRanking(games: Game[], players: Ranked[]): DailyRankingEntry[
   >();
 
   for (const player of players) {
-    if (player.name === "_Invitado") continue;
+    if (isPlaceholderPlayer(player)) continue;
 
     playerStats.set(player.id, {
       rating: INITIAL_RATING,

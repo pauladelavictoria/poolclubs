@@ -64,7 +64,9 @@ export function sortPlayedMatches(matches: TournamentMatch[]): TournamentMatch[]
 
 /** Who the organiser can still put in: the club roster this tournament is
  *  open to, minus whoever is already entered. */
-export function eligibleToAdd<T extends { id: number; category: Category }>(
+export function eligibleToAdd<
+  T extends { id: number; category: Category; name: string },
+>(
   players: T[],
   category: Category | null,
   entrants: number[],

@@ -11,7 +11,6 @@ import {
   rangeOf,
 } from "./shared";
 import type { Club, Player } from "@/types";
-import { GLOBAL_CLUB_SLUG } from "@/libs/algorithms/features";
 
 export type PublicClub = Pick<
   Club,
@@ -85,11 +84,7 @@ export const publicClubsQuery = (filters: PublicClubsFilters = {}) => {
         // Redundant against the anon policy, and deliberately so: a signed-in
         // visitor reads under their own policies, which would otherwise show
         // them their own hidden club in a public directory.
-        .eq("is_public", true)
-        // The global lobby is public so that its members show up in the
-        // players directory, but it is not a venue — it has no address, no
-        // tables and nobody to visit. It stays out of the club listings.
-        .neq("slug", GLOBAL_CLUB_SLUG);
+        .eq("is_public", true);
 
       // Name or where it is: "Madrid" is as likely a search for a club as its
       // name is. City and country only, not the street address — a term that
@@ -196,9 +191,6 @@ export const publicClubQuery = (slug: string) =>
         .select(CLUB_DETAIL_COLS)
         .eq("slug", slug)
         .eq("is_public", true)
-        // /clubs/global is a 404: the lobby has no club page to show, and one
-        // rendering a roster of every player in the app is not a club page.
-        .neq("slug", GLOBAL_CLUB_SLUG)
         .maybeSingle()
         .throwOnError();
 

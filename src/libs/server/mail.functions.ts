@@ -4,14 +4,18 @@ import { getSupabaseServer } from "@/libs/supabase/server";
 import {
   MAIL_FROM,
   MAIL_OPS,
+  clubApprovedMail,
   clubClaimMail,
+  clubRequestMail,
   joinRequestMail,
   memberApprovedMail,
 } from "@/libs/algorithms/mailText";
 
 /**
- * The two sides of joining a club, by email: telling an admin somebody is
- * waiting, and telling that somebody they are in.
+ * The two sides of joining a club, and the two sides of a club existing at all,
+ * by email: telling an admin somebody is waiting and telling that somebody they
+ * are in; telling us a club has been asked for and telling whoever asked that it
+ * is up.
  *
  * Built to the same shape as sendPush (src/libs/server/push.functions.ts) and
  * for the same reasons — read that file's header first; everything it says
@@ -25,12 +29,13 @@ import {
  * not looking at it. The address each signed up with is the only channel, and
  * these are the only moments it is legitimate to use.
  *
- * Authorisation is in neither handler. It is approved_member_contact and
- * join_request_admin_contact, SECURITY DEFINER functions that decide whether
- * the caller may know an address at all and return nothing if not — see
- * sql/schema.sql. Either handler could be called with any id by any signed-in
- * person and would still only ever send about a membership that caller just
- * legitimately changed.
+ * Authorisation is in none of the handlers. It is approved_member_contact,
+ * join_request_admin_contact, club_claim_contact, club_request_ops_contact and
+ * club_request_owner_contact — SECURITY DEFINER functions that decide whether
+ * the caller may know an address at all and return nothing if not (see
+ * sql/schema.sql). Any handler could be called with any id by any signed-in
+ * person and would still only ever send about something that caller just
+ * legitimately did.
  */
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
@@ -78,9 +83,8 @@ const requestInput = z.object({ clubId: z.number().int().positive() });
 /**
  * Fired by whoever just asked to join, which is why the club id is all it
  * takes: join_request_admin_contact reads auth.uid() itself and answers only
- * while that caller's own row in that club is still pending. So a join into the
- * global club (which lands active, never pending — see join_club in
- * sql/schema.sql) sends nothing, and neither does a second call after approval.
+ * while that caller's own row in that club is still pending — so a second call
+ * after approval sends nothing.
  */
 export const sendJoinRequestMail = createServerFn({ method: "POST" })
   .validator(requestInput)
@@ -156,6 +160,86 @@ export const sendClubClaimMail = createServerFn({ method: "POST" })
       // So that replying to it lands on the person claiming the club, which is
       // the next thing that has to happen.
       contact.email,
+    );
+  });
+
+const clubRequestInput = z.object({ requestId: z.number().int().positive() });
+
+/**
+ * Fired by whoever just asked for a club. club_request_ops_contact answers only
+ * while that request is the caller's own and still open, so the id being
+ * guessable buys nothing: a second call after a decision sends nothing, and a
+ * call with somebody else's id sends nothing.
+ */
+export const sendClubRequestMail = createServerFn({ method: "POST" })
+  .validator(clubRequestInput)
+  .handler(async ({ data }): Promise<null> => {
+    const say = logger(`clubRequest#${data.requestId}`);
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return say("no RESEND_API_KEY in this build");
+
+    const supabase = getSupabaseServer();
+    const { data: rows, error } = await supabase.rpc(
+      "club_request_ops_contact",
+      { p_id: data.requestId },
+    );
+    if (error) return say(`contact lookup failed: ${error.message}`);
+
+    const contact = rows?.[0];
+    if (!contact?.email) return say("not the caller's own open request");
+
+    return send(
+      apiKey,
+      MAIL_OPS,
+      say,
+      clubRequestMail({
+        name: contact.name ?? contact.email,
+        email: contact.email,
+        clubName: contact.club_name,
+        city: contact.city,
+        country: contact.country,
+        note: contact.note,
+      }),
+      // So that replying lands on the person asking, which is the next thing
+      // that has to happen if anything about it is unclear.
+      contact.email,
+    );
+  });
+
+/**
+ * Fired by the operator, right after approving. The gate is the same one on the
+ * approval itself — club_request_owner_contact answers only for is_drill_admin
+ * and only for a request that is already approved, so this cannot be used to
+ * read an address out of a request nobody has decided.
+ */
+export const sendClubApprovedMail = createServerFn({ method: "POST" })
+  .validator(clubRequestInput)
+  .handler(async ({ data }): Promise<null> => {
+    const say = logger(`clubApproved#${data.requestId}`);
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return say("no RESEND_API_KEY in this build");
+
+    const supabase = getSupabaseServer();
+    const { data: rows, error } = await supabase.rpc(
+      "club_request_owner_contact",
+      { p_id: data.requestId },
+    );
+    if (error) return say(`contact lookup failed: ${error.message}`);
+
+    const contact = rows?.[0];
+    if (!contact?.email) return say("not approved, or not the operator");
+
+    return send(
+      apiKey,
+      contact.email,
+      say,
+      clubApprovedMail({
+        name: contact.name ?? contact.email,
+        clubName: contact.club_name,
+        clubSlug: contact.club_slug,
+      }),
     );
   });
 

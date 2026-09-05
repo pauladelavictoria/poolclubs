@@ -107,6 +107,9 @@ export default function ClubInfoPage() {
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
   const [description, setDescription] = useState<string | undefined>(undefined);
   const [phone, setPhone] = useState<string | undefined>(undefined);
+  const [contactEmail, setContactEmail] = useState<string | undefined>(
+    undefined,
+  );
   const [tablesInfo, setTablesInfo] = useState<string | undefined>(undefined);
   const [schedule, setSchedule] = useState<Schedule | undefined>(undefined);
 
@@ -131,6 +134,7 @@ export default function ClubInfoPage() {
   const shownPublic = isPublic ?? activeClub.is_public;
   const shownDescription = description ?? activeClub.description ?? "";
   const shownPhone = phone ?? activeClub.phone ?? "";
+  const shownContactEmail = contactEmail ?? activeClub.contact_email ?? "";
   const shownTables = tablesInfo ?? activeClub.tables_info ?? "";
   // Parsed rather than cast: the column is jsonb with no CHECK, so what comes
   // back is whatever is in the row. See libs/algorithms/schedule.ts.
@@ -146,6 +150,7 @@ export default function ClubInfoPage() {
     timezone !== undefined ||
     description !== undefined ||
     phone !== undefined ||
+    contactEmail !== undefined ||
     tablesInfo !== undefined ||
     schedule !== undefined;
 
@@ -160,6 +165,7 @@ export default function ClubInfoPage() {
         ...(timezone !== undefined && { timezone }),
         ...(description !== undefined && { description }),
         ...(phone !== undefined && { phone }),
+        ...(contactEmail !== undefined && { contactEmail }),
         ...(tablesInfo !== undefined && { tablesInfo }),
         ...(schedule !== undefined && { schedule }),
       },
@@ -173,6 +179,7 @@ export default function ClubInfoPage() {
           setTimezone(undefined);
           setDescription(undefined);
           setPhone(undefined);
+          setContactEmail(undefined);
           setTablesInfo(undefined);
           setSchedule(undefined);
           toast.success(t("common.saved"));
@@ -289,6 +296,25 @@ export default function ClubInfoPage() {
             disabled={updateClub.isPending}
             onChange={(e) => setPhone(e.target.value)}
           />
+        </div>
+
+        <div className="mt-4 space-y-1.5">
+          <Label htmlFor="club-contact-email">{t("club.contactEmail")}</Label>
+          {/* type="email" for the keyboard and the browser's own check. The
+              database has a loose shape CHECK behind it (sql/schema.sql); a
+              strict pattern turns away addresses that are perfectly valid. */}
+          <Input
+            id="club-contact-email"
+            type="email"
+            maxLength={120}
+            value={shownContactEmail}
+            placeholder={t("club.contactEmailPlaceholder")}
+            disabled={updateClub.isPending}
+            onChange={(e) => setContactEmail(e.target.value)}
+          />
+          <p className="text-caption text-ink-faint">
+            {t("club.contactEmailHint")}
+          </p>
         </div>
 
         {/* The room itself, in prose. Not club_tables, which is the list of

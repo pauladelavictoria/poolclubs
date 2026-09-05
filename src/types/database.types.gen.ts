@@ -115,6 +115,53 @@ export type Database = {
           },
         ]
       }
+      club_requests: {
+        Row: {
+          city: string | null
+          club_id: number | null
+          country: string | null
+          created_at: string
+          decided_at: string | null
+          id: number
+          name: string
+          note: string | null
+          requested_by: string
+          status: string
+        }
+        Insert: {
+          city?: string | null
+          club_id?: number | null
+          country?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: number
+          name: string
+          note?: string | null
+          requested_by: string
+          status?: string
+        }
+        Update: {
+          city?: string | null
+          club_id?: number | null
+          country?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: number
+          name?: string
+          note?: string | null
+          requested_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_requests_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_tables: {
         Row: {
           club_id: number
@@ -148,6 +195,7 @@ export type Database = {
         Row: {
           address: string | null
           city: string | null
+          contact_email: string | null
           country: string | null
           created_at: string | null
           description: string | null
@@ -172,6 +220,7 @@ export type Database = {
         Insert: {
           address?: string | null
           city?: string | null
+          contact_email?: string | null
           country?: string | null
           created_at?: string | null
           description?: string | null
@@ -196,6 +245,7 @@ export type Database = {
         Update: {
           address?: string | null
           city?: string | null
+          contact_email?: string | null
           country?: string | null
           created_at?: string | null
           description?: string | null
@@ -1081,6 +1131,7 @@ export type Database = {
         Args: { cat?: number; cid: number; pname: string }
         Returns: number
       }
+      approve_club_request: { Args: { p_id: number }; Returns: number }
       approved_member_contact: {
         Args: { p_player_id: number }
         Returns: {
@@ -1124,15 +1175,38 @@ export type Database = {
           player_name: string
         }[]
       }
+      club_request_ops_contact: {
+        Args: { p_id: number }
+        Returns: {
+          city: string
+          club_name: string
+          country: string
+          email: string
+          name: string
+          note: string
+        }[]
+      }
+      club_request_owner_contact: {
+        Args: { p_id: number }
+        Returns: {
+          club_name: string
+          club_slug: string
+          email: string
+          name: string
+        }[]
+      }
       club_slug_reserved: { Args: never; Returns: string[] }
-      create_club: { Args: { club_name: string }; Returns: number }
+      create_club: {
+        Args: { club_name: string; p_owner?: string }
+        Returns: number
+      }
       finish_live_match: { Args: { p_id: string }; Returns: string }
       hide_member: { Args: { p_person_id: number }; Returns: undefined }
       is_club_admin: { Args: { cid: number }; Returns: boolean }
       is_club_device: { Args: { cid: number }; Returns: boolean }
       is_club_member: { Args: { cid: number }; Returns: boolean }
+      is_club_requested: { Args: { cid: number }; Returns: boolean }
       is_drill_admin: { Args: never; Returns: boolean }
-      is_global_club: { Args: { cid: number }; Returns: boolean }
       is_own_person: { Args: { pid: number }; Returns: boolean }
       is_own_player: { Args: { pid: number }; Returns: boolean }
       is_public_club: { Args: { cid: number }; Returns: boolean }
@@ -1153,6 +1227,7 @@ export type Database = {
           name: string
         }[]
       }
+      leave_club: { Args: { p_club_id: number }; Returns: undefined }
       operator_clubs: {
         Args: never
         Returns: {
@@ -1181,6 +1256,16 @@ export type Database = {
           lang: string
           p256dh: string
         }[]
+      }
+      reject_club_request: { Args: { p_id: number }; Returns: undefined }
+      request_club: {
+        Args: {
+          p_city?: string
+          p_country?: string
+          p_name: string
+          p_note?: string
+        }
+        Returns: number
       }
       slugify: { Args: { txt: string }; Returns: string }
       start_device_pairing: {

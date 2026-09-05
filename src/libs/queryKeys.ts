@@ -42,7 +42,11 @@ export const keys = {
   /** The cross-club operator dashboard. Not club-scoped — it is every club. */
   operator: {
     clubs: ["operator-clubs"] as const,
+    clubRequests: ["operator-club-requests"] as const,
   },
+
+  /** The caller's own open request for a club to be added. */
+  myClubRequest: ["my-club-request"] as const,
 
   /** Address suggestions from Photon. Its own root and nothing invalidates it:
    *  the answer to "Calle Mayor 12" does not change while a form is open. */

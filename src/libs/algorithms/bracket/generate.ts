@@ -1,5 +1,6 @@
 // Not crypto.randomUUID directly: it is secure-context only, so it is missing
 // on a tablet opening the app over plain http. See libs/algorithms/uuid.ts.
+import { isPlaceholderPlayer } from "../placeholderPlayer";
 import { uuid } from "@/libs/algorithms/uuid";
 import { resolveBracket } from "./resolve";
 import type { BracketSide, Category } from "@/types";
@@ -344,9 +345,14 @@ export function qualifiers(
   return [...winners, ...runnersUp].slice(0, advance);
 }
 
-/** Players eligible for a tournament: everyone, or one division. */
-export const eligible = <T extends { category: Category }>(
+/** Players eligible for a tournament: everyone, or one division — and never the
+ *  guest placeholder, which is one row standing for whoever walked in and so
+ *  cannot be an entrant. See libs/algorithms/placeholderPlayer.ts. */
+export const eligible = <T extends { category: Category; name: string }>(
   players: T[],
   category: Category | null,
 ) =>
-  category === null ? players : players.filter((p) => p.category === category);
+  players.filter(
+    (p) =>
+      !isPlaceholderPlayer(p) && (category === null || p.category === category),
+  );

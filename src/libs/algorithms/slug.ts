@@ -22,11 +22,12 @@ const ACCENTED = "àáäâãåāèéëêēìíïîīòóöôõøōùúüûūñç
 const PLAIN = "aaaaaaaeeeeeiiiiiooooooouuuuuncyyz";
 
 /**
- * Path segments that are already routes under /app, so a club can never own
- * them: /app/login, /app/join/$slug and /app/clubs/new are static siblings of
+ * Path segments that are already routes, so a club can never own them:
+ * /app/login, /app/join/$slug and /app/clubs/none are static siblings of
  * /app/$clubSlug, and a static segment wins. A club slugged "login" would be
  * permanently unreachable. "join" doubles as the invite route's own prefix,
- * since a club's slug is now what addresses /app/join/<slug>.
+ * since a club's slug is now what addresses /app/join/<slug>, and "new" is the
+ * public /clubs/new sitting in front of /clubs/$slug.
  */
 export const RESERVED_SLUGS = [
   "login",
@@ -36,6 +37,7 @@ export const RESERVED_SLUGS = [
   "me",
   "auth",
   "api",
+  "new",
 ] as const;
 
 /** What the database will store for a club called `name`, before the id suffix

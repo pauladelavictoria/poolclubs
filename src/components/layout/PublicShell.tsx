@@ -305,7 +305,7 @@ export function CtaBand() {
           {t("public.ctaBand.body")}
         </p>
         <Link
-          to="/app/clubs/new"
+          to="/clubs/new"
           className={buttonClasses({ className: "mt-2 px-6" })}
         >
           {t("public.footer.startClub")}

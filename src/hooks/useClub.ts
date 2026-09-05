@@ -7,6 +7,8 @@ import { SESSION_KEY, sessionQuery } from "@/queries/session";
 import { clubPreviewQuery } from "@/queries/club";
 import { clubMembersQuery } from "@/queries/players";
 import {
+  sendClubApprovedMail,
+  sendClubRequestMail,
   sendJoinRequestMail,
   sendMemberApprovedMail,
 } from "@/libs/server/mail.functions";
@@ -60,6 +62,21 @@ export const useManageClub = () => {
       },
     }),
 
+    // Turning down a request, which is not the same as removing a member:
+    // the row stays so the person can be told, and can ask again. Removing is
+    // still a delete — see removeMember below.
+    rejectMember: useMutation({
+      mutationFn: async (playerId: number) => {
+        await supabase
+          .from("players")
+          .update({ status: "rejected" })
+          .eq("id", playerId)
+          .throwOnError();
+        return playerId;
+      },
+      onSuccess,
+    }),
+
     // Removing drops their games and drill logs with them (ON DELETE CASCADE).
     removeMember: useMutation({
       mutationFn: async (playerId: number) => {
@@ -96,6 +113,9 @@ export const useManageClub = () => {
         /** A public venue's phone number. Stored as typed — it is rendered as a
          *  tel: link and dialled, never parsed. */
         phone?: string | null;
+        /** Where to write to the club. Shown to somebody whose request was
+         *  turned down, next to the phone number. */
+        contactEmail?: string | null;
         /** The room, in the admin's own words: how many tables, what make,
          *  what size. Free text because any schema for it is a guess — see
          *  sql/schema.sql. */
@@ -123,6 +143,7 @@ export const useManageClub = () => {
           timezone?: string;
           description?: string | null;
           phone?: string | null;
+          contact_email?: string | null;
           tables_info?: string | null;
           schedule?: Schedule;
           photo_order?: string[];
@@ -147,6 +168,8 @@ export const useManageClub = () => {
           patch.description = updates.description?.trim() || null;
         if (updates.phone !== undefined)
           patch.phone = updates.phone?.trim() || null;
+        if (updates.contactEmail !== undefined)
+          patch.contact_email = updates.contactEmail?.trim() || null;
         if (updates.tablesInfo !== undefined)
           patch.tables_info = updates.tablesInfo?.trim() || null;
         if (updates.schedule !== undefined) patch.schedule = updates.schedule;
@@ -165,25 +188,24 @@ export const useManageClub = () => {
 };
 
 /**
- * Creating and joining reach clubs you are not in yet, so they go through
- * SECURITY DEFINER RPCs rather than table writes — see the create_club /
- * join_club definitions in sql/schema.sql.
+ * Joining reaches a club you are not in yet, so it goes through a SECURITY
+ * DEFINER RPC rather than a table write — see join_club in sql/schema.sql.
  *
- * Deliberately does not use `useAuth`: both callers run outside a club —
- * /app/clubs/new and the invite link — where there is no club context to read.
+ * Deliberately does not use `useAuth`: it runs outside a club — the invite link
+ * — where there is no club context to read.
  */
-export const useJoinOrCreateClub = () => {
+export const useJoinClub = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const navigate = useNavigate();
 
   /**
-   * Re-read the session, then go to the club if we can address it.
+   * Re-read the session, then go to the club.
    *
-   * A club you just created is yours and active, so it has a slug you can
-   * navigate to. One you just *asked* to join is pending, and RLS lets you see
-   * your own player row before it lets you see the club it belongs to — so
-   * there is no slug yet and /app is as specific as this can be.
+   * A pending membership can address its club too — see the "Pending members can
+   * see the club they asked to join" policy in sql/schema.sql, which exists so
+   * that the waiting panel has a URL. The /app fallback is for the case where
+   * the row has not landed in the re-read session yet.
    */
   const settle = async (clubId: number) => {
     await queryClient.invalidateQueries({ queryKey: SESSION_KEY });
@@ -203,16 +225,6 @@ export const useJoinOrCreateClub = () => {
   };
 
   return {
-    createClub: useMutation({
-      mutationFn: async (name: string) => {
-        const { data } = await supabase
-          .rpc("create_club", { club_name: name })
-          .throwOnError();
-
-        return settle(data);
-      },
-    }),
-
     joinClub: useMutation({
       mutationFn: async ({
         slug,
@@ -238,9 +250,8 @@ export const useJoinOrCreateClub = () => {
 
         // Tell the admin somebody is waiting. Fired here rather than from a
         // trigger, and never awaited, for the same reasons approveMember above
-        // fires its mail that way. The send decides for itself whether there
-        // is anything pending to tell them about (sql/schema.sql), so a join
-        // that landed active — the global club — sends nothing.
+        // fires its mail that way. The send decides for itself whether there is
+        // anything pending to tell them about (sql/schema.sql).
         void sendJoinRequestMail({ data: { clubId: data } }).catch(() => {});
 
         return settle(data);
@@ -251,3 +262,109 @@ export const useJoinOrCreateClub = () => {
 
 export const useClubPreview = (slug: string | undefined) =>
   useQuery({ ...clubPreviewQuery(slug ?? ""), enabled: !!slug });
+
+/**
+ * Asking for a club, and — for the operator — answering.
+ *
+ * Clubs are not created from inside the app: the only way one comes into
+ * existence is `request_club` from the public page and `approve_club_request`
+ * from /app/ops. Both are SECURITY DEFINER RPCs, and the approval side checks
+ * `is_drill_admin()` itself — the route guard on /app/ops is the courtesy, not
+ * the lock (sql/schema.sql).
+ */
+/**
+ * Walking out of a club.
+ *
+ * An RPC rather than a table write: the row is not deleted (games reference
+ * players ON DELETE CASCADE, so deleting it would take your opponents' copies
+ * of those matches with it), and the club's owner is refused outright — see
+ * leave_club in sql/schema.sql.
+ */
+export const useLeaveClub = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (clubId: number) => {
+      await supabase.rpc("leave_club", { p_club_id: clubId }).throwOnError();
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: SESSION_KEY });
+      const session = await queryClient.query(sessionQuery());
+      const stillInOne = session?.memberships.some(
+        (m) => m.status === "active",
+      );
+
+      // A full page load, not router.invalidate() and navigate().
+      //
+      // You are standing inside the club you just left — the settings page is
+      // under /app/<slug> — and invalidating re-runs that route's beforeLoad
+      // where it is mounted. It now throws notFound under the tree that is
+      // rendering, which React answers by tearing the page down mid-flight:
+      // the "removeChild: the node to be removed is not a child of this node"
+      // crash, and the error screen instead of the page we were on our way to.
+      //
+      // Leaving a club is once-in-a-membership, so paying for a reload here
+      // buys the one thing that cannot go wrong: the router and the session are
+      // both built again from scratch, with no stale membership in either.
+      window.location.href = stillInOne ? "/app" : "/";
+    },
+  });
+};
+
+export const useClubRequests = () => {
+  const queryClient = useQueryClient();
+
+  return {
+    /** Filed by whoever wants the club. Returns the request id, which is all
+     *  the mail needs — it reads the rest under the caller's own identity. */
+    requestClub: useMutation({
+      mutationFn: async (input: {
+        name: string;
+        city?: string;
+        country?: string;
+        note?: string;
+      }) => {
+        const { data } = await supabase
+          .rpc("request_club", {
+            p_name: input.name,
+            p_city: input.city?.trim() || undefined,
+            p_country: input.country?.trim().toUpperCase() || undefined,
+            p_note: input.note?.trim() || undefined,
+          })
+          .throwOnError();
+
+        // Never awaited, for the same reason the join request mail is not: the
+        // row is already in, and a request nobody was emailed about is still a
+        // request sitting on the operator page.
+        void sendClubRequestMail({ data: { requestId: data } }).catch(() => {});
+        return data;
+      },
+      onSuccess: () =>
+        queryClient.invalidateQueries({ queryKey: keys.myClubRequest }),
+    }),
+
+    approveRequest: useMutation({
+      mutationFn: async (requestId: number) => {
+        await supabase
+          .rpc("approve_club_request", { p_id: requestId })
+          .throwOnError();
+
+        void sendClubApprovedMail({ data: { requestId } }).catch(() => {});
+        return requestId;
+      },
+      onSuccess: () =>
+        queryClient.invalidateQueries({ queryKey: keys.operator.clubRequests }),
+    }),
+
+    rejectRequest: useMutation({
+      mutationFn: async (requestId: number) => {
+        await supabase
+          .rpc("reject_club_request", { p_id: requestId })
+          .throwOnError();
+        return requestId;
+      },
+      onSuccess: () =>
+        queryClient.invalidateQueries({ queryKey: keys.operator.clubRequests }),
+    }),
+  };
+};

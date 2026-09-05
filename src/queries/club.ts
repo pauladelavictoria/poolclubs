@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
+import { isPlaceholderPlayer } from "@/libs/algorithms/placeholderPlayer";
 
 export type ClubPreview = {
   club_id: number;
@@ -28,8 +29,13 @@ export const clubPreviewQuery = (slug: string) =>
         .rpc("club_preview", { p_slug: slug })
         .throwOnError();
 
+      // Null, not a throw: "there is no club with that slug" is an answer, and
+      // one the server has to be able to render. Thrown, it left the cache
+      // empty, so the page arrived as a loading skeleton and only admitted the
+      // link was dead once JavaScript had run — on the page that a mistyped
+      // invite code, and now a wrong /app/<slug>, both land on.
       const rows = (data ?? []) as ClubPreview[];
-      if (rows.length === 0) throw new Error("unknown club");
+      if (rows.length === 0) return null;
 
       // The RPC LEFT JOINs, so an empty club comes back as one row of nulls.
       const players = rows.filter((r) => r.player_id !== null);
@@ -37,8 +43,15 @@ export const clubPreviewQuery = (slug: string) =>
       return {
         clubId: rows[0].club_id,
         clubName: rows[0].club_name,
+        // The guest placeholder is unclaimed by construction and must stay
+        // that way: it is the row every visitor's game is filed against, so
+        // claiming it would hand one arriving member all of them. See
+        // libs/algorithms/placeholderPlayer.ts.
         unclaimed: players
-          .filter((r) => r.claimable)
+          .filter(
+            (r) =>
+              r.claimable && !isPlaceholderPlayer({ name: r.player_name ?? "" }),
+          )
           .map((r) => ({
             id: r.player_id as number,
             name: r.player_name as string,
