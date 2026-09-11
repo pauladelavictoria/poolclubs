@@ -10,7 +10,7 @@ import {
   orContains,
   rangeOf,
 } from "./shared";
-import type { Club, Player } from "@/types";
+import type { Club, ClubTable, Player } from "@/types";
 
 export type PublicClub = Pick<
   Club,
@@ -256,5 +256,46 @@ export const publicClubRosterQuery = (clubId: number) =>
       return (data ?? [])
         .map((row) => flattenPlayer(row) as unknown as PublicPlayer)
         .sort((a, b) => a.name.localeCompare(b.name));
+    },
+  });
+
+export type PublicClubTable = Pick<
+  ClubTable,
+  | "id"
+  | "label"
+  | "type"
+  | "size"
+  | "brand"
+  | "felt"
+  | "map_x"
+  | "map_y"
+  | "map_rotation"
+  | "sort_order"
+>;
+
+const PUBLIC_CLUB_TABLE_COLS =
+  "id, label, type, size, brand, felt, map_x, map_y, map_rotation, sort_order";
+
+/**
+ * The room's tables on the club's own page — the structured facts beside
+ * tables_info's paragraph (ClubTablesFacts), and what the read-only floor
+ * plan draws (ClubFloorPlanView). No new GRANT was needed for this: unlike
+ * clubs/players/drills, club_tables keeps its table-wide anon grant (see
+ * sql/schema.sql), so the existing "Tables of public clubs are readable by
+ * anyone" RLS policy already covers every column selected here.
+ */
+export const publicClubTablesQuery = (clubId: number) =>
+  queryOptions({
+    queryKey: [...keys.public.all, "tables", clubId] as const,
+    queryFn: async () => {
+      const { data } = await getSupabase()
+        .from("club_tables")
+        .select(PUBLIC_CLUB_TABLE_COLS)
+        .eq("club_id", clubId)
+        .order("sort_order", { ascending: true })
+        .order("id", { ascending: true })
+        .throwOnError();
+
+      return (data ?? []) as PublicClubTable[];
     },
   });

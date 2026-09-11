@@ -193,6 +193,13 @@ describe("freeTables", () => {
     club_id: 1,
     label: `T${id}`,
     sort_order: id,
+    type: null,
+    size: null,
+    brand: null,
+    felt: null,
+    map_x: null,
+    map_y: null,
+    map_rotation: null,
   });
 
   it("is every table with no live row pointing at it", () => {

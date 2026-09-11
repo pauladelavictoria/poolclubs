@@ -80,9 +80,52 @@ export type PlayerStatus = "pending" | "active" | "rejected" | "left";
  *  sql/schema.sql. Name, face and public listing live here and nowhere else. */
 export type Person = Row<"people">;
 
+/** The five cue sports a table might be built for. Sizes are not shared
+ *  across types — see TABLE_SIZES_BY_TYPE — a "7ft" American Pool table and a
+ *  "7ft" English Pool table are different tables that happen to round to the
+ *  same nominal length. */
+export type TableType =
+  | "american_pool"
+  | "english_pool"
+  | "snooker"
+  | "carom"
+  | "chinese_pool";
+
+export const TABLE_TYPES: TableType[] = [
+  "american_pool",
+  "english_pool",
+  "snooker",
+  "carom",
+  "chinese_pool",
+];
+
+/** Every size that appears under any type — which of these are valid for a
+ *  given type is TABLE_SIZES_BY_TYPE, not this list on its own. */
+export type TableSize = "6ft" | "7ft" | "8ft" | "9ft" | "10ft" | "12ft";
+
+/** The size picker is empty until a type is chosen, then offers exactly this
+ *  list, smallest first — the same set club_tables_type_size_check enforces
+ *  in sql/schema.sql. */
+export const TABLE_SIZES_BY_TYPE: Record<TableType, TableSize[]> = {
+  american_pool: ["7ft", "8ft", "9ft"],
+  english_pool: ["6ft", "7ft"],
+  snooker: ["10ft", "12ft"],
+  carom: ["10ft"],
+  chinese_pool: ["9ft"],
+};
+
 /** One of the venue's tables. `label` is what is painted on the wall — "3",
- *  "Mesa 2", "Snooker" — so it is text and not a number. */
-export type ClubTable = Row<"club_tables">;
+ *  "Mesa 2", "Snooker" — so it is text and not a number, and unrelated to
+ *  `type`/`size`/`brand`/`felt`, which are the room's own facts about the
+ *  table. All of `type`, `size`, `brand`, `felt`, `map_x`, `map_y` and
+ *  `map_rotation` are optional: existing tables have none of them, and
+ *  nothing backfills them. `map_x`/`map_y`/`map_rotation` place the table on
+ *  the floor plan — a table with no position simply hasn't been placed on it
+ *  yet; see libs/algorithms/tableFloorPlan.ts. */
+export type ClubTable = Omit<Row<"club_tables">, "type" | "size"> & {
+  type: TableType | null;
+  size: TableSize | null;
+};
 
 /**
  * A match being played right now.
