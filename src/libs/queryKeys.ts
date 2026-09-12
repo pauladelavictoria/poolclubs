@@ -219,6 +219,11 @@ export const keys = {
       ["public", "drills", f.q, f.difficulty, f.skill_type] as const,
     drill: (id?: number) => ["public", "drill", id] as const,
     search: (q?: string) => ["public", "search", q] as const,
+    /** The overlay's own reads of live_matches — see queries/public/live.ts. */
+    liveMatch: (tournamentMatchId?: string) =>
+      ["public", "live-match", tournamentMatchId] as const,
+    liveMatchByTable: (clubSlug?: string, tableId?: number) =>
+      ["public", "live-match-table", clubSlug, tableId] as const,
   },
 };
 

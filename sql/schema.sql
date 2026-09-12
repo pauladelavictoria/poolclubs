@@ -1792,8 +1792,10 @@ CREATE TABLE IF NOT EXISTS "public"."people" (
     "avatar_url" "text",
     "user_id" "uuid",
     "is_public" boolean DEFAULT true NOT NULL,
+    "country" "text",
     CONSTRAINT "people_name_check" CHECK (("char_length"("btrim"("name")) >= 1)),
-    CONSTRAINT "people_slug_shape" CHECK (("slug" ~ '^[a-z0-9][a-z0-9-]*$'::"text"))
+    CONSTRAINT "people_slug_shape" CHECK (("slug" ~ '^[a-z0-9][a-z0-9-]*$'::"text")),
+    CONSTRAINT "people_country_shape" CHECK ((("country" IS NULL) OR ("country" ~ '^[A-Z]{2}$'::"text")))
 );
 
 
@@ -3800,6 +3802,8 @@ GRANT SELECT("avatar_url") ON TABLE "public"."people" TO "anon";
 
 
 GRANT SELECT("is_public") ON TABLE "public"."people" TO "anon";
+
+GRANT SELECT("country") ON TABLE "public"."people" TO "anon";
 
 
 

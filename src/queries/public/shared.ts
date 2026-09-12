@@ -50,7 +50,7 @@ export const CLUB_COLS =
 export const CLUB_CARD_COLS = `${CLUB_COLS}, photo_order`;
 
 export const CLUB_DETAIL_COLS = `${CLUB_COLS}, description, phone, tables_info, schedule, timezone, photo_order`;
-export const PERSON_COLS = "id, slug, name, avatar_url, is_public";
+export const PERSON_COLS = "id, slug, name, avatar_url, is_public, country";
 export const PLAYER_COLS = "id, club_id, category";
 export const DRILL_COLS =
   "id, name, description, difficulty, skill_type, setup_instructions, scoring_method, max_score, ball_positions, shot_paths, club_id, created_at";

@@ -1,6 +1,6 @@
-# Streaming tournament matches to YouTube
+# Recording and streaming games to YouTube
 
-**Status:** planned, not started. Written 2026-09-04.
+**Status:** planned, not started. Written 2026-09-04, revised 2026-09-12.
 **Nothing in this document has been built.** No route, table, env var or
 dependency described here exists in the repo yet.
 
@@ -16,6 +16,39 @@ The answer turned out to be small, because the data already exists. This is the
 plan and, more importantly, the context — what was checked, what was assumed,
 and why each decision went the way it did — so that whoever picks this up does
 not have to re-derive it.
+
+### The pitch to a club (revised 2026-09-12)
+
+The feature sold to clubs is two player-facing buttons, not an admin tool —
+and the two buttons apply to two different kinds of game:
+
+1. **Tournament matches are always streamed, publicly, no checkbox.** A
+   player entering a tournament already knows and wants this — it is agreed
+   at registration (see "Consent" in the runbook), not decided per match.
+   Every tournament fixture on a camera-equipped table gets a **"Watch"**
+   button that opens the live stream on YouTube while it is in progress, and
+   the same link is emailed to both players once it ends.
+2. **Casual games are opt-in.** A player starting an ordinary game on the
+   table's tablet sees a **"Record this game"** checkbox with a public or
+   unlisted choice, off by default, and gets a YouTube link to their game
+   once it ends only if they checked it.
+
+The club installs and configures exactly one thing, once: a camera and an
+always-on encoder PC pointed at YouTube with a stream key pasted in. From
+then on, nothing club-side happens per game or per tournament — a
+tournament's matches are simply always on, and a casual game's are decided
+by the player, per game, from the tablet already bolted to the table
+([kiosk.ts](../src/libs/browser/kiosk.ts)).
+
+The insight that makes both buttons cheap to build together: in the YouTube
+Live API, **the broadcast id is the video id**, and YouTube automatically
+keeps a completed live broadcast as a VOD at that same `youtu.be/<id>` URL.
+"Record and send me the link" and "Watch live" are the same object — one
+`liveBroadcast` per game — differing only in `privacyStatus` (set from the
+checkbox) and in *when* the link is handed out (immediately for Watch, after
+`transition(complete)` for the recording). There is no separate
+record/upload pipeline to build for the checkbox; it rides on the same
+live-broadcast machinery Phase 2 already needs for Watch.
 
 ---
 
@@ -36,6 +69,16 @@ This is the part that makes the feature cheap. None of it needs changing.
 | Scoring helpers to reuse: `leaderOf`, `isMatchOver` | [src/libs/algorithms/night.ts:19-175](../src/libs/algorithms/night.ts#L19-L175) |
 | Match numbering for on-screen context | [src/libs/algorithms/bracket/numbering.ts](../src/libs/algorithms/bracket/numbering.ts) |
 | Club accent colour from `clubs.theme_color` | [src/libs/theme/clubTheme.ts:32-44](../src/libs/theme/clubTheme.ts#L32-L44) |
+| `live_matches` already carries **both** casual and tournament games through the same row — `challenge_id` and `tournament_match_id` are mutually exclusive (`live_matches_origin_check`), both alongside `table_id` | `sql/schema.sql:1773-1778` |
+| Tablet-bolted-to-a-table concept already exists (kiosk mode), the natural home for a "record this game" checkbox at match start | [src/libs/browser/kiosk.ts](../src/libs/browser/kiosk.ts) |
+| Outbound email already wired (Resend), with a `send()` helper and per-purpose functions to copy for "your game is ready" | [src/libs/server/mail.functions.ts:45-295](../src/libs/server/mail.functions.ts#L45-L295) |
+
+Because casual and tournament games already share one row shape, the
+reconciler that drives both needs only one query, one state machine — the
+column that already tells them apart (`tournament_match_id` vs.
+`challenge_id`, mutually exclusive) is exactly the column that decides
+whether a row is desired unconditionally (tournament) or only when opted in
+(casual). No separate "tournament mode" to build.
 
 **The single gap:** nothing in `src/queries/public/` reads `live_matches`. The
 only readers are [src/queries/live.ts](../src/queries/live.ts) and
@@ -65,7 +108,9 @@ recoverable from the resulting code.
 | **No `googleapis` dependency** | The whole integration is `fetch` plus a token POST. Same for AES-256-GCM via Node's `crypto`. |
 | **Reconcile loop, not triggers + webhooks** | Every step is idempotent and a failed tick retries — which is exactly what `transition(live)` needs anyway, since it fails until the encoder is actually connected. |
 | **No `tournament_matches.video_url` column** | Derive the VOD link from `stream_sessions`. One less migration, one less thing to keep in sync. |
-| **Public clubs only** | No signed overlay tokens. Add a token column if a private club ever needs to stream. |
+| **One broadcast serves both Watch and the recorded link** | Same object throughout its life: `privacyStatus` comes from the player's checkbox, and the VOD is the live broadcast after `transition(complete)` — not a second upload. See "The pitch to a club" above. |
+| **Tournament matches are always public, no checkbox; casual games are opt-in** | Tournament consent is given once, at registration, for the whole event — asking again per match would be friction nobody wants. Casual games have no such prior consent, so the tablet checkbox is where it is gathered, per game. Same `live_matches` row shape, different desired-state rule (§2.4) driven by which of `tournament_match_id` / `challenge_id` is set. |
+| **Public clubs only, for now** | No signed overlay tokens yet. A private club's player can still get a personal unlisted link once a signed per-table token exists — see the row above about the overlay route needing no auth today. Add the token column when a private club asks. |
 
 ---
 
@@ -199,7 +244,12 @@ OBS ever changes the scene-collection schema, that test is what tells you.
 
 ---
 
-## Phase 2 — the app drives YouTube (~5–7 days + weeks of Google review)
+## Phase 2 — the app drives YouTube (~6–9 days + weeks of Google review)
+
+This phase now covers both player-facing buttons (Watch and Record), since
+they share one broadcast per game — see "The pitch to a club" above. What was
+previously the whole of Phase 2 is §§2.1–2.4 and 2.6–2.7 below; §2.5 is the
+addition for per-game opt-in and delivery.
 
 ### 2.1 API shape
 
@@ -215,11 +265,18 @@ design outright — bound to one broadcast only, invisible to
 `liveStreams.list?mine=true`, and deleted by an automated process after the
 broadcast ends.
 
-Per match: `liveBroadcasts.insert` → `liveBroadcasts.bind` (to the club's
-existing stream) → poll `liveStreams.list` until
+Per opted-in game: `liveBroadcasts.insert` (with `status.privacyStatus` taken
+from the player's checkbox — `public` or `unlisted`) → `liveBroadcasts.bind`
+(to the club's existing stream) → poll `liveStreams.list` until
 `status.streamStatus == "active"` → `liveBroadcasts.transition(status=live)` →
 on match finish `transition(status=complete)`. The broadcast id **is** the video
-id, so the VOD is `https://youtu.be/<broadcastId>` with no extra call.
+id, so the VOD is `https://youtu.be/<broadcastId>` with no extra call — the
+same URL a Watch button links to while the game is live is what gets emailed
+to the player afterwards.
+
+"Per opted-in game" deliberately says game, not tournament match: a broadcast
+is created for any `live_matches` row the player flagged, tournament fixture
+or casual game alike — see §2.5.
 
 Constraints to design against:
 
@@ -268,9 +325,19 @@ club_youtube      club_id PK, refresh_token_enc, channel_id, channel_title,
                   connected_by, connected_at
 club_streams      id, club_id, table_id, youtube_stream_id,
                   ingestion_address, stream_key_enc, label
-stream_sessions   id, club_stream_id, tournament_match_id, broadcast_id,
-                  state, error, created_at, went_live_at, completed_at
+stream_sessions   id, club_stream_id, live_match_id, broadcast_id,
+                  privacy_status, state, error, notified_at,
+                  created_at, went_live_at, completed_at
 ```
+
+Two new columns on `live_matches` itself, meaningful only for casual games
+(`challenge_id` set): `record_opt_in boolean not null default false` and
+`record_privacy text check (record_privacy in ('public', 'unlisted'))`, set
+by the checkbox at match start. A tournament fixture (`tournament_match_id`
+set) never reads these — it is desired unconditionally, always `public`; see
+§2.4. `stream_sessions` no longer keys off `tournament_match_id` specifically
+(renamed `live_match_id` above) so a casual game's broadcast is tracked the
+same way a tournament fixture's is, once either is desired.
 
 **Security — the part not to be lazy about.** `club_youtube` and `club_streams`
 hold credentials that can post video to someone's channel.
@@ -303,10 +370,20 @@ Follow [logo.ts](../src/routes/api/clubs/$slug/logo.ts) and
 ### 2.4 The reconciler
 
 One Netlify scheduled function, `netlify/functions/youtube-reconcile.mts`,
-`export const config = { schedule: "* * * * *" }`. For each `club_streams` row:
-desired state is the current `live_matches` row on that table carrying a
-`tournament_match_id`; actual state is its `stream_sessions` row. Drive the
-state machine one step per tick, idempotently.
+`export const config = { schedule: "* * * * *" }`. For each `club_streams`
+row, desired state is the current `live_matches` row on that table where
+**either** `tournament_match_id is not null` (always desired, `privacy_status
+= 'public'`, no checkbox involved) **or** `record_opt_in = true`
+(`privacy_status` from `record_privacy`); actual state is its
+`stream_sessions` row. Drive the state machine one step per tick,
+idempotently. A table with a casual game that was never opted in desires
+nothing, so no broadcast is created and OBS just streams into the void, as it
+did before this feature existed — but a table with a tournament fixture
+always desires a broadcast, checkbox or not.
+
+On the tick where a session reaches `complete`, the reconciler is also what
+triggers delivery (§2.5) — it is the one place that already observes the
+transition, so there is nothing new to schedule.
 
 **Verify during implementation** that `@netlify/vite-plugin-tanstack-start` and
 a hand-written function in `netlify/functions/` coexist — `netlify.toml` sets no
@@ -314,14 +391,52 @@ a hand-written function in `netlify/functions/` coexist — `netlify.toml` sets 
 fight, fall back to Supabase `pg_cron` + `pg_net` hitting a server route;
 Supabase is already in the stack.
 
-### 2.5 Admin UI
+### 2.5 Player-facing UI: the checkbox, the delivery, the Watch button
 
-Club settings and tournament screens: connect/disconnect YouTube, map each
-`club_streams` row to a `club_tables` row, show the ingest URL and key to copy
-into OBS, a per-tournament "stream this" toggle, VOD links on finished matches.
-Strings into `src/i18n/{en,es,fr}.json`.
+This is the part that makes Phase 2 worth building — everything before it is
+plumbing.
 
-### 2.6 The blocker that is not code
+**Record checkbox, on the tablet, casual games only.** Wherever a *casual*
+game is started from kiosk mode ([kiosk.ts](../src/libs/browser/kiosk.ts)),
+add "Record this game" with a public/unlisted choice, writing
+`record_opt_in` / `record_privacy` on the `live_matches` insert. A tournament
+fixture never shows this checkbox — it is already always streamed publicly
+by §2.4's rule, and asking again per match would contradict the "agreed once
+at registration" design. No checkbox at all when the table has no
+`club_streams` row — a club with no camera on that table sees nothing
+different.
+
+**Delivery, by email, both kinds of game.** When `stream_sessions.state`
+reaches `complete`, send the game's participants `https://youtu.be/<broadcastId>`
+and stamp `notified_at` so a retried reconcile tick doesn't resend it. This
+fires for every completed session regardless of origin — a tournament
+fixture's players get the link because it was always going to be recorded, a
+casual game's players get it because they opted in. Follow the existing
+pattern in [mail.functions.ts:45-295](../src/libs/server/mail.functions.ts#L45-L295)
+— a new `sendGameRecordingMail`, same shape as `sendMemberApprovedMail`,
+using the same `send()` helper. Doubles matches send to all of `player_1`,
+`player_1b`, `player_2`, `player_2b`.
+
+**Watch button.** On each tournament match's row/card, once a
+`stream_sessions` row exists for it with `state in ('live', 'complete')`,
+render a link to `https://youtu.be/<broadcastId>` — live while the match is
+in progress, the same link becomes the VOD once it finishes. No new query
+needed beyond joining `tournament_matches` → `live_matches` →
+`stream_sessions` by id.
+
+Not built here: a Watch button on casual games. The pitch only asked for it on
+tournament matches; a casual game's opted-in player gets their link by email,
+not a public Watch button, since there is no tournament bracket page to put
+one on.
+
+### 2.6 Admin UI
+
+Club settings screen: connect/disconnect YouTube, map each `club_streams` row
+to a `club_tables` row, show the ingest URL and key to copy into OBS.
+Strings into `src/i18n/{en,es,fr}.json`. No per-tournament or per-match admin
+toggle — that decision moved to the player, per §2.5.
+
+### 2.7 The blocker that is not code
 
 `https://www.googleapis.com/auth/youtube` is a **sensitive scope**. Google
 requires app verification before an unlimited number of users can grant it;
@@ -371,11 +486,18 @@ the 50-subscriber rule is mobile-only.
 Either no audio, or a directional mic aimed at the table, or licensed music.
 This one silently ruins archives, so decide it up front.
 
-**Consent.** Filming players in a venue: visible signage, consent at tournament
-registration, and a way for an entrant to opt out (their match is not streamed).
-Minors need guardian consent. The club carries the legal duty, but the app
-should carry the opt-out flag on the entrant so the reconciler can skip those
-matches — worth adding in Phase 2.
+**Consent.** Two different sources of consent, matching the two kinds of game
+(§2.4): a tournament entrant agrees to being streamed publicly once, at
+registration, for every match they play in that event — visible signage plus
+a line in the registration flow covers it, and minors need guardian consent
+there. A casual player has given no such prior consent, so their own
+"Record this game" checkbox (§2.5) *is* the consent, per game, and is off
+until they tick it. Either way, the camera itself runs continuously
+regardless of any single casual game's opt-in — a casual player who never
+checks the box is still on camera, just never uploaded — so the signage
+still needs to say a camera is present, independent of what gets published.
+The club carries the legal duty for the signage and the camera's presence;
+the app only controls what happens to the recording after.
 
 ---
 
@@ -414,17 +536,27 @@ matches — worth adding in Phase 2.
 15. Connect a **throwaway** YouTube channel first, never a club's real one.
 16. Run one full broadcast lifecycle by hand, read Cloud Console → Quotas for
     units actually consumed. **Before building the reconciler**, not after.
-17. OBS pointed at the persistent key with no match running: reconciler creates
-    nothing.
-18. Start a tournament match: within ~2 ticks the broadcast exists, is bound,
-    and flips live once the encoder connects.
-19. Finish the match: broadcast goes `complete`, VOD link appears.
-20. Kill OBS mid-match and restart: reconciler recovers, no duplicate broadcast.
-21. Second match on the same table straight after: confirms the reusable stream
-    rebinds rather than needing a new key.
-22. `grep -r` the built `dist/client` for `YOUTUBE_` and `TOKEN_ENCRYPTION_KEY`
+17. OBS pointed at the persistent key with no casual game opted in and no
+    tournament fixture on the table: reconciler creates nothing.
+18. Start a casual game **without** checking "record": reconciler still
+    creates nothing, no email arrives when it finishes.
+19. Start a tournament match: **no checkbox is shown at all**, and within ~2
+    ticks the broadcast exists with `privacyStatus: public`, is bound, and
+    flips live once the encoder connects — unconditionally, confirming §2.4's
+    tournament rule needs no player action.
+20. Start a casual game **with** the checkbox (unlisted): same lifecycle as
+    18 but the broadcast is created, confirming the opt-in path independently
+    of the always-on tournament path.
+21. Finish both a tournament match and an opted-in casual game: each
+    broadcast goes `complete`, and every participant of both receives the VOD
+    email exactly once, even if the reconcile tick that observed `complete`
+    is re-run.
+22. Kill OBS mid-match and restart: reconciler recovers, no duplicate broadcast.
+23. Second tournament match on the same table straight after: confirms the
+    reusable stream rebinds rather than needing a new key.
+24. `grep -r` the built `dist/client` for `YOUTUBE_` and `TOKEN_ENCRYPTION_KEY`
     — must find nothing.
-23. Query `club_youtube` with the anon key — must error.
+25. Query `club_youtube` with the anon key — must error.
 
 ---
 
@@ -435,14 +567,17 @@ matches — worth adding in Phase 2.
 | Phase 1 — overlay routes (match + table), query, component | ~1–1.5 days |
 | Phase 1.5 — scene collection generator + browser dock panel | ~1 day |
 | Phase 2 — OAuth + connect flow | ~2 days |
-| Phase 2 — schema, reconciler, state machine | ~2–3 days |
-| Phase 2 — admin UI + i18n | ~1–2 days |
+| Phase 2 — schema, reconciler, state machine (broadened past tournament-only) | ~2–3 days |
+| Phase 2 — record checkbox, delivery email, Watch button | ~1–2 days |
+| Phase 2 — admin UI + i18n | ~1 day |
 | Google OAuth verification | weeks of calendar, ~0 dev |
 
 Phases 1 and 1.5 together — about two days — put a club live on YouTube:
 import the scene collection, pick the camera, paste a stream key once. Phase 2
-removes that last manual step, and is where all the credential handling, the
-two Google reviews and the calendar risk live.
+removes that last manual step and adds both player-facing buttons in one pass
+— they share a broadcast, so there is no separate "recording" build after —
+and is where all the credential handling, the two Google reviews and the
+calendar risk live.
 
 ---
 
@@ -456,10 +591,27 @@ two Google reviews and the calendar risk live.
    against long-term. The round-trip snapshot test in §1.5b is the tripwire.
 4. Doubles matches — `live_matches` carries `player_1b_id`/`player_2b_id`. The
    overlay layout above assumes singles; four names need a different lower
-   third.
-5. Whether the entrant-level streaming opt-out (consent, in the runbook) should
-   land in Phase 1 rather than Phase 2. It is a legal control, and Phase 1 is
-   already publishing names and scores to a public URL.
+   third. For a **casual** doubles game, the record checkbox (§2.5) is ticked
+   by whichever player started the game — does that bind their partner's
+   consent too, or does the checkbox need all four names' explicit sign-off
+   before it can be checked? For a **tournament** doubles pair, this is
+   presumably covered by both partners registering for the event, but that
+   assumes tournament registration actually asks about streaming today —
+   worth confirming before relying on it as consent.
+5. Whether tournament registration currently says anything about streaming at
+   all. The design in §2.4 treats "entered the tournament" as consent to
+   being streamed publicly — that is only true if registration copy actually
+   says so; if it doesn't yet, adding that line is a Phase-2 prerequisite, not
+   an afterthought. Separately: whether Phase 1's public overlay page (always
+   rendering whoever is live on camera, tournament or casual, streamed or
+   not) is itself a consent problem independent of recording — a casual
+   player who never touches the checkbox is still visible, with their real
+   name, on an unauthenticated URL, the moment they start any game on a
+   camera-equipped table.
+6. How clearly clubs are told that opt-in is per-game, not per-camera: the
+   camera and encoder run continuously regardless of any single checkbox
+   (runbook, "Consent"), so a club that assumes "no one's recording, the
+   checkbox is off" is wrong about the camera, only right about YouTube.
 
 ---
 

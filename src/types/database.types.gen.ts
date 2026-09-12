@@ -661,6 +661,7 @@ export type Database = {
       people: {
         Row: {
           avatar_url: string | null
+          country: string | null
           id: number
           is_public: boolean
           name: string
@@ -669,6 +670,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          country?: string | null
           id?: number
           is_public?: boolean
           name: string
@@ -677,6 +679,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          country?: string | null
           id?: number
           is_public?: boolean
           name?: string
