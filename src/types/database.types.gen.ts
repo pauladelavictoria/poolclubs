@@ -164,22 +164,43 @@ export type Database = {
       }
       club_tables: {
         Row: {
+          brand: string | null
           club_id: number
+          felt: string | null
           id: number
           label: string
+          map_rotation: number | null
+          map_x: number | null
+          map_y: number | null
+          size: string | null
           sort_order: number
+          type: string | null
         }
         Insert: {
+          brand?: string | null
           club_id: number
+          felt?: string | null
           id?: number
           label: string
+          map_rotation?: number | null
+          map_x?: number | null
+          map_y?: number | null
+          size?: string | null
           sort_order?: number
+          type?: string | null
         }
         Update: {
+          brand?: string | null
           club_id?: number
+          felt?: string | null
           id?: number
           label?: string
+          map_rotation?: number | null
+          map_x?: number | null
+          map_y?: number | null
+          size?: string | null
           sort_order?: number
+          type?: string | null
         }
         Relationships: [
           {

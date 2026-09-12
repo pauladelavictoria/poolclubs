@@ -1541,7 +1541,20 @@ CREATE TABLE IF NOT EXISTS "public"."club_tables" (
     "club_id" integer NOT NULL,
     "label" "text" NOT NULL,
     "sort_order" smallint DEFAULT 0 NOT NULL,
-    CONSTRAINT "club_tables_label_check" CHECK ((("char_length"("btrim"("label")) >= 1) AND ("char_length"("btrim"("label")) <= 24)))
+    "type" "text",
+    "size" "text",
+    "brand" "text",
+    "felt" "text",
+    "map_x" real,
+    "map_y" real,
+    "map_rotation" smallint,
+    CONSTRAINT "club_tables_label_check" CHECK ((("char_length"("btrim"("label")) >= 1) AND ("char_length"("btrim"("label")) <= 24))),
+    CONSTRAINT "club_tables_type_check" CHECK ((("type" IS NULL) OR ("type" = ANY (ARRAY['american_pool'::"text", 'english_pool'::"text", 'snooker'::"text", 'carom'::"text", 'chinese_pool'::"text"])))),
+    CONSTRAINT "club_tables_type_size_check" CHECK ((("size" IS NULL) OR ((("type" = 'american_pool'::"text") AND ("size" = ANY (ARRAY['7ft'::"text", '8ft'::"text", '9ft'::"text"]))) OR (("type" = 'english_pool'::"text") AND ("size" = ANY (ARRAY['6ft'::"text", '7ft'::"text"]))) OR (("type" = 'snooker'::"text") AND ("size" = ANY (ARRAY['10ft'::"text", '12ft'::"text"]))) OR (("type" = 'carom'::"text") AND ("size" = '10ft'::"text")) OR (("type" = 'chinese_pool'::"text") AND ("size" = '9ft'::"text"))))),
+    CONSTRAINT "club_tables_brand_check" CHECK ((("brand" IS NULL) OR (("char_length"("btrim"("brand")) >= 1) AND ("char_length"("btrim"("brand")) <= 60)))),
+    CONSTRAINT "club_tables_felt_check" CHECK ((("felt" IS NULL) OR (("char_length"("btrim"("felt")) >= 1) AND ("char_length"("btrim"("felt")) <= 60)))),
+    CONSTRAINT "club_tables_map_pos_pair" CHECK ((("map_x" IS NULL) = ("map_y" IS NULL))),
+    CONSTRAINT "club_tables_map_rotation_check" CHECK ((("map_rotation" IS NULL) OR (("map_rotation" >= 0) AND ("map_rotation" <= 359))))
 );
 
 

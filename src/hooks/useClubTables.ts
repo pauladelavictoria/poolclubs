@@ -3,6 +3,7 @@ import { supabase } from "@/libs/supabase/browser";
 import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
 import { clubTablesQuery } from "@/queries/live";
+import type { TableSize, TableType } from "@/types";
 
 /** The venue's tables, in the order they are numbered on the wall. */
 export const useClubTables = () => {
@@ -60,6 +61,73 @@ export const useManageClubTables = () => {
         onSuccess();
         queryClient.invalidateQueries({ queryKey: keys.liveMatches.all });
       },
+    }),
+
+    /** The room's own facts about the table: what it's built for, how big,
+     *  who made it, what's on it. type and size are always sent together —
+     *  even when only one changed — because club_tables_type_size_check
+     *  evaluates the whole row: writing type alone while a now-incompatible
+     *  size sits in the row would fail the constraint. ClubTablesCard is
+     *  what clears the staged size whenever the staged type changes; this
+     *  mutation just sends whatever it is given. */
+    updateTableDetails: useMutation({
+      mutationFn: async ({
+        id,
+        type,
+        size,
+        brand,
+        felt,
+      }: {
+        id: number;
+        type?: TableType | null;
+        size?: TableSize | null;
+        brand?: string | null;
+        felt?: string | null;
+      }) => {
+        const patch: {
+          type?: TableType | null;
+          size?: TableSize | null;
+          brand?: string | null;
+          felt?: string | null;
+        } = {};
+        if (type !== undefined) patch.type = type;
+        if (size !== undefined) patch.size = size;
+        if (brand !== undefined) patch.brand = brand?.trim() || null;
+        if (felt !== undefined) patch.felt = felt?.trim() || null;
+        await supabase
+          .from("club_tables")
+          .update(patch)
+          .eq("id", id)
+          .throwOnError();
+      },
+      onSuccess,
+    }),
+
+    /** The floor plan's Save button: every placed/moved/rotated/unplaced
+     *  table in one round trip. Plain per-row updates rather than a batch
+     *  RPC — a club has a handful of tables, RLS already scopes every row to
+     *  an admin, and a half-saved layout (one row failing) is stale UI, not
+     *  a correctness problem the way a half-saved game result would be. */
+    saveTableLayout: useMutation({
+      mutationFn: async (
+        placements: {
+          id: number;
+          mapX: number | null;
+          mapY: number | null;
+          mapRotation: number | null;
+        }[],
+      ) => {
+        await Promise.all(
+          placements.map(({ id, mapX, mapY, mapRotation }) =>
+            supabase
+              .from("club_tables")
+              .update({ map_x: mapX, map_y: mapY, map_rotation: mapRotation })
+              .eq("id", id)
+              .throwOnError(),
+          ),
+        );
+      },
+      onSuccess,
     }),
   };
 };

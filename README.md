@@ -7,8 +7,6 @@
 
 **Live:** [poolclubs.app](https://poolclubs.app)
 
-Forked from [aluzed/vite-react-ts-supabase](https://github.com/aluzed/vite-react-ts-supabase).
-
 ---
 
 ## 🌟 Overview
@@ -18,9 +16,6 @@ Forked from [aluzed/vite-react-ts-supabase](https://github.com/aluzed/vite-react
 ---
 
 ## 📸 A look at it
-
-Light theme, English, desktop. `node scripts/screenshots.mjs` regenerates the
-whole set — every page below in three languages, both themes, and on a phone.
 
 **The club directory** — `/clubs`
 
