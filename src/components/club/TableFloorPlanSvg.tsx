@@ -7,6 +7,12 @@ import {
 import { useT } from "@/i18n";
 
 const SELECTED_STROKE = "var(--color-strike)";
+/** A placement with no table behind it any more — reassign's leftover when
+ *  it hands a rectangle to a table that already had one elsewhere. Drawn in
+ *  the app's one red rather than the selection gold, because unlike a
+ *  selection this is a thing that has to be resolved before the layout can
+ *  be saved, not just a state of the UI. */
+const UNCONFIRMED_STROKE = "var(--color-accent-red)";
 
 type ViewBox = { minX: number; minY: number; w: number; h: number };
 
@@ -90,6 +96,10 @@ export default function TableFloorPlanSvg({
         const w = mmToUnits(lengthMm);
         const h = mmToUnits(widthMm);
         const selected = table.id === selectedId;
+        // Negative ids never come from Postgres — they're reassign's own
+        // marker for "this rectangle's table moved away and nothing has
+        // taken its place yet" (see useTableFloorPlanEditor.reassign).
+        const unconfirmed = table.id < 0;
         return (
           <g
             key={table.id}
@@ -100,18 +110,35 @@ export default function TableFloorPlanSvg({
                 hover, since nothing else on the canvas says a table is
                 draggable at all. Editor-only — the public view has nothing
                 to drag. */}
-            {interactive && <title>{t("tables.map.moveHint")}</title>}
+            {interactive && (
+              <title>
+                {unconfirmed
+                  ? t("tables.map.unconfirmedHint")
+                  : t("tables.map.moveHint")}
+              </title>
+            )}
             <rect
               x={-w / 2}
               y={-h / 2}
               width={w}
               height={h}
               rx={Math.min(w, h) * 0.08}
-              fill="var(--color-felt-raised)"
+              // rail rather than felt-raised: the canvas itself is pocket,
+              // and pocket/felt-raised sit right next to each other in the
+              // light theme — a table drawn in felt-raised barely reads as
+              // a shape at all, just a hairline rectangle. rail is the
+              // token this app already reserves for "the surface that's
+              // meant to stand out most", which is exactly the job here.
+              fill="var(--color-rail)"
               stroke={
-                selected ? SELECTED_STROKE : "var(--color-hairline-strong)"
+                unconfirmed
+                  ? UNCONFIRMED_STROKE
+                  : selected
+                    ? SELECTED_STROKE
+                    : "var(--color-hairline-strong)"
               }
-              strokeWidth={selected ? 0.15 : 0.08}
+              strokeDasharray={unconfirmed ? "0.4 0.3" : undefined}
+              strokeWidth={selected || unconfirmed ? 0.15 : 0.08}
             />
             {/* Counter-rotated so the label stays upright regardless of the
                 table's own facing — the same trick PoolTableDiagram uses to
@@ -120,10 +147,15 @@ export default function TableFloorPlanSvg({
               <text
                 textAnchor="middle"
                 dominantBaseline="central"
-                fill="var(--color-ink-soft)"
+                fill={
+                  unconfirmed ? UNCONFIRMED_STROKE : "var(--color-ink-soft)"
+                }
                 fontSize={Math.min(w, h) * 0.32}
               >
-                {labels[table.id] ?? ""}
+                {/* "?" isn't a fallback for a missing label here — every
+                    real table always has one; a blank lookup only ever
+                    means this is an unconfirmed placement. */}
+                {labels[table.id] ?? "?"}
               </text>
             </g>
           </g>

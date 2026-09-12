@@ -15,6 +15,7 @@ import {
 import TableFloorPlanSvg from "@/components/club/TableFloorPlanSvg";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button, IconButton } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import type { ClubTable } from "@/types";
 import { useT } from "@/i18n";
@@ -85,7 +86,9 @@ function SpawnGhost({
       width={w}
       height={h}
       rx={Math.min(w, h) * 0.08}
-      fill="var(--color-felt-raised)"
+      // Matches the real tables' own fill (see TableFloorPlanSvg) so a
+      // table in flight previews as the same shape it'll land as.
+      fill="var(--color-rail)"
       fillOpacity={0.6}
       stroke="var(--color-strike)"
       strokeDasharray="0.4 0.3"
@@ -191,7 +194,20 @@ export default function ClubFloorPlanEditor() {
 
   const selected = editor.placed.find((t) => t.id === editor.selectedId);
 
+  // Reassign targets: every other table, split by whether it already has a
+  // spot on the floor plan — picking one from the "already placed" group
+  // vacates its old spot rather than swapping the two (see the hook's
+  // reassign for why a swap isn't what this does).
+  const placedIds = new Set(editor.placed.map((t) => t.id));
+  const otherTables = (tables ?? []).filter((t) => t.id !== editor.selectedId);
+  const unplacedTargets = otherTables.filter((t) => !placedIds.has(t.id));
+  const placedTargets = otherTables.filter((t) => placedIds.has(t.id));
+
   const save = () => {
+    // Belt and suspenders alongside the Save button's own disabled state:
+    // there is nowhere in the database to write an unconfirmed placement's
+    // position, since it has no table id of its own.
+    if (editor.hasUnconfirmed) return;
     const byId = new Map(editor.placed.map((t) => [t.id, t]));
     const payload = (tables ?? []).map((table) => {
       const p = byId.get(table.id);
@@ -257,7 +273,7 @@ export default function ClubFloorPlanEditor() {
               labels={labels}
               selectedId={editor.selectedId}
               viewBox={editor.view}
-              className="h-80 w-full rounded-card bg-pocket"
+              className="h-[32rem] w-full rounded-card bg-pocket"
               onPointerDown={editor.handlePointerDown}
               onPointerMove={editor.handlePointerMove}
               onPointerUp={editor.handlePointerUp}
@@ -273,6 +289,15 @@ export default function ClubFloorPlanEditor() {
             </TableFloorPlanSvg>
           </div>
 
+          {editor.hasUnconfirmed && (
+            // accent-red, not strike: this matches the "?" rectangle's own
+            // colour on the canvas, not the app's action colour — the point
+            // is "something needs fixing", not "click here".
+            <p className="border-t border-hairline px-4 py-2 text-caption text-accent-red">
+              {t("tables.map.unconfirmedBlockSave")}
+            </p>
+          )}
+
           <div className="flex flex-wrap items-center gap-2 border-t border-hairline p-3">
             <IconButton
               label={t("tables.map.undo")}
@@ -282,18 +307,62 @@ export default function ClubFloorPlanEditor() {
               <LuUndo2 className="h-4 w-4" aria-hidden />
             </IconButton>
             {editor.selectedId != null && (
-              <IconButton
-                label={t("tables.map.removeFromMap")}
-                tone="danger"
-                onClick={() => editor.removeFromMap(editor.selectedId!)}
-              >
-                <LuTrash2 className="h-4 w-4" aria-hidden />
-              </IconButton>
+              <>
+                <IconButton
+                  label={t("tables.map.removeFromMap")}
+                  tone="danger"
+                  onClick={() => editor.removeFromMap(editor.selectedId!)}
+                >
+                  <LuTrash2 className="h-4 w-4" aria-hidden />
+                </IconButton>
+                {otherTables.length > 0 && (
+                  <Select
+                    size="sm"
+                    className="w-auto"
+                    aria-label={t("tables.map.reassignTo")}
+                    // Always reset to the placeholder: like ClubTablesCard's
+                    // "copy from" picker, this is a one-shot action on the
+                    // selected rectangle, not a binding that would need to
+                    // keep showing which table it last picked.
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value)
+                        editor.reassign(Number(e.target.value));
+                    }}
+                  >
+                    <option value="" disabled>
+                      {t("tables.map.reassignPlaceholder")}
+                    </option>
+                    {unplacedTargets.length > 0 && (
+                      <optgroup label={t("tables.map.unplacedTitle")}>
+                        {unplacedTargets.map((table) => (
+                          <option key={table.id} value={table.id}>
+                            {table.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {placedTargets.length > 0 && (
+                      <optgroup label={t("tables.map.placedTitle")}>
+                        {placedTargets.map((table) => (
+                          <option key={table.id} value={table.id}>
+                            {table.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </Select>
+                )}
+              </>
             )}
             <span className="ml-auto" />
             <Button
               onClick={save}
-              disabled={!editor.hasChanges || saveTableLayout.isPending}
+              disabled={
+                !editor.hasChanges ||
+                saveTableLayout.isPending ||
+                editor.hasUnconfirmed
+              }
             >
               {t("tables.map.save")}
             </Button>

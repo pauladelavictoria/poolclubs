@@ -15,6 +15,7 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import { gamesQuery } from "@/queries/games";
 import { clubPhotosQuery, type ClubPhoto } from "@/queries/clubPhotos";
 import { orderPhotos } from "@/libs/algorithms/photoOrder";
+import { groupTablesByFacts } from "@/libs/algorithms/tableFacts";
 import { useDialog } from "@/hooks/useDialog";
 import {
   publicClubRosterQuery,
@@ -866,28 +867,33 @@ function ClubTablesFacts({ tables }: { tables: PublicClubTable[] }) {
   const withFacts = tables.filter((table) => table.type);
   if (withFacts.length === 0) return null;
 
+  // Same idea as weekRows for opening hours: adjacent tables sharing every
+  // fact collapse into one row, so six identical 9ft American Pool tables
+  // read as one line instead of six copies of it.
+  const rows = groupTablesByFacts(withFacts);
+
   return (
     <Card className="p-4">
       <h3 className="pb-2 text-body font-medium text-ink">
         {t("club.tablesFactsTitle")}
       </h3>
       <ul className="divide-y divide-hairline">
-        {withFacts.map((table) => (
+        {rows.map((row) => (
           <li
-            key={table.id}
+            key={row.labels.join(",")}
             className="flex items-baseline justify-between gap-3 py-1.5"
           >
-            <span className="text-body text-ink">{table.label}</span>
+            <span className="text-body text-ink">{row.labels.join(", ")}</span>
             <span className="text-right text-caption text-ink-soft">
               {[
                 [
-                  table.size,
-                  table.type ? t(`tables.type.${table.type}` as Key) : null,
+                  row.size,
+                  row.type ? t(`tables.type.${row.type}` as Key) : null,
                 ]
                   .filter(Boolean)
                   .join(" "),
-                table.brand,
-                table.felt,
+                row.brand,
+                row.felt,
               ]
                 .filter(Boolean)
                 .join(" · ")}

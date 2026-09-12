@@ -19,6 +19,14 @@ import type { ClubTable } from "@/types";
  *  zoom — see tableFloorPlan.ts's note on tablet-sized touch targets. */
 const ROTATE_GRAB_PX = 44;
 
+/** A ceiling on that grab radius, in grid units. Without one, ROTATE_GRAB_PX
+ *  converted at a zoomed-out view (a big room, many tables) can cover most
+ *  of the spoke line back to the table's own centre — at that point a press
+ *  anywhere along the line rotates it, not just a press on the dot drawn at
+ *  its end. Comfortably past the drawn circle's own radius (0.9 units) so
+ *  the touch target stays forgiving; nowhere near the spoke's own length. */
+const ROTATE_GRAB_MAX_UNITS = 1.5;
+
 const NO_GUIDES = { align: [] as AlignGuide[], spacing: [] as SpacingGuide[] };
 
 const toPlacement = (t: ClubTable): TablePlacement => ({
@@ -85,6 +93,11 @@ export function useTableFloorPlanEditor(tables: ClubTable[]) {
   const drag = useRef<
     null | { kind: "move"; id: number } | { kind: "rotate"; id: number }
   >(null);
+  // Negative, locally-made-up ids for a placement reassign has vacated —
+  // see reassign below. Real table ids come from Postgres and are always
+  // positive, so a negative one can never collide with one.
+  const placeholderCounter = useRef(0);
+  const newPlaceholderId = () => --placeholderCounter.current;
   // The smart guides currently on screen — only ever non-empty mid-move, and
   // only for the table being dragged; see handlePointerMove/Up.
   const [guides, setGuides] = useState(NO_GUIDES);
@@ -114,7 +127,7 @@ export function useTableFloorPlanEditor(tables: ClubTable[]) {
   const rotateGrabUnits = () => {
     if (!svgRef.current) return 0;
     const scale = svgScale(svgRef.current.getBoundingClientRect(), view);
-    return scale ? ROTATE_GRAB_PX / scale : 0;
+    return scale ? Math.min(ROTATE_GRAB_PX / scale, ROTATE_GRAB_MAX_UNITS) : 0;
   };
 
   /** Same conversion, tighter budget: how close a table has to come to a
@@ -275,7 +288,52 @@ export function useTableFloorPlanEditor(tables: ClubTable[]) {
 
   const cancelSpawn = () => setSpawn(null);
 
-  const unplaced = tables.filter((t) => t.map_x == null || t.map_y == null);
+  // Off the local, possibly-unsaved `placed` — not the server's map_x —
+  // so a table dragged onto the grid this session disappears from the tray
+  // immediately, and one just removed reappears in it immediately, rather
+  // than waiting for a Save + refetch to catch up.
+  const placedIds = new Set(placed.map((t) => t.id));
+  const unplaced = tables.filter((t) => !placedIds.has(t.id));
+
+  /** Hands the selected placement — its position and rotation — to a
+   *  different table, and updates the drawn footprint to that table's own
+   *  type/size. The table that used to be here goes back to the "not yet
+   *  placed" tray (it's simply no longer in `placed`).
+   *
+   *  The target can be an already-placed table too, not only one from the
+   *  tray. A table can only ever occupy one rectangle, so its own old spot
+   *  can't just keep its id — but it isn't deleted either: it gets a
+   *  negative, made-up id instead, drawn as a "?" (see TableFloorPlanSvg)
+   *  standing in for "something is meant to go here, unresolved". A swap
+   *  would silently guess that the table just displaced belongs there;
+   *  this instead leaves that as a decision for the admin to make (by
+   *  reassigning the "?" itself, or by removing it), and hasUnconfirmed
+   *  blocks Save until they do. */
+  const reassign = (newTableId: number) => {
+    if (selectedId == null || newTableId === selectedId) return;
+    const newTable = tables.find((t) => t.id === newTableId);
+    if (!newTable) return;
+    pushHistory();
+    const next = placed.map((t) => {
+      if (t.id === selectedId)
+        return {
+          ...t,
+          id: newTableId,
+          type: newTable.type,
+          size: newTable.size,
+        };
+      if (t.id === newTableId) return { ...t, id: newPlaceholderId() };
+      return t;
+    });
+    setPlaced(next);
+    setView(fitViewBox(next));
+    setSelectedId(newTableId);
+  };
+
+  /** True while any placement is one of reassign's leftover "?" rectangles —
+   *  Save stays disabled for as long as one exists, since there is no table
+   *  to write its position under. */
+  const hasUnconfirmed = placed.some((t) => t.id < 0);
 
   return {
     svgRef,
@@ -286,9 +344,11 @@ export function useTableFloorPlanEditor(tables: ClubTable[]) {
     view,
     guides,
     hasChanges,
+    hasUnconfirmed,
     undo,
     canUndo: history.length > 0,
     removeFromMap,
+    reassign,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
