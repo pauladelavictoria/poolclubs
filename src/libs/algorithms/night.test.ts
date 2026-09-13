@@ -33,6 +33,8 @@ const match = (over: Partial<LiveMatch> = {}): LiveMatch => ({
   last_side: null,
   challenge_id: null,
   tournament_match_id: null,
+  record_opt_in: false,
+  record_privacy: null,
   started_at: new Date(NOW).toISOString(),
   updated_at: new Date(NOW).toISOString(),
   ...over,
@@ -50,6 +52,7 @@ const player = (over: Partial<Player> = {}): Player => ({
   user_id: null,
   avatar_url: null,
   is_public: true,
+  country: null,
   present_since: null,
   queued_table_id: null,
   queued_at: null,
@@ -193,6 +196,13 @@ describe("freeTables", () => {
     club_id: 1,
     label: `T${id}`,
     sort_order: id,
+    type: null,
+    size: null,
+    brand: null,
+    felt: null,
+    map_x: null,
+    map_y: null,
+    map_rotation: null,
   });
 
   it("is every table with no live row pointing at it", () => {

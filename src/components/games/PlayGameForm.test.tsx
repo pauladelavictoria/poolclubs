@@ -21,6 +21,7 @@ const player = (id: number, name: string): Player => ({
   user_id: null,
   avatar_url: null,
   is_public: true,
+  country: null,
   present_since: null,
   queued_table_id: null,
   queued_at: null,

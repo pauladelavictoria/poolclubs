@@ -15,13 +15,21 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import { gamesQuery } from "@/queries/games";
 import { clubPhotosQuery, type ClubPhoto } from "@/queries/clubPhotos";
 import { orderPhotos } from "@/libs/algorithms/photoOrder";
+import { groupTablesByFacts } from "@/libs/algorithms/tableFacts";
 import { useDialog } from "@/hooks/useDialog";
 import {
   publicClubRosterQuery,
+  publicClubTablesQuery,
   type PublicClub,
   type PublicClubDetail,
+  type PublicClubTable,
   type PublicPlayer,
 } from "@/queries/public/clubs";
+import TableFloorPlanSvg from "@/components/club/TableFloorPlanSvg";
+import {
+  fitViewBox,
+  type TablePlacement,
+} from "@/libs/algorithms/tableFloorPlan";
 import { useNow } from "@/hooks/useNow";
 import { useSession } from "@/hooks/useAuth";
 import { loginLink } from "@/libs/algorithms/nextPath";
@@ -313,12 +321,14 @@ export function ClubInfoTab() {
   // slice(1): the leading photo is already the hero's banner
   const { data: storedPhotos = [] } = useQuery(clubPhotosQuery(club.id));
   const photos = orderPhotos(storedPhotos, club.photo_order).slice(1);
+  const { data: tables = [] } = useQuery(publicClubTablesQuery(club.id));
 
   const hasVisit = Boolean(
     club.description ||
     club.phone ||
     club.tables_info ||
-    !isEmpty(parseSchedule(club.schedule)),
+    !isEmpty(parseSchedule(club.schedule)) ||
+    tables.some((table) => table.type || table.map_x != null),
   );
 
   if (photos.length === 0 && !hasVisit) {
@@ -328,7 +338,8 @@ export function ClubInfoTab() {
   return (
     <>
       <ClubPhotos photos={photos} />
-      <ClubVisit club={club} />
+      <ClubVisit club={club} tables={tables} />
+      <ClubFloorPlanView tables={tables} />
     </>
   );
 }
@@ -716,10 +727,17 @@ function PhotoLightbox({
  * The whole section is absent for a club that has set none of the three, rather
  * than three empty headings.
  */
-function ClubVisit({ club }: { club: PublicClubDetail }) {
+function ClubVisit({
+  club,
+  tables,
+}: {
+  club: PublicClubDetail;
+  tables: PublicClubTable[];
+}) {
   const { t } = useT();
   const schedule = parseSchedule(club.schedule);
   const hasHours = !isEmpty(schedule);
+  const hasTableFacts = tables.some((table) => table.type);
 
   // Null until an effect runs, which is the point: "open now" is `Date.now()`,
   // and rendering it on the server would be a hydration mismatch that resolves
@@ -729,7 +747,13 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
   const open =
     now !== null && hasHours && isOpenNow(schedule, club.timezone, now);
 
-  if (!club.description && !club.phone && !club.tables_info && !hasHours)
+  if (
+    !club.description &&
+    !club.phone &&
+    !club.tables_info &&
+    !hasHours &&
+    !hasTableFacts
+  )
     return null;
 
   return (
@@ -809,6 +833,8 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
           </Card>
         )}
 
+        {hasTableFacts && <ClubTablesFacts tables={tables} />}
+
         {club.phone && (
           <Card className="p-4">
             <h3 className="pb-2 text-body font-medium text-ink">
@@ -826,6 +852,94 @@ function ClubVisit({ club }: { club: PublicClubDetail }) {
           </Card>
         )}
       </div>
+    </section>
+  );
+}
+
+/**
+ * One row per table that has type/size/brand/felt set — the room's own
+ * structured facts, beside (not instead of) the admin's free-text
+ * tables_info paragraph above. Absent entirely when no table has anything
+ * set, same "nothing to show, nothing shown" rule as every other card here.
+ */
+function ClubTablesFacts({ tables }: { tables: PublicClubTable[] }) {
+  const { t } = useT();
+  const withFacts = tables.filter((table) => table.type);
+  if (withFacts.length === 0) return null;
+
+  // Same idea as weekRows for opening hours: adjacent tables sharing every
+  // fact collapse into one row, so six identical 9ft American Pool tables
+  // read as one line instead of six copies of it.
+  const rows = groupTablesByFacts(withFacts);
+
+  return (
+    <Card className="p-4">
+      <h3 className="pb-2 text-body font-medium text-ink">
+        {t("club.tablesFactsTitle")}
+      </h3>
+      <ul className="divide-y divide-hairline">
+        {rows.map((row) => (
+          <li
+            key={row.labels.join(",")}
+            className="flex items-baseline justify-between gap-3 py-1.5"
+          >
+            <span className="text-body text-ink">{row.labels.join(", ")}</span>
+            <span className="text-right text-caption text-ink-soft">
+              {[
+                [
+                  row.size,
+                  row.type ? t(`tables.type.${row.type}` as Key) : null,
+                ]
+                  .filter(Boolean)
+                  .join(" "),
+                row.brand,
+                row.felt,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/**
+ * The room, drawn to scale — read-only, built from the exact geometry
+ * ClubFloorPlanEditor edits (see tableFloorPlan.ts and TableFloorPlanSvg).
+ * Absent when no table has been placed on the admin's floor plan yet.
+ */
+function ClubFloorPlanView({ tables }: { tables: PublicClubTable[] }) {
+  const { t } = useT();
+  const placed: TablePlacement[] = tables
+    .filter((table) => table.map_x != null && table.map_y != null)
+    .map((table) => ({
+      id: table.id,
+      x: table.map_x!,
+      y: table.map_y!,
+      rotationDeg: table.map_rotation ?? 0,
+      type: table.type,
+      size: table.size,
+    }));
+
+  if (placed.length === 0) return null;
+
+  const labels = Object.fromEntries(
+    tables.map((table) => [table.id, table.label]),
+  );
+
+  return (
+    <section className="mt-8">
+      <SectionHead title={t("club.floorPlanTitle")} />
+      <Card className="mt-4 p-4">
+        <TableFloorPlanSvg
+          tables={placed}
+          labels={labels}
+          viewBox={fitViewBox(placed)}
+          className="h-72 w-full rounded-card bg-pocket sm:h-96"
+        />
+      </Card>
     </section>
   );
 }

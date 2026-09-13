@@ -26,6 +26,7 @@ type WithPerson = {
     avatar_url: string | null;
     slug: string;
     is_public: boolean;
+    country: string | null;
     /** Optional because anon is not granted it — see sql/schema.sql. Present
      *  for a member reading their own club, null everywhere public. */
     user_id?: string | null;
@@ -54,6 +55,7 @@ export const flattenPlayer = <T extends WithPerson>(row: T) => {
     avatar_url: person?.avatar_url ?? null,
     slug: person?.slug ?? "",
     is_public: person?.is_public ?? false,
+    country: person?.country ?? null,
     user_id: person?.user_id ?? null,
   } as unknown as Player;
 };
