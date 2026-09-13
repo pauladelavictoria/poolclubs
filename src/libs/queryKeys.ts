@@ -128,6 +128,18 @@ export const keys = {
     in: (clubId?: number | null) => ["club_tables", clubId] as const,
   },
 
+  /** club_youtube's connection state — channel_title / connected_at only,
+   *  see youtube.functions.ts. */
+  youtubeConnection: {
+    all: ["youtube_connection"] as const,
+    of: (clubId?: number | null) => ["youtube_connection", clubId] as const,
+  },
+
+  clubStreams: {
+    all: ["club_streams"] as const,
+    in: (clubId?: number | null) => ["club_streams", clubId] as const,
+  },
+
   tournaments: {
     all: ["tournaments"] as const,
     in: (clubId?: number | null) => ["tournaments", clubId] as const,

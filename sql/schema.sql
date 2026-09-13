@@ -1946,7 +1946,7 @@ CREATE TABLE IF NOT EXISTS "public"."stream_sessions" (
     "id" integer NOT NULL,
     "club_stream_id" integer NOT NULL,
     "live_match_id" "uuid" NOT NULL,
-    "broadcast_id" "text" NOT NULL,
+    "broadcast_id" "text",
     "privacy_status" "text" NOT NULL,
     "state" "text" DEFAULT 'created'::"text" NOT NULL,
     "error" "text",
@@ -2683,11 +2683,6 @@ ALTER TABLE ONLY "public"."reactions"
 
 ALTER TABLE ONLY "public"."stream_sessions"
     ADD CONSTRAINT "stream_sessions_club_stream_id_fkey" FOREIGN KEY ("club_stream_id") REFERENCES "public"."club_streams"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."stream_sessions"
-    ADD CONSTRAINT "stream_sessions_live_match_id_fkey" FOREIGN KEY ("live_match_id") REFERENCES "public"."live_matches"("id") ON DELETE CASCADE;
 
 
 

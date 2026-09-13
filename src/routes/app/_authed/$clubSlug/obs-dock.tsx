@@ -14,7 +14,9 @@ import { playersQuery } from "@/queries/players";
  */
 export const Route = createFileRoute("/app/_authed/$clubSlug/obs-dock")({
   staticData: {
-    crumbs: [{ labelKey: "nav.clubSettings", to: "/app/$clubSlug/club/tables" }],
+    crumbs: [
+      { labelKey: "nav.clubSettings", to: "/app/$clubSlug/club/streaming" },
+    ],
   },
   loader: ({ context }) =>
     Promise.all([

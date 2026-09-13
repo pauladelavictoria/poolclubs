@@ -111,7 +111,7 @@ export const Route = createFileRoute("/api/youtube/callback")({
 
         return new Response(null, {
           status: 303,
-          headers: { location: `/app/${club?.slug}/club/tables` },
+          headers: { location: `/app/${club?.slug}/club/streaming` },
         });
       },
     },

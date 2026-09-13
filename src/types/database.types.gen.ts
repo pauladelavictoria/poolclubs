@@ -954,7 +954,7 @@ export type Database = {
       }
       stream_sessions: {
         Row: {
-          broadcast_id: string
+          broadcast_id: string | null
           club_stream_id: number
           completed_at: string | null
           created_at: string
@@ -967,7 +967,7 @@ export type Database = {
           went_live_at: string | null
         }
         Insert: {
-          broadcast_id: string
+          broadcast_id?: string | null
           club_stream_id: number
           completed_at?: string | null
           created_at?: string
@@ -980,7 +980,7 @@ export type Database = {
           went_live_at?: string | null
         }
         Update: {
-          broadcast_id?: string
+          broadcast_id?: string | null
           club_stream_id?: number
           completed_at?: string | null
           created_at?: string
@@ -998,13 +998,6 @@ export type Database = {
             columns: ["club_stream_id"]
             isOneToOne: false
             referencedRelation: "club_streams"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stream_sessions_live_match_id_fkey"
-            columns: ["live_match_id"]
-            isOneToOne: true
-            referencedRelation: "live_matches"
             referencedColumns: ["id"]
           },
         ]

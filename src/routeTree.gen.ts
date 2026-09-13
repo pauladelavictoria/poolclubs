@@ -66,6 +66,7 @@ import { Route as OverlayTableClubSlugTableIdRouteImport } from './routes/overla
 import { Route as PublicClubsSlugGameGameIdRouteImport } from './routes/_public/clubs/$slug/game/$gameId'
 import { Route as AppAuthedClubSlugClubIndexRouteImport } from './routes/app/_authed/$clubSlug/club/index'
 import { Route as AppAuthedClubSlugClubMembersRouteImport } from './routes/app/_authed/$clubSlug/club/members'
+import { Route as AppAuthedClubSlugClubStreamingRouteImport } from './routes/app/_authed/$clubSlug/club/streaming'
 import { Route as AppAuthedClubSlugClubTablesRouteImport } from './routes/app/_authed/$clubSlug/club/tables'
 import { Route as AppAuthedClubSlugDrillsIndexRouteImport } from './routes/app/_authed/$clubSlug/drills/index'
 import { Route as AppAuthedClubSlugDrillsNewRouteImport } from './routes/app/_authed/$clubSlug/drills/new'
@@ -387,6 +388,12 @@ const AppAuthedClubSlugClubMembersRoute =
     path: '/members',
     getParentRoute: () => AppAuthedClubSlugClubRouteRoute,
   } as any)
+const AppAuthedClubSlugClubStreamingRoute =
+  AppAuthedClubSlugClubStreamingRouteImport.update({
+    id: '/streaming',
+    path: '/streaming',
+    getParentRoute: () => AppAuthedClubSlugClubRouteRoute,
+  } as any)
 const AppAuthedClubSlugClubTablesRoute =
   AppAuthedClubSlugClubTablesRouteImport.update({
     id: '/tables',
@@ -599,6 +606,7 @@ export interface FileRoutesByFullPath {
   '/app/$clubSlug/': typeof AppAuthedClubSlugIndexRoute
   '/clubs/$slug/game/$gameId': typeof PublicClubsSlugGameGameIdRoute
   '/app/$clubSlug/club/members': typeof AppAuthedClubSlugClubMembersRoute
+  '/app/$clubSlug/club/streaming': typeof AppAuthedClubSlugClubStreamingRoute
   '/app/$clubSlug/club/tables': typeof AppAuthedClubSlugClubTablesRoute
   '/app/$clubSlug/drills/new': typeof AppAuthedClubSlugDrillsNewRoute
   '/app/$clubSlug/games/new': typeof AppAuthedClubSlugGamesNewRoute
@@ -678,6 +686,7 @@ export interface FileRoutesByTo {
   '/app/$clubSlug': typeof AppAuthedClubSlugIndexRoute
   '/clubs/$slug/game/$gameId': typeof PublicClubsSlugGameGameIdRoute
   '/app/$clubSlug/club/members': typeof AppAuthedClubSlugClubMembersRoute
+  '/app/$clubSlug/club/streaming': typeof AppAuthedClubSlugClubStreamingRoute
   '/app/$clubSlug/club/tables': typeof AppAuthedClubSlugClubTablesRoute
   '/app/$clubSlug/drills/new': typeof AppAuthedClubSlugDrillsNewRoute
   '/app/$clubSlug/games/new': typeof AppAuthedClubSlugGamesNewRoute
@@ -764,6 +773,7 @@ export interface FileRoutesById {
   '/app/_authed/$clubSlug/': typeof AppAuthedClubSlugIndexRoute
   '/_public/clubs/$slug/game/$gameId': typeof PublicClubsSlugGameGameIdRoute
   '/app/_authed/$clubSlug/club/members': typeof AppAuthedClubSlugClubMembersRoute
+  '/app/_authed/$clubSlug/club/streaming': typeof AppAuthedClubSlugClubStreamingRoute
   '/app/_authed/$clubSlug/club/tables': typeof AppAuthedClubSlugClubTablesRoute
   '/app/_authed/$clubSlug/drills/new': typeof AppAuthedClubSlugDrillsNewRoute
   '/app/_authed/$clubSlug/games/new': typeof AppAuthedClubSlugGamesNewRoute
@@ -849,6 +859,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/'
     | '/clubs/$slug/game/$gameId'
     | '/app/$clubSlug/club/members'
+    | '/app/$clubSlug/club/streaming'
     | '/app/$clubSlug/club/tables'
     | '/app/$clubSlug/drills/new'
     | '/app/$clubSlug/games/new'
@@ -928,6 +939,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug'
     | '/clubs/$slug/game/$gameId'
     | '/app/$clubSlug/club/members'
+    | '/app/$clubSlug/club/streaming'
     | '/app/$clubSlug/club/tables'
     | '/app/$clubSlug/drills/new'
     | '/app/$clubSlug/games/new'
@@ -1013,6 +1025,7 @@ export interface FileRouteTypes {
     | '/app/_authed/$clubSlug/'
     | '/_public/clubs/$slug/game/$gameId'
     | '/app/_authed/$clubSlug/club/members'
+    | '/app/_authed/$clubSlug/club/streaming'
     | '/app/_authed/$clubSlug/club/tables'
     | '/app/_authed/$clubSlug/drills/new'
     | '/app/_authed/$clubSlug/games/new'
@@ -1461,6 +1474,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthedClubSlugClubMembersRouteImport
       parentRoute: typeof AppAuthedClubSlugClubRouteRoute
     }
+    '/app/_authed/$clubSlug/club/streaming': {
+      id: '/app/_authed/$clubSlug/club/streaming'
+      path: '/streaming'
+      fullPath: '/app/$clubSlug/club/streaming'
+      preLoaderRoute: typeof AppAuthedClubSlugClubStreamingRouteImport
+      parentRoute: typeof AppAuthedClubSlugClubRouteRoute
+    }
     '/app/_authed/$clubSlug/club/tables': {
       id: '/app/_authed/$clubSlug/club/tables'
       path: '/tables'
@@ -1711,6 +1731,7 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
 
 interface AppAuthedClubSlugClubRouteRouteChildren {
   AppAuthedClubSlugClubMembersRoute: typeof AppAuthedClubSlugClubMembersRoute
+  AppAuthedClubSlugClubStreamingRoute: typeof AppAuthedClubSlugClubStreamingRoute
   AppAuthedClubSlugClubTablesRoute: typeof AppAuthedClubSlugClubTablesRoute
   AppAuthedClubSlugClubIndexRoute: typeof AppAuthedClubSlugClubIndexRoute
 }
@@ -1718,6 +1739,7 @@ interface AppAuthedClubSlugClubRouteRouteChildren {
 const AppAuthedClubSlugClubRouteRouteChildren: AppAuthedClubSlugClubRouteRouteChildren =
   {
     AppAuthedClubSlugClubMembersRoute: AppAuthedClubSlugClubMembersRoute,
+    AppAuthedClubSlugClubStreamingRoute: AppAuthedClubSlugClubStreamingRoute,
     AppAuthedClubSlugClubTablesRoute: AppAuthedClubSlugClubTablesRoute,
     AppAuthedClubSlugClubIndexRoute: AppAuthedClubSlugClubIndexRoute,
   }

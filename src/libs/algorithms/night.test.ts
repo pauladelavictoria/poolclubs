@@ -33,6 +33,8 @@ const match = (over: Partial<LiveMatch> = {}): LiveMatch => ({
   last_side: null,
   challenge_id: null,
   tournament_match_id: null,
+  record_opt_in: false,
+  record_privacy: null,
   started_at: new Date(NOW).toISOString(),
   updated_at: new Date(NOW).toISOString(),
   ...over,
