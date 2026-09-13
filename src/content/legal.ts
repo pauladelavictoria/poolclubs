@@ -21,11 +21,6 @@ export const OPERATOR = {
   legalName: "Satellite Studio Digital S.L.",
   nif: "B88036348",
   address: "Calle Juan Bautista Corachán 14, 46018 Valencia, España",
-  /** Registro Mercantil data (Tomo, Folio, Hoja, Inscripción). Still empty —
-   *  an S.L. is required to be registered, so this is genuinely missing
-   *  rather than deliberately blank the way it is for an autónomo. Fill it
-   *  in before relying on this page; until then the section just drops out. */
-  registry: "",
 } as const;
 
 /** The one mailbox the public pages hand out. */
@@ -565,7 +560,7 @@ const termsFr: LegalDoc = {
   ],
 };
 
-/** LSSI-CE art. 10: identity, contact and, where it exists, registry data.
+/** LSSI-CE art. 10: identity and contact data.
  *  Spanish is the operative version — it is the obligation of a service offered
  *  from Spain — and the other two are translations of it. */
 const avisoEs: LegalDoc = {
@@ -580,9 +575,6 @@ const avisoEs: LegalDoc = {
         `NIF: ${OPERATOR.nif}`,
         `Domicilio: ${OPERATOR.address}`,
         `Correo electrónico: ${CONTACT_EMAIL}`,
-        ...(OPERATOR.registry
-          ? [`Datos registrales: ${OPERATOR.registry}`]
-          : []),
       ],
     },
     {
@@ -637,9 +629,6 @@ const avisoEn: LegalDoc = {
         `Tax ID: ${OPERATOR.nif}`,
         `Address: ${OPERATOR.address}`,
         `Email: ${CONTACT_EMAIL}`,
-        ...(OPERATOR.registry
-          ? [`Registry details: ${OPERATOR.registry}`]
-          : []),
       ],
     },
     {
@@ -692,9 +681,6 @@ const avisoFr: LegalDoc = {
         `NIF : ${OPERATOR.nif}`,
         `Adresse : ${OPERATOR.address}`,
         `E-mail : ${CONTACT_EMAIL}`,
-        ...(OPERATOR.registry
-          ? [`Informations d'immatriculation : ${OPERATOR.registry}`]
-          : []),
       ],
     },
     {

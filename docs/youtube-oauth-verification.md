@@ -15,16 +15,15 @@ when you do.
 
 ## Before you start
 
-1. **Registro Mercantil data is still missing.** `OPERATOR.legalName` /
-   `.nif` / `.address` in
-   [src/content/legal.ts:19-27](../src/content/legal.ts#L19-L27) are now
-   real (Satellite Studio Digital S.L., CIF B88036348, Calle Juan Bautista
-   Corachán 14, 46018 Valencia). `OPERATOR.registry` is still empty, though
-   — an S.L. is required to be registered, so LSSI-CE art. 10 technically
-   wants the Tomo/Folio/Hoja/Inscripción too. Fill it in and have someone
-   check the whole page before submitting anything. The policy now also
-   mentions the YouTube/video data category (§2 "Video") and lists YouTube
-   as a subprocessor (§5), added alongside this document.
+1. **The operator identity is filled in.** `OPERATOR.legalName` / `.nif` /
+   `.address` in [src/content/legal.ts:19-23](../src/content/legal.ts#L19-L23)
+   are real (Satellite Studio Digital S.L., CIF B88036348, Calle Juan
+   Bautista Corachán 14, 46018 Valencia) — have someone check the whole page
+   once before submitting anything. The policy also mentions the
+   YouTube/video data category (§2 "Video") and lists YouTube as a
+   subprocessor (§5), added alongside this document. Registro Mercantil
+   details (Tomo/Folio/Hoja/Inscripción) were left out on purpose — see the
+   Aviso Legal page.
 2. **Confirm the scope's current classification.** `.../auth/youtube` was
    "Sensitive" at the time docs/youtube-streaming.md was written
    (2026-09-04). Google moves scopes between Sensitive and Restricted
