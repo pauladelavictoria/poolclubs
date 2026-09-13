@@ -34,6 +34,8 @@ import { Route as PublicPlayersIndexRouteImport } from './routes/_public/players
 import { Route as PublicPlayersPlayerSlugRouteImport } from './routes/_public/players/$playerSlug'
 import { Route as PublicTournamentsIndexRouteImport } from './routes/_public/tournaments/index'
 import { Route as PublicTournamentsTournamentIdRouteImport } from './routes/_public/tournaments/$tournamentId'
+import { Route as ApiYoutubeCallbackRouteImport } from './routes/api/youtube/callback'
+import { Route as ApiYoutubeConnectRouteImport } from './routes/api/youtube/connect'
 import { Route as AppClubSlugManifestDotwebmanifestRouteImport } from './routes/app/$clubSlug.manifest[.]webmanifest'
 import { Route as AppAuthedIndexRouteImport } from './routes/app/_authed/index'
 import { Route as AppAuthedClubSlugRouteRouteImport } from './routes/app/_authed/$clubSlug/route'
@@ -215,6 +217,16 @@ const PublicTournamentsTournamentIdRoute =
     path: '/tournaments/$tournamentId',
     getParentRoute: () => PublicRouteRoute,
   } as any)
+const ApiYoutubeCallbackRoute = ApiYoutubeCallbackRouteImport.update({
+  id: '/api/youtube/callback',
+  path: '/api/youtube/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiYoutubeConnectRoute = ApiYoutubeConnectRouteImport.update({
+  id: '/api/youtube/connect',
+  path: '/api/youtube/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppClubSlugManifestDotwebmanifestRoute =
   AppClubSlugManifestDotwebmanifestRouteImport.update({
     id: '/$clubSlug/manifest.webmanifest',
@@ -553,6 +565,8 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof PublicLegalTermsRoute
   '/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
+  '/api/youtube/callback': typeof ApiYoutubeCallbackRoute
+  '/api/youtube/connect': typeof ApiYoutubeConnectRoute
   '/app/$clubSlug/manifest.webmanifest': typeof AppClubSlugManifestDotwebmanifestRoute
   '/app/ops': typeof AppAuthedOpsRoute
   '/app/select-club': typeof AppAuthedSelectClubRoute
@@ -632,6 +646,8 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof PublicLegalTermsRoute
   '/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
+  '/api/youtube/callback': typeof ApiYoutubeCallbackRoute
+  '/api/youtube/connect': typeof ApiYoutubeConnectRoute
   '/app/$clubSlug/manifest.webmanifest': typeof AppClubSlugManifestDotwebmanifestRoute
   '/app/ops': typeof AppAuthedOpsRoute
   '/app/select-club': typeof AppAuthedSelectClubRoute
@@ -714,6 +730,8 @@ export interface FileRoutesById {
   '/_public/legal/terms': typeof PublicLegalTermsRoute
   '/_public/players/$playerSlug': typeof PublicPlayersPlayerSlugRoute
   '/_public/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
+  '/api/youtube/callback': typeof ApiYoutubeCallbackRoute
+  '/api/youtube/connect': typeof ApiYoutubeConnectRoute
   '/app/$clubSlug/manifest.webmanifest': typeof AppClubSlugManifestDotwebmanifestRoute
   '/app/_authed/ops': typeof AppAuthedOpsRoute
   '/app/_authed/select-club': typeof AppAuthedSelectClubRoute
@@ -797,6 +815,8 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/players/$playerSlug'
     | '/tournaments/$tournamentId'
+    | '/api/youtube/callback'
+    | '/api/youtube/connect'
     | '/app/$clubSlug/manifest.webmanifest'
     | '/app/ops'
     | '/app/select-club'
@@ -876,6 +896,8 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/players/$playerSlug'
     | '/tournaments/$tournamentId'
+    | '/api/youtube/callback'
+    | '/api/youtube/connect'
     | '/app/$clubSlug/manifest.webmanifest'
     | '/app/ops'
     | '/app/select-club'
@@ -957,6 +979,8 @@ export interface FileRouteTypes {
     | '/_public/legal/terms'
     | '/_public/players/$playerSlug'
     | '/_public/tournaments/$tournamentId'
+    | '/api/youtube/callback'
+    | '/api/youtube/connect'
     | '/app/$clubSlug/manifest.webmanifest'
     | '/app/_authed/ops'
     | '/app/_authed/select-club'
@@ -1024,6 +1048,8 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  ApiYoutubeCallbackRoute: typeof ApiYoutubeCallbackRoute
+  ApiYoutubeConnectRoute: typeof ApiYoutubeConnectRoute
   OverlayTournamentIdMatchIdRoute: typeof OverlayTournamentIdMatchIdRoute
   ApiClubsSlugLogoRoute: typeof ApiClubsSlugLogoRoute
   ApiClubsSlugObsScenesDotjsonRoute: typeof ApiClubsSlugObsScenesDotjsonRoute
@@ -1210,6 +1236,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/tournaments/$tournamentId'
       preLoaderRoute: typeof PublicTournamentsTournamentIdRouteImport
       parentRoute: typeof PublicRouteRoute
+    }
+    '/api/youtube/callback': {
+      id: '/api/youtube/callback'
+      path: '/api/youtube/callback'
+      fullPath: '/api/youtube/callback'
+      preLoaderRoute: typeof ApiYoutubeCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/youtube/connect': {
+      id: '/api/youtube/connect'
+      path: '/api/youtube/connect'
+      fullPath: '/api/youtube/connect'
+      preLoaderRoute: typeof ApiYoutubeConnectRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/$clubSlug/manifest.webmanifest': {
       id: '/app/$clubSlug/manifest.webmanifest'
@@ -1824,6 +1864,8 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  ApiYoutubeCallbackRoute: ApiYoutubeCallbackRoute,
+  ApiYoutubeConnectRoute: ApiYoutubeConnectRoute,
   OverlayTournamentIdMatchIdRoute: OverlayTournamentIdMatchIdRoute,
   ApiClubsSlugLogoRoute: ApiClubsSlugLogoRoute,
   ApiClubsSlugObsScenesDotjsonRoute: ApiClubsSlugObsScenesDotjsonRoute,
