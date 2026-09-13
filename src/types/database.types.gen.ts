@@ -162,30 +162,131 @@ export type Database = {
           },
         ]
       }
-      club_tables: {
+      club_streams: {
         Row: {
           club_id: number
           id: number
+          ingestion_address: string
           label: string
-          sort_order: number
+          stream_key_enc: string
+          table_id: number
+          youtube_stream_id: string
         }
         Insert: {
           club_id: number
           id?: number
+          ingestion_address: string
           label: string
-          sort_order?: number
+          stream_key_enc: string
+          table_id: number
+          youtube_stream_id: string
         }
         Update: {
           club_id?: number
           id?: number
+          ingestion_address?: string
           label?: string
+          stream_key_enc?: string
+          table_id?: number
+          youtube_stream_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_streams_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_streams_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: true
+            referencedRelation: "club_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_tables: {
+        Row: {
+          brand: string | null
+          club_id: number
+          felt: string | null
+          id: number
+          label: string
+          map_rotation: number | null
+          map_x: number | null
+          map_y: number | null
+          size: string | null
+          sort_order: number
+          type: string | null
+        }
+        Insert: {
+          brand?: string | null
+          club_id: number
+          felt?: string | null
+          id?: number
+          label: string
+          map_rotation?: number | null
+          map_x?: number | null
+          map_y?: number | null
+          size?: string | null
           sort_order?: number
+          type?: string | null
+        }
+        Update: {
+          brand?: string | null
+          club_id?: number
+          felt?: string | null
+          id?: number
+          label?: string
+          map_rotation?: number | null
+          map_x?: number | null
+          map_y?: number | null
+          size?: string | null
+          sort_order?: number
+          type?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "club_tables_club_id_fkey"
             columns: ["club_id"]
             isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_youtube: {
+        Row: {
+          channel_id: string
+          channel_title: string
+          club_id: number
+          connected_at: string
+          connected_by: string
+          refresh_token_enc: string
+        }
+        Insert: {
+          channel_id: string
+          channel_title: string
+          club_id: number
+          connected_at?: string
+          connected_by: string
+          refresh_token_enc: string
+        }
+        Update: {
+          channel_id?: string
+          channel_title?: string
+          club_id?: number
+          connected_at?: string
+          connected_by?: string
+          refresh_token_enc?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_youtube_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: true
             referencedRelation: "clubs"
             referencedColumns: ["id"]
           },
@@ -535,6 +636,8 @@ export type Database = {
           player_2_score: number
           player_2b_id: number | null
           race_to: number
+          record_opt_in: boolean
+          record_privacy: string | null
           started_at: string
           table_id: number | null
           tournament_match_id: string | null
@@ -554,6 +657,8 @@ export type Database = {
           player_2_score?: number
           player_2b_id?: number | null
           race_to?: number
+          record_opt_in?: boolean
+          record_privacy?: string | null
           started_at?: string
           table_id?: number | null
           tournament_match_id?: string | null
@@ -573,6 +678,8 @@ export type Database = {
           player_2_score?: number
           player_2b_id?: number | null
           race_to?: number
+          record_opt_in?: boolean
+          record_privacy?: string | null
           started_at?: string
           table_id?: number | null
           tournament_match_id?: string | null
@@ -640,6 +747,7 @@ export type Database = {
       people: {
         Row: {
           avatar_url: string | null
+          country: string | null
           id: number
           is_public: boolean
           name: string
@@ -648,6 +756,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          country?: string | null
           id?: number
           is_public?: boolean
           name: string
@@ -656,6 +765,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          country?: string | null
           id?: number
           is_public?: boolean
           name?: string
@@ -838,6 +948,68 @@ export type Database = {
             columns: ["tournament_id"]
             isOneToOne: false
             referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stream_sessions: {
+        Row: {
+          broadcast_id: string | null
+          club_stream_id: number
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          id: number
+          live_match_id: string
+          notified_at: string | null
+          player_1_id: number | null
+          player_1b_id: number | null
+          player_2_id: number | null
+          player_2b_id: number | null
+          privacy_status: string
+          state: string
+          went_live_at: string | null
+        }
+        Insert: {
+          broadcast_id?: string | null
+          club_stream_id: number
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: number
+          live_match_id: string
+          notified_at?: string | null
+          player_1_id?: number | null
+          player_1b_id?: number | null
+          player_2_id?: number | null
+          player_2b_id?: number | null
+          privacy_status: string
+          state?: string
+          went_live_at?: string | null
+        }
+        Update: {
+          broadcast_id?: string | null
+          club_stream_id?: number
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: number
+          live_match_id?: string
+          notified_at?: string | null
+          player_1_id?: number | null
+          player_1b_id?: number | null
+          player_2_id?: number | null
+          player_2b_id?: number | null
+          privacy_status?: string
+          state?: string
+          went_live_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_sessions_club_stream_id_fkey"
+            columns: ["club_stream_id"]
+            isOneToOne: false
+            referencedRelation: "club_streams"
             referencedColumns: ["id"]
           },
         ]
@@ -1274,6 +1446,18 @@ export type Database = {
       start_device_pairing: {
         Args: { cid: number; tid: number }
         Returns: string
+      }
+      stream_session_recipients: {
+        Args: {
+          p_player_1_id: number
+          p_player_1b_id: number
+          p_player_2_id: number
+          p_player_2b_id: number
+        }
+        Returns: {
+          email: string
+          name: string
+        }[]
       }
       tournament_club: { Args: { tid: number }; Returns: number }
     }

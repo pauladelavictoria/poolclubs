@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
+import { Toggle } from "@/components/ui/Toggle";
 import {
   DISCIPLINES,
   type ClubTable,
@@ -36,6 +37,7 @@ export default function StartMatchForm({
   lockedOpponent,
   table,
   tables,
+  streamed = false,
   onSubmit,
   onCancel,
   isSubmitting,
@@ -51,6 +53,11 @@ export default function StartMatchForm({
   table?: ClubTable;
   /** Offer a choice of these. Free tables only; the caller knows which. */
   tables?: ClubTable[];
+  /** Whether `table` has a camera — docs/youtube-streaming.md §2.5. Only
+   *  meaningful together with `table`: a locked-opponent start (an accepted
+   *  challenge, picked up from a phone rather than the table's own tablet)
+   *  has no fixed table yet, so there is nothing to offer a camera for. */
+  streamed?: boolean;
   /** What the club is playing today — see libs/algorithms/today.ts. The form opens on
    *  these rather than on its own defaults, and they stay changeable: one match
    *  in an evening is a race to nine and should not need the day's setting
@@ -69,6 +76,8 @@ export default function StartMatchForm({
     discipline: Discipline;
     raceTo: number;
     tableId: number | null;
+    recordOptIn: boolean;
+    recordPrivacy: "public" | "unlisted" | null;
   }) => void;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -113,6 +122,12 @@ export default function StartMatchForm({
   const [player1Id, setPlayer1Id] = useState(forOthers ? "" : String(me.id));
   const [discipline, setDiscipline] = useState<Discipline>(defaults.discipline);
   const [raceTo, setRaceTo] = useState(String(defaults.raceTo));
+  // Off by default, per §2.5 — a casual game has given no prior consent to
+  // being recorded, unlike a tournament fixture agreed at registration.
+  const [recordOptIn, setRecordOptIn] = useState(false);
+  const [recordPrivacy, setRecordPrivacy] = useState<"public" | "unlisted">(
+    "unlisted",
+  );
 
   // An admin is a player and belongs in their own list; the device is not one.
   // Sorted in with everybody else rather than pinned to the top: whoever is in
@@ -183,6 +198,8 @@ export default function StartMatchForm({
           // A match with no table is a real thing in a busy club, and it is
           // what "every table is taken but we are playing anyway" writes.
           tableId: table?.id ?? (tableId ? Number(tableId) : null),
+          recordOptIn: streamed && recordOptIn,
+          recordPrivacy: streamed && recordOptIn ? recordPrivacy : null,
         });
       }}
     >
@@ -381,6 +398,33 @@ export default function StartMatchForm({
 
       {duplicate && (
         <p className="text-caption text-strike">{t("games.duplicatePlayer")}</p>
+      )}
+
+      {/* Casual games only, and only on a table with a camera — a tournament
+          fixture is always recorded already (agreed once at registration),
+          and a table with no club_streams row has nothing to record onto.
+          See docs/youtube-streaming.md §2.5. */}
+      {streamed && (
+        <div className="space-y-2 rounded-card border border-hairline p-3">
+          <Toggle
+            checked={recordOptIn}
+            onChange={setRecordOptIn}
+            label={t("live.recordGame")}
+            hint={t("live.recordGameHint")}
+            disabled={isSubmitting}
+          />
+          {recordOptIn && (
+            <Segmented
+              value={recordPrivacy}
+              onChange={setRecordPrivacy}
+              label={t("live.recordPrivacy")}
+              options={[
+                { value: "unlisted", label: t("live.recordUnlisted") },
+                { value: "public", label: t("live.recordPublic") },
+              ]}
+            />
+          )}
+        </div>
       )}
 
       <div className="flex justify-end gap-3">

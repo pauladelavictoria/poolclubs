@@ -1,7 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import { LuChevronRight } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useManageClub } from "@/hooks/useClub";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
@@ -12,6 +11,7 @@ import ClubScheduleEditor from "@/components/club/ClubScheduleEditor";
 import ClubPhotosUpload from "@/components/club/ClubPhotosUpload";
 import { BallGlyph } from "@/components/ui/Ball";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { Collapsible } from "@/components/ui/Collapsible";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Select } from "@/components/ui/Select";
@@ -37,53 +37,6 @@ const ZONES: string[] = (() => {
   const supported = Intl.supportedValuesOf?.("timeZone") ?? [];
   return supported.length > 0 ? [...supported].sort() : [CLUB_TZ];
 })();
-
-/**
- * A setting folded away behind what it is currently set to.
- *
- * The accent, the address and the clock are each chosen once and then left
- * alone, but the pickers for them are the three tallest things on this page —
- * open, they push the name field and the save button off the screen. Collapsed,
- * the summary still answers the only question anyone has when scrolling past:
- * what is it set to right now.
- *
- * Native <details>, so open/close, keyboard and screen-reader semantics cost
- * nothing. The value shown is the *staged* one, not the saved one — this page
- * batches its edits into one save, and a summary that reverted to the old colour
- * the moment you collapsed it would be lying.
- */
-function Collapsible({
-  label,
-  hint,
-  value,
-  children,
-}: {
-  label: string;
-  hint: string;
-  value: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <details className="group mt-5 border-t border-hairline pt-4">
-      <summary className="flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
-        <LuChevronRight
-          className="h-4 w-4 shrink-0 text-ink-faint transition-transform duration-150 group-open:rotate-90"
-          aria-hidden
-        />
-        <span className="min-w-0 flex-1 text-body font-medium text-ink">
-          {label}
-        </span>
-        <span className="shrink-0 text-caption text-ink-faint group-open:hidden">
-          {value}
-        </span>
-      </summary>
-      <div className="mt-3 space-y-3 pl-6">
-        <p className="text-body text-ink-soft">{hint}</p>
-        {children}
-      </div>
-    </details>
-  );
-}
 
 /**
  * What the club is: its name, its crest, its accent, where it is and what clock

@@ -433,6 +433,17 @@ html[data-theme="light"]:has([data-public]) {
   option:checked {
     font-weight: 500;
   }
+
+  /* optgroup's own label is a separate node from the options inside it, and
+     styling `option` does not reach it — left alone it renders in the UA's
+     own default text colour, which on Firefox/Chrome-Windows is dark and all
+     but disappears against felt-raised in the dark theme (the floor-plan
+     editor's table-reassign picker is where this first showed up, but any
+     grouped select would have had it). */
+  optgroup {
+    color: var(--color-ink-faint);
+    font-style: normal;
+  }
 }
 
 /*
@@ -576,6 +587,19 @@ html[data-theme="light"]:has([data-public]) {
     order: 1;
     margin-inline-start: auto;
     color: var(--color-strike);
+  }
+
+  /* Same reason as the plain optgroup rule above the base-select block: the
+     label is its own node, unreached by the option rules, and left alone it
+     is UA-default dark text on felt-raised — barely there in the dark
+     theme. font-weight/size match a caption to read as a section heading
+     rather than a disabled option. */
+  .select-field optgroup {
+    padding: 0.375rem 0.5rem 0.125rem;
+    color: var(--color-ink-faint);
+    font-style: normal;
+    font-weight: 600;
+    font-size: var(--text-caption);
   }
 }
 

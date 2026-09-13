@@ -34,3 +34,16 @@
 #   VITE_CF_BEACON_TOKEN — Cloudflare Web Analytics site token. Public by
 #                          design; without it __root renders no beacon tag at
 #                          all, so dev and previews stay out of the numbers.
+
+# YouTube live streaming (docs/youtube-streaming.md), same place, none VITE_-
+# prefixed — all four are secrets read only by server routes and the
+# reconciler:
+#   YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET — Google Cloud OAuth client for
+#                          the YouTube Data API v3 (sensitive scope, needs
+#                          Google app verification before general use).
+#   TOKEN_ENCRYPTION_KEY — AES-256-GCM key encrypting refresh tokens and
+#                          stream keys at rest in club_youtube/club_streams.
+#   SUPABASE_SERVICE_ROLE_KEY — those two tables deny all anon/authenticated
+#                          access; only the service role can read or write
+#                          them, from server routes and the scheduled
+#                          reconciler.
