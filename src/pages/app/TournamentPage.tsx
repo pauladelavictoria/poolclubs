@@ -279,6 +279,15 @@ export default function TournamentPage() {
           )}
         </dl>
 
+        {/* Prizes and anything else the organiser wants entrants to read —
+            long-form, so it sits below the fixed facts rather than fighting
+            them for a grid cell. */}
+        {tournament.notes && (
+          <p className="whitespace-pre-wrap text-body text-ink">
+            {tournament.notes}
+          </p>
+        )}
+
         {/* A finished tournament leads with its result: the bracket below is
             then the story of how it got there, not the headline. */}
         {tournament.status === "done" && podium && (
@@ -610,6 +619,7 @@ export default function TournamentPage() {
               starts_on: tournament.starts_on,
               ends_on: tournament.ends_on,
               entry_fee: tournament.entry_fee,
+              notes: tournament.notes,
               format: tournament.format,
               category: tournament.category,
               legs: tournament.legs,

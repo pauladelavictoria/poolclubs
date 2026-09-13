@@ -665,6 +665,8 @@
   "tournaments.notDated": "Nobody has dated it yet",
   "tournaments.entryFee": "Entry fee",
   "tournaments.entryFeePlaceholder": "E.g. £15 · £10 members",
+  "tournaments.notes": "Notes",
+  "tournaments.notesPlaceholder": "Prizes, sponsors, anything else entrants should know",
   "tournaments.format": "Format",
   "tournaments.doubleElim": "Double elimination",
   "tournaments.league": "League",

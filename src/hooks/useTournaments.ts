@@ -82,6 +82,8 @@ type NewTournament = {
   ends_on: string | null;
   /** What entry costs, as the organiser wrote it. */
   entry_fee: string | null;
+  /** Free text for prizes or anything else worth telling entrants. */
+  notes: string | null;
   format: TournamentFormat;
   category: Category | null;
   legs: 1 | 2;

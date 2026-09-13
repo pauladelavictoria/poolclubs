@@ -665,6 +665,8 @@
   "tournaments.notDated": "Todavía sin fecha",
   "tournaments.entryFee": "Inscripción",
   "tournaments.entryFeePlaceholder": "Ej.: 15 € · 10 € socios",
+  "tournaments.notes": "Notas",
+  "tournaments.notesPlaceholder": "Premios, patrocinadores, cualquier cosa que deban saber los participantes",
   "tournaments.format": "Formato",
   "tournaments.doubleElim": "Doble eliminación",
   "tournaments.league": "Liga",

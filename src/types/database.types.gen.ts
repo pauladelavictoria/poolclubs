@@ -1161,6 +1161,7 @@ export type Database = {
           id: number
           legs: number
           name: string
+          notes: string | null
           race_final: number | null
           race_semi: number | null
           race_to: number
@@ -1180,6 +1181,7 @@ export type Database = {
           id?: number
           legs?: number
           name: string
+          notes?: string | null
           race_final?: number | null
           race_semi?: number | null
           race_to?: number
@@ -1199,6 +1201,7 @@ export type Database = {
           id?: number
           legs?: number
           name?: string
+          notes?: string | null
           race_final?: number | null
           race_semi?: number | null
           race_to?: number

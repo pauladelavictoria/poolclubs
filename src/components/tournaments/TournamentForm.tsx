@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
@@ -22,6 +23,8 @@ export type TournamentValues = {
   ends_on: string | null;
   /** What it costs to enter, in the organiser's own words. */
   entry_fee: string | null;
+  /** Free text for prizes or anything else worth telling entrants. */
+  notes: string | null;
   format: TournamentFormat;
   category: Category | null;
   legs: 1 | 2;
@@ -60,6 +63,7 @@ export default function TournamentForm({
   const [startsOn, setStartsOn] = useState(initialValues?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(initialValues?.ends_on ?? "");
   const [entryFee, setEntryFee] = useState(initialValues?.entry_fee ?? "");
+  const [notes, setNotes] = useState(initialValues?.notes ?? "");
   const [format, setFormat] = useState<TournamentFormat>(
     initialValues?.format ?? "double_elim",
   );
@@ -99,6 +103,7 @@ export default function TournamentForm({
       // refuses it — see sql/schema.sql.
       ends_on: startsOn && endsOn ? endsOn : null,
       entry_fee: entryFee.trim() || null,
+      notes: notes.trim() || null,
       format,
       category,
       legs,
@@ -169,6 +174,19 @@ export default function TournamentForm({
           maxLength={80}
           placeholder={t("tournaments.entryFeePlaceholder")}
           onChange={(e) => setEntryFee(e.target.value)}
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div className="space-y-1.5 sm:col-span-2">
+        <Label htmlFor="tournament-notes">{t("tournaments.notes")}</Label>
+        <Textarea
+          id="tournament-notes"
+          value={notes}
+          maxLength={2000}
+          rows={3}
+          placeholder={t("tournaments.notesPlaceholder")}
+          onChange={(e) => setNotes(e.target.value)}
           disabled={isSubmitting}
         />
       </div>

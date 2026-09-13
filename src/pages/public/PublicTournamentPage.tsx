@@ -397,6 +397,15 @@ function TournamentHero({
           )}
         </dl>
 
+        {/* Prizes and anything else the organiser wants entrants to read —
+            long-form, so it sits below the fixed facts rather than fighting
+            them for a grid cell. */}
+        {tournament.notes && (
+          <p className="mt-4 whitespace-pre-wrap text-body text-ink">
+            {tournament.notes}
+          </p>
+        )}
+
         {/* Under the fields: only progress, and only while there is any.
             A count and a row of faces used to sit here too, directly above a
             section that lists the same people larger and with their names on —
