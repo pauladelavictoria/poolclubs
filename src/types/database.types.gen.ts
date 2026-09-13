@@ -962,6 +962,10 @@ export type Database = {
           id: number
           live_match_id: string
           notified_at: string | null
+          player_1_id: number | null
+          player_1b_id: number | null
+          player_2_id: number | null
+          player_2b_id: number | null
           privacy_status: string
           state: string
           went_live_at: string | null
@@ -975,6 +979,10 @@ export type Database = {
           id?: number
           live_match_id: string
           notified_at?: string | null
+          player_1_id?: number | null
+          player_1b_id?: number | null
+          player_2_id?: number | null
+          player_2b_id?: number | null
           privacy_status: string
           state?: string
           went_live_at?: string | null
@@ -988,6 +996,10 @@ export type Database = {
           id?: number
           live_match_id?: string
           notified_at?: string | null
+          player_1_id?: number | null
+          player_1b_id?: number | null
+          player_2_id?: number | null
+          player_2b_id?: number | null
           privacy_status?: string
           state?: string
           went_live_at?: string | null
@@ -1434,6 +1446,18 @@ export type Database = {
       start_device_pairing: {
         Args: { cid: number; tid: number }
         Returns: string
+      }
+      stream_session_recipients: {
+        Args: {
+          p_player_1_id: number
+          p_player_1b_id: number
+          p_player_2_id: number
+          p_player_2b_id: number
+        }
+        Returns: {
+          email: string
+          name: string
+        }[]
       }
       tournament_club: { Args: { tid: number }; Returns: number }
     }

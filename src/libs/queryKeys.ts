@@ -140,6 +140,16 @@ export const keys = {
     in: (clubId?: number | null) => ["club_streams", clubId] as const,
   },
 
+  /** Just the table ids from club_streams — its own root even though it's
+   *  the same underlying rows as clubStreams above: that query is
+   *  admin-only and returns the full row shape, this one is open to any
+   *  member and returns only ids, and the two must never share a cache
+   *  entry with each other. */
+  streamedTableIds: {
+    all: ["streamed_table_ids"] as const,
+    in: (clubId?: number | null) => ["streamed_table_ids", clubId] as const,
+  },
+
   tournaments: {
     all: ["tournaments"] as const,
     in: (clubId?: number | null) => ["tournaments", clubId] as const,

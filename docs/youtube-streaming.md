@@ -446,6 +446,12 @@ Weeks of calendar time, near-zero dev time.
 **Start the verification submission the day Phase 2 begins, not the day it
 ends.** This is the single largest schedule risk in the document.
 
+The submission text (consent screen fields, scope justification, demo video
+script) is drafted in
+[docs/youtube-oauth-verification.md](youtube-oauth-verification.md) —
+nobody has signed into Google Cloud Console yet, so nothing there has
+actually been submitted.
+
 ---
 
 ## Ops runbook (club side)

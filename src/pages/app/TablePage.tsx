@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
+import { useStreamedTableIds } from "@/hooks/useClubYoutube";
 import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
 import Scoreboard from "@/components/live/Scoreboard";
 import StartMatchForm from "@/components/live/StartMatchForm";
@@ -42,6 +43,7 @@ export default function TablePage() {
   const { data: live } = useLiveMatches();
   const { data: players } = usePlayers();
   const { startMatch } = useManageLiveMatch();
+  const { data: streamedTableIds } = useStreamedTableIds();
   const appNavigate = useAppNavigate();
 
   // The club's setting as it stands. Read, not owned: /night is where it is
@@ -239,6 +241,7 @@ export default function TablePage() {
             // the roster it offers is everyone but itself, the same as a phone.
             opponents={roster.filter((p) => p.id !== player.id)}
             table={table}
+            streamed={(streamedTableIds ?? []).includes(table.id)}
             onSubmit={(values) =>
               startMatch.mutate(
                 {
@@ -249,6 +252,8 @@ export default function TablePage() {
                   tableId: values.tableId,
                   discipline: values.discipline,
                   raceTo: values.raceTo,
+                  recordOptIn: values.recordOptIn,
+                  recordPrivacy: values.recordPrivacy,
                 },
                 {
                   onSuccess: (row) => {

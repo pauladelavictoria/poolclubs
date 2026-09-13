@@ -1,5 +1,7 @@
 import { getSupabaseServiceRole } from "../../src/libs/supabase/serviceRole";
 import { decryptSecret } from "../../src/libs/server/crypto";
+import { sendMail, logger } from "../../src/libs/server/resend";
+import { gameRecordingMail } from "../../src/libs/algorithms/mailText";
 import {
   refreshYoutubeAccessToken,
   insertBroadcast,
@@ -82,6 +84,8 @@ export default async () => {
     }
   }
 
+  await deliverCompletedSessions(db);
+
   return new Response("ok");
 };
 
@@ -94,7 +98,9 @@ async function reconcileTable(
 ) {
   const { data: liveRow } = await db
     .from("live_matches")
-    .select("id, tournament_match_id, record_opt_in, record_privacy")
+    .select(
+      "id, tournament_match_id, record_opt_in, record_privacy, player_1_id, player_2_id, player_1b_id, player_2b_id",
+    )
     .eq("table_id", stream.table_id)
     .maybeSingle();
 
@@ -150,6 +156,14 @@ async function reconcileTable(
         ? "public"
         : (wanted.record_privacy ?? "unlisted"),
       state: "created",
+      // Snapshotted now because live_matches won't exist by the time this
+      // session reaches 'complete' — finish_live_match() deletes it the
+      // instant the match ends, which is exactly when deliverCompletedSessions
+      // below needs to know who to email (§2.5).
+      player_1_id: wanted.player_1_id,
+      player_2_id: wanted.player_2_id,
+      player_1b_id: wanted.player_1b_id,
+      player_2b_id: wanted.player_2b_id,
     });
     return;
   }
@@ -184,4 +198,75 @@ async function reconcileTable(
   }
   // Otherwise: still waiting for the encoder, or already 'live' with
   // nothing to do until the match ends — both retried next tick.
+}
+
+/**
+ * The delivery half of §2.5: every session that reached 'complete' and
+ * hasn't been mailed yet. Its own pass over every club rather than folded
+ * into reconcileTable's per-table loop — a crash between marking 'complete'
+ * and stamping notified_at must not lose the mail, and a session no longer
+ * counts as "active" the moment it's complete, so nothing else would ever
+ * revisit it. Not gated behind YOUTUBE_CLIENT_ID like the rest of this file:
+ * a completed session can still be waiting on notified_at even if the
+ * YouTube credentials were since removed.
+ */
+async function deliverCompletedSessions(
+  db: ReturnType<typeof getSupabaseServiceRole>,
+) {
+  const apiKey = process.env.RESEND_API_KEY;
+  // Same bargain as every other mail in the app: no key, no send, and dev/CI
+  // just no-op rather than fail the tick.
+  if (!apiKey) return;
+
+  const { data: sessions } = await db
+    .from("stream_sessions")
+    .select(
+      "id, broadcast_id, player_1_id, player_2_id, player_1b_id, player_2b_id",
+    )
+    .eq("state", "complete")
+    .is("notified_at", null);
+
+  for (const session of sessions ?? []) {
+    if (!session.broadcast_id) continue;
+    const say = logger(`gameRecording#${session.id}`);
+
+    // The generated RPC type wants plain numbers — the SQL function itself
+    // (sql/schema.sql) is happy with SQL NULL for an empty seat, `= any()`
+    // simply never matching it, but that nullability isn't reflected in the
+    // generated signature.
+    const { data: recipients, error } = await db.rpc(
+      "stream_session_recipients",
+      {
+        p_player_1_id: session.player_1_id as number,
+        p_player_2_id: session.player_2_id as number,
+        p_player_1b_id: session.player_1b_id as number,
+        p_player_2b_id: session.player_2b_id as number,
+      },
+    );
+    if (error) {
+      console.error(`youtube-reconcile: recipients#${session.id}`, error);
+      continue;
+    }
+
+    const videoUrl = `https://youtu.be/${session.broadcast_id}`;
+    await Promise.all(
+      (recipients ?? [])
+        .filter((r) => r.email)
+        .map((r) =>
+          sendMail(
+            apiKey,
+            r.email!,
+            say,
+            gameRecordingMail({ name: r.name ?? r.email!, videoUrl }),
+          ),
+        ),
+    );
+
+    // Stamped regardless of whether there were any recipients at all (a
+    // device-only match, say) — either way there is nothing left to retry.
+    await db
+      .from("stream_sessions")
+      .update({ notified_at: new Date().toISOString() })
+      .eq("id", session.id);
+  }
 }

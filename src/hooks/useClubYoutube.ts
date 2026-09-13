@@ -7,6 +7,7 @@ import {
   listClubStreams,
   createClubStream,
   deleteClubStream,
+  getStreamedTableIds,
 } from "@/libs/server/youtube.functions";
 
 /** The club's YouTube connection and its per-table streams —
@@ -31,6 +32,18 @@ export const useClubStreams = () => {
   });
 };
 
+/** Which tables have a camera — the "Record this game" checkbox (§2.5) only
+ *  shows for one of these. Not admin-gated, unlike the two hooks above: any
+ *  member starting a game needs this, not just the settings screen. */
+export const useStreamedTableIds = () => {
+  const { activeClubId } = useAuth();
+  return useQuery({
+    queryKey: keys.streamedTableIds.in(activeClubId),
+    queryFn: () => getStreamedTableIds({ data: { clubId: activeClubId! } }),
+    enabled: !!activeClubId,
+  });
+};
+
 export const useManageClubYoutube = () => {
   const queryClient = useQueryClient();
   const { activeClubId } = useAuth();
@@ -44,6 +57,7 @@ export const useManageClubYoutube = () => {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: keys.youtubeConnection.all });
         queryClient.invalidateQueries({ queryKey: keys.clubStreams.all });
+        queryClient.invalidateQueries({ queryKey: keys.streamedTableIds.all });
       },
     }),
 
@@ -62,8 +76,10 @@ export const useManageClubYoutube = () => {
           data: { clubId: activeClubId, tableId, label },
         });
       },
-      onSuccess: () =>
-        queryClient.invalidateQueries({ queryKey: keys.clubStreams.all }),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: keys.clubStreams.all });
+        queryClient.invalidateQueries({ queryKey: keys.streamedTableIds.all });
+      },
     }),
 
     deleteStream: useMutation({
@@ -71,8 +87,10 @@ export const useManageClubYoutube = () => {
         if (!activeClubId) throw new Error("no active club");
         await deleteClubStream({ data: { clubId: activeClubId, streamId } });
       },
-      onSuccess: () =>
-        queryClient.invalidateQueries({ queryKey: keys.clubStreams.all }),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: keys.clubStreams.all });
+        queryClient.invalidateQueries({ queryKey: keys.streamedTableIds.all });
+      },
     }),
   };
 };

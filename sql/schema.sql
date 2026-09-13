@@ -1405,6 +1405,23 @@ END $$;
 ALTER FUNCTION "public"."start_device_pairing"("cid" integer, "tid" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."stream_session_recipients"("p_player_1_id" bigint, "p_player_2_id" bigint, "p_player_1b_id" bigint, "p_player_2b_id" bigint) RETURNS TABLE("email" "text", "name" "text")
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  select distinct u.email::text, pe.name
+  from players pl
+  join people pe on pe.id = pl.person_id
+  join auth.users u on u.id = pe.user_id
+  where pl.id = any (array[p_player_1_id, p_player_2_id, p_player_1b_id, p_player_2b_id])
+    and pe.user_id is not null
+    and pl.is_device = false;
+$$;
+
+
+ALTER FUNCTION "public"."stream_session_recipients"("p_player_1_id" bigint, "p_player_2_id" bigint, "p_player_1b_id" bigint, "p_player_2b_id" bigint) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."tournament_club"("tid" integer) RETURNS integer
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -1954,6 +1971,10 @@ CREATE TABLE IF NOT EXISTS "public"."stream_sessions" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "went_live_at" timestamp with time zone,
     "completed_at" timestamp with time zone,
+    "player_1_id" bigint,
+    "player_2_id" bigint,
+    "player_1b_id" bigint,
+    "player_2b_id" bigint,
     CONSTRAINT "stream_sessions_privacy_status_check" CHECK (("privacy_status" = ANY (ARRAY['public'::"text", 'unlisted'::"text"]))),
     CONSTRAINT "stream_sessions_state_check" CHECK (("state" = ANY (ARRAY['created'::"text", 'bound'::"text", 'live'::"text", 'complete'::"text", 'error'::"text"])))
 );
@@ -3649,6 +3670,10 @@ GRANT ALL ON FUNCTION "public"."slugify"("txt" "text") TO "service_role";
 REVOKE ALL ON FUNCTION "public"."start_device_pairing"("cid" integer, "tid" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."start_device_pairing"("cid" integer, "tid" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."start_device_pairing"("cid" integer, "tid" integer) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."stream_session_recipients"("p_player_1_id" bigint, "p_player_2_id" bigint, "p_player_1b_id" bigint, "p_player_2b_id" bigint) TO "service_role";
 
 
 

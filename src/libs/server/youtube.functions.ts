@@ -10,11 +10,13 @@ import {
 } from "@/libs/server/youtube";
 
 /**
- * Club-admin actions on club_youtube / club_streams — docs/youtube-streaming.md
- * §2.6. Both tables deny all anon/authenticated access (§2.2), so every read
- * and write here goes through the service-role client; the admin check that
- * would ordinarily be RLS happens by hand instead, same as
- * routes/api/clubs/$slug/obs-scenes.json.ts and routes/api/youtube/*.ts.
+ * Actions on club_youtube / club_streams — most of them club-admin only
+ * (docs/youtube-streaming.md §2.6), plus one open to any signed-in member
+ * (§2.5's getStreamedTableIds). Both tables deny all anon/authenticated
+ * access (§2.2), so every read and write here goes through the service-role
+ * client; the admin check that would ordinarily be RLS happens by hand
+ * instead, same as routes/api/clubs/$slug/obs-scenes.json.ts and
+ * routes/api/youtube/*.ts.
  *
  * Every input is validated: a server function is a public HTTP endpoint
  * whatever it looks like from the call site.
@@ -31,6 +33,26 @@ async function assertClubAdmin(clubId: number) {
 }
 
 const clubIdInput = z.object({ clubId: z.number().int().positive() });
+
+/**
+ * Which of the club's tables have a camera — no admin gate: the "Record this
+ * game" checkbox (§2.5) needs this from any signed-in seat starting a game,
+ * not just an admin's, and which tables are streamed is not sensitive on its
+ * own. Only requires a session at all, to keep parity with the rest of the
+ * app's server functions.
+ */
+export const getStreamedTableIds = createServerFn({ method: "GET" })
+  .validator(clubIdInput)
+  .handler(async ({ data }) => {
+    const { data: user } = await getSupabaseServer().auth.getUser();
+    if (!user.user) throw new Error("not signed in");
+
+    const { data: rows } = await getSupabaseServiceRole()
+      .from("club_streams")
+      .select("table_id")
+      .eq("club_id", data.clubId);
+    return (rows ?? []).map((r) => r.table_id);
+  });
 
 /** Connection state only — channel_title / connected_at, never the token
  *  (§2.2's "Security" note: owners see this through a narrow read, never the

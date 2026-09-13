@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseServer } from "@/libs/supabase/server";
+import { sendMail, logger } from "@/libs/server/resend";
 import {
-  MAIL_FROM,
   MAIL_OPS,
   clubApprovedMail,
   clubClaimMail,
@@ -38,8 +38,6 @@ import {
  * legitimately did.
  */
 
-const RESEND_ENDPOINT = "https://api.resend.com/emails";
-
 const approvedInput = z.object({ playerId: z.number().int().positive() });
 
 export const sendMemberApprovedMail = createServerFn({ method: "POST" })
@@ -66,7 +64,7 @@ export const sendMemberApprovedMail = createServerFn({ method: "POST" })
     const contact = rows?.[0];
     if (!contact?.email) return say("no address, or not allowed to know");
 
-    return send(
+    return sendMail(
       apiKey,
       contact.email,
       say,
@@ -104,7 +102,7 @@ export const sendJoinRequestMail = createServerFn({ method: "POST" })
     const contact = rows?.[0];
     if (!contact?.email) return say("nothing pending, or no admin address");
 
-    return send(
+    return sendMail(
       apiKey,
       contact.email,
       say,
@@ -147,7 +145,7 @@ export const sendClubClaimMail = createServerFn({ method: "POST" })
     // No such club, already claimed, or nobody signed in to claim it.
     if (!contact?.email) return say("not claimable, or not signed in");
 
-    return send(
+    return sendMail(
       apiKey,
       MAIL_OPS,
       say,
@@ -189,7 +187,7 @@ export const sendClubRequestMail = createServerFn({ method: "POST" })
     const contact = rows?.[0];
     if (!contact?.email) return say("not the caller's own open request");
 
-    return send(
+    return sendMail(
       apiKey,
       MAIL_OPS,
       say,
@@ -231,7 +229,7 @@ export const sendClubApprovedMail = createServerFn({ method: "POST" })
     const contact = rows?.[0];
     if (!contact?.email) return say("not approved, or not the operator");
 
-    return send(
+    return sendMail(
       apiKey,
       contact.email,
       say,
@@ -242,59 +240,3 @@ export const sendClubApprovedMail = createServerFn({ method: "POST" })
       }),
     );
   });
-
-/** One POST with a bearer token. fetch, not the resend SDK: a dependency for
- *  this would be a dependency to keep up to date. */
-async function send(
-  apiKey: string,
-  to: string,
-  say: (reason: string) => null,
-  body: { subject: string; html: string; text: string },
-  replyTo?: string,
-) {
-  const response = await fetch(RESEND_ENDPOINT, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      from: MAIL_FROM,
-      to: [to],
-      subject: body.subject,
-      html: body.html,
-      text: body.text,
-      ...(replyTo ? { reply_to: [replyTo] } : {}),
-    }),
-  });
-
-  if (!response.ok) {
-    // Read the body: Resend puts the actual reason in it, and a bare 403 in
-    // the deploy log is indistinguishable from a wrong key, an unverified
-    // domain and a rate limit.
-    const detail = await response.text().catch(() => "");
-    return say(`resend ${response.status}: ${detail.slice(0, 300)}`);
-  }
-
-  return say("sent");
-}
-
-/**
- * One line to the deploy logs, returning null so every bail-out above can be
- * written as `return say(...)`.
- *
- * Never thrown and never sent to the client, exactly as in push.functions.ts:
- * the write already succeeded before this ran, and a member who is in the club
- * but did not get an email is in the club. Logging the success case too,
- * because otherwise "sent" and "silently did nothing" look identical from
- * outside — which is the one thing that made the first push failure in
- * production impossible to diagnose.
- *
- * The address is deliberately not logged.
- */
-function logger(subject: string) {
-  return (reason: string): null => {
-    console.log(`[mail] ${subject}: ${reason}`);
-    return null;
-  };
-}
