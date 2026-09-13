@@ -149,7 +149,7 @@ export type LiveMatch = Omit<Row<"live_matches">, "last_side"> & {
 export type Player = Omit<Row<"players">, "category" | "status"> & {
   category: Category;
   status: PlayerStatus;
-} & Pick<Person, "name" | "avatar_url" | "slug" | "is_public"> & {
+} & Pick<Person, "name" | "avatar_url" | "slug" | "is_public" | "country"> & {
     /** Null out here on the public side, where anon is not granted the column.
      *  Only ClubPage reads it, to mark which member owns the club. */
     user_id: string | null;

@@ -68,6 +68,11 @@ type NewLiveMatch = {
    *  so finishing can close it out in the same transaction. */
   challengeId?: number;
   tournamentMatchId?: string;
+  /** "Record this game" — casual games only, docs/youtube-streaming.md §2.5.
+   *  Ignored by the reconciler for a tournament fixture, which is desired
+   *  unconditionally regardless of these two. */
+  recordOptIn?: boolean;
+  recordPrivacy?: "public" | "unlisted" | null;
 };
 
 /**
@@ -158,6 +163,8 @@ export const useManageLiveMatch = () => {
           last_side: null,
           challenge_id: input.challengeId ?? null,
           tournament_match_id: input.tournamentMatchId ?? null,
+          record_opt_in: input.recordOptIn ?? false,
+          record_privacy: input.recordPrivacy ?? null,
         };
 
         // An abandoned match still holds its table, and the person starting a

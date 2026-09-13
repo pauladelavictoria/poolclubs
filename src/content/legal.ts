@@ -18,17 +18,18 @@ import type { Lang } from "@/i18n";
  */
 export const OPERATOR = {
   /** Autónomo's full name, or the SL's razón social. */
-  legalName: "[NOMBRE Y APELLIDOS / RAZÓN SOCIAL]",
-  nif: "[NIF / CIF]",
-  address: "[DIRECCIÓN POSTAL COMPLETA]",
-  /** Registro Mercantil data. Empty for an autónomo — the section drops out. */
+  legalName: "Satellite Studio Digital S.L.",
+  nif: "B88036348",
+  address: "Calle Juan Bautista Corachán 14, 46018 Valencia, España",
+  /** Registro Mercantil data (Tomo, Folio, Hoja, Inscripción). Still empty —
+   *  an S.L. is required to be registered, so this is genuinely missing
+   *  rather than deliberately blank the way it is for an autónomo. Fill it
+   *  in before relying on this page; until then the section just drops out. */
   registry: "",
 } as const;
 
-/** The one mailbox the public pages hand out. TODO: confirm it exists and is
- *  read before these pages go live — a contact page pointing at a mailbox
- *  nobody opens is worse than no contact page. */
-export const CONTACT_EMAIL = "hola@poolclubs.app";
+/** The one mailbox the public pages hand out. */
+export const CONTACT_EMAIL = "admin@poolclubs.app";
 
 /** Every provider that processes data on our behalf, with where it runs. Shown
  *  on the privacy page and required by art. 28. Region strings are per-project
@@ -37,6 +38,11 @@ export const SUBPROCESSORS = [
   { name: "Supabase", role: "database, authentication, storage", region: "EU" },
   { name: "Netlify", role: "hosting, CDN", region: "US/global" },
   { name: "Google", role: "sign-in with Google (OAuth)", region: "US/global" },
+  {
+    name: "YouTube (Google)",
+    role: "live streaming and video hosting for clubs that connect a camera",
+    region: "US/global",
+  },
   {
     name: "Cloudflare",
     role: "cookieless audience measurement (Web Analytics)",
@@ -62,6 +68,9 @@ export type LegalDoc = {
 export type LegalDocId = "privacy" | "terms" | "aviso-legal";
 
 const UPDATED = "2026-09-04";
+/** Privacy alone changed to mention the YouTube streaming feature — bumping
+ *  the shared UPDATED above would wrongly date terms and aviso-legal too. */
+const PRIVACY_UPDATED = "2026-09-13";
 
 const providerList = SUBPROCESSORS.map(
   (p) => `${p.name} - ${p.role} (${p.region})`,
@@ -69,7 +78,7 @@ const providerList = SUBPROCESSORS.map(
 
 const privacyEs: LegalDoc = {
   title: "Política de privacidad",
-  updated: UPDATED,
+  updated: PRIVACY_UPDATED,
   lede: "Qué datos trata PoolClubs, para qué, quién los ve y cómo ejercer tus derechos.",
   sections: [
     {
@@ -86,6 +95,7 @@ const privacyEs: LegalDoc = {
         "Perfil: nombre con el que apareces en tu club, foto si la subes, categoría y clubes a los que perteneces.",
         "Actividad deportiva: partidos, resultados, ranking Elo y diario, retos, torneos, ejercicios registrados, reacciones y comentarios.",
         "Club: nombre, escudo, color, dirección y coordenadas si el administrador las añade.",
+        "Vídeo: si el club conecta una cámara, los partidos de torneo se retransmiten siempre en YouTube, y una partida informal se retransmite solo si el jugador marca la casilla \"Grabar esta partida\" antes de empezar. El vídeo lo aloja YouTube; nosotros solo guardamos el enlace.",
         "Técnicos: registros de error y del servidor necesarios para mantener el servicio en funcionamiento.",
         "No tratamos datos de pago: hoy no hay ningún plan de pago.",
       ],
@@ -153,7 +163,7 @@ const privacyEs: LegalDoc = {
 
 const privacyEn: LegalDoc = {
   title: "Privacy policy",
-  updated: UPDATED,
+  updated: PRIVACY_UPDATED,
   lede: "What PoolClubs processes, why, who can see it, and how to exercise your rights.",
   sections: [
     {
@@ -170,6 +180,7 @@ const privacyEn: LegalDoc = {
         "Profile: the name you appear under in your club, a photo if you upload one, your category and the clubs you belong to.",
         "Playing activity: matches, results, Elo and daily rankings, challenges, tournaments, logged drills, reactions and comments.",
         "Club: name, crest, colour, address and coordinates if the admin adds them.",
+        "Video: if the club connects a camera, tournament matches are always streamed to YouTube, and a casual game is streamed only if the player checks \"Record this game\" before it starts. The video itself is hosted by YouTube; we only store the link.",
         "Technical: error and server logs needed to keep the service running.",
         "No payment data: there is no paid plan today.",
       ],
@@ -237,7 +248,7 @@ const privacyEn: LegalDoc = {
 
 const privacyFr: LegalDoc = {
   title: "Politique de confidentialité",
-  updated: UPDATED,
+  updated: PRIVACY_UPDATED,
   lede: "Quelles données PoolClubs traite, pourquoi, qui les voit et comment exercer vos droits.",
   sections: [
     {
@@ -254,6 +265,7 @@ const privacyFr: LegalDoc = {
         "Profil : nom sous lequel vous apparaissez dans votre club, photo si vous en ajoutez une, catégorie et clubs auxquels vous appartenez.",
         "Activité sportive : matchs, résultats, classements Elo et journalier, défis, tournois, exercices enregistrés, réactions et commentaires.",
         "Club : nom, écusson, couleur, adresse et coordonnées si l'administrateur les renseigne.",
+        "Vidéo : si le club connecte une caméra, les matchs de tournoi sont toujours diffusés sur YouTube, et une partie informelle ne l'est que si le joueur coche « Enregistrer cette partie » avant de commencer. La vidéo est hébergée par YouTube ; nous ne conservons que le lien.",
         "Techniques : journaux d'erreurs et de serveur nécessaires au fonctionnement du service.",
         "Aucune donnée de paiement : il n'existe aujourd'hui aucune offre payante.",
       ],

@@ -50,7 +50,14 @@ export type PublicClubDetail = PublicClub &
  *  roster row out here is the same shape as a roster row inside a club. */
 export type PublicPlayer = Pick<
   Player,
-  "id" | "club_id" | "category" | "name" | "slug" | "avatar_url" | "is_public"
+  | "id"
+  | "club_id"
+  | "category"
+  | "name"
+  | "slug"
+  | "avatar_url"
+  | "is_public"
+  | "country"
 >;
 
 export type PublicClubSort = "members" | "name" | "new";

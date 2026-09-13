@@ -128,6 +128,28 @@ export const keys = {
     in: (clubId?: number | null) => ["club_tables", clubId] as const,
   },
 
+  /** club_youtube's connection state — channel_title / connected_at only,
+   *  see youtube.functions.ts. */
+  youtubeConnection: {
+    all: ["youtube_connection"] as const,
+    of: (clubId?: number | null) => ["youtube_connection", clubId] as const,
+  },
+
+  clubStreams: {
+    all: ["club_streams"] as const,
+    in: (clubId?: number | null) => ["club_streams", clubId] as const,
+  },
+
+  /** Just the table ids from club_streams — its own root even though it's
+   *  the same underlying rows as clubStreams above: that query is
+   *  admin-only and returns the full row shape, this one is open to any
+   *  member and returns only ids, and the two must never share a cache
+   *  entry with each other. */
+  streamedTableIds: {
+    all: ["streamed_table_ids"] as const,
+    in: (clubId?: number | null) => ["streamed_table_ids", clubId] as const,
+  },
+
   tournaments: {
     all: ["tournaments"] as const,
     in: (clubId?: number | null) => ["tournaments", clubId] as const,
@@ -219,6 +241,11 @@ export const keys = {
       ["public", "drills", f.q, f.difficulty, f.skill_type] as const,
     drill: (id?: number) => ["public", "drill", id] as const,
     search: (q?: string) => ["public", "search", q] as const,
+    /** The overlay's own reads of live_matches — see queries/public/live.ts. */
+    liveMatch: (tournamentMatchId?: string) =>
+      ["public", "live-match", tournamentMatchId] as const,
+    liveMatchByTable: (clubSlug?: string, tableId?: number) =>
+      ["public", "live-match-table", clubSlug, tableId] as const,
   },
 };
 

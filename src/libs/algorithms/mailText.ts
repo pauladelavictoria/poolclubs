@@ -1,3 +1,5 @@
+import { CONTACT_EMAIL } from "@/content/legal";
+
 /**
  * The transactional emails this app sends itself.
  *
@@ -22,12 +24,9 @@
  *  phishing vector with our name on it. */
 const SITE = "https://poolclubs.app";
 
-/** Must be a domain verified in Resend, or every send fails with a 403. */
-export const MAIL_FROM = "PoolClubs <hola@poolclubs.app>";
-
 /** Us. The one mail here that is not to a member or an admin but to whoever
  *  runs the site, because only they can hand a club over. */
-export const MAIL_OPS = "hola@poolclubs.app";
+export const MAIL_OPS = CONTACT_EMAIL;
 
 /** Names and club names are typed by people. They land inside an HTML
  *  attribute and inside element text, so they are escaped for both. */
@@ -104,7 +103,7 @@ function shell({
 
             <p style="margin:24px 0 0 0;padding-top:20px;border-top:1px solid rgba(9,11,14,0.1);font-size:13px;line-height:1.55;color:#69727e;">
               ${note} ¿Dudas? Escríbenos a
-              <a href="mailto:hola@poolclubs.app" style="color:#966c00;text-decoration:underline;">hola@poolclubs.app</a>.
+              <a href="mailto:${CONTACT_EMAIL}" style="color:#966c00;text-decoration:underline;">${CONTACT_EMAIL}</a>.
             </p>
 
           </td>
@@ -346,6 +345,41 @@ export function clubApprovedMail({ name, clubName, clubSlug }: ClubApproved) {
       url,
       cta: `Abrir ${club}`,
       note: "Recibes este correo porque pediste dar de alta este club en PoolClubs.",
+    }),
+  };
+}
+
+export type GameRecorded = {
+  name: string;
+  /** youtu.be/<broadcastId> — the same link a Watch button showed while the
+   *  game was live, now pointing at the finished VOD (§2.5). */
+  videoUrl: string;
+};
+
+/**
+ * "Your game is on YouTube." Sent once a stream_sessions row reaches
+ * 'complete' — docs/youtube-streaming.md §2.5. Fired for every participant of
+ * both a tournament fixture (always recorded, no opt-in) and a casual game
+ * whose player checked "Record this game".
+ */
+export function gameRecordingMail({ name, videoUrl }: GameRecorded) {
+  const who = escapeHtml(name);
+
+  return {
+    subject: "Tu partido ya está en YouTube",
+    text: [
+      `Hola ${name},`,
+      "",
+      "Tu partido ya está disponible en YouTube.",
+      "",
+      videoUrl,
+    ].join("\n"),
+    html: shell({
+      heading: "Tu partido ya está en YouTube",
+      lead: `Hola ${who}: tu partido ya está disponible en YouTube.`,
+      url: videoUrl,
+      cta: "Ver el partido",
+      note: "Recibes este correo porque el partido se grabó en PoolClubs.",
     }),
   };
 }

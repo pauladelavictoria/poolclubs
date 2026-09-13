@@ -29,6 +29,13 @@ export default function ClubTabs() {
         {t("club.tabs.info")}
       </AppLink>
       <AppLink
+        to="/app/$clubSlug/club/members"
+        activeProps={{ className: segmentedItem(true), "aria-current": "page" }}
+        inactiveProps={{ className: segmentedItem(false) }}
+      >
+        {t("club.tabs.members")}
+      </AppLink>
+      <AppLink
         to="/app/$clubSlug/club/tables"
         activeProps={{ className: segmentedItem(true), "aria-current": "page" }}
         inactiveProps={{ className: segmentedItem(false) }}
@@ -36,11 +43,11 @@ export default function ClubTabs() {
         {t("club.tabs.tables")}
       </AppLink>
       <AppLink
-        to="/app/$clubSlug/club/members"
+        to="/app/$clubSlug/club/streaming"
         activeProps={{ className: segmentedItem(true), "aria-current": "page" }}
         inactiveProps={{ className: segmentedItem(false) }}
       >
-        {t("club.tabs.members")}
+        {t("club.tabs.streaming")}
       </AppLink>
     </div>
   );
