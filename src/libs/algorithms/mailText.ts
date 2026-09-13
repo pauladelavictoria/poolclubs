@@ -1,4 +1,8 @@
-import { CONTACT_EMAIL } from "@/content/legal";
+// Relative rather than the `@/` alias: netlify/functions/youtube-reconcile.mts
+// imports gameRecordingMail from this file and is bundled standalone by
+// Netlify's esbuild step, outside Vite, where the alias doesn't resolve —
+// same reasoning as libs/server/resend.ts.
+import { CONTACT_EMAIL } from "../../content/legal";
 
 /**
  * The transactional emails this app sends itself.
