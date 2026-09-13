@@ -183,8 +183,7 @@ export default function OverlayScoreboard({
             <span
               className="text-[clamp(0.9rem,2.1vmin,1.4rem)] font-semibold whitespace-nowrap"
               style={{
-                color: discipline === "8ball" ? "#fff" : "#000",
-                opacity: 0.75,
+                color: discipline === "9ball" ? "#000" : "#fff",
               }}
             >
               ({raceTo})

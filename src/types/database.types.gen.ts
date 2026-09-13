@@ -162,6 +162,51 @@ export type Database = {
           },
         ]
       }
+      club_streams: {
+        Row: {
+          club_id: number
+          id: number
+          ingestion_address: string
+          label: string
+          stream_key_enc: string
+          table_id: number
+          youtube_stream_id: string
+        }
+        Insert: {
+          club_id: number
+          id?: number
+          ingestion_address: string
+          label: string
+          stream_key_enc: string
+          table_id: number
+          youtube_stream_id: string
+        }
+        Update: {
+          club_id?: number
+          id?: number
+          ingestion_address?: string
+          label?: string
+          stream_key_enc?: string
+          table_id?: number
+          youtube_stream_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_streams_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_streams_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: true
+            referencedRelation: "club_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_tables: {
         Row: {
           brand: string | null
@@ -207,6 +252,41 @@ export type Database = {
             foreignKeyName: "club_tables_club_id_fkey"
             columns: ["club_id"]
             isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_youtube: {
+        Row: {
+          channel_id: string
+          channel_title: string
+          club_id: number
+          connected_at: string
+          connected_by: string
+          refresh_token_enc: string
+        }
+        Insert: {
+          channel_id: string
+          channel_title: string
+          club_id: number
+          connected_at?: string
+          connected_by: string
+          refresh_token_enc: string
+        }
+        Update: {
+          channel_id?: string
+          channel_title?: string
+          club_id?: number
+          connected_at?: string
+          connected_by?: string
+          refresh_token_enc?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_youtube_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: true
             referencedRelation: "clubs"
             referencedColumns: ["id"]
           },
@@ -556,6 +636,8 @@ export type Database = {
           player_2_score: number
           player_2b_id: number | null
           race_to: number
+          record_opt_in: boolean
+          record_privacy: string | null
           started_at: string
           table_id: number | null
           tournament_match_id: string | null
@@ -575,6 +657,8 @@ export type Database = {
           player_2_score?: number
           player_2b_id?: number | null
           race_to?: number
+          record_opt_in?: boolean
+          record_privacy?: string | null
           started_at?: string
           table_id?: number | null
           tournament_match_id?: string | null
@@ -594,6 +678,8 @@ export type Database = {
           player_2_score?: number
           player_2b_id?: number | null
           race_to?: number
+          record_opt_in?: boolean
+          record_privacy?: string | null
           started_at?: string
           table_id?: number | null
           tournament_match_id?: string | null
@@ -862,6 +948,63 @@ export type Database = {
             columns: ["tournament_id"]
             isOneToOne: false
             referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stream_sessions: {
+        Row: {
+          broadcast_id: string
+          club_stream_id: number
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          id: number
+          live_match_id: string
+          notified_at: string | null
+          privacy_status: string
+          state: string
+          went_live_at: string | null
+        }
+        Insert: {
+          broadcast_id: string
+          club_stream_id: number
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: number
+          live_match_id: string
+          notified_at?: string | null
+          privacy_status: string
+          state?: string
+          went_live_at?: string | null
+        }
+        Update: {
+          broadcast_id?: string
+          club_stream_id?: number
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: number
+          live_match_id?: string
+          notified_at?: string | null
+          privacy_status?: string
+          state?: string
+          went_live_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_sessions_club_stream_id_fkey"
+            columns: ["club_stream_id"]
+            isOneToOne: false
+            referencedRelation: "club_streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_sessions_live_match_id_fkey"
+            columns: ["live_match_id"]
+            isOneToOne: true
+            referencedRelation: "live_matches"
             referencedColumns: ["id"]
           },
         ]
