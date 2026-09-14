@@ -366,7 +366,7 @@
   "club.phonePlaceholder": "+33 1 00 00 00 00",
   "club.tablesInfo": "Les tables",
   "club.tablesInfoPlaceholder": "Combien de tables, de quel type et de quelle taille. Ex. : 4 tables de pool de 9 pieds, 2 de 8 pieds et un billard français.",
-  "club.tablesFactsTitle": "Les tables, une à une",
+  "club.tablesFactsCount": "{n} tables",
   "club.floorPlanTitle": "Plan de la salle",
   "club.photos.title": "Photos du club",
   "club.photos.cover": "Couverture",

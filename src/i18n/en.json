@@ -366,7 +366,7 @@
   "club.phonePlaceholder": "+44 20 0000 0000",
   "club.tablesInfo": "The tables",
   "club.tablesInfoPlaceholder": "How many tables, what kind and what size. E.g. 4 nine-foot pool tables, 2 eight-foot and one snooker table.",
-  "club.tablesFactsTitle": "The tables, one by one",
+  "club.tablesFactsCount": "{n} tables",
   "club.floorPlanTitle": "Floor plan",
   "club.photos.title": "Club photos",
   "club.photos.cover": "Cover",

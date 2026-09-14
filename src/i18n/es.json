@@ -366,7 +366,7 @@
   "club.phonePlaceholder": "+34 600 00 00 00",
   "club.tablesInfo": "Las mesas",
   "club.tablesInfoPlaceholder": "Cuántas mesas, de qué tipo y de qué medida. Ej.: 4 mesas de pool de 9 pies, 2 de 8 pies y una de billar francés.",
-  "club.tablesFactsTitle": "Las mesas, una a una",
+  "club.tablesFactsCount": "{n} mesas",
   "club.floorPlanTitle": "Plano de la sala",
   "club.photos.title": "Fotos del club",
   "club.photos.cover": "Portada",

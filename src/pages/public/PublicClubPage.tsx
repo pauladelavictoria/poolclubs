@@ -317,10 +317,12 @@ export function ClubInfoTab() {
   const club = useClub();
 
   // Read here rather than inside ClubPhotos so the empty case below can see
-  // whether there is anything on this tab at all.
-  // slice(1): the leading photo is already the hero's banner
+  // whether there is anything on this tab at all. The cover stays in this
+  // list — ClubPhotos drops it from the thumbnail strip (it's already the
+  // hero's banner) but keeps it in the lightbox, so arrowing left from the
+  // first thumbnail still reaches it.
   const { data: storedPhotos = [] } = useQuery(clubPhotosQuery(club.id));
-  const photos = orderPhotos(storedPhotos, club.photo_order).slice(1);
+  const photos = orderPhotos(storedPhotos, club.photo_order);
   const { data: tables = [] } = useQuery(publicClubTablesQuery(club.id));
 
   const hasVisit = Boolean(
@@ -331,7 +333,7 @@ export function ClubInfoTab() {
     tables.some((table) => table.type || table.map_x != null),
   );
 
-  if (photos.length === 0 && !hasVisit) {
+  if (photos.length <= 1 && !hasVisit) {
     return <Empty text={t("public.publicClub.noInfo")} />;
   }
 
@@ -491,7 +493,9 @@ function ClubHero({
   // order the info tab's gallery and the directory card use, so all three
   // agree about which photo leads.
   const { data: storedPhotos = [] } = useQuery(clubPhotosQuery(club.id));
-  const cover = orderPhotos(storedPhotos, club.photo_order)[0] ?? null;
+  const orderedPhotos = orderPhotos(storedPhotos, club.photo_order);
+  const cover = orderedPhotos[0] ?? null;
+  const [open, setOpen] = useState<number | null>(null);
 
   return (
     <section className="border-b border-hairline">
@@ -505,7 +509,12 @@ function ClubHero({
           page's own surface. The photo gets to be a photograph and every ink
           token keeps the contrast it was measured for. */}
       {cover && (
-        <div className="relative h-40 overflow-hidden sm:h-56">
+        <button
+          type="button"
+          onClick={() => setOpen(0)}
+          aria-label={t("public.publicClub.viewPhoto", { n: "1" })}
+          className="relative block h-40 w-full overflow-hidden sm:h-56"
+        >
           <img
             src={cover.url}
             // Decorative: the club's name is the heading directly below.
@@ -513,8 +522,15 @@ function ClubHero({
             aria-hidden
             className="h-full w-full object-cover"
           />
-        </div>
+        </button>
       )}
+
+      <PhotoLightbox
+        photos={orderedPhotos}
+        index={open}
+        onClose={() => setOpen(null)}
+        onIndex={setOpen}
+      />
       {/* `relative` is load-bearing, not decoration. The banner above is
           positioned (it has to be, to clip the photo), so it paints in the
           positioned layer above every non-positioned sibling — which cut off
@@ -611,7 +627,11 @@ function ClubPhotos({ photos }: { photos: ClubPhoto[] }) {
   const { t } = useT();
   const [open, setOpen] = useState<number | null>(null);
 
-  if (photos.length === 0) return null;
+  // The cover is already the hero's banner, so it doesn't get a second
+  // thumbnail here — but it stays in `photos` for the lightbox, one arrow
+  // key left of the first thumbnail (index 1 there, index 0 in `photos`).
+  const strip = photos.slice(1);
+  if (strip.length === 0) return null;
 
   return (
     <section className="mt-8">
@@ -620,11 +640,11 @@ function ClubPhotos({ photos }: { photos: ClubPhoto[] }) {
           card rises on hover — and the shadow above it — was cut off against
           the top edge of the scroller. */}
       <div className="no-bar -mx-4 mt-2 flex snap-x gap-3 overflow-x-auto px-4 py-2 sm:-mx-6 sm:px-6">
-        {photos.map((photo, i) => (
+        {strip.map((photo, i) => (
           <button
             key={photo.path}
             type="button"
-            onClick={() => setOpen(i)}
+            onClick={() => setOpen(i + 1)}
             aria-label={t("public.publicClub.viewPhoto", { n: String(i + 1) })}
             className="lift shrink-0 snap-start overflow-hidden rounded-card border border-hairline bg-felt-raised"
           >
@@ -875,7 +895,7 @@ function ClubTablesFacts({ tables }: { tables: PublicClubTable[] }) {
   return (
     <Card className="p-4">
       <h3 className="pb-2 text-body font-medium text-ink">
-        {t("club.tablesFactsTitle")}
+        {t("tables.title")}
       </h3>
       <ul className="divide-y divide-hairline">
         {rows.map((row) => (
@@ -883,7 +903,11 @@ function ClubTablesFacts({ tables }: { tables: PublicClubTable[] }) {
             key={row.labels.join(",")}
             className="flex items-baseline justify-between gap-3 py-1.5"
           >
-            <span className="text-body text-ink">{row.labels.join(", ")}</span>
+            <span className="text-body text-ink">
+              {row.labels.length > 1
+                ? t("club.tablesFactsCount", { n: row.labels.length })
+                : row.labels[0]}
+            </span>
             <span className="text-right text-caption text-ink-soft">
               {[
                 [

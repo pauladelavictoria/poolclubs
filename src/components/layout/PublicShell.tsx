@@ -1,7 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { headlineClasses } from "@/components/layout/publicTitleStyles";
 import { Link, type LinkProps } from "@tanstack/react-router";
-import { LuLogOut, LuMenu, LuSearch, LuX } from "react-icons/lu";
+import { LuLogIn, LuLogOut, LuMenu, LuSearch, LuX } from "react-icons/lu";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
 import { buttonClasses } from "@/components/ui/buttonStyles";
@@ -122,17 +122,19 @@ export function PublicNav() {
               {/* Signed in, the way back into the app was one click deep in the
                   avatar popover. Spelled out here from md up, where there is
                   room; on a phone the drawer's footer button is the same link,
-                  and the popover row stays either way. */}
-              <Link
-                to="/app"
-                className={buttonClasses({
-                  variant: "secondary",
-                  size: "sm",
-                  className: "hidden shrink-0 md:inline-flex",
-                })}
-              >
-                {t(enterKey)}
-              </Link>
+                  and the popover row stays either way.
+                  A plain wrapper carries the hidden/md:block switch: the
+                  button's own classes always include an unconditioned
+                  inline-flex, which would otherwise tie against "hidden" on
+                  the same element and win regardless of viewport. */}
+              <div className="hidden shrink-0 md:block">
+                <Link
+                  to="/app"
+                  className={buttonClasses({ variant: "secondary", size: "sm" })}
+                >
+                  {t(enterKey)}
+                </Link>
+              </div>
               <PublicUserMenu />
             </>
           ) : (
@@ -265,10 +267,19 @@ function PublicUserMenu() {
             )}
           </div>
 
-          {/* No "go to the app" row: the bar spells that out next to the avatar
-              from md up, and on a phone the drawer's footer button does. A
-              popover under a button that says the same thing is one menu the
-              reader has to open to learn nothing. */}
+          {/* On a phone there is no room left in the bar for this row, so the
+              popover carries it; from md up the bar already spells it out next
+              to the avatar, so this row would say the same thing twice. */}
+          <Link
+            to="/app"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={`${menuItemClasses} md:hidden`}
+          >
+            <LuLogIn className="h-[18px] w-[18px] shrink-0" aria-hidden />
+            {t("auth.openApp")}
+          </Link>
+
           <button
             type="button"
             role="menuitem"
