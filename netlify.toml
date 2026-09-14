@@ -10,6 +10,13 @@
 [build.environment]
   NODE_VERSION = "22.6.0"
 
+# Vite fingerprints every filename under /assets with a content hash, so it's
+# safe to tell browsers and the CDN to keep it forever.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 # VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY have to be set in the Netlify UI
 # (Site configuration → Environment variables). Both are public by design — the
 # anon key is what RLS is for — but the build needs them present, and the server

@@ -54,6 +54,10 @@ export default function NavRail({ onMore }: { onMore: () => void }) {
           key={String(to)}
           to={to}
           activeOptions={{ exact: end }}
+          // Eager, not just on hover: these are the four tabs a thumb reaches
+          // for next, always on screen, so there's no "intent" signal to wait
+          // for the way there is for a link buried in a list.
+          preload="render"
           viewTransition
           inactiveProps={{ className: tab({ isActive: false }) }}
           activeProps={{ className: tab({ isActive: true }) }}

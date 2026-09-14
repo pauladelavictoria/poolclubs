@@ -1,13 +1,4 @@
-import { useMemo } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { Suspense, lazy, useMemo } from "react";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useGames } from "@/hooks/useGames";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,9 +11,13 @@ import { Stat } from "@/components/ui/Stat";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { useChartTheme } from "@/libs/theme/chartTheme";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
+
+// Lazy: recharts is large and only this page (plus DrillProgressChart) uses
+// it, so a static import here would put it in the shared chunk every route
+// pulls in.
+const PlayerRatingChart = lazy(() => import("./PlayerRatingChart"));
 
 /** A player's whole history, not a page of it — the charts are cumulative. */
 export const PLAYER_GAMES_LIMIT = 1000;
@@ -33,7 +28,6 @@ export const PLAYER_GAMES_LIMIT = 1000;
  *  "Players" crumb back to the list. */
 export default function PlayerDetailPage({ playerId }: { playerId: number }) {
   const { t, locale } = useT();
-  const chart = useChartTheme();
 
   const { user } = useAuth();
   const { data: players, isLoading: isLoadingPlayers } = usePlayers();
@@ -178,56 +172,16 @@ export default function PlayerDetailPage({ playerId }: { playerId: number }) {
               />
             </Card>
 
-            <Card className="overflow-hidden">
-              <CardHeader title={t("players.winsOverTime")} />
-              <div className="h-64 w-full p-3 text-caption md:h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={stats.chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
-                    <XAxis
-                      dataKey="date"
-                      stroke={chart.axis}
-                      tick={{ fill: chart.axis, fontSize: 14 }}
-                      axisLine={{ stroke: chart.grid }}
-                      tickLine={{ stroke: chart.grid }}
-                      tickFormatter={(val) => val.split(",")[0]}
-                    />
-                    <YAxis
-                      stroke={chart.axis}
-                      tick={{ fill: chart.axis, fontSize: 14 }}
-                      domain={[0, 100]}
-                      axisLine={{ stroke: chart.grid }}
-                      tickLine={{ stroke: chart.grid }}
-                      tickFormatter={(val) => `${val}%`}
-                    />
-                    <Tooltip
-                      contentStyle={chart.tooltip}
-                      itemStyle={chart.tooltipItem}
-                      formatter={(value) => `${value}%`}
-                      itemSorter={(i) => (i.dataKey === "gameWinRate" ? -1 : 1)}
-                    />
-                    <Line
-                      type="step"
-                      name={t("players.racks")}
-                      dataKey="rackWinRate"
-                      stroke={chart.series.racks}
-                      strokeWidth={2}
-                      strokeDasharray="3 3"
-                      dot={false}
-                    />
-                    <Line
-                      type="step"
-                      name={t("players.games")}
-                      dataKey="gameWinRate"
-                      stroke={chart.series.games}
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 5 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
+            <Suspense
+              fallback={
+                <Card className="overflow-hidden">
+                  <CardHeader title={t("players.winsOverTime")} />
+                  <div className="h-64 w-full p-3 text-caption md:h-80" />
+                </Card>
+              }
+            >
+              <PlayerRatingChart chartData={stats.chartData} />
+            </Suspense>
 
             <Card className="overflow-hidden">
               <CardHeader title={t("games.history")} />

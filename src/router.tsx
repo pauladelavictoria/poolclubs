@@ -27,6 +27,9 @@ export function getRouter() {
     // default the router would consider preloaded data fresh and never let the
     // query cache decide, and the two would disagree about what is stale.
     defaultPreloadStaleTime: 0,
+    // Matches queryClient.ts's gcTime, so the router doesn't evict a visited
+    // route's match while the query cache underneath it is still warm.
+    defaultGcTime: 10 * 60_000,
     defaultErrorComponent: RouteError,
     defaultNotFoundComponent: NotFound,
     // No route defines its own pendingComponent, so without this a slow
