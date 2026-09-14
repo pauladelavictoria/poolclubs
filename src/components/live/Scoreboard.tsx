@@ -285,10 +285,10 @@ export default function Scoreboard({
             className="h-[var(--scoreboard-face)] w-[var(--scoreboard-face)] shrink-0"
           />
           <span
-            className="text-center font-medium uppercase leading-tight tracking-wide text-ink-faint"
+            className="text-center font-medium leading-tight tracking-wide text-ink-faint"
             style={{ fontSize: "var(--text-scoreboard-label)" }}
           >
-            {t("live.raceTo", { n: match.race_to })}
+            {t("live.raceToShort", { n: match.race_to })}
           </span>
           {variant === "spectate" && (
             <span className="flex items-center gap-1.5 text-caption text-ink-faint">

@@ -169,6 +169,10 @@ export const keys = {
       ["tournament", "pending-matches", playerId, clubId] as const,
     myEntries: (playerId?: number, clubId?: number | null) =>
       ["tournament", "my-entries", playerId, clubId] as const,
+    /** Every pending fixture of every running league in the club — what a
+     *  table offers to tag a match with, not just the signed-in player's own. */
+    leagueFixtures: (clubId?: number | null) =>
+      ["tournament", "league-fixtures", clubId] as const,
   },
 
   comments: {

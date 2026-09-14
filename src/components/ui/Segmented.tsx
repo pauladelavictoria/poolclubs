@@ -9,12 +9,14 @@ export function Segmented<T extends string>({
   onChange,
   options,
   label,
+  disabled = false,
   className = "",
 }: {
   value: T;
   onChange: (value: T) => void;
   options: { value: T; label: string; icon?: React.ReactNode }[];
   label: string;
+  disabled?: boolean;
   className?: string;
 }) {
   return (
@@ -31,6 +33,7 @@ export function Segmented<T extends string>({
             type="button"
             role="tab"
             aria-selected={selected}
+            disabled={disabled}
             onClick={() => onChange(option.value)}
             className={segmentedItem(selected)}
           >

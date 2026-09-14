@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
 import {
   gameTournamentsQuery,
+  leagueFixturesQuery,
   myPendingMatchesQuery,
   myTournamentIdsQuery,
   tournamentQuery,
@@ -72,6 +73,12 @@ export const useMyTournamentIds = () => {
 export const useMyPendingMatches = () => {
   const { player, activeClubId } = useAuth();
   return useQuery(myPendingMatchesQuery(player?.id, activeClubId));
+};
+
+/** Every fixture still to play in a running league — see leagueFixturesQuery. */
+export const useLeagueFixtures = () => {
+  const { activeClubId } = useAuth();
+  return useQuery(leagueFixturesQuery(activeClubId));
 };
 
 type NewTournament = {

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { getRouteApi, Navigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { getRouteApi } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { LuMonitorSmartphone } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +7,7 @@ import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { useStreamedTableIds } from "@/hooks/useClubYoutube";
+import { useLeagueFixtures } from "@/hooks/useTournaments";
 import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
 import Scoreboard from "@/components/live/Scoreboard";
 import StartMatchForm from "@/components/live/StartMatchForm";
@@ -36,7 +37,7 @@ const route = getRouteApi("/app/_authed/$clubSlug/tables/$tableId");
  */
 export default function TablePage() {
   const { t } = useT();
-  const { clubSlug, tableId } = route.useParams();
+  const { tableId } = route.useParams();
   const id = Number(tableId);
   const { player, isClubAdmin } = useAuth();
   const { data: tables, isLoading } = useClubTables();
@@ -44,6 +45,7 @@ export default function TablePage() {
   const { data: players } = usePlayers();
   const { startMatch } = useManageLiveMatch();
   const { data: streamedTableIds } = useStreamedTableIds();
+  const { data: leagueFixtures } = useLeagueFixtures();
   const appNavigate = useAppNavigate();
 
   // The club's setting as it stands. Read, not owned: /night is where it is
@@ -63,6 +65,27 @@ export default function TablePage() {
   const dialogRef = useDialog(starting);
   const close = () => setStarting(false);
 
+  const match = (live ?? []).find((m) => m.table_id === id);
+  const pinned = readKioskTable() === id;
+
+  // Pinned, this table's tablet belongs on the scoreboard the moment a match
+  // lands on it — its own, or one started from someone else's phone. An
+  // effect, not a rendered <Navigate>: that component reads "should I
+  // navigate" off its whole props object by reference (see useNavigate.js),
+  // which JSX recreates on every render regardless of what's inside it, so
+  // it renavigates every single render — a tight loop with no error in it
+  // anywhere. An effect keyed on the match id only fires when the id itself
+  // changes, which is the actual question here.
+  useEffect(() => {
+    if (pinned && match) {
+      appNavigate("/app/$clubSlug/live/$liveId", { liveId: match.id });
+    }
+    // appNavigate is a fresh closure every render (useAppNavigate does not
+    // memoize it); only pinned-ness and which match matter for when this
+    // should fire.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinned, match?.id]);
+
   if (isLoading) return <PageSkeleton />;
 
   const table = (tables ?? []).find((tbl) => tbl.id === id);
@@ -73,12 +96,20 @@ export default function TablePage() {
       </div>
     );
 
-  const match = (live ?? []).find((m) => m.table_id === id);
+  // The effect above is already on its way to the scoreboard; nothing here
+  // is worth painting for the one frame before it lands.
+  if (pinned && match) return null;
+
   const roster = players ?? [];
   const seat = (seatId: number | null) =>
     seatId === null ? undefined : roster.find((p) => p.id === seatId);
-  const pinned = readKioskTable() === id;
   const next = groupFor(id);
+
+  // Unpinned, there is no reactive redirect above to fall back on — this is
+  // the only way there.
+  const goLive = (liveId: string) => {
+    if (!pinned) appNavigate("/app/$clubSlug/live/$liveId", { liveId });
+  };
 
   /** The offer, taken. Same shape as every other way a match is started, so the
    *  row the button makes is the match the names above it described. */
@@ -93,24 +124,10 @@ export default function TablePage() {
       {
         // Straight onto the board. A tablet on the rail is where this was
         // tapped, and the next thing anybody wants from it is the score.
-        onSuccess: (row) =>
-          appNavigate("/app/$clubSlug/live/$liveId", { liveId: row.id }),
+        onSuccess: (row) => goLive(row.id),
         onError: (err) =>
           toast.error(t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS))),
       },
-    );
-
-  // A pinned tablet is this table's scorer, not its audience. Watch mode is for
-  // somebody who opened the table from the list on their own phone; the device
-  // on the rail belongs on the screen with the buttons, and there is no tap
-  // between the two worth asking a player mid-rack for.
-  if (pinned && match)
-    return (
-      <Navigate
-        to="/app/$clubSlug/live/$liveId"
-        params={{ clubSlug, liveId: match.id }}
-        replace
-      />
     );
 
   return (
@@ -242,6 +259,7 @@ export default function TablePage() {
             opponents={roster.filter((p) => p.id !== player.id)}
             table={table}
             streamed={(streamedTableIds ?? []).includes(table.id)}
+            leagueFixtures={leagueFixtures}
             onSubmit={(values) =>
               startMatch.mutate(
                 {
@@ -254,13 +272,12 @@ export default function TablePage() {
                   raceTo: values.raceTo,
                   recordOptIn: values.recordOptIn,
                   recordPrivacy: values.recordPrivacy,
+                  tournamentMatchId: values.tournamentMatchId,
                 },
                 {
                   onSuccess: (row) => {
                     close();
-                    appNavigate("/app/$clubSlug/live/$liveId", {
-                      liveId: row.id,
-                    });
+                    goLive(row.id);
                   },
                   onError: (err) =>
                     toast.error(

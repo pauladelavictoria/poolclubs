@@ -7,6 +7,10 @@ export type PendingMatch = Pick<TournamentMatch, "id" | "tournament_id"> & {
   tournament: Pick<Tournament, "id" | "name">;
 };
 
+export type LeagueFixture = Pick<TournamentMatch, "id" | "p1_id" | "p2_id"> & {
+  tournament: Pick<Tournament, "id" | "name" | "discipline" | "race_to">;
+};
+
 /** A row on the index: the tournament plus how many have entered it. */
 export type TournamentListItem = Tournament & {
   tournament_players: { count: number }[];
@@ -139,5 +143,33 @@ export const myPendingMatchesQuery = (
         .throwOnError();
 
       return data as unknown as PendingMatch[];
+    },
+  });
+
+/**
+ * Every unplayed fixture of every running league in the club, for the tablet
+ * to offer: whichever two names a table picks, this is what says "that pair
+ * is also a league fixture" and hands back the tournament to play it as.
+ */
+export const leagueFixturesQuery = (clubId: number | null | undefined) =>
+  queryOptions({
+    queryKey: keys.tournament.leagueFixtures(clubId),
+    enabled: !!clubId,
+    queryFn: async () => {
+      const supabase = getSupabase();
+      const { data } = await supabase
+        .from("tournament_matches")
+        .select(
+          "id, p1_id, p2_id, tournament:tournaments!inner(id, name, discipline, race_to)",
+        )
+        .eq("tournament.club_id", clubId!)
+        .eq("tournament.format", "league")
+        .eq("tournament.status", "running")
+        .is("winner_id", null)
+        .not("p1_id", "is", null)
+        .not("p2_id", "is", null)
+        .throwOnError();
+
+      return data as unknown as LeagueFixture[];
     },
   });

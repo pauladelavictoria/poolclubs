@@ -16,6 +16,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useWhoIsHere } from "@/hooks/useNight";
 import { DEFAULT_SETUP, type DaySetup } from "@/libs/algorithms/today";
+import type { LeagueFixture } from "@/queries/tournaments";
 import { useT } from "@/i18n";
 
 /**
@@ -38,6 +39,7 @@ export default function StartMatchForm({
   table,
   tables,
   streamed = false,
+  leagueFixtures,
   onSubmit,
   onCancel,
   isSubmitting,
@@ -53,6 +55,10 @@ export default function StartMatchForm({
   table?: ClubTable;
   /** Offer a choice of these. Free tables only; the caller knows which. */
   tables?: ClubTable[];
+  /** Every pending fixture of a running league in the club. Singles picked
+   *  who happen to match one are offered the fixture's own race and
+   *  discipline, and a live match tagged with it — see useLeagueFixtures. */
+  leagueFixtures?: LeagueFixture[];
   /** Whether `table` has a camera — docs/youtube-streaming.md §2.5. Only
    *  meaningful together with `table`: a locked-opponent start (an accepted
    *  challenge, picked up from a phone rather than the table's own tablet)
@@ -78,6 +84,9 @@ export default function StartMatchForm({
     tableId: number | null;
     recordOptIn: boolean;
     recordPrivacy: "public" | "unlisted" | null;
+    /** Set when this pair also has a pending league fixture and the toggle
+     *  below was left on — finishing then files the fixture too. */
+    tournamentMatchId?: string;
   }) => void;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -128,6 +137,12 @@ export default function StartMatchForm({
   const [recordPrivacy, setRecordPrivacy] = useState<"public" | "unlisted">(
     "unlisted",
   );
+  // Which matched fixture the toggle below was turned back off for — not a
+  // plain boolean, so switching opponents clears a stale "off" the same way
+  // it clears a stale match: the id it was set for no longer applies.
+  const [declinedFixtureId, setDeclinedFixtureId] = useState<string | null>(
+    null,
+  );
 
   // An admin is a player and belongs in their own list; the device is not one.
   // Sorted in with everybody else rather than pinned to the top: whoever is in
@@ -135,8 +150,11 @@ export default function StartMatchForm({
   // the head of a list reads as the answer.
   const sideOne = isDevice ? roster : [...roster, me].sort(byPresenceThenName);
 
+  // Matched against the same list the select for side two renders — whoever
+  // can be side one can be side two, `sideOne` for both despite the name.
   const opponent =
-    lockedOpponent ?? roster.find((p) => String(p.id) === opponentId);
+    lockedOpponent ??
+    (forOthers ? sideOne : roster).find((p) => String(p.id) === opponentId);
   const player1 = forOthers
     ? (sideOne.find((p) => String(p.id) === player1Id) ?? null)
     : me;
@@ -152,6 +170,21 @@ export default function StartMatchForm({
     mode === "doubles"
       ? (pool.find((p) => String(p.id) === partner2Id) ?? null)
       : null;
+
+  // Singles only — a league fixture has no partner seats to match against.
+  const fixture =
+    mode === "single" && player1 && opponent
+      ? leagueFixtures?.find(
+          (f) =>
+            (f.p1_id === player1!.id && f.p2_id === opponent.id) ||
+            (f.p1_id === opponent.id && f.p2_id === player1!.id),
+        )
+      : undefined;
+  const forLeague = !!fixture && fixture.id !== declinedFixtureId;
+  // The fixture's own terms while it is in play — a league match is not
+  // somebody's to shorten because the stepper is right there.
+  const effectiveDiscipline = forLeague ? fixture!.tournament.discipline : discipline;
+  const effectiveRaceTo = forLeague ? fixture!.tournament.race_to : Number(raceTo);
 
   const race = Number(raceTo);
   /** Clamped here rather than left to the input's min/max, which only the
@@ -172,15 +205,9 @@ export default function StartMatchForm({
     !!opponent &&
     pairsReady &&
     !duplicate &&
-    Number.isInteger(race) &&
-    race >= 1 &&
-    race <= 50;
-
-  const where = table
-    ? t("live.onTable", { name: table.label })
-    : tables?.length
-      ? t("live.pickTable")
-      : t("live.noFreeTables");
+    Number.isInteger(effectiveRaceTo) &&
+    effectiveRaceTo >= 1 &&
+    effectiveRaceTo <= 50;
 
   return (
     <form
@@ -193,27 +220,24 @@ export default function StartMatchForm({
           player2: opponent!,
           partner1,
           partner2,
-          discipline,
-          raceTo: race,
+          discipline: effectiveDiscipline,
+          raceTo: effectiveRaceTo,
           // A match with no table is a real thing in a busy club, and it is
           // what "every table is taken but we are playing anyway" writes.
           tableId: table?.id ?? (tableId ? Number(tableId) : null),
           recordOptIn: streamed && recordOptIn,
           recordPrivacy: streamed && recordOptIn ? recordPrivacy : null,
+          tournamentMatchId: forLeague ? fixture!.id : undefined,
         });
       }}
     >
-      <div>
-        <h2 className="text-h3 font-semibold text-ink">{t("live.start")}</h2>
-        <p className="text-caption text-ink-faint">{where}</p>
-      </div>
+      <h2 className="text-h3 font-semibold text-ink">{t("live.start")}</h2>
 
       {/* What the match is, before who is in it. Format decides whether there
           are two seats or four, so asking it after the players is asking them
           to fill in a form that changes shape underneath them. */}
       <div className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-card border border-hairline bg-felt-raised p-3">
         <div className="space-y-1.5">
-          <Label>{t("live.format")}</Label>
           <Segmented
             value={mode}
             onChange={setMode}
@@ -226,11 +250,11 @@ export default function StartMatchForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label>{t("live.discipline")}</Label>
           <Segmented
-            value={discipline}
+            value={effectiveDiscipline}
             onChange={setDiscipline}
             label={t("live.discipline")}
+            disabled={forLeague}
             options={DISCIPLINES.map((d) => ({
               value: d,
               label: t(`discipline.${d}`),
@@ -239,7 +263,6 @@ export default function StartMatchForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="live-race">{t("live.race")}</Label>
           {/* The tablet on the rail is the one that sets this up, and it has no
               keyboard worth opening for a number under fifty — the native
               spinner being two arrows a few pixels tall. The field stays
@@ -250,21 +273,22 @@ export default function StartMatchForm({
               variant="secondary"
               aria-label={t("live.raceDown")}
               onClick={() => stepRace(-1)}
-              disabled={isSubmitting || race <= 1}
+              disabled={isSubmitting || forLeague || race <= 1}
               className="h-11 w-11 px-0"
             >
               <LuMinus className="h-4 w-4" aria-hidden />
             </Button>
             <Input
               id="live-race"
+              aria-label={t("live.race")}
               type="number"
               inputMode="numeric"
               min={1}
               max={50}
-              value={raceTo}
+              value={effectiveRaceTo}
               onChange={(e) => setRaceTo(e.target.value)}
               className="h-11 w-16 text-center font-mono"
-              disabled={isSubmitting}
+              disabled={isSubmitting || forLeague}
               required
             />
             <Button
@@ -272,7 +296,7 @@ export default function StartMatchForm({
               variant="secondary"
               aria-label={t("live.raceUp")}
               onClick={() => stepRace(1)}
-              disabled={isSubmitting || race >= 50}
+              disabled={isSubmitting || forLeague || race >= 50}
               className="h-11 w-11 px-0"
             >
               <LuPlus className="h-4 w-4" aria-hidden />
@@ -366,7 +390,11 @@ export default function StartMatchForm({
               required
             >
               <option value="">{t("common.select")}</option>
-              {roster.map((p) => (
+              {/* Whoever can be side one can be side two — an admin or the
+                  device is as often filing their own match as somebody
+                  else's, and "you" only ever showing up on the left would
+                  leave you unable to play as the opponent. */}
+              {(forOthers ? sideOne : roster).map((p) => (
                 <option key={p.id} value={p.id}>
                   {label(p)}
                 </option>
@@ -395,6 +423,23 @@ export default function StartMatchForm({
           )}
         </div>
       </div>
+
+      {/* Surfaces once the two names picked above also happen to be a pending
+          league fixture — on by default, since that is why the tablet knows
+          their race and discipline at all. Turning it off plays the same two
+          people as a normal casual game instead. */}
+      {fixture && (
+        <div className="rounded-card border border-hairline p-3">
+          <Toggle
+            checked={forLeague}
+            onChange={(checked) =>
+              setDeclinedFixtureId(checked ? null : fixture.id)
+            }
+            label={t("live.forLeague", { name: fixture.tournament.name })}
+            disabled={isSubmitting}
+          />
+        </div>
+      )}
 
       {duplicate && (
         <p className="text-caption text-strike">{t("games.duplicatePlayer")}</p>

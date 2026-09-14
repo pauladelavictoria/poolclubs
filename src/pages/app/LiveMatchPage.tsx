@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { getRouteApi, Navigate, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { LuExpand, LuTrash2 } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,7 +40,8 @@ export default function LiveMatchPage() {
   const navigate = useNavigate();
   const { player, isClubAdmin } = useAuth();
   const { data: players } = usePlayers();
-  const pinned = readKioskTable() !== null;
+  const kioskTableId = readKioskTable();
+  const pinned = kioskTableId !== null;
   // Polled only there: the tablet on the rail is the one screen that finds out
   // the match is over by nobody telling it.
   const { data: match, isLoading } = useLiveMatch(liveId, { poll: pinned });
@@ -84,36 +85,67 @@ export default function LiveMatchPage() {
   const { ref, isFullscreen, toggle } = useFullscreen<HTMLDivElement>();
   const appNavigate = useAppNavigate();
 
+  // Worked out ahead of every early return below, so the two effects that
+  // follow can read them unconditionally — see the note on each effect for
+  // why this is an effect and not a rendered <Navigate>.
+  const freedTable = freed
+    ? (tables ?? []).find((tbl) => tbl.id === freed.tableId)
+    : undefined;
+  const freedPaired = freed ? groupFor(freed.tableId) : undefined;
+  const freedWinnerStays =
+    freed !== null &&
+    freedPaired === undefined &&
+    freed.stays !== null &&
+    waiting.length === 1;
+  const freedGroup =
+    freed !== null
+      ? (freedPaired ??
+        (freedWinnerStays ? [freed.stays!, waiting[0]] : undefined))
+      : undefined;
+  // Nobody waiting, or the table is gone: there is nothing to offer and this
+  // page has no match left to show.
+  const freedGone = freed !== null && (!freedTable || !freedGroup);
+
+  // <Navigate> compares its whole props object by reference (see
+  // useNavigate.js), which JSX recreates on every render regardless of what
+  // is inside it — so it renavigates every single render, a tight loop with
+  // no error in it anywhere. An effect keyed on the actual question (is
+  // there still something to offer here) only fires when that changes.
+  useEffect(() => {
+    if (!freedGone || !freed) return;
+    if (pinned) {
+      appNavigate("/app/$clubSlug/tables/$tableId", {
+        tableId: freed.tableId,
+      });
+    } else {
+      appNavigate("/app/$clubSlug");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [freedGone, pinned, freed?.tableId]);
+
+  // Same reasoning as above — the other half of the bounce this page and
+  // TablePage's own redirect make between them.
+  const matchGone = !match;
+  useEffect(() => {
+    if (matchGone && pinned && kioskTableId !== null) {
+      appNavigate("/app/$clubSlug/tables/$tableId", {
+        tableId: kioskTableId,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchGone, pinned, kioskTableId]);
+
   if (isLoading) return <PageSkeleton />;
 
   // Filed, and this table is free. Whoever the night says is next, on it — an
   // offer and never an auto-start: a match that started itself while both
   // players were at the bar is a ghost row holding a table.
   if (freed !== null) {
-    const table = (tables ?? []).find((tbl) => tbl.id === freed.tableId);
-    const paired = groupFor(freed.tableId);
-    // Two or more waiting and the night pairs them off, which is what `paired`
-    // is. Exactly one and there is no pair to make: the winner keeps the table
-    // rather than the room losing it while somebody stands next to it. A forced
-    // rematch can come out of that and is right — with one person waiting there
-    // is no other game to offer.
-    const winnerStays =
-      paired === undefined && freed.stays !== null && waiting.length === 1;
-    const group =
-      paired ?? (winnerStays ? [freed.stays!, waiting[0]] : undefined);
-
-    // Nobody waiting, or the table is gone: there is nothing to offer and this
-    // page has no match left to show.
-    if (!table || !group)
-      return pinned ? (
-        <Navigate
-          to="/app/$clubSlug/tables/$tableId"
-          params={{ clubSlug, tableId: String(freed.tableId) }}
-          replace
-        />
-      ) : (
-        <Navigate to="/app/$clubSlug" params={{ clubSlug }} replace />
-      );
+    // The effect above is already on its way off this table; nothing here is
+    // worth painting for the one frame before it lands.
+    if (freedGone) return null;
+    const table = freedTable!;
+    const group = freedGroup!;
 
     return (
       <div className="mx-auto max-w-md px-3 py-8">
@@ -129,7 +161,7 @@ export default function LiveMatchPage() {
                 queue's answer: the winner is on this table because nobody else
                 could be paired for it, and the room should be able to see that
                 rather than wonder why they got another go. */}
-            {winnerStays && (
+            {freedWinnerStays && (
               <p className="mt-2 text-caption text-ink-faint">
                 {t("live.winnerStays", { name: freed.stays!.name })}
               </p>
@@ -186,14 +218,8 @@ export default function LiveMatchPage() {
   // "back home" on it, and home is not where it belongs anyway: it goes to its
   // own table, which is either free or has the next match on it. This is also
   // what catches the abandon it just performed from the bar.
-  if (!match && pinned)
-    return (
-      <Navigate
-        to="/app/$clubSlug/tables/$tableId"
-        params={{ clubSlug, tableId: String(readKioskTable()) }}
-        replace
-      />
-    );
+  // The effect above is already on its way back to the table.
+  if (!match && pinned) return null;
 
   if (!match)
     return (

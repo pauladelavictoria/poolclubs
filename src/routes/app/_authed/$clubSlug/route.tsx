@@ -59,12 +59,13 @@ export const Route = createFileRoute("/app/_authed/$clubSlug")({
     if (
       kioskTable !== null &&
       !isKioskAllowed(location.pathname, params.clubSlug)
-    )
+    ) {
       throw redirect({
         to: "/app/$clubSlug/tables/$tableId",
         params: { clubSlug: params.clubSlug, tableId: String(kioskTable) },
         replace: true,
       });
+    }
 
     return {
       player: membership,

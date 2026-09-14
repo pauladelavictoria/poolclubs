@@ -16,5 +16,6 @@ export const segmentedItem = (selected: boolean) =>
     "tap inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[7px] px-3 text-caption font-medium",
     "pointer-coarse:px-4 pointer-coarse:text-body",
     "transition-[background-color,color] duration-150 ease-[var(--ease-out)]",
+    "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:text-ink-faint",
     selected ? "bg-rail text-ink" : "text-ink-faint hover:text-ink-soft",
   ].join(" ");

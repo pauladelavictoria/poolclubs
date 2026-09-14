@@ -17,7 +17,7 @@ export type DaySetup = {
 export const DEFAULT_SETUP: DaySetup = {
   mode: "single",
   discipline: "9ball",
-  raceTo: 5,
+  raceTo: 7,
 };
 
 /** The race the database and the start form both accept. */
@@ -102,9 +102,9 @@ export const waitingSince = (
  *  against a list without a hook — see today.test.ts. */
 export const byWait =
   (lastPlayed: Map<number, number>) =>
-  <T extends { id: number; present_since: string | null }>(a: T, b: T) =>
-    waitingSince(a, lastPlayed.get(a.id)) -
-    waitingSince(b, lastPlayed.get(b.id));
+    <T extends { id: number; present_since: string | null }>(a: T, b: T) =>
+      waitingSince(a, lastPlayed.get(a.id)) -
+      waitingSince(b, lastPlayed.get(b.id));
 
 /**
  * Who could play whom, out of the people waiting.
@@ -195,9 +195,9 @@ export function balanceDoubles<T extends { category: number }>(
   for (const [a, b, c, d] of SPLITS) {
     const gap = Math.abs(
       group[a].category +
-        group[b].category -
-        group[c].category -
-        group[d].category,
+      group[b].category -
+      group[c].category -
+      group[d].category,
     );
     // Strictly closer, so a tie keeps the order the queue produced.
     if (gap < closest) {
