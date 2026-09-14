@@ -1,6 +1,5 @@
-import { LuSwords } from "react-icons/lu";
+import { LuPlus, LuSwords } from "react-icons/lu";
 import ActivityFeed from "@/components/social/ActivityFeed";
-import NowBar from "@/components/home/NowBar";
 import TonightPanel from "@/components/live/TonightPanel";
 import DrillCard from "@/components/drills/DrillCard";
 import GameTile from "@/components/home/GameTile";
@@ -12,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDrills } from "@/hooks/useDrills";
 import { useGames } from "@/hooks/useGames";
 import { FEED_PAGE_SIZE } from "@/queries/games";
+import { buttonClasses } from "@/components/ui/buttonStyles";
 import {
   useMyTournamentIds,
   useTournaments,
@@ -20,6 +20,7 @@ import {
 import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import { useT } from "@/i18n";
+import { AppLink } from "@/components/layout/AppLink";
 
 /** How many rows a block shows before "see all" is the rest of the answer. */
 const PER_BLOCK = 8;
@@ -85,14 +86,18 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-3 py-4">
-      {/* Who is here and the two things to do about it, before any of the
-          blocks: the page's one action strip. */}
-      <NowBar />
 
       {/* First, and the one block that stays put when it is empty: filing a
           result is what a club does every night, and a club with no matches is
           a club that has not started. */}
       <HomeSection titleKey="games.title" to="/app/$clubSlug/games">
+        <AppLink
+          to="/app/$clubSlug/games/new"
+          className={buttonClasses({ className: "w-full justify-center" })}
+        >
+          <LuPlus className="h-4 w-4" aria-hidden />
+          {t("games.add")}
+        </AppLink>
         {games.length > 0 ? (
           <Carousel wide>
             {games.map((game) => (

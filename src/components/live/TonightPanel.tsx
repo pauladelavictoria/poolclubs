@@ -34,9 +34,6 @@ export default function TonightPanel() {
   const labelOf = (tableId: number | null) =>
     (tables ?? []).find((tbl) => tbl.id === tableId)?.label;
 
-  // Nothing on the tables, nothing to show: the block that used to always
-  // render did so for the check-in row, which is up in the lobby's action strip
-  // now (components/home/NowBar) along with the way through to the night page.
   if (matches.length === 0) return null;
 
   return (
