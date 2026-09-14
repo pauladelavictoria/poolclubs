@@ -7,6 +7,7 @@ import { routeTree } from "./routeTree.gen";
 import { makeQueryClient } from "@/libs/queryClient";
 import RouteError from "@/components/layout/RouteError";
 import { NotFound } from "@/components/layout/NotFound";
+import { PageSkeleton } from "@/components/ui/Skeleton";
 
 /**
  * Called once per request on the server and once per page load in the browser.
@@ -28,6 +29,10 @@ export function getRouter() {
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: RouteError,
     defaultNotFoundComponent: NotFound,
+    // No route defines its own pendingComponent, so without this a slow
+    // loader left the URL updated but the old page frozen on screen — a link
+    // that looked dead instead of a page that was loading.
+    defaultPendingComponent: PageSkeleton,
     scrollRestoration: true,
     scrollToTopSelectors: ['[data-scroll-restoration-id="app-shell"]'],
   });
