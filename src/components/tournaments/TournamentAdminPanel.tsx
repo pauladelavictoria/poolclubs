@@ -14,6 +14,7 @@ type Manage = Pick<
   | "deleteTournament"
   | "generateKnockout"
   | "updateTournament"
+  | "leaveTournament"
 >;
 
 /**
@@ -49,7 +50,40 @@ export default function TournamentAdminPanel({
     deleteTournament,
     generateKnockout,
     updateTournament,
+    leaveTournament,
   } = manage;
+
+  // Unpaid entrants only exist to be caught here: the setting that makes them
+  // meaningful also decides whether they can slip into a draw un-caught.
+  const unpaidIds = tournament.requires_payment
+    ? tournament.tournament_players
+        .filter((e) => !e.paid)
+        .map((e) => e.player_id)
+    : [];
+
+  const handleStart = async () => {
+    if (
+      unpaidIds.length > 0 &&
+      !confirm(t("tournaments.removeUnpaidConfirm", { n: unpaidIds.length }))
+    )
+      return;
+
+    // Out before the draw, not after: a bracket already reshapes around a
+    // withdrawal, so dropping them first is the one path that needs no
+    // special case in the seeding itself.
+    for (const playerId of unpaidIds) {
+      await leaveTournament.mutateAsync({ tournamentId, playerId });
+    }
+
+    const seededIds = seeded.filter((id) => !unpaidIds.includes(id));
+    runMutation(
+      startTournament.mutateAsync({ tournament, seededIds }),
+      t,
+      "tournaments.started",
+      "common.error",
+      { denied: "common.deniedError" },
+    );
+  };
 
   if (tournament.status === "open") {
     return (
@@ -64,16 +98,12 @@ export default function TournamentAdminPanel({
         </p>
         <div className="flex flex-wrap gap-2">
           <Button
-            disabled={entrants.length < minimum || startTournament.isPending}
-            onClick={() =>
-              runMutation(
-                startTournament.mutateAsync({ tournament, seededIds: seeded }),
-                t,
-                "tournaments.started",
-                "common.error",
-                { denied: "common.deniedError" },
-              )
+            disabled={
+              entrants.length < minimum ||
+              startTournament.isPending ||
+              leaveTournament.isPending
             }
+            onClick={handleStart}
           >
             {t("tournaments.start")}
           </Button>

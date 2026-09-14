@@ -1,21 +1,5 @@
 import type { Lang } from "@/i18n";
 
-/**
- * The three legal documents, as prose rather than as dictionary keys.
- *
- * ponytail: long-form copy lives here and not in src/i18n/*.json on purpose.
- * The dictionaries are UI strings — a label a component asks for by key — and
- * they are checked for key parity across three files. A privacy policy is one
- * document per language that gets read and edited as a whole, so it is one
- * object per language, and the pages render it with a single component.
- *
- * The identity fields below are placeholders. LSSI-CE art. 10 and GDPR arts.
- * 13–14 both require a real, identifiable operator: publishing these pages with
- * `[…]` still in them is worse than not publishing them at all. Fill OPERATOR
- * before the first non-you signup, and have a Spanish adviser read the result —
- * this text is drafted from model knowledge, not from a lawyer, and the content
- * is yours once it is live.
- */
 export const OPERATOR = {
   /** Autónomo's full name, or the SL's razón social. */
   legalName: "Satellite Studio Digital S.L.",

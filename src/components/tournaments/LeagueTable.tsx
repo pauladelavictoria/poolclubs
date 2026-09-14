@@ -1,5 +1,6 @@
-import { BallBadge } from "@/components/ui/Ball";
+import { BallBadge, CategoryBadge } from "@/components/ui/Ball";
 import type { Standing } from "@/libs/algorithms/leagueTable";
+import type { Category } from "@/types";
 import { useT } from "@/i18n";
 import PlayerLink from "@/components/players/PlayerLink";
 
@@ -12,6 +13,7 @@ export default function LeagueTable({
   rows,
   nameOf,
   slugOf,
+  categoryOf,
   qualify = 0,
 }: {
   rows: Standing[];
@@ -19,6 +21,10 @@ export default function LeagueTable({
   /** The person's slug for each id, for the public side's /players/:slug
    *  links. Omitted inside a club, where PlayerLink uses the club route. */
   slugOf?: (id: number) => string | undefined;
+  /** Each entrant's own category, shown only where the tournament itself sets
+   *  no single category — a combined draw is the one case where two rows here
+   *  can be playing under different rules. */
+  categoryOf?: (id: number) => Category | null | undefined;
   /** How many of the top places go through. 0 for a plain league. */
   qualify?: number;
 }) {
@@ -35,6 +41,11 @@ export default function LeagueTable({
           <th scope="col" className="py-2 text-left font-medium">
             {t("ranking.player")}
           </th>
+          {categoryOf && (
+            <th scope="col" className="py-2 pr-3 text-left font-medium">
+              {t("tournaments.category")}
+            </th>
+          )}
           <th scope="col" className="py-2 pr-3 text-right font-medium">
             {t("tournaments.played")}
           </th>
@@ -76,6 +87,13 @@ export default function LeagueTable({
                 {nameOf(row.playerId)}
               </PlayerLink>
             </td>
+            {categoryOf && (
+              <td className="py-2.5 pr-3">
+                {categoryOf(row.playerId) && (
+                  <CategoryBadge category={categoryOf(row.playerId)!} />
+                )}
+              </td>
+            )}
             <td className="py-2.5 pr-3 text-right">
               <span className="font-mono text-caption tabular-nums text-ink-faint">
                 {row.played}

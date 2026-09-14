@@ -171,6 +171,11 @@ export default function PublicTournamentPage() {
               rows={standings(entrantIds, matches)}
               nameOf={nameOf}
               slugOf={slugOf}
+              categoryOf={
+                tournament.category === null
+                  ? (id) => byId.get(id)?.category
+                  : undefined
+              }
             />
           </Card>
         ) : (

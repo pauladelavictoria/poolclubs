@@ -1118,16 +1118,19 @@ export type Database = {
       tournament_players: {
         Row: {
           created_at: string
+          paid: boolean
           player_id: number
           tournament_id: number
         }
         Insert: {
           created_at?: string
+          paid?: boolean
           player_id: number
           tournament_id: number
         }
         Update: {
           created_at?: string
+          paid?: boolean
           player_id?: number
           tournament_id?: number
         }
@@ -1165,6 +1168,7 @@ export type Database = {
           race_final: number | null
           race_semi: number | null
           race_to: number
+          requires_payment: boolean
           single_from: number
           starts_on: string | null
           status: string
@@ -1185,6 +1189,7 @@ export type Database = {
           race_final?: number | null
           race_semi?: number | null
           race_to?: number
+          requires_payment?: boolean
           single_from?: number
           starts_on?: string | null
           status?: string
@@ -1205,6 +1210,7 @@ export type Database = {
           race_final?: number | null
           race_semi?: number | null
           race_to?: number
+          requires_payment?: boolean
           single_from?: number
           starts_on?: string | null
           status?: string

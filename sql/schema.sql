@@ -2023,7 +2023,8 @@ ALTER TABLE "public"."tournament_matches" OWNER TO "postgres";
 CREATE TABLE IF NOT EXISTS "public"."tournament_players" (
     "tournament_id" integer NOT NULL,
     "player_id" integer NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "paid" boolean DEFAULT false NOT NULL
 );
 
 
@@ -2049,6 +2050,7 @@ CREATE TABLE IF NOT EXISTS "public"."tournaments" (
     "ends_on" "date",
     "entry_fee" "text",
     "notes" "text",
+    "requires_payment" boolean DEFAULT false NOT NULL,
     CONSTRAINT "tournaments_advance_check" CHECK ((("format" = 'group_knockout'::"text") = ("advance" IS NOT NULL))),
     CONSTRAINT "tournaments_advance_values_check" CHECK (("advance" = ANY (ARRAY[2, 4, 8, 16]))),
     CONSTRAINT "tournaments_category_check" CHECK (("category" = ANY (ARRAY[1, 2, 3]))),
@@ -2804,6 +2806,10 @@ CREATE POLICY "Admin can manage device codes" ON "public"."club_device_codes" TO
 
 
 CREATE POLICY "Admin can manage tables" ON "public"."club_tables" TO "authenticated" USING ("public"."is_club_admin"("club_id")) WITH CHECK ("public"."is_club_admin"("club_id"));
+
+
+
+CREATE POLICY "Admin can mark entrants paid" ON "public"."tournament_players" FOR UPDATE TO "authenticated" USING ("public"."is_club_admin"("public"."tournament_club"("tournament_id"))) WITH CHECK ("public"."is_club_admin"("public"."tournament_club"("tournament_id")));
 
 
 

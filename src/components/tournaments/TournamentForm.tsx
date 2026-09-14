@@ -25,6 +25,9 @@ export type TournamentValues = {
   entry_fee: string | null;
   /** Free text for prizes or anything else worth telling entrants. */
   notes: string | null;
+  /** Whether entrants owe money to be in the draw — gates the paid tracker on
+   *  the entrant list, and the removal prompt when starting. */
+  requires_payment: boolean;
   format: TournamentFormat;
   category: Category | null;
   legs: 1 | 2;
@@ -64,6 +67,9 @@ export default function TournamentForm({
   const [endsOn, setEndsOn] = useState(initialValues?.ends_on ?? "");
   const [entryFee, setEntryFee] = useState(initialValues?.entry_fee ?? "");
   const [notes, setNotes] = useState(initialValues?.notes ?? "");
+  const [requiresPayment, setRequiresPayment] = useState(
+    initialValues?.requires_payment ?? false,
+  );
   const [format, setFormat] = useState<TournamentFormat>(
     initialValues?.format ?? "double_elim",
   );
@@ -104,6 +110,7 @@ export default function TournamentForm({
       ends_on: startsOn && endsOn ? endsOn : null,
       entry_fee: entryFee.trim() || null,
       notes: notes.trim() || null,
+      requires_payment: requiresPayment,
       format,
       category,
       legs,
@@ -176,6 +183,23 @@ export default function TournamentForm({
           onChange={(e) => setEntryFee(e.target.value)}
           disabled={isSubmitting}
         />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="tournament-requires-payment">
+          {t("tournaments.requiresPayment")}
+        </Label>
+        <input
+          id="tournament-requires-payment"
+          type="checkbox"
+          checked={requiresPayment}
+          onChange={(e) => setRequiresPayment(e.target.checked)}
+          disabled={isSubmitting}
+          className="h-4 w-4 cursor-pointer rounded-[4px] accent-[var(--color-strike)] disabled:cursor-not-allowed"
+        />
+        <span className="text-caption text-ink-faint ml-2">
+          {t("tournaments.requiresPaymentHint")}
+        </span>
       </div>
 
       <div className="space-y-1.5 sm:col-span-2">

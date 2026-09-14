@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { dialogClasses } from "@/components/ui/cardStyles";
 import {
+  LuBanknote,
   LuGitFork,
   LuList,
   LuPlus,
@@ -74,6 +75,7 @@ export default function TournamentPage() {
     deleteTournament,
     joinTournament,
     leaveTournament,
+    setPaid,
     startTournament,
     generateKnockout,
     recordResult,
@@ -91,6 +93,10 @@ export default function TournamentPage() {
   const entrants = useMemo(
     () => (tournament?.tournament_players ?? []).map((e) => e.player_id),
     [tournament],
+  );
+
+  const paidById = new Map(
+    (tournament?.tournament_players ?? []).map((e) => [e.player_id, e.paid]),
   );
 
   const seeded = useMemo(
@@ -418,6 +424,50 @@ export default function TournamentPage() {
                         </span>
                       )}
                     </span>
+                    {/* Paid tracking only matters while entry is still being
+                        collected — the toggle lives inside this same "open"
+                        card rather than following the entrant into the draw —
+                        and only for a tournament that actually charges one. */}
+                    {tournament.requires_payment &&
+                      (isClubAdmin ? (
+                      <IconButton
+                        label={t("tournaments.paid")}
+                        title={t("tournaments.paid")}
+                        size="sm"
+                        disabled={setPaid.isPending}
+                        onClick={() =>
+                          runMutation(
+                            setPaid.mutateAsync({
+                              tournamentId,
+                              playerId,
+                              paid: !(paidById.get(playerId) ?? false),
+                            }),
+                            t,
+                            "common.saved",
+                            "common.error",
+                            { denied: "common.deniedError" },
+                          )
+                        }
+                        shape="circle"
+                        className={
+                          paidById.get(playerId)
+                            ? "bg-strike text-pocket hover:bg-strike-light"
+                            : "text-ink-faint"
+                        }
+                      >
+                        <LuBanknote className="h-4 w-4" aria-hidden />
+                      </IconButton>
+                    ) : (
+                      paidById.get(playerId) && (
+                        <span
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-strike text-pocket"
+                          aria-label={t("tournaments.paid")}
+                          title={t("tournaments.paid")}
+                        >
+                          <LuBanknote className="h-4 w-4" aria-hidden />
+                        </span>
+                      )
+                    ))}
                     {isClubAdmin && (
                       <IconButton
                         label={t("tournaments.removeNamed", {
@@ -529,6 +579,11 @@ export default function TournamentPage() {
               <LeagueTable
                 rows={standings(entrants, matches)}
                 nameOf={nameOf}
+                categoryOf={
+                  tournament.category === null
+                    ? (id) => byId.get(id)?.category
+                    : undefined
+                }
               />
             </Card>
             {/* What is left to arrange comes first: the played ones are a log,
@@ -593,6 +648,7 @@ export default function TournamentPage() {
                 deleteTournament,
                 generateKnockout,
                 updateTournament,
+                leaveTournament,
               }}
               onEdit={() => setIsEditOpen(true)}
             />
@@ -620,6 +676,7 @@ export default function TournamentPage() {
               ends_on: tournament.ends_on,
               entry_fee: tournament.entry_fee,
               notes: tournament.notes,
+              requires_payment: tournament.requires_payment,
               format: tournament.format,
               category: tournament.category,
               legs: tournament.legs,

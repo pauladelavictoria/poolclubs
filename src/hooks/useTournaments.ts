@@ -84,6 +84,8 @@ type NewTournament = {
   entry_fee: string | null;
   /** Free text for prizes or anything else worth telling entrants. */
   notes: string | null;
+  /** Whether entrants owe money to be in the draw. */
+  requires_payment: boolean;
   format: TournamentFormat;
   category: Category | null;
   legs: 1 | 2;
@@ -193,6 +195,28 @@ export const useManageTournaments = () => {
           .delete()
           .eq("tournament_id", tournamentId)
           .eq("player_id", entrant)
+          .throwOnError();
+      },
+      onSuccess: refresh,
+    }),
+
+    /** Admin-only, and only meaningful while entries are still open — RLS
+     *  enforces the former, the page's own "open" gate the latter. */
+    setPaid: useMutation({
+      mutationFn: async ({
+        tournamentId,
+        playerId,
+        paid,
+      }: {
+        tournamentId: number;
+        playerId: number;
+        paid: boolean;
+      }) => {
+        await supabase
+          .from("tournament_players")
+          .update({ paid })
+          .eq("tournament_id", tournamentId)
+          .eq("player_id", playerId)
           .throwOnError();
       },
       onSuccess: refresh,

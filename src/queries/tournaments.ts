@@ -13,7 +13,7 @@ export type TournamentListItem = Tournament & {
 };
 
 export type TournamentDetail = Tournament & {
-  tournament_players: { player_id: number }[];
+  tournament_players: { player_id: number; paid: boolean }[];
   tournament_matches: TournamentMatch[];
 };
 
@@ -50,7 +50,7 @@ export const tournamentQuery = (id: number) =>
       const { data } = await supabase
         .from("tournaments")
         .select(
-          "*, tournament_players(player_id), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, played_at))",
+          "*, tournament_players(player_id, paid), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, played_at))",
         )
         .eq("id", id)
         .single()
