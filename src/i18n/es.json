@@ -72,6 +72,8 @@
   "auth.confirmOpen": "Ábrelo y tu cuenta estará lista. Puedes cerrar esta página.",
   "auth.confirmSpam": "¿No ha llegado? Mira en la carpeta de spam.",
   "auth.confirmBack": "Volver a iniciar sesión",
+  "auth.resendConfirm": "¿No lo has recibido? Enviar de nuevo",
+  "auth.resendSent": "Enviado de nuevo.",
   "auth.signedOut": "Has cerrado sesión correctamente",
   "auth.signOutError": "Error al cerrar sesión",
   "auth.yourProfile": "Tu perfil",

@@ -72,6 +72,8 @@
   "auth.confirmOpen": "Ouvrez-le et votre compte est prêt. Vous pouvez fermer cette page.",
   "auth.confirmSpam": "Rien reçu ? Regardez dans vos spams.",
   "auth.confirmBack": "Retour à la connexion",
+  "auth.resendConfirm": "Vous ne l'avez pas reçu ? Renvoyer",
+  "auth.resendSent": "Renvoyé.",
   "auth.signedOut": "Déconnexion réussie",
   "auth.signOutError": "Échec de la déconnexion",
   "auth.yourProfile": "Ton profil",

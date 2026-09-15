@@ -72,6 +72,8 @@
   "auth.confirmOpen": "Open it and your account is ready. You can close this page.",
   "auth.confirmSpam": "Nothing there? Look in your spam folder.",
   "auth.confirmBack": "Back to sign in",
+  "auth.resendConfirm": "Didn't get it? Send again",
+  "auth.resendSent": "Sent again.",
   "auth.signedOut": "Signed out",
   "auth.signOutError": "Could not sign out",
   "auth.yourProfile": "Your profile",
