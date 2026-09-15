@@ -353,7 +353,12 @@ function CardPodium({ tournament }: { tournament: PublicTournamentListItem }) {
   const resolved = resolveBracket(matches);
   const places =
     tournament.format === "league"
-      ? leaguePodium(standings([...byId.keys()], resolved))
+      ? leaguePodium(
+          standings([...byId.keys()], resolved, {
+            win: tournament.points_win,
+            play: tournament.points_play,
+          }),
+        )
       : placings(resolved);
 
   if (places.first === null) return null;

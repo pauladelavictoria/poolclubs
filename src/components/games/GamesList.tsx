@@ -4,7 +4,12 @@ import { Link } from "@tanstack/react-router";
 import { EmptyState } from "@/components/ui/EmptyState";
 import SocialBar from "@/components/social/SocialBar";
 import { LuPencil, LuSwords } from "react-icons/lu";
-import { dayLabel, startsNewDay, timeOf } from "@/libs/algorithms/dayLabel";
+import {
+  dayLabel,
+  hasTime,
+  startsNewDay,
+  timeOf,
+} from "@/libs/algorithms/dayLabel";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 import GameLinkOverlay from "@/components/games/GameLinkOverlay";
@@ -243,7 +248,7 @@ export default function GamesList({
                   dateTime={played_at}
                   className="hidden w-12 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
                 >
-                  {timeOf(date, locale)}
+                  {hasTime(date) ? timeOf(date, locale) : ""}
                 </time>
                 <span
                   className={`flex min-w-0 flex-1 flex-col text-right ${side(p1Won)}`}

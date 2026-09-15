@@ -15,6 +15,7 @@ export default function LeagueTable({
   slugOf,
   categoryOf,
   qualify = 0,
+  showPoints = false,
 }: {
   rows: Standing[];
   nameOf: (id: number) => string;
@@ -27,6 +28,9 @@ export default function LeagueTable({
   categoryOf?: (id: number) => Category | null | undefined;
   /** How many of the top places go through. 0 for a plain league. */
   qualify?: number;
+  /** A league has its own points column; a group table has no points config of
+   *  its own, so it stays off rather than show everyone tied at 0. */
+  showPoints?: boolean;
 }) {
   const { t } = useT();
 
@@ -58,6 +62,11 @@ export default function LeagueTable({
           <th scope="col" className="py-2 pr-4 text-right font-medium">
             {t("tournaments.wins")}
           </th>
+          {showPoints && (
+            <th scope="col" className="py-2 pr-4 text-right font-medium">
+              {t("tournaments.points")}
+            </th>
+          )}
         </tr>
       </thead>
       <tbody>
@@ -110,6 +119,13 @@ export default function LeagueTable({
                 {row.wins}
               </span>
             </td>
+            {showPoints && (
+              <td className="py-2.5 pr-4 text-right">
+                <span className="font-mono text-h4 font-semibold tabular-nums text-strike">
+                  {row.points}
+                </span>
+              </td>
+            )}
           </tr>
         ))}
       </tbody>

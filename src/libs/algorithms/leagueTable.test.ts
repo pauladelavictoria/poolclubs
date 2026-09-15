@@ -57,6 +57,7 @@ describe("standings", () => {
       racksWon: 5,
       racksLost: 3,
       diff: 2,
+      points: 0,
     });
     expect(table[1]).toEqual({
       playerId: 2,
@@ -66,6 +67,7 @@ describe("standings", () => {
       racksWon: 3,
       racksLost: 5,
       diff: -2,
+      points: 0,
     });
   });
 
@@ -122,6 +124,30 @@ describe("standings", () => {
     );
     // Both winners are +2 and both losers −2, so racks won orders each pair.
     expect(table.map((r) => r.playerId)).toEqual([1, 3, 2, 4]);
+  });
+
+  it("with a points config, ranks by points first — a loser who has played more can outrank a winner who has played less", () => {
+    const table = standings(
+      [1, 2, 3],
+      [
+        fixture(1, 2, { winner: 1, racks: [5, 0] }),
+        fixture(2, 3, { winner: 2, racks: [5, 4] }),
+      ],
+      { win: 1, play: 1 },
+    );
+    const byId = new Map(table.map((r) => [r.playerId, r]));
+    // 2: one win, two played → 1*1 + 2*1 = 3. 1: one win, one played → 1+1 = 2.
+    expect(byId.get(2)!.points).toBe(3);
+    expect(byId.get(1)!.points).toBe(2);
+    expect(table.map((r) => r.playerId)[0]).toBe(2);
+  });
+
+  it("with no points config, every row scores 0 and the order falls back to wins", () => {
+    const table = standings(
+      [1, 2],
+      [fixture(1, 2, { winner: 1, racks: [5, 3] })],
+    );
+    expect(table.map((r) => r.points)).toEqual([0, 0]);
   });
 });
 

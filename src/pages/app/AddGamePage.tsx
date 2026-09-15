@@ -31,21 +31,25 @@ const todayLocal = () => {
 
 /** The date input hands back "YYYY-MM-DD"; combined with a time of day rather
  *  than midnight, so today's games keep sorting exactly as they did before this
- *  field existed, and a backdated one still lands after whatever else was
- *  recorded that same evening.
+ *  field existed.
  *
- *  `clock` is now for a new result and the result's own time for a correction:
- *  re-saving a game filed at 23:51 must not move it to whenever the fix was
- *  made, which on a club night is a different night. */
-const toPlayedAt = (dateStr: string, clock = new Date()) => {
+ *  `clock` is now for a new result filed on the day it was played, and the
+ *  result's own time for a correction: re-saving a game filed at 23:51 must
+ *  not move it to whenever the fix was made, which on a club night is a
+ *  different night. A new result backdated to an earlier day has no real
+ *  time to attach — "now" would just be the moment it was typed in, not when
+ *  the match happened — so it gets midnight, which the display reads as "no
+ *  time recorded". */
+const toPlayedAt = (dateStr: string, clock?: Date) => {
   const [y, m, d] = dateStr.split("-").map(Number);
+  const time = clock ?? (dateStr === todayLocal() ? new Date() : null);
   return new Date(
     y,
     m - 1,
     d,
-    clock.getHours(),
-    clock.getMinutes(),
-    clock.getSeconds(),
+    time?.getHours() ?? 0,
+    time?.getMinutes() ?? 0,
+    time?.getSeconds() ?? 0,
   ).toISOString();
 };
 

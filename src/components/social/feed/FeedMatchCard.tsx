@@ -1,6 +1,6 @@
 import { LuTrophy } from "react-icons/lu";
 import SocialBar from "@/components/social/SocialBar";
-import { timeOf } from "@/libs/algorithms/dayLabel";
+import { hasTime, timeOf } from "@/libs/algorithms/dayLabel";
 import type { Game, Tournament } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -60,7 +60,9 @@ export default function FeedMatchCard({
             dateTime={game.played_at}
             className="shrink-0 font-mono text-caption tabular-nums text-ink-ghost"
           >
-            {timeOf(new Date(game.played_at), locale)}
+            {hasTime(new Date(game.played_at))
+              ? timeOf(new Date(game.played_at), locale)
+              : ""}
           </time>
         ) : (
           <AppLink
@@ -70,7 +72,9 @@ export default function FeedMatchCard({
             className="shrink-0 font-mono text-caption tabular-nums text-ink-ghost transition-colors duration-150 hover:text-strike"
           >
             <time dateTime={game.played_at}>
-              {timeOf(new Date(game.played_at), locale)}
+              {hasTime(new Date(game.played_at))
+                ? timeOf(new Date(game.played_at), locale)
+                : ""}
             </time>
           </AppLink>
         )}
