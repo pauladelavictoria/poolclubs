@@ -60,10 +60,10 @@ export const gameQuery = (id: string) =>
         .from("games")
         .select("*")
         .eq("id", id)
-        .single()
+        .maybeSingle()
         .throwOnError();
 
-      return data as Game;
+      return data as Game | null;
     },
   });
 
