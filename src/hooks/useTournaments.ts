@@ -104,6 +104,9 @@ type NewTournament = {
   race_to: number;
   race_semi: number | null;
   race_final: number | null;
+  /** Only meaningful for a league — see libs/algorithms/leagueTable. */
+  points_win: number;
+  points_play: number;
 };
 
 /** Rows for one insert. The bracket's pointers are client-side uuids, which is

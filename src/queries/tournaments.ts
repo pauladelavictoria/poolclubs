@@ -57,10 +57,10 @@ export const tournamentQuery = (id: number) =>
           "*, tournament_players(player_id, paid), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, played_at))",
         )
         .eq("id", id)
-        .single()
+        .maybeSingle()
         .throwOnError();
 
-      return data as unknown as TournamentDetail;
+      return data as unknown as TournamentDetail | null;
     },
   });
 

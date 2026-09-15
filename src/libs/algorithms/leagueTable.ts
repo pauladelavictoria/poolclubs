@@ -20,7 +20,15 @@ export type Standing = {
   racksLost: number;
   /** racksWon − racksLost, the first tie-break after wins. */
   diff: number;
+  /** wins × pointsWin + played × pointsPlay — the club's own scoring, 0 when
+   *  `standings` was called with no `points` config (a group table, which has
+   *  none of its own). */
+  points: number;
 };
+
+/** Per-win and per-match values a league sets for itself — see
+ *  `tournaments.points_win` / `points_play` in sql/schema.sql. */
+export type LeaguePoints = { win: number; play: number };
 
 /** Only the fields a result is read off, so a caller that fetched four columns
  *  of a fixture rather than the whole row can still build a table. */
@@ -37,16 +45,21 @@ const empty = (playerId: number): Standing => ({
   racksWon: 0,
   racksLost: 0,
   diff: 0,
+  points: 0,
 });
 
 /**
  * `playerIds` seeds the table so entrants who have not played yet still appear.
  * Only matches with a winner count; racks come from the joined game, so a
  * result filed without one (a walkover) counts as a win with no racks.
+ *
+ * `points` ranks the table by the club's own scoring first; omitted (a group
+ * table), every row's points stay 0 and the order falls back to wins as before.
  */
 export function standings(
   playerIds: number[],
   matches: ResultMatch[],
+  points?: LeaguePoints,
 ): Standing[] {
   const rows = new Map(playerIds.map((id) => [id, empty(id)]));
   const row = (id: number) => {
@@ -84,9 +97,14 @@ export function standings(
   }
 
   return [...rows.values()]
-    .map((r) => ({ ...r, diff: r.racksWon - r.racksLost }))
+    .map((r) => ({
+      ...r,
+      diff: r.racksWon - r.racksLost,
+      points: points ? r.wins * points.win + r.played * points.play : 0,
+    }))
     .sort(
       (a, b) =>
+        b.points - a.points ||
         b.wins - a.wins ||
         b.diff - a.diff ||
         b.racksWon - a.racksWon ||

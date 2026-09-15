@@ -49,7 +49,7 @@ export type LegalDocId = "privacy" | "terms" | "aviso-legal";
 const UPDATED = "2026-09-04";
 /** Privacy alone changed to mention the YouTube streaming feature — bumping
  *  the shared UPDATED above would wrongly date terms and aviso-legal too. */
-const PRIVACY_UPDATED = "2026-09-13";
+const PRIVACY_UPDATED = "2026-09-15";
 
 const providerList = SUBPROCESSORS.map(
   (p) => `${p.name} - ${p.role} (${p.region})`,
@@ -105,34 +105,42 @@ const privacyEs: LegalDoc = {
       ],
     },
     {
-      heading: "6. Conservación",
+      heading: "6. Seguridad",
+      body: [
+        "Toda la aplicación viaja cifrada (HTTPS). El token de YouTube que permite retransmitir se guarda cifrado en la base de datos con AES-256-GCM y solo se descifra en el servidor, en el momento de usarlo.",
+        "El acceso a los datos de tu club está limitado a sus administradores y protegido por seguridad a nivel de fila en la base de datos (ver punto 4).",
+        "Puedes revocar el acceso a YouTube en cualquier momento desde los permisos de tu cuenta de Google (myaccount.google.com/permissions) o desde los ajustes del club. Tratamos los datos de la API de YouTube conforme a la Política de datos de usuario de los Servicios de API de Google, incluidos sus requisitos de uso limitado (Limited Use).",
+      ],
+    },
+    {
+      heading: "7. Conservación",
       body: [
         "Los datos de tu cuenta se conservan mientras la cuenta exista.",
         "Los resultados deportivos se conservan mientras el club los quiera conservar: son el historial del club y no solo el tuyo.",
       ],
     },
     {
-      heading: "7. Tus derechos",
+      heading: "8. Tus derechos",
       body: [
         `Puedes solicitar acceso, rectificación, supresión, limitación, oposición y portabilidad escribiendo a ${CONTACT_EMAIL}. También puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).`,
         "Sobre la supresión: un partido es un dato compartido. Borrar a una persona borraría también el historial de sus rivales, que es dato suyo. Por eso ejecutamos la supresión como anonimización: se elimina el nombre, el correo, la foto y el vínculo con la cuenta, y el resultado permanece asociado a un participante sin identificar.",
       ],
     },
     {
-      heading: "8. Cookies y almacenamiento local",
+      heading: "9. Cookies y almacenamiento local",
       body: [
         "Solo usamos cookies y almacenamiento estrictamente necesarios: la sesión de acceso, el idioma y el tema claro u oscuro.",
         "Medimos las visitas con Cloudflare Web Analytics, que no usa cookies ni almacenamiento en tu navegador y no crea un identificador de usuario: cuenta páginas vistas, no personas. Por eso no verás un banner de consentimiento. Si algún día añadimos analítica basada en cookies, pediremos consentimiento antes.",
       ],
     },
     {
-      heading: "9. Menores",
+      heading: "10. Menores",
       body: [
         "Para tener cuenta hay que tener 16 años o más. Un menor puede jugar y aparecer en el ranking como jugador invitado, dado de alta por el administrador del club sin cuenta y sin correo electrónico.",
       ],
     },
     {
-      heading: "10. Cambios",
+      heading: "11. Cambios",
       body: [
         "Si esta política cambia de forma relevante, lo avisaremos en la aplicación. La fecha de arriba es la de la última versión.",
       ],
@@ -190,34 +198,42 @@ const privacyEn: LegalDoc = {
       ],
     },
     {
-      heading: "6. Retention",
+      heading: "6. Security",
+      body: [
+        "The whole app travels encrypted (HTTPS). The YouTube token that enables streaming is stored encrypted in the database with AES-256-GCM and is only decrypted on the server, at the moment it is used.",
+        "Access to your club's data is limited to the club's admins and protected by row-level security in the database (see 4).",
+        "You can revoke YouTube access at any time from your Google account permissions (myaccount.google.com/permissions) or from the club settings. We handle YouTube API data under Google's API Services User Data Policy, including its Limited Use requirements.",
+      ],
+    },
+    {
+      heading: "7. Retention",
       body: [
         "Account data is kept while the account exists.",
         "Playing results are kept as long as the club wants them: they are the club's history, not only yours.",
       ],
     },
     {
-      heading: "7. Your rights",
+      heading: "8. Your rights",
       body: [
         `Write to ${CONTACT_EMAIL} to request access, rectification, erasure, restriction, objection or portability. You can also complain to the Spanish data protection authority, the AEPD (aepd.es).`,
         "On erasure: a match is shared data. Deleting a person would delete their opponents' history too, and that is those people's data. So erasure is carried out as anonymisation: name, email, photo and the link to the account are removed, and the result stays attached to an unidentified participant.",
       ],
     },
     {
-      heading: "8. Cookies and local storage",
+      heading: "9. Cookies and local storage",
       body: [
         "We only use strictly necessary cookies and storage: the sign-in session, the language and the light or dark theme.",
         "We count visits with Cloudflare Web Analytics, which uses no cookies and no browser storage and builds no user identifier: it counts page views, not people. That is why you see no consent banner. If we ever add cookie-based analytics, we will ask for consent first.",
       ],
     },
     {
-      heading: "9. Minors",
+      heading: "10. Minors",
       body: [
         "You must be 16 or older to hold an account. A younger player can play and appear in the ranking as a guest player, added by the club admin with no account and no email address.",
       ],
     },
     {
-      heading: "10. Changes",
+      heading: "11. Changes",
       body: [
         "If this policy changes materially we will say so in the app. The date above is the current version.",
       ],
@@ -275,34 +291,42 @@ const privacyFr: LegalDoc = {
       ],
     },
     {
-      heading: "6. Conservation",
+      heading: "6. Sécurité",
+      body: [
+        "Toute l'application transite chiffrée (HTTPS). Le jeton YouTube qui permet la diffusion est stocké chiffré dans la base de données avec AES-256-GCM et n'est déchiffré que côté serveur, au moment de son utilisation.",
+        "L'accès aux données de votre club est limité à ses administrateurs et protégé par une sécurité au niveau des lignes dans la base de données (voir point 4).",
+        "Vous pouvez révoquer l'accès à YouTube à tout moment depuis les autorisations de votre compte Google (myaccount.google.com/permissions) ou depuis les réglages du club. Nous traitons les données de l'API YouTube conformément à la politique de données utilisateur des services API de Google, y compris ses exigences d'utilisation limitée (Limited Use).",
+      ],
+    },
+    {
+      heading: "7. Conservation",
       body: [
         "Les données de compte sont conservées tant que le compte existe.",
         "Les résultats sportifs sont conservés aussi longtemps que le club le souhaite : ils constituent l'historique du club, pas seulement le vôtre.",
       ],
     },
     {
-      heading: "7. Vos droits",
+      heading: "8. Vos droits",
       body: [
         `Écrivez à ${CONTACT_EMAIL} pour demander l'accès, la rectification, l'effacement, la limitation, l'opposition ou la portabilité. Vous pouvez également saisir l'autorité espagnole de protection des données, l'AEPD (aepd.es).`,
         "Sur l'effacement : un match est une donnée partagée. Supprimer une personne supprimerait aussi l'historique de ses adversaires, qui est leur donnée. L'effacement est donc réalisé par anonymisation : nom, e-mail, photo et lien avec le compte sont supprimés, et le résultat reste rattaché à un participant non identifié.",
       ],
     },
     {
-      heading: "8. Cookies et stockage local",
+      heading: "9. Cookies et stockage local",
       body: [
         "Nous n'utilisons que des cookies et un stockage strictement nécessaires : la session de connexion, la langue et le thème clair ou sombre.",
         "Nous mesurons l'audience avec Cloudflare Web Analytics, qui n'utilise ni cookies ni stockage dans votre navigateur et ne crée aucun identifiant d'utilisateur : il compte des pages vues, pas des personnes. D'où l'absence de bandeau de consentement. Si nous ajoutons un jour une mesure d'audience à base de cookies, nous demanderons votre consentement au préalable.",
       ],
     },
     {
-      heading: "9. Mineurs",
+      heading: "10. Mineurs",
       body: [
         "Il faut avoir 16 ans ou plus pour disposer d'un compte. Un joueur plus jeune peut jouer et figurer au classement en tant que joueur invité, créé par l'administrateur du club sans compte ni adresse e-mail.",
       ],
     },
     {
-      heading: "10. Modifications",
+      heading: "11. Modifications",
       body: [
         "Si cette politique change de manière substantielle, nous le signalerons dans l'application. La date ci-dessus est celle de la version en vigueur.",
       ],

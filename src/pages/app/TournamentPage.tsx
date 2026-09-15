@@ -44,6 +44,7 @@ import TournamentForm, {
 } from "@/components/tournaments/TournamentForm";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button, IconButton } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Segmented } from "@/components/ui/Segmented";
 import { Select } from "@/components/ui/Select";
 import { CategoryBadge } from "@/components/ui/Ball";
@@ -127,6 +128,14 @@ export default function TournamentPage() {
           <EmptyState
             title={t("tournaments.missing")}
             hint={tournament ? t("tournaments.otherClub") : undefined}
+            action={
+              <AppLink
+                to="/app/$clubSlug/tournaments"
+                className={buttonClasses({ variant: "secondary" })}
+              >
+                {t("nav.tournaments")}
+              </AppLink>
+            }
           />
         </Card>
       </div>
@@ -430,44 +439,44 @@ export default function TournamentPage() {
                         and only for a tournament that actually charges one. */}
                     {tournament.requires_payment &&
                       (isClubAdmin ? (
-                      <IconButton
-                        label={t("tournaments.paid")}
-                        title={t("tournaments.paid")}
-                        size="sm"
-                        disabled={setPaid.isPending}
-                        onClick={() =>
-                          runMutation(
-                            setPaid.mutateAsync({
-                              tournamentId,
-                              playerId,
-                              paid: !(paidById.get(playerId) ?? false),
-                            }),
-                            t,
-                            "common.saved",
-                            "common.error",
-                            { denied: "common.deniedError" },
-                          )
-                        }
-                        shape="circle"
-                        className={
-                          paidById.get(playerId)
-                            ? "bg-strike text-pocket hover:bg-strike-light"
-                            : "text-ink-faint"
-                        }
-                      >
-                        <LuBanknote className="h-4 w-4" aria-hidden />
-                      </IconButton>
-                    ) : (
-                      paidById.get(playerId) && (
-                        <span
-                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-strike text-pocket"
-                          aria-label={t("tournaments.paid")}
+                        <IconButton
+                          label={t("tournaments.paid")}
                           title={t("tournaments.paid")}
+                          size="sm"
+                          disabled={setPaid.isPending}
+                          onClick={() =>
+                            runMutation(
+                              setPaid.mutateAsync({
+                                tournamentId,
+                                playerId,
+                                paid: !(paidById.get(playerId) ?? false),
+                              }),
+                              t,
+                              "common.saved",
+                              "common.error",
+                              { denied: "common.deniedError" },
+                            )
+                          }
+                          shape="circle"
+                          className={
+                            paidById.get(playerId)
+                              ? "bg-strike text-pocket hover:bg-strike-light"
+                              : "text-ink-faint"
+                          }
                         >
                           <LuBanknote className="h-4 w-4" aria-hidden />
-                        </span>
-                      )
-                    ))}
+                        </IconButton>
+                      ) : (
+                        paidById.get(playerId) && (
+                          <span
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-strike text-pocket"
+                            aria-label={t("tournaments.paid")}
+                            title={t("tournaments.paid")}
+                          >
+                            <LuBanknote className="h-4 w-4" aria-hidden />
+                          </span>
+                        )
+                      ))}
                     {isClubAdmin && (
                       <IconButton
                         label={t("tournaments.removeNamed", {
@@ -577,15 +586,80 @@ export default function TournamentPage() {
             <Card className="overflow-hidden">
               <CardHeader title={t("tournaments.standings")} />
               <LeagueTable
-                rows={standings(entrants, matches)}
+                rows={standings(entrants, matches, {
+                  win: tournament.points_win,
+                  play: tournament.points_play,
+                })}
                 nameOf={nameOf}
                 categoryOf={
                   tournament.category === null
                     ? (id) => byId.get(id)?.category
                     : undefined
                 }
+                showPoints
               />
             </Card>
+            {/* A league keeps its unpaid entrants rather than removing them at
+                the start (see TournamentAdminPanel), so the tracker they were
+                paid through has to survive the same move — this is that same
+                toggle, just no longer confined to the "open" card, which
+                disappears once the draw is cut. */}
+            {tournament.requires_payment && (
+              <Card className="overflow-hidden">
+                <CardHeader title={t("tournaments.paid")} />
+                <ul className="divide-y divide-hairline">
+                  {entrants.map((playerId) => (
+                    <li
+                      key={playerId}
+                      className="flex items-center gap-3 px-4 py-2.5"
+                    >
+                      <span className="min-w-0 flex-1 truncate text-body text-ink">
+                        {nameOf(playerId)}
+                      </span>
+                      {isClubAdmin ? (
+                        <IconButton
+                          label={t("tournaments.paid")}
+                          title={t("tournaments.paid")}
+                          size="sm"
+                          disabled={setPaid.isPending}
+                          onClick={() =>
+                            runMutation(
+                              setPaid.mutateAsync({
+                                tournamentId,
+                                playerId,
+                                paid: !(paidById.get(playerId) ?? false),
+                              }),
+                              t,
+                              "common.saved",
+                              "common.error",
+                              { denied: "common.deniedError" },
+                            )
+                          }
+                          shape="circle"
+                          className={
+                            paidById.get(playerId)
+                              ? "bg-strike text-pocket hover:bg-strike-light"
+                              : "text-ink-faint"
+                          }
+                        >
+                          <LuBanknote className="h-4 w-4" aria-hidden />
+                        </IconButton>
+                      ) : (
+                        paidById.get(playerId) && (
+                          <span
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-strike text-pocket"
+                            aria-label={t("tournaments.paid")}
+                            title={t("tournaments.paid")}
+                          >
+                            <LuBanknote className="h-4 w-4" aria-hidden />
+                          </span>
+                        )
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
             {/* What is left to arrange comes first: the played ones are a log,
                 the pending ones are the thing anyone can act on. Once the
                 tournament is closed nobody can, so they stop being news. */}
@@ -631,10 +705,11 @@ export default function TournamentPage() {
           </>
         )}
 
-        {isClubAdmin && tournament.status !== "done" && (
+        {isClubAdmin && (
           // The seam between the tournament and the running of it. Everything
           // above is what a tournament is; everything below is a job, and only
-          // one person on the page has it.
+          // one person on the page has it. Done still gets this seam: delete
+          // is the one job left once a tournament is over.
           <div className="border-t border-hairline pt-4">
             <TournamentAdminPanel
               tournament={tournament}
@@ -686,6 +761,8 @@ export default function TournamentPage() {
               race_to: tournament.race_to,
               race_semi: tournament.race_semi,
               race_final: tournament.race_final,
+              points_win: tournament.points_win,
+              points_play: tournament.points_play,
             }}
             isSubmitting={updateTournament.isPending}
             onCancel={() => setIsEditOpen(false)}

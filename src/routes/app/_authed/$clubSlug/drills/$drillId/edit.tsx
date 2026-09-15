@@ -22,6 +22,9 @@ export const Route = createFileRoute(
       ...drillQuery(Number(params.drillId)),
       staleTime: "static",
     });
+    // No such drill: DrillEditorPage draws the "not found" state itself, off
+    // the same query, once drillId is set but useDrill comes back empty.
+    if (!drill) return null;
 
     const isAdmin = context.player.id === ADMIN_PLAYER_ID;
     if (!canEditDrill(drill.created_by, context.user.id, isAdmin)) {

@@ -37,6 +37,9 @@ export type TournamentValues = {
   race_to: number;
   race_semi: number | null;
   race_final: number | null;
+  /** Only meaningful for a league — see LeagueTable and libs/algorithms/leagueTable. */
+  points_win: number;
+  points_play: number;
 };
 
 const ADVANCE = [2, 4, 8, 16];
@@ -89,6 +92,12 @@ export default function TournamentForm({
   const [raceFinal, setRaceFinal] = useState(
     initialValues?.race_final ? String(initialValues.race_final) : "",
   );
+  const [pointsWin, setPointsWin] = useState(
+    String(initialValues?.points_win ?? 3),
+  );
+  const [pointsPlay, setPointsPlay] = useState(
+    String(initialValues?.points_play ?? 1),
+  );
 
   const roundRobin = format === "league" || format === "group_knockout";
   // A round robin has no closing stage, so a longer final would have nothing
@@ -97,11 +106,19 @@ export default function TournamentForm({
   const race = Number(raceTo);
   const raceValid = Number.isInteger(race) && race >= 1 && race <= 50;
   const optional = (value: string) => (value === "" ? null : Number(value));
+  const pointsValid = (value: string) => {
+    const n = Number(value);
+    return Number.isInteger(n) && n >= 0 && n <= 20;
+  };
+  const pointsInvalid =
+    format === "league" &&
+    (!pointsValid(pointsWin) || !pointsValid(pointsPlay));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     if (!raceValid) return;
+    if (pointsInvalid) return;
     onSubmit({
       name: name.trim(),
       starts_on: startsOn || null,
@@ -120,6 +137,8 @@ export default function TournamentForm({
       race_to: race,
       race_semi: hasFinal ? optional(raceSemi) : null,
       race_final: hasFinal ? optional(raceFinal) : null,
+      points_win: format === "league" ? Number(pointsWin) : 3,
+      points_play: format === "league" ? Number(pointsPlay) : 1,
     });
   };
 
@@ -291,6 +310,48 @@ export default function TournamentForm({
         </div>
       )}
 
+      {format === "league" && (
+        <fieldset className="space-y-1.5">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="tournament-points-win">
+                {t("tournaments.pointsWin")}
+              </Label>
+              <Input
+                id="tournament-points-win"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={20}
+                value={pointsWin}
+                onChange={(e) => setPointsWin(e.target.value)}
+                className="font-mono"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="tournament-points-play">
+                {t("tournaments.pointsPlay")}
+              </Label>
+              <Input
+                id="tournament-points-play"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={20}
+                value={pointsPlay}
+                onChange={(e) => setPointsPlay(e.target.value)}
+                className="font-mono"
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+          <p className="text-caption text-ink-faint">
+            {t("tournaments.pointsHint")}
+          </p>
+        </fieldset>
+      )}
+
       {format === "double_elim" && (
         <div className="space-y-1.5">
           <Label htmlFor="tournament-single-from">
@@ -401,7 +462,9 @@ export default function TournamentForm({
         </Button>
         <Button
           type="submit"
-          disabled={isSubmitting || !name.trim() || !raceValid}
+          disabled={
+            isSubmitting || !name.trim() || !raceValid || pointsInvalid
+          }
         >
           {isSubmitting ? t("common.saving") : t("common.save")}
         </Button>

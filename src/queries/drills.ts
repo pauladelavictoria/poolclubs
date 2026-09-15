@@ -18,10 +18,10 @@ export const drillQuery = (id: number) =>
         .from("drills")
         .select("*")
         .eq("id", id)
-        .single()
+        .maybeSingle()
         .throwOnError();
 
-      return data as Drill;
+      return data as Drill | null;
     },
   });
 

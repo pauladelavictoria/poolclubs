@@ -36,20 +36,17 @@ export default function TournamentPodium({
 
   /**
    * A single-elimination draw never plays its two beaten semi-finalists off
-   * against each other, so third is a list and there are usually two of them.
-   * The extras go out on the far left rather than all onto the right end: four
-   * steps in 2-1-3-3 order put the winner off-centre and the podium stopped
-   * looking like one.
+   * against each other, so third is shared rather than decided — one step,
+   * both faces on it, same as a real bronze tie.
    */
-  const [thirdRight, ...thirdLeft] = places.third;
-
-  const third = (playerId: number) => ({ rank: 3, playerId });
-
-  const steps: { rank: number; playerId: number }[] = [
-    ...thirdLeft.map(third),
-    ...(places.second !== null ? [{ rank: 2, playerId: places.second }] : []),
-    ...(places.first !== null ? [{ rank: 1, playerId: places.first }] : []),
-    ...(thirdRight !== undefined ? [third(thirdRight)] : []),
+  const steps: { rank: number; playerIds: number[] }[] = [
+    ...(places.second !== null
+      ? [{ rank: 2, playerIds: [places.second] }]
+      : []),
+    ...(places.first !== null ? [{ rank: 1, playerIds: [places.first] }] : []),
+    ...(places.third.length > 0
+      ? [{ rank: 3, playerIds: places.third }]
+      : []),
   ];
 
   if (steps.length === 0) return null;
@@ -64,38 +61,55 @@ export default function TournamentPodium({
           : "flex items-end justify-center gap-2 px-3 pt-6 sm:gap-4"
       }
     >
-      {steps.map(({ rank, playerId }) => {
-        const player = byId.get(playerId);
+      {steps.map(({ rank, playerIds }) => {
+        const players = playerIds.map((id) => byId.get(id));
+        const avatarSize = compact
+          ? rank === 1
+            ? "h-10 w-10"
+            : "h-8 w-8"
+          : rank === 1
+            ? "h-16 w-16"
+            : "h-12 w-12";
         return (
           <div
-            key={playerId}
+            key={playerIds.join("-")}
             className={
               compact
                 ? "flex min-w-0 flex-1 basis-0 flex-col items-center gap-1.5 sm:max-w-16"
                 : "flex min-w-0 flex-1 basis-0 flex-col items-center gap-2 sm:max-w-40"
             }
           >
-            <Avatar
-              name={player?.name ?? "—"}
-              url={player?.avatar_url ?? undefined}
-              className={
-                compact
-                  ? rank === 1
-                    ? "h-10 w-10"
-                    : "h-8 w-8"
-                  : rank === 1
-                    ? "h-16 w-16"
-                    : "h-12 w-12"
-              }
-            />
+            {/* Two faces share one step exactly as two names share one row
+                below: overlapping rather than side by side, so a shared bronze
+                still reads as one place rather than two half-width ones. */}
+            <div className="flex -space-x-3">
+              {playerIds.map((id) => (
+                <Avatar
+                  key={id}
+                  name={byId.get(id)?.name ?? "—"}
+                  url={byId.get(id)?.avatar_url ?? undefined}
+                  className={[
+                    avatarSize,
+                    playerIds.length > 1 ? "ring-2 ring-felt" : "",
+                  ].join(" ")}
+                />
+              ))}
+            </div>
             {!compact && (
-              <PlayerLink
-                playerId={playerId}
-                playerSlug={player?.slug}
-                className="line-clamp-2 text-center text-caption font-medium text-ink transition-colors duration-150 hover:text-strike"
-              >
-                {player?.name ?? "—"}
-              </PlayerLink>
+              <span className="line-clamp-2 text-center text-caption font-medium text-ink">
+                {playerIds.map((id, i) => (
+                  <span key={id}>
+                    {i > 0 && " / "}
+                    <PlayerLink
+                      playerId={id}
+                      playerSlug={byId.get(id)?.slug}
+                      className="transition-colors duration-150 hover:text-strike"
+                    >
+                      {byId.get(id)?.name ?? "—"}
+                    </PlayerLink>
+                  </span>
+                ))}
+              </span>
             )}
             {/* The block itself is the ranking: taller is better, and the
                 object-ball colour repeats it for anyone who cannot compare two
@@ -114,7 +128,9 @@ export default function TournamentPodium({
             </div>
             <span className="sr-only">
               {t("tournaments.place", { n: rank })}
-              {compact && player ? ` — ${player.name}` : null}
+              {compact && players.length
+                ? ` — ${players.map((p) => p?.name ?? "—").join(" / ")}`
+                : null}
             </span>
           </div>
         );

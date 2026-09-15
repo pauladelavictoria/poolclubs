@@ -168,7 +168,10 @@ export default function PublicTournamentPage() {
           <Card className="mt-10 overflow-hidden">
             <CardHeader title={t("tournaments.standings")} />
             <LeagueTable
-              rows={standings(entrantIds, matches)}
+              rows={standings(entrantIds, matches, {
+                win: tournament.points_win,
+                play: tournament.points_play,
+              })}
               nameOf={nameOf}
               slugOf={slugOf}
               categoryOf={
@@ -176,6 +179,7 @@ export default function PublicTournamentPage() {
                   ? (id) => byId.get(id)?.category
                   : undefined
               }
+              showPoints
             />
           </Card>
         ) : (

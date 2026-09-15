@@ -23,7 +23,9 @@ type Manage = Pick<
  * can't use at all — so they go last, behind a dashed disclosure, which is the
  * same "not the content" edge the feed already uses.
  *
- * Renders nothing once the tournament is done — there is nothing left to run.
+ * There is nothing left to run once the tournament is done, but delete stays
+ * available — a bracket entered by mistake, or a test run, does not become
+ * permanent just because someone closed it.
  */
 export default function TournamentAdminPanel({
   tournament,
@@ -54,12 +56,15 @@ export default function TournamentAdminPanel({
   } = manage;
 
   // Unpaid entrants only exist to be caught here: the setting that makes them
-  // meaningful also decides whether they can slip into a draw un-caught.
-  const unpaidIds = tournament.requires_payment
-    ? tournament.tournament_players
-        .filter((e) => !e.paid)
-        .map((e) => e.player_id)
-    : [];
+  // meaningful also decides whether they can slip into a draw un-caught. A
+  // league has no fixed bracket size to protect, so an unpaid entrant is the
+  // club chasing a payment, not a reason to remove them from the table.
+  const unpaidIds =
+    tournament.requires_payment && tournament.format !== "league"
+      ? tournament.tournament_players
+          .filter((e) => !e.paid)
+          .map((e) => e.player_id)
+      : [];
 
   const handleStart = async () => {
     if (
@@ -182,6 +187,34 @@ export default function TournamentAdminPanel({
           }
         >
           {t("tournaments.close")}
+        </Button>
+      </ManagePanel>
+    );
+  }
+
+  if (tournament.status === "done") {
+    return (
+      <ManagePanel title={t("tournaments.manage")}>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            if (
+              !confirm(
+                t("tournaments.deleteConfirm", { name: tournament.name }),
+              )
+            )
+              return;
+            runMutation(
+              deleteTournament.mutateAsync(tournamentId),
+              t,
+              "tournaments.deleted",
+              "common.error",
+              { denied: "common.deniedError" },
+            );
+          }}
+        >
+          <LuTrash2 className="h-4 w-4" aria-hidden />
+          {t("common.delete")}
         </Button>
       </ManagePanel>
     );
