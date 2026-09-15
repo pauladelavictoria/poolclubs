@@ -124,7 +124,7 @@ export default function DrillEditorPage() {
         <DrillForm
           // Remount once the drill arrives, so the form seeds from real data
           key={drill?.id ?? "new"}
-          initial={drill}
+          initial={drill ?? undefined}
           onSubmit={handleSubmit}
           onDelete={drillId ? handleDelete : undefined}
           isSubmitting={isSubmitting}
