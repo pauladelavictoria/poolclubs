@@ -1,4 +1,4 @@
-import { getRouteApi } from "@tanstack/react-router";
+import { getRouteApi, useRouterState } from "@tanstack/react-router";
 import { AppLink } from "@/components/layout/AppLink";
 import ClubMenu from "@/components/layout/ClubMenu";
 import NotificationBell from "@/components/layout/NotificationBell";
@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSignOut } from "@/hooks/useSignOut";
 import { useDialog } from "@/hooks/useDialog";
 import { toast } from "react-toastify";
-import { NAV_SECTIONS, ME_NAV } from "@/components/layout/navItems";
+import { NAV_SECTIONS, ME_NAV, type NavItem } from "@/components/layout/navItems";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { LANGS, useT, type Lang } from "@/i18n";
 import { LuLogOut, LuSend } from "react-icons/lu";
@@ -35,9 +35,9 @@ const item = ({ isActive }: { isActive: boolean }) =>
     "transition-colors duration-150",
     isActive
       ? // Hovering where you already are does not un-mark it. The row still lifts,
-        // so it stays obviously a link, but the colour is the answer to "where am
-        // I" and the pointer passing over is not new information about that.
-        "bg-felt-raised font-medium text-strike hover:bg-rail"
+      // so it stays obviously a link, but the colour is the answer to "where am
+      // I" and the pointer passing over is not new information about that.
+      "bg-felt-raised font-medium text-strike hover:bg-rail"
       : "text-ink-soft hover:bg-felt-raised hover:text-ink",
   ].join(" ");
 
@@ -49,9 +49,30 @@ function Heading({ children }: { children: string }) {
   );
 }
 
+function activePath(
+  pathname: string,
+  items: NavItem[],
+  clubSlug: string,
+  playerId: string | number,
+) {
+  const resolved = items.map((navItem) => ({
+    to: String(navItem.to),
+    path: String(navItem.to)
+      .replace("$clubSlug", clubSlug)
+      .replace("$playerId", String(playerId)),
+    end: navItem.end,
+  }));
+  const active = resolved
+    .filter(({ path, end }) =>
+      end ? pathname === path : pathname === path || pathname.startsWith(`${path}/`),
+    )
+    .sort((a, b) => b.path.length - a.path.length)[0];
+  return active?.to;
+}
+
 export default function NavDrawer({
   open = false,
-  onClose = () => {},
+  onClose = () => { },
   /** Renders the left-column form instead of the dialog: no backdrop, no Esc,
    *  nothing to open, and the club and the user across its two ends.
    *
@@ -74,6 +95,7 @@ export default function NavDrawer({
   const { user, player, activeClub, isClubAdmin } = useAuth();
   const { t, lang, setLang } = useT();
   const signOut = useSignOut();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   // An absolute link, so it needs a host that exists on the server too.
   const { origin } = getRouteApi("__root__").useRouteContext();
 
@@ -83,9 +105,9 @@ export default function NavDrawer({
       // button below instead of a page they can't do anything on.
       section.headingKey === "nav.club" && !isClubAdmin
         ? {
-            ...section,
-            items: section.items.filter((i) => i.to !== "/app/$clubSlug/club"),
-          }
+          ...section,
+          items: section.items.filter((i) => i.to !== "/app/$clubSlug/club"),
+        }
         : section,
     ),
     // Your own rows only exist once there is a player to address them to, which
@@ -93,6 +115,13 @@ export default function NavDrawer({
     // are real redirects now.
     { headingKey: "nav.me" as const, items: ME_NAV },
   ];
+
+  const activeTo = activePath(
+    pathname,
+    sections.flatMap((s) => s.items),
+    activeClub?.slug ?? "",
+    player.id,
+  );
 
   // "Send" over "copy": the share sheet is the natural way to hand a link to
   // a specific person on a phone. Falls back to the clipboard on desktop.
@@ -124,34 +153,29 @@ export default function NavDrawer({
       {sections.map((section) => (
         <div key={section.headingKey}>
           <Heading>{t(section.headingKey)}</Heading>
-          {section.items.map(({ to, labelKey, icon: Icon, end }) => (
-            <AppLink
-              key={String(to) + String(labelKey)}
-              to={to}
-              // The training links carry a playerId; the rest ignore it.
-              params={{ playerId: player.id }}
-              activeOptions={{ exact: end }}
-              // Both branches go through activeProps/inactiveProps rather than
-              // one of them through `className`: activeProps is concatenated onto
-              // className, not swapped for it, so the active row was also
-              // carrying the inactive row's `hover:text-ink` — and a hover
-              // variant beats a base colour, which is why hovering the page you
-              // were on turned its label back to ink.
-              inactiveProps={{ className: item({ isActive: false }) }}
-              activeProps={{ className: item({ isActive: true }) }}
-            >
-              {({ isActive }: { isActive: boolean }) => (
+          {section.items.map(({ to, labelKey, icon: Icon }) => {
+            // Picked by activePath, not by this row's own Link — a row otherwise
+            // has no way to know a sibling's match is the more specific one. See
+            // activePath's comment.
+            const isActive = to === activeTo;
+            return (
+              <AppLink
+                key={String(to) + String(labelKey)}
+                to={to}
+                // The training links carry a playerId; the rest ignore it.
+                params={{ playerId: player.id }}
+                className={item({ isActive })}
+              >
                 <>
                   <Icon
-                    className={`h-[18px] w-[18px] ${
-                      isActive ? "text-strike" : "text-ink-soft"
-                    }`}
+                    className={`h-[18px] w-[18px] ${isActive ? "text-strike" : "text-ink-soft"
+                      }`}
                   />
                   {t(labelKey)}
                 </>
-              )}
-            </AppLink>
-          ))}
+              </AppLink>
+            );
+          })}
           {section.headingKey === "nav.club" && !isClubAdmin && activeClub && (
             <button
               type="button"

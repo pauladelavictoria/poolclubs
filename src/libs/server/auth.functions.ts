@@ -263,6 +263,25 @@ export const signUp = createServerFn({ method: "POST" })
   );
 
 /**
+ * Resending the sign-up confirmation link, for the dead end where the first
+ * mail never turns up (spam filter, typo the person already fixed, slow
+ * SMTP). Swallows its error the same way requestPasswordReset does: whether
+ * the address has an unconfirmed account is not this endpoint's to reveal.
+ */
+export const resendConfirmation = createServerFn({ method: "POST" })
+  .validator(z.object({ email: z.string().email().max(320), next: z.string().optional() }))
+  .handler(async ({ data }): Promise<null> => {
+    const supabase = getSupabaseServer();
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: data.email,
+      options: { emailRedirectTo: callbackUrl(data.next) },
+    });
+    if (error) console.error("resendConfirmation failed", error.message);
+    return null;
+  });
+
+/**
  * Forgotting a password, and then setting a new one.
  *
  * The request half never reports anything. Whether the address has an account

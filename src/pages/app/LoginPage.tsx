@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import {
   requestPasswordReset,
+  resendConfirmation,
   signIn,
   signUp,
   startGoogleOAuth,
@@ -55,6 +56,9 @@ export default function LoginPage() {
   const [note, setNote] = useState<{ text: string; ok?: boolean } | null>(
     search.error ? { text: t("auth.badLink") } : null,
   );
+  // The dead end this fixes: a signup confirmation mail that never arrives
+  // leaves the "back to sign in" button as the only way off this screen.
+  const [resent, setResent] = useState(false);
 
   /** The session cookies are set; make the router notice and move on. */
   const arrive = async () => {
@@ -99,6 +103,16 @@ export default function LoginPage() {
     // is what they just typed — but the sentence around it stays conditional,
     // because only that sentence knows anything.
     setSent({ email: field.value, reset: true });
+    setBusy(false);
+  };
+
+  const resendConfirm = async () => {
+    if (!sent) return;
+    setBusy(true);
+    await resendConfirmation({ data: { email: sent.email, next } }).catch(
+      () => {},
+    );
+    setResent(true);
     setBusy(false);
   };
 
@@ -181,11 +195,25 @@ export default function LoginPage() {
           <p className="mt-6 border-t border-hairline pt-4 text-caption text-ink-faint">
             {t("auth.confirmSpam")}
           </p>
+          {/* Not offered for a password reset: the sentence around this screen
+              stays conditional there on purpose, and a resend button would be
+              a second chance to give away whether the account exists. */}
+          {!sent.reset && (
+            <button
+              type="button"
+              onClick={resendConfirm}
+              disabled={busy}
+              className="mt-2 text-caption text-ink-soft underline underline-offset-2 disabled:opacity-60"
+            >
+              {resent ? t("auth.resendSent") : t("auth.resendConfirm")}
+            </button>
+          )}
           <button
             type="button"
-            className="mt-4 text-caption text-ink-soft underline underline-offset-2"
+            className="mt-4 block w-full text-caption text-ink-soft underline underline-offset-2"
             onClick={() => {
               setSent(null);
+              setResent(false);
               setMode("signin");
             }}
           >

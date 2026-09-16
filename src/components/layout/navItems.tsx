@@ -16,7 +16,7 @@ import type { Key } from "@/i18n";
 import type { SectionId } from "@/libs/algorithms/sections";
 import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 
-type NavItem = {
+export type NavItem = {
   /**
    * The route's own pattern, not a path. The club is filled in by AppLink, which
    * is what every one of these is rendered through — so a nav item names a route
