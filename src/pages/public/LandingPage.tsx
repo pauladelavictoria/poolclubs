@@ -16,6 +16,7 @@ import {
   LuArrowRight,
   LuCheck,
   LuChevronDown,
+  LuRocket,
 } from "react-icons/lu";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Shot } from "@/components/ui/Shot";
@@ -54,53 +55,6 @@ import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 /** One club colour per ball, in the picker's own order. Drawn rather than
  *  described: the club-branding feature is a row of real balls. */
 const CLUB_BALLS = Object.keys(CLUB_BALL_LABEL) as BallColor[];
-
-/**
- * The tour: four screens of the running app, one block each.
- *
- * Every one is a real screenshot out of scripts/screenshots.mjs, and the four
- * were picked so that nothing on the page appears twice. The ranking is not
- * here on purpose: it is already the hero's phone and the first feature card's
- * shot, which is two more places than any other screen gets.
- *
- * `size` is the promoted file's own pixel size, so `object-cover` never crops.
- */
-const TOUR: {
-  shot: string;
-  title: Key;
-  body: Key;
-  alt: Key;
-  size: [number, number];
-}[] = [
-  {
-    shot: "tournament",
-    title: "landing.t1Title",
-    body: "landing.t1Body",
-    alt: "landing.t1Alt",
-    size: [2000, 1527],
-  },
-  {
-    shot: "tv",
-    title: "landing.t2Title",
-    body: "landing.t2Body",
-    alt: "landing.t2Alt",
-    size: [2000, 1125],
-  },
-  {
-    shot: "me",
-    title: "landing.t3Title",
-    body: "landing.t3Body",
-    alt: "landing.t3Alt",
-    size: [2000, 1250],
-  },
-  {
-    shot: "club",
-    title: "landing.t4Title",
-    body: "landing.t4Body",
-    alt: "landing.t4Alt",
-    size: [2000, 1696],
-  },
-];
 
 const SEGMENTS: { title: Key; today: Key; now: Key }[] = [
   {
@@ -194,6 +148,26 @@ const FEATURES: Feature[] = [
   },
 ];
 
+/** What's shipped: the six feature-grid titles above (already translated
+ *  there, so reused rather than duplicated) plus the one shipped thing that
+ *  doesn't get its own card, match streaming. */
+const SHIPPED: Key[] = [
+  "landing.f1Title",
+  "landing.f2Title",
+  "landing.f3Title",
+  ...(DRILLS_ENABLED ? (["landing.f4Title"] as Key[]) : []),
+  "landing.f5Title",
+  "landing.f6Title",
+  "landing.rStreamingTitle",
+];
+
+const ROADMAP: { title: Key; body: Key }[] = [
+  { title: "landing.rReferralsTitle", body: "landing.rReferralsBody" },
+  { title: "landing.rPaymentsTitle", body: "landing.rPaymentsBody" },
+  { title: "landing.rMultiTournTitle", body: "landing.rMultiTournBody" },
+  { title: "landing.rSeasonsTitle", body: "landing.rSeasonsBody" },
+];
+
 /** Nine questions is past the point where a stacked list reads, so they fold.
  *  Native <details>: keyboard and screen-reader behaviour for free, and it
  *  works before hydration, which matters on the page a stranger arrives at. */
@@ -242,67 +216,6 @@ function PartLabel({ label }: { label: Key }) {
       </span>
       <span className="h-px flex-1 bg-hairline" aria-hidden />
     </div>
-  );
-}
-
-/**
- * One screen of the tour. The shot is the block, not an illustration next to
- * it: it takes seven of the twelve columns, and the copy beside it is a
- * heading and a sentence.
- *
- * It does not bleed past the container the way the hero's phone does. A phone
- * mockup can run off the edge and only lose its own bezel, but these are whole
- * desktop screens with the app's nav and headings in them, and clipping one
- * cuts words in half: "PoolClubs" arrives as "Clubs". Whatever the bleed buys
- * in width is not worth a screenshot that reads as broken.
- *
- * Sides alternate, which is what stops four of these reading as a list.
- */
-function TourBlock({
-  shot,
-  title,
-  body,
-  alt,
-  size,
-  flipped,
-}: (typeof TOUR)[number] & { flipped: boolean }) {
-  const { t } = useT();
-
-  return (
-    <article className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
-      <div className={`pop-in lg:col-span-7 ${flipped ? "lg:order-2" : ""}`}>
-        {/* A mat, not a hairline.
-
-            These are screenshots of a dark app on a dark canvas, and the frame
-            was bg-felt on pocket with a 10%-white edge: three near-blacks, so
-            the shot had no edge at all and read as a hole in the page. Light
-            mode had the mirror of the same problem, a white shot in a white
-            frame on pale blue.
-
-            felt-raised is the one surface that steps the right way in both
-            themes — up from the canvas on dark, down from the shot on light —
-            so the mat is visible either way. The stronger hairline and the
-            page's own lift do the rest; `lift` is a no-op outside the public
-            skin, which is where this lives. */}
-        <div className="lift overflow-hidden rounded-sheet border border-hairline-strong bg-felt-raised p-2">
-          <Shot
-            name={shot}
-            alt={t(alt)}
-            size={size}
-            className="rounded-[10px]"
-          />
-        </div>
-      </div>
-
-      <div className={`lg:col-span-5 ${flipped ? "lg:order-1" : ""}`}>
-        <h3 className="reveal text-h2 font-semibold leading-tight tracking-tight text-ink">
-          {t(title)}
-        </h3>
-        <p className="reveal mt-4 max-w-[44ch] text-body leading-relaxed text-ink-soft">
-          {t(body)}
-        </p>
-      </div>
-    </article>
   );
 }
 
@@ -410,27 +323,6 @@ export default function LandingPage() {
 
       <PartLabel label="landing.partProduct" />
 
-      {/* The tour. Four screens, alternating sides, and nothing between them
-          but air: the shots are the argument here, so the copy beside each one
-          is a heading and a sentence and stops. */}
-      <section
-        id="tour"
-        className="mx-auto max-w-6xl scroll-mt-8 px-4 pt-10 pb-16 sm:px-6 lg:pt-14 lg:pb-24"
-      >
-        <h2 className="reveal max-w-[20ch] text-h1 font-semibold leading-tight tracking-tight text-ink">
-          {t("landing.tourTitle")}
-        </h2>
-        <p className="reveal mt-4 max-w-[58ch] text-h4 leading-relaxed text-ink-soft">
-          {t("landing.tourBody")}
-        </p>
-
-        <div className="mt-14 flex flex-col gap-16 lg:gap-24">
-          {TOUR.map((block, i) => (
-            <TourBlock key={block.shot} {...block} flipped={i % 2 === 1} />
-          ))}
-        </div>
-      </section>
-
       {/* The product itself, area by area. Asymmetric bento so the grid
           alternates weight instead of repeating a row of equal cards, and every
           cell spells out three concrete things rather than one adjective. */}
@@ -455,11 +347,10 @@ export default function LandingPage() {
             <article
               key={title}
               className={cardClasses({
-                className: `pop-in flex flex-col overflow-hidden ${
-                  !DRILLS_ENABLED && i === shown.length - 1
+                className: `pop-in flex flex-col overflow-hidden ${!DRILLS_ENABLED && i === shown.length - 1
                     ? "lg:col-span-12"
                     : span
-                }`,
+                  }`,
               })}
             >
               <div className="p-6 sm:p-8">
@@ -540,6 +431,83 @@ export default function LandingPage() {
               )}
             </article>
           ))}
+        </div>
+      </section>
+
+      {/* The pitch for staying: shipped on the left as a settled checklist,
+          what's next on the right as a livelier, unfinished one. The dashed
+          border and the live-dot pulse borrow Shot's own "not here yet"
+          placeholder language, so "coming soon" reads as a promise rather
+          than as a fourth feature card pretending to be done. */}
+      <section
+        id="roadmap"
+        className="mx-auto max-w-6xl scroll-mt-8 px-4 py-16 sm:px-6 lg:py-24"
+      >
+        <h2 className="reveal max-w-[24ch] text-h1 font-semibold leading-tight tracking-tight text-ink">
+          {t("landing.roadmapTitle")}
+        </h2>
+        <p className="reveal mt-4 max-w-[58ch] text-h4 leading-relaxed text-ink-soft">
+          {t("landing.roadmapBody")}
+        </p>
+
+        <div className="mt-12 grid gap-6 lg:grid-cols-12">
+          <div className="wash wash-soft pop-in rounded-card border border-hairline p-7 lg:col-span-5">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-strike text-pocket">
+                <LuCheck className="h-3.5 w-3.5" aria-hidden />
+              </span>
+              <p className="text-caption font-semibold uppercase tracking-[0.14em] text-strike">
+                {t("landing.roadmapLive")}
+              </p>
+            </div>
+            <ul className="mt-6 flex flex-col gap-3.5">
+              {SHIPPED.map((title) => (
+                <li key={title} className="flex gap-2.5">
+                  <LuCheck
+                    className="mt-0.5 h-4 w-4 shrink-0 text-strike"
+                    aria-hidden
+                  />
+                  <span className="text-body text-ink-soft">{t(title)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div
+            className="lift pop-in rounded-card border border-dashed border-strike/50 bg-strike-tint p-7 lg:col-span-7"
+            style={{ animationDelay: "80ms" }}
+          >
+            <div className="flex items-center gap-2.5">
+              <span
+                className="live-dot h-2.5 w-2.5 rounded-full bg-strike"
+                aria-hidden
+              />
+              <p className="text-caption font-semibold uppercase tracking-[0.14em] text-strike">
+                {t("landing.roadmapSoon")}
+              </p>
+            </div>
+            <ul className="mt-6 grid gap-6 sm:grid-cols-2">
+              {ROADMAP.map(({ title, body }, i) => (
+                <li
+                  key={title}
+                  className="pop-in flex gap-3"
+                  style={{ animationDelay: `${120 + i * 60}ms` }}
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-strike text-pocket">
+                    <LuRocket className="h-4 w-4" aria-hidden />
+                  </span>
+                  <div>
+                    <p className="text-body font-semibold text-ink">
+                      {t(title)}
+                    </p>
+                    <p className="mt-1 text-caption text-ink-soft">
+                      {t(body)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </section>
 

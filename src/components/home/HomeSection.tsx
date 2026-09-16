@@ -64,7 +64,17 @@ export function HomeSection({
  * Cards are sized here rather than by each caller, so every block's rhythm
  * agrees: the width is a share of the block, never a fixed number, so what a
  * row shows is always a whole number of cards and half of the next one. The
- * half card is the only thing that says "this scrolls".
+ * half card is the only thing that says "this scrolls", and the fade over
+ * each edge says so too — always on, not just once you've scrolled partway,
+ * since that's simpler than tracking scroll position to hide it.
+ *
+ * A fade can't be the row's own background: the cards are opaque, so a
+ * gradient behind them would never show through. It has to sit on top, as a
+ * sticky child of the scroller itself rather than an absolutely-positioned
+ * div in a wrapper — this row bleeds past its own box on both sides (the
+ * negative margin below), so a wrapper's edges land 12px short of where the
+ * row actually clips. Sticky, positioned against the scroller it lives
+ * inside, can't drift out of step with it.
  */
 export function Carousel({
   children,
@@ -75,6 +85,25 @@ export function Carousel({
    *  Only changes how many fit once there is room for more than three. */
   wide?: boolean;
 }) {
+  const fade = (edge: "start" | "end") => (
+    <li
+      aria-hidden
+      className={[
+        "sticky z-10 w-0 shrink-0",
+        edge === "start" ? "left-0 -mr-3" : "right-0 -ml-3",
+      ].join(" ")}
+    >
+      <div
+        className={[
+          "pointer-events-none h-full w-4",
+          edge === "start"
+            ? "-ml-3 bg-gradient-to-r from-pocket to-transparent"
+            : "-ml-1 bg-gradient-to-l from-pocket to-transparent",
+        ].join(" ")}
+      />
+    </li>
+  );
+
   return (
     <ul
       className={[
@@ -84,6 +113,7 @@ export function Carousel({
         "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
       ].join(" ")}
     >
+      {fade("start")}
       {Children.map(children, (child) => (
         <li
           className={[
@@ -100,6 +130,7 @@ export function Carousel({
           {child}
         </li>
       ))}
+      {fade("end")}
     </ul>
   );
 }
