@@ -12,6 +12,28 @@ export const useClubTables = () => {
 };
 
 /**
+ * Each table's camera URL, admin-only both by policy and by which page ever
+ * fetches it — never joined onto `club_tables` itself, since that row is
+ * readable by any member and by anon for a public club, and this URL
+ * routinely carries the camera's own password (`rtsp://user:pass@host/...`).
+ */
+export const useClubTableCameras = () => {
+  const { activeClubId } = useAuth();
+  return useQuery({
+    queryKey: keys.clubTableCameras.in(activeClubId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("club_table_cameras")
+        .select("table_id, camera_url")
+        .eq("club_id", activeClubId!);
+      if (error) throw error;
+      return new Map(data.map((row) => [row.table_id, row.camera_url]));
+    },
+    enabled: !!activeClubId,
+  });
+};
+
+/**
  * The owner's list of tables. Admin-only in the database (one `FOR ALL` policy)
  * and reached from the club settings page, which is already admin-gated in its
  * route's beforeLoad.
@@ -101,6 +123,39 @@ export const useManageClubTables = () => {
           .throwOnError();
       },
       onSuccess,
+    }),
+
+    /** A separate table, not a `club_tables` column — see
+     *  `useClubTableCameras` for why. An empty/blank URL deletes the row
+     *  rather than storing an empty string, so "no camera set" has one
+     *  representation. */
+    updateTableCamera: useMutation({
+      mutationFn: async ({
+        id,
+        cameraUrl,
+      }: {
+        id: number;
+        cameraUrl: string | null;
+      }) => {
+        if (!activeClubId) throw new Error("no active club");
+        const url = cameraUrl?.trim() || null;
+        if (url) {
+          await supabase
+            .from("club_table_cameras")
+            .upsert({ table_id: id, club_id: activeClubId, camera_url: url })
+            .throwOnError();
+        } else {
+          await supabase
+            .from("club_table_cameras")
+            .delete()
+            .eq("table_id", id)
+            .throwOnError();
+        }
+      },
+      onSuccess: () =>
+        queryClient.invalidateQueries({
+          queryKey: keys.clubTableCameras.in(activeClubId),
+        }),
     }),
 
     /** The floor plan's Save button: every placed/moved/rotated/unplaced

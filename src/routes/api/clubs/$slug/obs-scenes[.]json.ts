@@ -14,8 +14,11 @@ import { buildObsSceneCollection } from "@/libs/algorithms/obsSceneCollection";
  *
  * The stream key is deliberately never read or written here — see the doc's
  * Decisions table. A scene collection carries scenes and sources; RTMP
- * service settings live in a separate OBS profile export, which is why this
- * download stays harmless if a club forwards it around.
+ * service settings live in a separate OBS profile export, kept out for that
+ * reason. club_table_cameras' camera_url is a different case: once a table
+ * has one on file it lands straight in this file's ffmpeg_source, password
+ * and all, because OBS has nowhere else to read it from — so this download
+ * is only as harmless to forward around as the weakest camera_url in it.
  */
 export const Route = createFileRoute("/api/clubs/$slug/obs-scenes.json")({
   server: {
@@ -42,10 +45,24 @@ export const Route = createFileRoute("/api/clubs/$slug/obs-scenes.json")({
           .order("sort_order", { ascending: true })
           .order("id", { ascending: true });
 
+        // A separate table, not a join column on club_tables — see
+        // club_table_cameras' own RLS policy for why (that row is readable
+        // by any member, this URL usually carries the camera's password).
+        const { data: cameras } = await supabase
+          .from("club_table_cameras")
+          .select("table_id, camera_url")
+          .eq("club_id", club.id);
+        const cameraByTableId = new Map(
+          (cameras ?? []).map((row) => [row.table_id, row.camera_url]),
+        );
+
         const collection = buildObsSceneCollection({
           clubName: club.name,
           clubSlug: club.slug,
-          tables: tables ?? [],
+          tables: (tables ?? []).map((table) => ({
+            ...table,
+            camera_url: cameraByTableId.get(table.id) ?? null,
+          })),
           origin: new URL(request.url).origin,
         });
 

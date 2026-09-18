@@ -11,9 +11,9 @@ import { useT } from "@/i18n";
  * Browser Dock — see docs/youtube-streaming.md Phase 1.5b.
  *
  * Scoped down from the doc's original spec: "which table is streaming" and
- * VOD links need Phase 2's club_streams/stream_sessions, which don't exist
- * yet. Until then this shows what the app already knows for free — every
- * table and whatever is live on it, tournament or casual — which is exactly
+ * VOD links aren't wired up here yet, even though club_streams/stream_sessions
+ * (Phase 2) now exist — this still only shows what a live match itself
+ * knows: every table and whatever is on it, tournament or casual, which is
  * what an operator switching OBS scenes by hand needs to see right now.
  *
  * Poll rather than the realtime channel, matching TvPage: a dock nobody is

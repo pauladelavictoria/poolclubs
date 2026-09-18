@@ -128,6 +128,13 @@ export const keys = {
     in: (clubId?: number | null) => ["club_tables", clubId] as const,
   },
 
+  /** club_table_cameras — kept off club_tables itself because that row is
+   *  readable by any member and by anon for a public club, and a camera URL
+   *  routinely carries the camera's own password in it. */
+  clubTableCameras: {
+    in: (clubId?: number | null) => ["club_table_cameras", clubId] as const,
+  },
+
   /** club_youtube's connection state — channel_title / connected_at only,
    *  see youtube.functions.ts. */
   youtubeConnection: {

@@ -15,8 +15,8 @@ describe("buildObsSceneCollection", () => {
       clubName: "El Billar",
       clubSlug: "el-billar",
       tables: [
-        { id: 1, label: "Mesa 1" },
-        { id: 2, label: "Mesa 2" },
+        { id: 1, label: "Mesa 1", camera_url: null },
+        { id: 2, label: "Mesa 2", camera_url: null },
       ],
       origin: "https://poolclubs.example",
     });
@@ -52,7 +52,7 @@ describe("buildObsSceneCollection", () => {
     const collection = buildObsSceneCollection({
       clubName: "El Billar",
       clubSlug: "el-billar",
-      tables: [{ id: 1, label: "Mesa 1" }],
+      tables: [{ id: 1, label: "Mesa 1", camera_url: null }],
       origin: "https://poolclubs.example",
     });
 
@@ -74,5 +74,28 @@ describe("buildObsSceneCollection", () => {
     expect(collection.sources).toEqual([]);
     expect(collection.scene_order).toEqual([]);
     expect(collection.current_scene).toBe("");
+  });
+
+  it("uses an ffmpeg RTSP source instead of the placeholder once a camera_url is on file", () => {
+    const collection = buildObsSceneCollection({
+      clubName: "El Billar",
+      clubSlug: "el-billar",
+      tables: [
+        {
+          id: 1,
+          label: "Mesa 1",
+          camera_url: "rtsp://user:pass@192.168.1.102:554/h264Preview_01_main",
+        },
+      ],
+      origin: "https://poolclubs.example",
+    });
+
+    const camera = collection.sources.find((s) => s.name === "Mesa 1 — Camera");
+    expect(camera?.id).toBe("ffmpeg_source");
+    expect(camera?.settings).toMatchObject({
+      input: "rtsp://user:pass@192.168.1.102:554/h264Preview_01_main",
+      input_format: "rtsp",
+      ffmpeg_options: "rtsp_transport=tcp",
+    });
   });
 });

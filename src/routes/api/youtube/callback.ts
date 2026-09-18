@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseServer } from "@/libs/supabase/server";
 import { getSupabaseServiceRole } from "@/libs/supabase/serviceRole";
 import { encryptSecret, verifyYoutubeState } from "@/libs/server/crypto";
+import { createClubStream } from "@/libs/server/youtube.functions";
 
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const CHANNELS_ENDPOINT =
@@ -9,12 +10,12 @@ const CHANNELS_ENDPOINT =
 
 /**
  * Where Google sends the club owner back to — docs/youtube-streaming.md §2.3.
- * Exchanges the one-time code, reads the connecting channel, and stores the
- * encrypted refresh token. Deliberately does not create a `club_streams` row
- * here: that needs a `table_id` (schema §2.2, one reusable stream per camera),
- * which isn't known until an admin maps a table in the settings UI (§2.6, not
- * yet built) — so a connected club shows up with a channel and no streams
- * until that exists.
+ * Exchanges the one-time code, reads the connecting channel, stores the
+ * encrypted refresh token, then backfills a `club_streams` row for every
+ * table that already has a `camera_url` on file (club_table_cameras) — an
+ * admin who set up cameras before connecting YouTube shouldn't have to
+ * re-click each table afterward. Best-effort: one table's provisioning
+ * failing doesn't block the connection itself or the others.
  */
 export const Route = createFileRoute("/api/youtube/callback")({
   server: {
@@ -92,21 +93,62 @@ export const Route = createFileRoute("/api/youtube/callback")({
         }
 
         const { data: user } = await supabase.auth.getUser();
-        const { error } = await getSupabaseServiceRole()
-          .from("club_youtube")
-          .upsert({
-            club_id: clubId,
-            refresh_token_enc: encryptSecret(tokens.refresh_token),
-            channel_id: channel.id,
-            channel_title: channel.snippet.title,
-            connected_by: user.user!.id,
-            connected_at: new Date().toISOString(),
-          });
+        const serviceRole = getSupabaseServiceRole();
+        const { error } = await serviceRole.from("club_youtube").upsert({
+          club_id: clubId,
+          refresh_token_enc: encryptSecret(tokens.refresh_token),
+          channel_id: channel.id,
+          channel_title: channel.snippet.title,
+          connected_by: user.user!.id,
+          connected_at: new Date().toISOString(),
+        });
         if (error) {
           console.error("youtube callback: store club_youtube", error.message);
           return new Response("Could not save the connection.", {
             status: 500,
           });
+        }
+
+        const { data: cameras } = await serviceRole
+          .from("club_table_cameras")
+          .select("table_id")
+          .eq("club_id", clubId);
+        if (cameras && cameras.length > 0) {
+          const { data: existingStreams } = await serviceRole
+            .from("club_streams")
+            .select("table_id")
+            .eq("club_id", clubId);
+          const streamed = new Set(
+            (existingStreams ?? []).map((s) => s.table_id),
+          );
+          const unstreamedIds = cameras
+            .map((c) => c.table_id)
+            .filter((id) => !streamed.has(id));
+
+          if (unstreamedIds.length > 0) {
+            const { data: tables } = await serviceRole
+              .from("club_tables")
+              .select("id, label")
+              .in("id", unstreamedIds);
+            for (const table of tables ?? []) {
+              try {
+                // Calling the server function directly, not over HTTP — this
+                // route is already server code, and createServerFn exports
+                // are plain callable functions when invoked that way. Reuses
+                // its own admin check and token refresh rather than a shared
+                // plain helper (see createClubStream's own comment for why).
+                await createClubStream({
+                  data: { clubId, tableId: table.id, label: table.label },
+                });
+              } catch (err) {
+                console.error(
+                  "youtube callback: backfill stream for table",
+                  table.id,
+                  err,
+                );
+              }
+            }
+          }
         }
 
         return new Response(null, {
