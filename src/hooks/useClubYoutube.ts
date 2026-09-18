@@ -8,6 +8,7 @@ import {
   createClubStream,
   deleteClubStream,
   getStreamedTableIds,
+  revealClubStream,
 } from "@/libs/server/youtube.functions";
 
 /** The club's YouTube connection and its per-table streams —
@@ -61,8 +62,9 @@ export const useManageClubYoutube = () => {
       },
     }),
 
-    /** Returns the ingest URL and key once — the caller is what shows them,
-     *  since neither is ever readable again after this call resolves. */
+    /** Returns the ingest URL and key straight from creation, so the caller
+     *  can show them without an extra round trip — `revealStream` below gets
+     *  the same two values again any time after. */
     createStream: useMutation({
       mutationFn: async ({
         tableId,
@@ -90,6 +92,16 @@ export const useManageClubYoutube = () => {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: keys.clubStreams.all });
         queryClient.invalidateQueries({ queryKey: keys.streamedTableIds.all });
+      },
+    }),
+
+    /** The ingest URL and key again, on demand — decrypted server-side each
+     *  call, never cached in query state, so closing the reveal and asking
+     *  again is the same round trip as the first time. */
+    revealStream: useMutation({
+      mutationFn: async (streamId: number) => {
+        if (!activeClubId) throw new Error("no active club");
+        return revealClubStream({ data: { clubId: activeClubId, streamId } });
       },
     }),
   };

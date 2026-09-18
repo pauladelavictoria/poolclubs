@@ -82,8 +82,9 @@ export const disconnectYoutube = createServerFn({ method: "POST" })
     return null;
   });
 
-/** One row per table with a camera. stream_key_enc never leaves the server
- *  after creation — "show the ingest URL and key to the owner once" (§2.3). */
+/** One row per table with a camera. The key itself isn't here — reveal it
+ *  with `revealClubStream` — this list is what OBS setup and the "already
+ *  streaming" state need without touching the encrypted column at all. */
 export const listClubStreams = createServerFn({ method: "GET" })
   .validator(clubIdInput)
   .handler(async ({ data }) => {
@@ -105,7 +106,16 @@ const createStreamInput = z.object({
  *  streaming simultaneously means two liveStream resources and two
  *  encoders"). Re-running this for a table that already has one replaces it
  *  — club_streams.table_id is unique, so the upsert rebinds rather than
- *  duplicating. */
+ *  duplicating.
+ *
+ *  Also called directly, server-side, by the OAuth callback's backfill for
+ *  tables that already had a camera_url when YouTube got connected —
+ *  `createServerFn` exports are plain callable functions, so no HTTP round
+ *  trip happens when the caller is already on the server. Deliberately not
+ *  factored into a shared plain helper: a top-level function outside any
+ *  `.handler()` isn't stripped from the client bundle, and this one touches
+ *  `encryptSecret`, which imports `node:crypto` — that leaked into the
+ *  browser once already. */
 export const createClubStream = createServerFn({ method: "POST" })
   .validator(createStreamInput)
   .handler(async ({ data }) => {
@@ -141,11 +151,36 @@ export const createClubStream = createServerFn({ method: "POST" })
       .single();
     if (error) throw error;
 
-    // The only moment the plaintext key is ever handed back to the browser.
     return {
       id: row.id,
       ingestionAddress: stream.ingestionAddress,
       streamKey: stream.streamKey,
+    };
+  });
+
+const revealStreamInput = z.object({
+  clubId: z.number().int().positive(),
+  streamId: z.number().int().positive(),
+});
+
+/** Decrypts and returns one stream's ingest URL and key on demand. The
+ *  encryption at rest (defence in depth against a leaked service-role key or
+ *  a DB dump, per crypto.ts) is the boundary here, not a one-time reveal —
+ *  any admin of this club can call this again later, the same access every
+ *  other action on this screen already requires. */
+export const revealClubStream = createServerFn({ method: "POST" })
+  .validator(revealStreamInput)
+  .handler(async ({ data }) => {
+    await assertClubAdmin(data.clubId);
+    const { data: row } = await getSupabaseServiceRole()
+      .from("club_streams")
+      .select("club_id, ingestion_address, stream_key_enc")
+      .eq("id", data.streamId)
+      .single();
+    if (!row || row.club_id !== data.clubId) throw new Error("not found");
+    return {
+      ingestionAddress: row.ingestion_address,
+      streamKey: decryptSecret(row.stream_key_enc),
     };
   });
 

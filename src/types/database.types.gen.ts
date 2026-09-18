@@ -207,6 +207,39 @@ export type Database = {
           },
         ]
       }
+      club_table_cameras: {
+        Row: {
+          camera_url: string
+          club_id: number
+          table_id: number
+        }
+        Insert: {
+          camera_url: string
+          club_id: number
+          table_id: number
+        }
+        Update: {
+          camera_url?: string
+          club_id?: number
+          table_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_table_cameras_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_table_cameras_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: true
+            referencedRelation: "club_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_tables: {
         Row: {
           brand: string | null

@@ -18,17 +18,46 @@
  * out, and diff it against this generator's output.
  */
 
-export type ObsSceneTable = { id: number; label: string };
+export type ObsSceneTable = {
+  id: number;
+  label: string;
+  /** From `club_table_cameras`, not `club_tables` — see that table's own
+   *  comment for why the URL (which usually carries the camera's password)
+   *  is kept off the row every member can read. */
+  camera_url: string | null;
+};
 
 /**
  * The Windows Video Capture Device source. Chosen as the default rather than
  * `av_capture_input` (macOS) or `ffmpeg_source` (RTSP): the ops runbook steers
  * clubs toward an NVENC/QuickSync mini PC, which is Windows or Linux, never a
- * Mac. A Linux or RTSP-camera club re-adds this one source under `v4l2_input`
- * or `ffmpeg_source` by hand — the same one manual step as picking the actual
- * device, which the doc already says the app cannot know.
+ * Mac. A Linux club re-adds this one source under `v4l2_input` by hand — the
+ * same one manual step as picking the actual device, which the app cannot
+ * know without a `camera_url` on file.
  */
 const CAMERA_SOURCE_ID = "dshow_input";
+
+/**
+ * RTSP settings for a table with a `camera_url` on file, matched against a
+ * real Reolink camera during PoolValencia's install: `rtsp_transport=tcp`
+ * because the sub-second UDP default drops packets on ordinary WiFi/switch
+ * setups and shows as a black or frozen feed, `restart_on_activate: false` /
+ * `close_when_inactive: false` so OBS keeps the stream connected while the
+ * scene is off program (an IP camera reconnect costs a black flash the
+ * source's own buffering can't hide).
+ */
+const rtspCameraSettings = (url: string) => ({
+  input: url,
+  is_local_file: false,
+  input_format: "rtsp",
+  ffmpeg_options: "rtsp_transport=tcp",
+  buffering_mb: 2,
+  reconnect_delay_sec: 2,
+  restart_on_activate: false,
+  close_when_inactive: false,
+  clear_on_media_end: false,
+  hw_decode: true,
+});
 
 const OVERLAY_WIDTH = 1920;
 const OVERLAY_HEIGHT = 1080;
@@ -112,10 +141,12 @@ export function buildObsSceneCollection({
     const cameraName = `${table.label} — Camera`;
     const overlayName = `${table.label} — Overlay`;
 
-    const camera = source(CAMERA_SOURCE_ID, cameraName, {
-      device_id: "",
-      device_name: "",
-    });
+    const camera = table.camera_url
+      ? source("ffmpeg_source", cameraName, rtspCameraSettings(table.camera_url))
+      : source(CAMERA_SOURCE_ID, cameraName, {
+          device_id: "",
+          device_name: "",
+        });
 
     const overlay = source("browser_source", overlayName, {
       url: `${origin}/overlay/table/${clubSlug}/${table.id}`,

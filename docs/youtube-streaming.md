@@ -1,8 +1,9 @@
 # Recording and streaming games to YouTube
 
-**Status:** planned, not started. Written 2026-09-04, revised 2026-09-12.
-**Nothing in this document has been built.** No route, table, env var or
-dependency described here exists in the repo yet.
+**Status:** Phase 1, 1.5 and most of Phase 2 are built — `club_youtube`,
+`club_streams`, `stream_sessions`, `club_table_cameras`, the YouTube
+connect/callback routes, `obs-scenes.json` and the streaming tab UI all exist
+in the repo. Written 2026-09-04, revised 2026-09-18.
 
 ---
 
@@ -214,13 +215,35 @@ Server route `src/routes/api/clubs/$slug/obs-scenes.json.ts`, same shape as
 Reads `club_tables` (shape as in
 [live.ts:84-99](../src/queries/live.ts#L84-L99)) and emits one scene per table:
 
-- a placeholder camera source (`dshow_input` on Windows, `av_capture_input` on
-  macOS, `ffmpeg_source` for an RTSP IP camera) — the operator picks the actual
-  device once, which is the one thing the app cannot know;
+- if the table has a `camera_url` on file (`club_table_cameras`, admin-set on
+  the Tables tab): an `ffmpeg_source` pointed at it with known-good RTSP
+  settings (`rtsp_transport=tcp`, `hw_decode: true`, ...) — the picture just
+  works on import;
+- otherwise a placeholder camera source (`dshow_input` on Windows,
+  `av_capture_input` on macOS) — the operator picks the actual device once,
+  which is the one thing the app cannot know without a `camera_url`;
 - a `browser_source` with `url` pre-filled to
   `https://<app>/overlay/table/<slug>/<tableId>`, 1920×1080, `shutdown: false`,
   `restart_when_active: true`;
 - scene named after `club_tables.name`.
+
+`club_table_cameras` is a separate table, not a column on `club_tables`: that
+row is readable by any club member and, for a public club, by anon, and a
+camera URL routinely carries the camera's own password
+(`rtsp://user:pass@host/...`). It gets its own admin-only RLS policy instead.
+
+Finding the camera's IP in the first place is a manual, one-time step per
+table — `public/find-cameras.ps1` (Windows) and `public/find-cameras.sh`
+(macOS/Linux), both linked from ClubStreamingCard's download buttons, run on
+the OBS machine. Shell-builtin only in both, not Node/Python: the OBS
+machine is Windows by default (dshow_input, the placeholder camera source's
+default, is Windows-only) or Linux per the ops runbook, and PowerShell/bash
+need no separate install on either. Both probe port 554 across the local
+subnet and report candidates to paste in. No auto-discovery UI: the OBS
+browser dock/panel is sandboxed the same way any browser is, no raw sockets
+or UDP multicast, so real discovery needs something running on the
+operator's own machine either way — these scripts are that, at the cost of
+one manual paste instead of zero.
 
 `// ponytail: build the JSON literal from the table rows, no scene-collection
 schema library and no OBS SDK. It is a nested object with a stable shape.`
@@ -364,8 +387,9 @@ Follow [logo.ts](../src/routes/api/clubs/$slug/logo.ts) and
   consent, scope `https://www.googleapis.com/auth/youtube`,
   `access_type=offline`, `prompt=consent`, signed state carrying the club id.
 - `src/routes/api/youtube/callback.ts` — exchange the code, store the encrypted
-  refresh token, create the club's first reusable `liveStream`, show the ingest
-  URL and key to the owner once.
+  refresh token, then backfill a `club_streams` row for every table that
+  already has a `camera_url` on file (§2.6) — best-effort, one table failing
+  doesn't block the connection or the others.
 
 ### 2.4 The reconciler
 
@@ -431,10 +455,16 @@ one on.
 
 ### 2.6 Admin UI
 
-Club settings screen: connect/disconnect YouTube, map each `club_streams` row
-to a `club_tables` row, show the ingest URL and key to copy into OBS.
-Strings into `src/i18n/{en,es,fr}.json`. No per-tournament or per-match admin
-toggle — that decision moved to the player, per §2.5.
+Club settings screen: connect/disconnect YouTube; every table with a
+`camera_url` on file gets its `club_streams` row provisioned automatically
+(on saving that camera_url if already connected, or backfilled in the OAuth
+callback if connecting afterward) — "Start streaming" only shows for the
+rare table that still needs a manual retry. The ingest URL and key are
+revealable on demand, not shown once and thrown away: `stream_key_enc` stays
+encrypted at rest, decrypted fresh on each "Show key" click by an admin of
+the club, same access this whole screen already requires. Strings into
+`src/i18n/{en,es,fr}.json`. No per-tournament or per-match admin toggle —
+that decision moved to the player, per §2.5.
 
 ### 2.7 The blocker that is not code
 
@@ -470,9 +500,10 @@ from the app (club settings → OBS setup), then Scene Collection → Import. Th
 lands one scene per table with the overlay Browser Source already pointed at the
 right URL. Two things remain, once, by hand:
 
-1. In each scene, pick the actual camera device on the placeholder source.
+1. If a table has no `camera_url` on file, pick the actual camera device on
+   its placeholder source — skipped automatically for a table that does.
 2. Settings → Stream → Custom RTMP, server `rtmp://a.rtmp.youtube.com/live2`,
-   key = the persistent key the app shows once.
+   key = the persistent key from that table's "Show key" in club settings.
 
 Optionally add the app's control panel via Docks → Custom Browser Dock.
 
