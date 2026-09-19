@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildGroups,
   buildKnockout,
+  buildLateEntry,
   buildLeague,
   qualifiers,
   seedOrder,
@@ -113,6 +114,46 @@ describe("buildKnockout — byes", () => {
       round2.filter((m) => m.p1_id !== null || m.p2_id !== null).length,
       "both semi-finals already know at least one player",
     ).toBe(2);
+  });
+});
+
+describe("buildLateEntry — joining a running league", () => {
+  it.each([1, 2] as const)(
+    "%i leg(s): one fixture per player already in",
+    (legs: 1 | 2) => {
+      const existing = buildLeague(field(4), legs, ids());
+      const last = Math.max(...existing.map((m) => m.round));
+      const late = buildLateEntry(5, field(4), legs, last + 1, ids());
+
+      expect(late.length).toBe(legs * 4);
+      for (const opponent of field(4)) {
+        expect(
+          late.filter((m) => m.p1_id === opponent || m.p2_id === opponent)
+            .length,
+          `5 meets ${opponent} once per leg`,
+        ).toBe(legs);
+      }
+      // Every fixture is the latecomer's, sides swapped in the second leg.
+      expect(late.every((m) => m.p1_id === 5 || m.p2_id === 5)).toBe(true);
+      if (legs === 2) {
+        expect(late.filter((m) => m.p1_id === 5).length).toBe(4);
+      }
+      // League fixtures, and never on a (round, slot) the league already used —
+      // the table's position constraint rejects a collision.
+      expect(late.every((m) => m.bracket === "league")).toBe(true);
+      expect(late.every((m) => m.group_no === null)).toBe(true);
+      const taken = new Set(existing.map((m) => `${m.round}:${m.slot}`));
+      expect(late.some((m) => taken.has(`${m.round}:${m.slot}`))).toBe(false);
+      expect(new Set(late.map((m) => `${m.round}:${m.slot}`)).size).toBe(
+        late.length,
+      );
+    },
+  );
+
+  it("never draws the latecomer against themselves", () => {
+    const late = buildLateEntry(2, field(3), 1, 9, ids());
+    expect(late.length).toBe(2);
+    expect(late.every((m) => m.p1_id !== m.p2_id)).toBe(true);
   });
 });
 

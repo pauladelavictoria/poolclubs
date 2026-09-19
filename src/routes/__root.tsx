@@ -9,7 +9,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
 import { I18nProvider, detectLang } from "@/i18n";
 import type { Lang } from "@/i18n";
-import { THEME_COOKIE, readOrigin, readPref } from "@/libs/prefs";
+import { KIOSK_COOKIE, THEME_COOKIE, readOrigin, readPref } from "@/libs/prefs";
 import { isHiddenPath } from "@/libs/algorithms/features";
 import { sessionQuery } from "@/queries/session";
 import RouteError from "@/components/layout/RouteError";
@@ -48,6 +48,12 @@ export const Route = createRootRouteWithContext<{
       // these come off the request's cookies, which is the only way the first
       // render can agree with the client's.
       theme: readPref(THEME_COOKIE) === "light" ? "light" : "dark",
+      // A tablet bolted to a rail, read standing up at arm's length. The whole
+      // app is sized in rem, so the device gets one bigger root and everything
+      // on it follows — see html[data-kiosk] in index.css. On the document
+      // rather than on the kiosk shell because rem answers to the root and
+      // nothing else.
+      kiosk: readPref(KIOSK_COOKIE) !== null,
       lang: detectLang() as Lang,
       // Absolute URLs (the club's invite link) need a host, and `window` does
       // not exist while this is rendering on the server.
@@ -207,7 +213,7 @@ document.documentElement.style.colorScheme=t;
 }catch(e){}})();`;
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const { theme, lang } = Route.useRouteContext();
+  const { theme, lang, kiosk } = Route.useRouteContext();
 
   return (
     // suppressHydrationWarning covers data-theme and the inline color-scheme:
@@ -222,6 +228,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html
       lang={lang}
       data-theme={theme}
+      data-kiosk={kiosk ? "" : undefined}
       style={{ colorScheme: theme }}
       suppressHydrationWarning
     >

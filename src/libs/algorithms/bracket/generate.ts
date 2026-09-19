@@ -305,6 +305,38 @@ export function buildLeague(
 }
 
 /**
+ * The fixtures a player joining a league already under way still owes: one
+ * against everyone already in it, per leg, sides swapped in the second the
+ * same way `buildLeague` swaps them.
+ *
+ * They go in rounds of their own after the last one generated, because the
+ * rotation that built the existing rounds has no seat left to slot them into
+ * — and a league's rounds are only a generation order anyway (see the
+ * `Fixtures` note in TournamentPage: no club plays them as matchdays).
+ * `fromRound` keeps the (round, slot) pair unique, which the table's own
+ * position constraint requires.
+ */
+export function buildLateEntry(
+  playerId: number,
+  opponentIds: number[],
+  legs: 1 | 2,
+  fromRound: number,
+  newId: () => string = uuid,
+): PlannedMatch[] {
+  const out: PlannedMatch[] = [];
+  for (let leg = 0; leg < legs; leg++) {
+    opponentIds.forEach((opponent, slot) => {
+      if (opponent === playerId) return;
+      const match = blank("league", fromRound + leg, slot, newId());
+      match.p1_id = leg === 0 ? playerId : opponent;
+      match.p2_id = leg === 0 ? opponent : playerId;
+      out.push(match);
+    });
+  }
+  return out;
+}
+
+/**
  * Snake-seeds the field into `groups` round-robin groups, so the strongest
  * players end up spread across them rather than stacked in the first.
  * `playerIds` must be in seed order.

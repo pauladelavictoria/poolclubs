@@ -29,9 +29,12 @@ describe("encodeSetup / decodeSetup", () => {
 
   it("falls back per-field rather than taking the page down, since a cookie is text a person can edit", () => {
     expect(decodeSetup("nonsense")).toEqual(DEFAULT_SETUP);
+    // One bad field only costs that field: snooker is not a discipline here,
+    // but "doubles" and a race of 5 are both usable and are kept.
     expect(decodeSetup("doubles:snooker:5")).toEqual({
       ...DEFAULT_SETUP,
       mode: "doubles",
+      raceTo: 5,
     });
     expect(decodeSetup("single:9ball:0").raceTo).toBe(DEFAULT_SETUP.raceTo);
     expect(decodeSetup("single:9ball:900").raceTo).toBe(DEFAULT_SETUP.raceTo);

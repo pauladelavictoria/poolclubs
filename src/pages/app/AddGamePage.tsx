@@ -6,6 +6,8 @@ import { useChallenges, useManageChallenges } from "@/hooks/useChallenges";
 import { useAddGame, useGame, useManageGames } from "@/hooks/useAddGame";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { usePlayers } from "@/hooks/usePlayers";
+import { useAuth } from "@/hooks/useAuth";
+import { PlayerOptions } from "@/components/players/PlayerOptions";
 import PageTitle from "@/components/layout/PageTitle";
 import CancelLink from "@/components/layout/CancelLink";
 import { Card } from "@/components/ui/Card";
@@ -74,6 +76,10 @@ export default function AddGamePage() {
   });
 
   const { data: players, isLoading: playersLoading } = usePlayers();
+  // Whoever is filing this, when they are a person: the club's tablet is a
+  // device and has never played a game — see PlayerOptions.
+  const { player: me } = useAuth();
+  const meId = me?.is_device ? undefined : me?.id;
   const { mutate: handleAddGame, isPending } = useAddGame();
 
   // One component, two routes: /games/new files a result, /games/$gameId/edit
@@ -281,7 +287,14 @@ export default function AddGamePage() {
                       })}
                     >
                       <option value="">{t("common.select")}</option>
-                      {playerOptions}
+                      {/* Only the first seat: the filer is one of the two
+                          players, and hoisting their name into both sides
+                          would say nothing about either. */}
+                      {n === 1 ? (
+                        <PlayerOptions players={players ?? []} meId={meId} />
+                      ) : (
+                        playerOptions
+                      )}
                     </Select>
                     {isDoubles && (
                       <Select

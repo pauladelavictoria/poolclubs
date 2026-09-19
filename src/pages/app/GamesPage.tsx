@@ -7,6 +7,7 @@ import PageTitle from "@/components/layout/PageTitle";
 import GamesList from "@/components/games/GamesList";
 import { Select } from "@/components/ui/Select";
 import { FilterBar } from "@/components/ui/FilterBar";
+import { PlayerOptions } from "@/components/players/PlayerOptions";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { SkeletonRows } from "@/components/ui/Skeleton";
@@ -24,7 +25,10 @@ export default function GamesPage() {
   // The filters are in the URL, not in useState. A loader can only key on the
   // URL, so this is what lets the page arrive already fetched — and it makes a
   // filtered view something you can send someone.
-  const { isClubAdmin } = useAuth();
+  const { isClubAdmin, player } = useAuth();
+  // Own games first is what a filter is opened for; the club's tablet has none
+  // — see PlayerOptions.
+  const meId = player?.is_device ? undefined : player?.id;
   const { page, playerId, category } = route.useSearch();
   const navigate = route.useNavigate();
 
@@ -77,11 +81,7 @@ export default function GamesPage() {
             aria-label={t("games.filterByPlayer")}
           >
             <option value={FILTER_ALL}>{t("games.allPlayers")}</option>
-            {players?.map((player) => (
-              <option key={player.id} value={player.id}>
-                {player.name}
-              </option>
-            ))}
+            <PlayerOptions players={players ?? []} meId={meId} />
           </Select>
 
           <Select
