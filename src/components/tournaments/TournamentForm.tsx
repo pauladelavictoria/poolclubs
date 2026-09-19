@@ -52,17 +52,26 @@ const SINGLE_FROM = [2, 16, 8, 4];
  * Four fields, so it lives in the club page's sheet rather than a route of its
  * own. `legs` and `advance` only appear where they mean something — a knockout
  * has no second leg, and only a group tournament has a cut.
+ *
+ * `locked` is the same form once the draw is cut: what a tournament says can
+ * still be corrected mid-run — its name, its dates, what it costs, the notes
+ * an organiser keeps prizes in — but what it *is* cannot, because the fixtures
+ * on the table were generated from it. The hidden fields keep their stored
+ * values and are submitted unchanged.
  */
 export default function TournamentForm({
   initialValues,
   onSubmit,
   onCancel,
   isSubmitting = false,
+  locked = false,
 }: {
   initialValues?: TournamentValues;
   onSubmit: (values: TournamentValues) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  /** The draw already exists: hide everything it was generated from. */
+  locked?: boolean;
 }) {
   const { t } = useT();
   const [name, setName] = useState(initialValues?.name ?? "");
@@ -234,43 +243,58 @@ export default function TournamentForm({
         />
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="tournament-format">{t("tournaments.format")}</Label>
-        <Segmented<TournamentFormat>
-          value={format}
-          onChange={setFormat}
-          label={t("tournaments.format")}
-          options={[
-            { value: "double_elim", label: t("tournaments.doubleElim") },
-            { value: "league", label: t("tournaments.league") },
-            { value: "group_knockout", label: t("tournaments.groupKnockout") },
-          ]}
-        />
-        <p className="text-caption text-ink-faint">
-          {t(`tournaments.hint.${format}`)}
+      {locked && (
+        <p className="text-caption text-ink-faint sm:col-span-2">
+          {t("tournaments.lockedHint")}
         </p>
-      </div>
+      )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="tournament-category">{t("tournaments.category")}</Label>
-        <Select
-          id="tournament-category"
-          value={category ?? ""}
-          onChange={(e) =>
-            setCategory(
-              e.target.value ? (Number(e.target.value) as Category) : null,
-            )
-          }
-          disabled={isSubmitting}
-        >
-          <option value="">{t("tournaments.combined")}</option>
-          <option value={1}>{t("category.1")}</option>
-          <option value={2}>{t("category.2")}</option>
-          <option value={3}>{t("category.3")}</option>
-        </Select>
-      </div>
+      {!locked && (
+        <div className="space-y-1.5">
+          <Label htmlFor="tournament-format">{t("tournaments.format")}</Label>
+          <Segmented<TournamentFormat>
+            value={format}
+            onChange={setFormat}
+            label={t("tournaments.format")}
+            options={[
+              { value: "double_elim", label: t("tournaments.doubleElim") },
+              { value: "league", label: t("tournaments.league") },
+              {
+                value: "group_knockout",
+                label: t("tournaments.groupKnockout"),
+              },
+            ]}
+          />
+          <p className="text-caption text-ink-faint">
+            {t(`tournaments.hint.${format}`)}
+          </p>
+        </div>
+      )}
 
-      {roundRobin && (
+      {!locked && (
+        <div className="space-y-1.5">
+          <Label htmlFor="tournament-category">
+            {t("tournaments.category")}
+          </Label>
+          <Select
+            id="tournament-category"
+            value={category ?? ""}
+            onChange={(e) =>
+              setCategory(
+                e.target.value ? (Number(e.target.value) as Category) : null,
+              )
+            }
+            disabled={isSubmitting}
+          >
+            <option value="">{t("tournaments.combined")}</option>
+            <option value={1}>{t("category.1")}</option>
+            <option value={2}>{t("category.2")}</option>
+            <option value={3}>{t("category.3")}</option>
+          </Select>
+        </div>
+      )}
+
+      {!locked && roundRobin && (
         <div className="space-y-1.5">
           <Label htmlFor="tournament-legs">{t("tournaments.legs")}</Label>
           <Select
@@ -285,7 +309,7 @@ export default function TournamentForm({
         </div>
       )}
 
-      {format === "group_knockout" && (
+      {!locked && format === "group_knockout" && (
         <div className="space-y-1.5">
           <Label htmlFor="tournament-advance">{t("tournaments.advance")}</Label>
           <Select
@@ -310,7 +334,7 @@ export default function TournamentForm({
         </div>
       )}
 
-      {format === "league" && (
+      {!locked && format === "league" && (
         <fieldset className="space-y-1.5">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -352,7 +376,7 @@ export default function TournamentForm({
         </fieldset>
       )}
 
-      {format === "double_elim" && (
+      {!locked && format === "double_elim" && (
         <div className="space-y-1.5">
           <Label htmlFor="tournament-single-from">
             {t("tournaments.singleFrom")}
@@ -384,72 +408,78 @@ export default function TournamentForm({
         </div>
       )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="tournament-discipline">
-          {t("tournaments.discipline")}
-        </Label>
-        <Segmented<Discipline>
-          value={discipline}
-          onChange={setDiscipline}
-          label={t("tournaments.discipline")}
-          options={DISCIPLINES.map((d) => ({
-            value: d,
-            label: t(`discipline.${d}`),
-            icon: <DisciplineBall discipline={d} />,
-          }))}
-        />
-      </div>
-
-      <fieldset className="space-y-1.5">
-        <Label htmlFor="tournament-race">{t("tournaments.raceTo")}</Label>
-        <div className={hasFinal ? "grid grid-cols-3 gap-3" : ""}>
-          <Input
-            id="tournament-race"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={50}
-            value={raceTo}
-            onChange={(e) => setRaceTo(e.target.value)}
-            className="font-mono"
-            required
-            disabled={isSubmitting}
+      {!locked && (
+        <div className="space-y-1.5">
+          <Label htmlFor="tournament-discipline">
+            {t("tournaments.discipline")}
+          </Label>
+          <Segmented<Discipline>
+            value={discipline}
+            onChange={setDiscipline}
+            label={t("tournaments.discipline")}
+            options={DISCIPLINES.map((d) => ({
+              value: d,
+              label: t(`discipline.${d}`),
+              icon: <DisciplineBall discipline={d} />,
+            }))}
           />
-          {/* Blank means "same as the base race" — an organiser who wants one
-              length throughout should not have to type it three times. */}
-          {hasFinal && (
-            <>
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={50}
-                value={raceSemi}
-                placeholder={raceTo}
-                aria-label={t("tournaments.raceSemi")}
-                onChange={(e) => setRaceSemi(e.target.value)}
-                className="font-mono"
-                disabled={isSubmitting}
-              />
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={50}
-                value={raceFinal}
-                placeholder={raceTo}
-                aria-label={t("tournaments.raceFinal")}
-                onChange={(e) => setRaceFinal(e.target.value)}
-                className="font-mono"
-                disabled={isSubmitting}
-              />
-            </>
-          )}
         </div>
-        <p className="text-caption text-ink-faint">
-          {hasFinal ? t("tournaments.raceHint") : t("tournaments.raceHintFlat")}
-        </p>
-      </fieldset>
+      )}
+
+      {!locked && (
+        <fieldset className="space-y-1.5">
+          <Label htmlFor="tournament-race">{t("tournaments.raceTo")}</Label>
+          <div className={hasFinal ? "grid grid-cols-3 gap-3" : ""}>
+            <Input
+              id="tournament-race"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={50}
+              value={raceTo}
+              onChange={(e) => setRaceTo(e.target.value)}
+              className="font-mono"
+              required
+              disabled={isSubmitting}
+            />
+            {/* Blank means "same as the base race" — an organiser who wants one
+              length throughout should not have to type it three times. */}
+            {hasFinal && (
+              <>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={50}
+                  value={raceSemi}
+                  placeholder={raceTo}
+                  aria-label={t("tournaments.raceSemi")}
+                  onChange={(e) => setRaceSemi(e.target.value)}
+                  className="font-mono"
+                  disabled={isSubmitting}
+                />
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={50}
+                  value={raceFinal}
+                  placeholder={raceTo}
+                  aria-label={t("tournaments.raceFinal")}
+                  onChange={(e) => setRaceFinal(e.target.value)}
+                  className="font-mono"
+                  disabled={isSubmitting}
+                />
+              </>
+            )}
+          </div>
+          <p className="text-caption text-ink-faint">
+            {hasFinal
+              ? t("tournaments.raceHint")
+              : t("tournaments.raceHintFlat")}
+          </p>
+        </fieldset>
+      )}
 
       <div className="flex justify-end gap-3 pt-2 sm:col-span-2">
         <Button
@@ -462,9 +492,7 @@ export default function TournamentForm({
         </Button>
         <Button
           type="submit"
-          disabled={
-            isSubmitting || !name.trim() || !raceValid || pointsInvalid
-          }
+          disabled={isSubmitting || !name.trim() || !raceValid || pointsInvalid}
         >
           {isSubmitting ? t("common.saving") : t("common.save")}
         </Button>

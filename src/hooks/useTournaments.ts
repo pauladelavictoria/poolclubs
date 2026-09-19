@@ -16,6 +16,7 @@ import {
 import {
   buildGroups,
   buildKnockout,
+  buildLateEntry,
   buildLeague,
   groupCount,
   qualifiers,
@@ -205,6 +206,98 @@ export const useManageTournaments = () => {
           .delete()
           .eq("tournament_id", tournamentId)
           .eq("player_id", entrant)
+          .throwOnError();
+      },
+      onSuccess: refresh,
+    }),
+
+    /**
+     * A player joining a league that is already running: entered, then drawn
+     * against everyone already in it, in fresh rounds after the last.
+     *
+     * Only a league — a knockout's seats are all spoken for the moment the
+     * draw is cut, so a latecomer there is a new tournament, not a new row.
+     * Two writes: if the fixtures fail the entrant is in the table with
+     * nothing to play, which an admin can fix by removing them; the reverse
+     * would leave fixtures against a player the tournament does not have.
+     */
+    addLateEntrant: useMutation({
+      mutationFn: async ({
+        tournament,
+        playerId,
+      }: {
+        tournament: TournamentDetail;
+        playerId: number;
+      }) => {
+        if (tournament.format !== "league" || tournament.status !== "running")
+          throw new Error("not a running league");
+
+        const opponents = tournament.tournament_players
+          .map((e) => e.player_id)
+          .filter((id) => id !== playerId);
+        if (opponents.length === 0) throw new Error("no opponents");
+
+        await supabase
+          .from("tournament_players")
+          .insert([{ tournament_id: tournament.id, player_id: playerId }])
+          .throwOnError();
+
+        const fromRound =
+          Math.max(0, ...tournament.tournament_matches.map((m) => m.round)) + 1;
+
+        await supabase
+          .from("tournament_matches")
+          .insert(
+            rows(
+              tournament.id,
+              buildLateEntry(playerId, opponents, tournament.legs, fromRound),
+            ),
+          )
+          .throwOnError();
+      },
+      onSuccess: refresh,
+    }),
+
+    /**
+     * A player out of a running league, and their fixtures with them.
+     *
+     * `leaveTournament` is the entrant row alone, which is all a tournament
+     * still taking entries has. Once the fixtures exist, leaving one behind is
+     * a match nobody can play and a name the standings still count — so the
+     * whole round robin they were in goes, played fixtures included.
+     *
+     * The games themselves are left where they are. A frame played in the club
+     * happened, it is in the feed and in the Elo board, and a league changing
+     * its mind about an entrant does not unplay it — only the fixture that
+     * claimed it for the table is deleted.
+     *
+     * Fixtures first: a stranded entrant is visible and can be removed again,
+     * where the reverse leaves fixtures against somebody the tournament does
+     * not have.
+     */
+    removeEntrant: useMutation({
+      mutationFn: async ({
+        tournament,
+        playerId,
+      }: {
+        tournament: TournamentDetail;
+        playerId: number;
+      }) => {
+        if (tournament.format !== "league")
+          throw new Error("only a league can lose an entrant mid-run");
+
+        await supabase
+          .from("tournament_matches")
+          .delete()
+          .eq("tournament_id", tournament.id)
+          .or(`p1_id.eq.${playerId},p2_id.eq.${playerId}`)
+          .throwOnError();
+
+        await supabase
+          .from("tournament_players")
+          .delete()
+          .eq("tournament_id", tournament.id)
+          .eq("player_id", playerId)
           .throwOnError();
       },
       onSuccess: refresh,

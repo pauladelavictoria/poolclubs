@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LuMinus, LuPlus } from "react-icons/lu";
 import { Select } from "@/components/ui/Select";
+import { PlayerOptions } from "@/components/players/PlayerOptions";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
@@ -341,11 +342,15 @@ export default function StartMatchForm({
               required
             >
               <option value="">{t("common.select")}</option>
-              {sideOne.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {label(p)}
-                </option>
-              ))}
+              {/* An admin starting a match is usually in it, so their own
+                  name leads this side. Not on the tablet: `sideOne` already
+                  leaves the device out, and `isDevice` keeps it out of the
+                  mark too. */}
+              <PlayerOptions
+                players={sideOne}
+                meId={isDevice ? undefined : me.id}
+                format={label}
+              />
             </Select>
           ) : (
             <p className="truncate text-body font-medium text-ink">{me.name}</p>

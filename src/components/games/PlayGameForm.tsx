@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Select } from "@/components/ui/Select";
+import { PlayerOptions } from "@/components/players/PlayerOptions";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +22,7 @@ import { useT } from "@/i18n";
  */
 export default function PlayGameForm({
   entrants,
+  meId,
   initialMatch,
   findMatch,
   raceFor,
@@ -29,6 +31,9 @@ export default function PlayGameForm({
   isSubmitting,
 }: {
   entrants: Player[];
+  /** The signed-in player, when they are an entrant and a person — their own
+   *  name then leads the first picker. See PlayerOptions. */
+  meId?: number | null;
   initialMatch?: TournamentMatch | null;
   /** The outstanding fixture between two players, if there is one. */
   findMatch: (a: number, b: number) => TournamentMatch | undefined;
@@ -74,6 +79,9 @@ export default function PlayGameForm({
     value: string,
     set: (value: string) => void,
     label: string,
+    /** Only the first picker leads with the reader's own name — the second is
+     *  whoever they played. */
+    mine = false,
   ) => (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
@@ -85,11 +93,7 @@ export default function PlayGameForm({
         required
       >
         <option value="">{t("common.select")}</option>
-        {entrants.map((player) => (
-          <option key={player.id} value={player.id}>
-            {player.name}
-          </option>
-        ))}
+        <PlayerOptions players={entrants} meId={mine ? meId : undefined} />
       </Select>
     </div>
   );
@@ -115,7 +119,7 @@ export default function PlayGameForm({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {picker("game-p1", p1Id, setP1Id, t("tournaments.playerOne"))}
+        {picker("game-p1", p1Id, setP1Id, t("tournaments.playerOne"), true)}
         {picker("game-p2", p2Id, setP2Id, t("tournaments.playerTwo"))}
       </div>
 

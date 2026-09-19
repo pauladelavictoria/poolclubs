@@ -39,14 +39,16 @@ import SocialBar from "@/components/social/SocialBar";
 import TournamentAdminPanel from "@/components/tournaments/TournamentAdminPanel";
 import PlayGameForm from "@/components/games/PlayGameForm";
 import { PlayerHighlight } from "@/components/players/PlayerLink";
+import { PlayerOptions } from "@/components/players/PlayerOptions";
 import TournamentForm, {
   type TournamentValues,
 } from "@/components/tournaments/TournamentForm";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card, CardHeader, CollapsibleCard } from "@/components/ui/Card";
 import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Segmented } from "@/components/ui/Segmented";
 import { Select } from "@/components/ui/Select";
+import { FilterBar } from "@/components/ui/FilterBar";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { Fact } from "@/components/ui/Fact";
 import { PageSkeleton } from "@/components/ui/Skeleton";
@@ -65,6 +67,9 @@ export default function TournamentPage() {
   const tournamentId = Number(tournamentIdParam);
 
   const { player, activeClubId, isClubAdmin, isMember } = useAuth();
+  /** The reader, where they are a person: the club's tablet is a device and
+   *  belongs in none of these lists — see PlayerOptions. */
+  const meId = player?.is_device ? undefined : player?.id;
   const { data: tournament, isLoading } = useTournament(tournamentId);
   const { data: players } = usePlayers();
   const { byId, nameOf } = usePlayerLookup();
@@ -80,6 +85,8 @@ export default function TournamentPage() {
     startTournament,
     generateKnockout,
     recordResult,
+    addLateEntrant,
+    removeEntrant,
   } = useManageTournaments();
 
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -89,6 +96,9 @@ export default function TournamentPage() {
   const [playing, setPlaying] = useState<TournamentMatch | "new" | null>(null);
   const recordRef = useDialog(!!playing);
   const [adding, setAdding] = useState("");
+  /** Whose league fixtures to show, "" for everyone's. A string because it is
+   *  a <select>'s value. */
+  const [fixturesOf, setFixturesOf] = useState("");
   const [view, setView] = useState<"bracket" | "list">("list");
 
   const entrants = useMemo(
@@ -175,6 +185,16 @@ export default function TournamentPage() {
     matches.filter((m) => m.winner_id !== null),
   );
   const pendingMatches = matches.filter((m) => m.winner_id === null);
+
+  /** The league's two fixture lists, narrowed to one entrant. A round robin is
+   *  n(n−1)/2 cards and only n−1 of them are yours: without this, "what have I
+   *  still got to play" is a read of the whole list. */
+  const inFixtures = (match: TournamentMatch) =>
+    fixturesOf === "" ||
+    match.p1_id === Number(fixturesOf) ||
+    match.p2_id === Number(fixturesOf);
+  const shownPending = pendingMatches.filter(inFixtures);
+  const shownPlayed = playedMatches.filter(inFixtures);
 
   const findMatch = (a: number, b: number) =>
     findOutstandingMatch(matches, a, b);
@@ -524,11 +544,7 @@ export default function TournamentPage() {
                       onChange={(e) => setAdding(e.target.value)}
                     >
                       <option value="">{t("tournaments.addPlayer")}</option>
-                      {addable.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
+                      <PlayerOptions players={addable} meId={meId} />
                     </Select>
                     <Button
                       size="sm"
@@ -663,30 +679,67 @@ export default function TournamentPage() {
             {/* What is left to arrange comes first: the played ones are a log,
                 the pending ones are the thing anyone can act on. Once the
                 tournament is closed nobody can, so they stop being news. */}
-            {pendingMatches.length > 0 && tournament.status !== "done" && (
-              <Card className="overflow-hidden">
-                <CardHeader
-                  title={t("tournaments.stillToPlay", {
-                    n: pendingMatches.length,
-                  })}
+            {/* One name, and both lists below become "what they have played
+                and what they still owe" — which is what an entrant opens a
+                round robin to find out. Between the table and the fixtures
+                because it filters the fixtures, not the table: the standings
+                stay the whole league, since a table of one row is not a
+                standing. */}
+            <FilterBar
+              trailing={t("tournaments.fixturesCount", {
+                played: shownPlayed.length,
+                pending: shownPending.length,
+              })}
+            >
+              <Select
+                size="sm"
+                className="max-w-[14rem]"
+                value={fixturesOf}
+                aria-label={t("tournaments.filterByPlayer")}
+                onChange={(e) => setFixturesOf(e.target.value)}
+              >
+                <option value="">{t("games.allPlayers")}</option>
+                {/* Your own fixtures are what you open a round robin for, so
+                    your name leads the list the same way it leads a result
+                    form — see PlayerOptions. */}
+                <PlayerOptions
+                  players={seeded.map((playerId) => ({
+                    id: playerId,
+                    name: nameOf(playerId),
+                  }))}
+                  meId={meId}
                 />
-                <div className="p-3">
-                  <Fixtures
-                    matches={pendingMatches}
-                    nameOf={nameOf}
-                    index={index}
-                    recorder={recorder}
-                  />
-                </div>
-              </Card>
-            )}
-            <Card className="overflow-hidden">
-              <CardHeader
-                title={t("tournaments.gamesPlayed", {
-                  n: playedMatches.length,
+              </Select>
+            </FilterBar>
+
+            {/* Both fold: a full round robin is dozens of cards, and the
+                table above them is what most people came for. */}
+            {pendingMatches.length > 0 && tournament.status !== "done" && (
+              <CollapsibleCard
+                title={t("tournaments.stillToPlay", {
+                  n: shownPending.length,
                 })}
-              />
-              {playedMatches.length === 0 ? (
+              >
+                {shownPending.length === 0 ? (
+                  <EmptyState title={t("tournaments.noneLeftFor")} />
+                ) : (
+                  <div className="p-3">
+                    <Fixtures
+                      matches={shownPending}
+                      nameOf={nameOf}
+                      index={index}
+                      recorder={recorder}
+                    />
+                  </div>
+                )}
+              </CollapsibleCard>
+            )}
+            <CollapsibleCard
+              title={t("tournaments.gamesPlayed", {
+                n: shownPlayed.length,
+              })}
+            >
+              {shownPlayed.length === 0 ? (
                 <EmptyState
                   title={t("tournaments.noGamesYet")}
                   hint={canPlay ? t("tournaments.noGamesHint") : undefined}
@@ -694,14 +747,14 @@ export default function TournamentPage() {
               ) : (
                 <div className="p-3">
                   <Fixtures
-                    matches={playedMatches}
+                    matches={shownPlayed}
                     nameOf={nameOf}
                     index={index}
                     recorder={recorder}
                   />
                 </div>
               )}
-            </Card>
+            </CollapsibleCard>
           </>
         )}
 
@@ -718,12 +771,17 @@ export default function TournamentPage() {
               seeded={seeded}
               minimum={minimum}
               groupsDone={groupsDone}
+              addable={addable}
+              entered={entrantPlayers}
+              meId={meId}
               manage={{
                 startTournament,
                 deleteTournament,
                 generateKnockout,
                 updateTournament,
                 leaveTournament,
+                addLateEntrant,
+                removeEntrant,
               }}
               onEdit={() => setIsEditOpen(true)}
             />
@@ -764,6 +822,9 @@ export default function TournamentPage() {
               points_win: tournament.points_win,
               points_play: tournament.points_play,
             }}
+            // Once the fixtures exist they were generated from these
+            // settings, so the form drops them and keeps the rest.
+            locked={tournament.status !== "open"}
             isSubmitting={updateTournament.isPending}
             onCancel={() => setIsEditOpen(false)}
             onSubmit={(values: TournamentValues) => {
@@ -793,6 +854,7 @@ export default function TournamentPage() {
         {playing && (
           <PlayGameForm
             entrants={entrantPlayers}
+            meId={meId}
             initialMatch={playing === "new" ? null : playing}
             findMatch={findMatch}
             raceFor={raceOf}

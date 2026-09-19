@@ -603,6 +603,49 @@ html[data-theme="light"]:has([data-public]) {
   }
 }
 
+/*
+  ...except on a touch screen, where the platform's own list is the better one.
+
+  `base-select` draws the popup as an anchored popover: a panel the width of
+  the control, 18rem tall, sitting just above or below it. On a desktop that is
+  exactly right. On the tablet on the rail it is the worst of both — a roster
+  of forty names in a strip a finger covers, opened next to a control that is
+  already near an edge, with no room to fall. Android and iOS answer a select
+  with a full-width sheet or a wheel, sized for a thumb and placed by the
+  platform, and neither of those is anything this file could rebuild.
+
+  So the closed control keeps our box (`appearance: none` still applies) and
+  the list goes back to the platform's. After the @supports block and at the
+  same specificity, so it is the later rule that wins.
+*/
+@media (pointer: coarse) {
+  .select-field {
+    appearance: none;
+  }
+}
+
+/*
+  The tablet on the rail, at arm's length.
+
+  Every size in the app is a rem — the type scale, the control heights, the
+  gaps — so the device is one knob and not a pass over every screen: a bigger
+  root, and the whole shell comes up with it, touch targets included. Set from
+  the kiosk cookie on the server (see __root.tsx), so the first byte is already
+  the right size and nothing reflows once JS lands.
+
+  Scaled off the viewport rather than a flat number: the same cookie is on a
+  10" tablet and on a 24" panel bolted to a wall, and 18px is too small on one
+  of them. vmax, so a tablet stood on its end is still sized by how big the
+  screen is rather than by which way round it is. The floor is the app's own
+  16px, so a kiosk is never smaller than a phone.
+
+  The scoreboard opts out by construction: its sizes are cqmin of the board, not
+  rem, because it is read from four metres rather than from arm's length.
+*/
+html[data-kiosk] {
+  font-size: clamp(1rem, 1.55vmax, 1.5rem);
+}
+
 /* Side nav drawer: slides in, fades its backdrop. No JS animation. */
 dialog.drawer {
   translate: -100% 0;
