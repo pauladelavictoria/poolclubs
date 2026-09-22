@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatch, useManageLiveMatch } from "@/hooks/useLiveMatch";
+import { useNightOn } from "@/hooks/useNight";
 import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
 import { leaderOf, seatsOf } from "@/libs/algorithms/night";
 import { Card } from "@/components/ui/Card";
@@ -70,6 +71,7 @@ export default function LiveMatchPage() {
   // changed, and a scoreboard arguing with it would be a second answer.
   const setup = readTodaySetup();
   const seats = seatsNeeded(setup);
+  const nightOn = useNightOn();
   // Only once this match has been filed and its table is free. Mid-rack there
   // is nothing on screen to offer, and every score tap re-renders this page —
   // see the note on useSuggestions' `enabled`.
@@ -80,7 +82,9 @@ export default function LiveMatchPage() {
   const { groupFor, canStart, waiting } = useSuggestions({
     setup,
     exclude: freed?.seats,
-    enabled: freed !== null,
+    // And only on a ranking night: the queue this reads is the night's, and
+    // off a night the table simply comes free — see useNightOn.
+    enabled: freed !== null && nightOn,
   });
   const { ref, isFullscreen, toggle } = useFullscreen<HTMLDivElement>();
   const appNavigate = useAppNavigate();

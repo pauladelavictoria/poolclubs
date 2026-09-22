@@ -79,12 +79,15 @@ export default function KioskBar({
   return (
     <div
       className={[
-        "flex items-start justify-between gap-3 px-3 py-2",
+        // items-center once, here: the name is shorter than the row of icon
+        // buttons beside it, so aligning the two groups to the top left the
+        // club sitting visibly above its own controls.
+        "flex items-center justify-between gap-3 px-3 py-2",
         floating
           ? // Nothing but the controls takes a tap: the strip covers the top of
             // both halves of the board, and the board is what is being pressed.
             "pointer-events-none absolute inset-x-0 top-0 z-30"
-          : "shrink-0 items-center border-b border-hairline bg-felt",
+          : "shrink-0 border-b border-hairline bg-felt",
       ].join(" ")}
     >
       <div className="flex min-w-0 items-center gap-2.5">
@@ -93,10 +96,13 @@ export default function KioskBar({
             name={activeClub.name}
             url={activeClub.logo_url}
             mark
-            className="h-7 w-7 shrink-0"
+            className="h-9 w-9 shrink-0"
           />
         )}
-        <span className="truncate text-body font-medium text-ink">
+        {/* Whose table this is, read from where the cue is. text-body was the
+            size a sentence is set in and this is a sign, not a sentence — next
+            to a row of controls it read as the caption to them. */}
+        <span className="truncate text-h4 font-semibold text-ink">
           {activeClub?.name}
         </span>
         {table && (
@@ -104,7 +110,7 @@ export default function KioskBar({
             <span className="shrink-0 text-ink-ghost" aria-hidden>
               ·
             </span>
-            <span className="truncate text-body text-ink-soft">
+            <span className="truncate text-h4 text-ink-soft">
               {table.label}
             </span>
           </>
@@ -137,7 +143,7 @@ export default function KioskBar({
             confirmLabel={t("live.abandonConfirm")}
             className="text-ink-faint"
           >
-            <LuTrash2 className="h-4 w-4" aria-hidden />
+            <LuTrash2 className="h-5 w-5" aria-hidden />
             {t("live.abandon")}
           </ConfirmButton>
         )}
@@ -154,7 +160,7 @@ export default function KioskBar({
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((wasOpen) => !wasOpen)}
           >
-            <LuEllipsisVertical className="h-4 w-4" aria-hidden />
+            <LuEllipsisVertical className="h-5 w-5" aria-hidden />
           </IconButton>
 
           {menuOpen && (
@@ -222,9 +228,9 @@ export default function KioskBar({
           onClick={() => setTheme(nextTheme)}
         >
           {nextTheme === "light" ? (
-            <LuSun className="h-4 w-4" aria-hidden />
+            <LuSun className="h-5 w-5" aria-hidden />
           ) : (
-            <LuMoon className="h-4 w-4" aria-hidden />
+            <LuMoon className="h-5 w-5" aria-hidden />
           )}
         </IconButton>
 
@@ -234,9 +240,9 @@ export default function KioskBar({
           onClick={toggle}
         >
           {isFullscreen ? (
-            <LuShrink className="h-4 w-4" aria-hidden />
+            <LuShrink className="h-5 w-5" aria-hidden />
           ) : (
-            <LuExpand className="h-4 w-4" aria-hidden />
+            <LuExpand className="h-5 w-5" aria-hidden />
           )}
         </IconButton>
       </div>
