@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { TournamentMatch } from "@/types";
-import { groupStandings, leaguePodium, standings } from "./leagueTable";
+import {
+  fixturesBetween,
+  groupStandings,
+  hasFixture,
+  leaguePodium,
+  standings,
+} from "./leagueTable";
 import { buildGroups } from "@/libs/algorithms/bracket";
 
 let seq = 0;
@@ -180,5 +186,27 @@ describe("leaguePodium", () => {
     );
     expect(leaguePodium(table)).toEqual({ first: 1, second: 2, third: [] });
     expect(leaguePodium([])).toEqual({ first: null, second: null, third: [] });
+  });
+});
+
+describe("pending fixtures", () => {
+  // Two legs of 1 v 2, one leg of 1 v 3, and 4 has nothing left.
+  const pending = [fixture(1, 2), fixture(2, 1), fixture(1, 3)];
+
+  it("finds both legs either way round", () => {
+    expect(fixturesBetween(pending, 1, 2).length).toBe(2);
+    expect(fixturesBetween(pending, 2, 1).length).toBe(2);
+    expect(fixturesBetween(pending, 1, 3).length).toBe(1);
+    expect(fixturesBetween(pending, 2, 3)).toEqual([]);
+    expect(fixturesBetween(pending, 1, null)).toEqual([]);
+  });
+
+  it("says who still has a fixture, and against whom", () => {
+    expect(hasFixture(pending, 1)).toBe(true);
+    expect(hasFixture(pending, 4)).toBe(false);
+    expect(hasFixture(pending, 3, 1)).toBe(true);
+    expect(hasFixture(pending, 3, 2)).toBe(false);
+    // Nobody plays themselves, whatever the list says.
+    expect(hasFixture(pending, 1, 1)).toBe(false);
   });
 });

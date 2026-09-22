@@ -29,6 +29,12 @@ export const ABANDON_AFTER_MS = 3 * 60 * 60 * 1000;
  */
 export const PRESENT_WINDOW_MS = 8 * 60 * 60 * 1000;
 
+/** How long a called ranking night stays on. The same two hours
+ *  call_ranking_night refuses a second call inside — see sql/schema.sql. The
+ *  bell says "the night is on" for exactly as long as the tables offer the
+ *  night's pairings. */
+export const NIGHT_CALL_WINDOW_MS = 2 * 60 * 60 * 1000;
+
 export const isPresent = (player: Player, now: number) =>
   player.present_since !== null &&
   now - new Date(player.present_since).getTime() < PRESENT_WINDOW_MS;

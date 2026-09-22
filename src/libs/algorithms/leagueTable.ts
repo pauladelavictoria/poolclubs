@@ -134,3 +134,44 @@ export function groupStandings(
     return standings(entrants, inGroup);
   });
 }
+
+/** Only the two seats, so a caller holding the four columns
+ *  `leagueFixturesQuery` selects can ask these as well as one holding whole
+ *  rows. */
+type Seats = { p1_id: number | null; p2_id: number | null };
+
+/**
+ * The fixtures these two still owe each other.
+ *
+ * A list and not one match: a two-legged league has them down to play twice,
+ * and which leg is being played is the caller's question — the tablet takes the
+ * first one left, the game editor offers the choice.
+ */
+export const fixturesBetween = <F extends Seats>(
+  fixtures: F[],
+  a: number | null | undefined,
+  b: number | null | undefined,
+): F[] =>
+  a == null || b == null
+    ? []
+    : fixtures.filter(
+        (f) =>
+          (f.p1_id === a && f.p2_id === b) || (f.p1_id === b && f.p2_id === a),
+      );
+
+/**
+ * Whether this player still has a fixture to play — against one particular
+ * opponent once the other side has been picked.
+ *
+ * What narrows the two name lists when a match is started *as* a league match:
+ * the openings are the fixtures, so anybody the league has nothing left for is
+ * not an answer to "who is playing".
+ */
+export const hasFixture = <F extends Seats>(
+  fixtures: F[],
+  id: number,
+  against?: number | null,
+): boolean =>
+  against == null
+    ? fixtures.some((f) => f.p1_id === id || f.p2_id === id)
+    : id !== against && fixturesBetween(fixtures, id, against).length > 0;

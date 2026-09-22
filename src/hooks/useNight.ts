@@ -5,7 +5,7 @@ import { useAuth, useSessionRefresh } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { keys } from "@/libs/queryKeys";
-import { whoIsHere } from "@/libs/algorithms/night";
+import { NIGHT_CALL_WINDOW_MS, whoIsHere } from "@/libs/algorithms/night";
 import { useNow } from "@/hooks/useNow";
 import { sendPush } from "@/libs/server/push.functions";
 import type { Player } from "@/types";
@@ -26,6 +26,28 @@ export const useWhoIsHere = (): Player[] => {
   return useMemo(
     () => whoIsHere(players ?? [], live ?? [], now),
     [players, live, now],
+  );
+};
+
+/**
+ * Whether the club is on a ranking night right now.
+ *
+ * Derived from the one column the call writes, the same way the bell is — the
+ * club row rides on the session, so this costs no request and no state.
+ *
+ * What it gates is the pairing: "next up, X vs Y" is the night's own answer to
+ * whose turn it is, and on an ordinary afternoon there is no queue for it to be
+ * the answer to. An admin calling the night is what turns it back on.
+ */
+export const useNightOn = (): boolean => {
+  const now = useNow();
+  const { activeClub } = useAuth();
+
+  const calledAt = activeClub?.night_call_at;
+  return (
+    !!calledAt &&
+    now !== null &&
+    now - new Date(calledAt).getTime() < NIGHT_CALL_WINDOW_MS
   );
 };
 

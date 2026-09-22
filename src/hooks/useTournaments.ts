@@ -467,5 +467,35 @@ export const useManageTournaments = () => {
         queryClient.invalidateQueries({ queryKey: keys.games.all });
       },
     }),
+
+    /**
+     * A game that is already filed, pinned onto the fixture it was: the other
+     * half of `recordResult`, for the result that arrived as a normal game and
+     * only then turned out to count for the league.
+     *
+     * The half of that mutation that writes the game is what is missing here,
+     * because the game exists — so this is the pointer and nothing else, and a
+     * league table is a fixture list read against the games it points at.
+     */
+    linkGame: useMutation({
+      mutationFn: async ({
+        matchId,
+        gameId,
+        winnerId,
+      }: {
+        matchId: string;
+        gameId: string;
+        /** Not derived here: the caller holds the scores, and a fixture with no
+         *  winner is one the table would count as unplayed. */
+        winnerId: number;
+      }) => {
+        await supabase
+          .from("tournament_matches")
+          .update({ game_id: gameId, winner_id: winnerId })
+          .eq("id", matchId)
+          .throwOnError();
+      },
+      onSuccess: refresh,
+    }),
   };
 };

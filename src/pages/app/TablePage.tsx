@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
+import { useNightOn } from "@/hooks/useNight";
 import { useStreamedTableIds } from "@/hooks/useClubYoutube";
 import { useLeagueFixtures } from "@/hooks/useTournaments";
 import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
@@ -24,6 +25,7 @@ import { seatsNeeded } from "@/libs/algorithms/today";
 import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 import type { Player } from "@/types";
+import type { LeagueFixture } from "@/queries/tournaments";
 
 const route = getRouteApi("/app/_authed/$clubSlug/tables/$tableId");
 
@@ -56,14 +58,25 @@ export default function TablePage() {
    *  so the suggestion can be skipped while one is being played — the hook is at
    *  the top of the component and the pairing is not free. */
   const busy = (live ?? []).some((m) => m.table_id === id);
+  // The pairing is the ranking night's own answer to whose turn it is, so it is
+  // offered on a night and not on an ordinary afternoon — see useNightOn. An
+  // admin calling the night is what turns it back on.
+  const nightOn = useNightOn();
   // Who the night says is next on *this* table. Positional, and derived from the
   // same list every other screen reads, so no two tables offer the same pair —
   // see hooks/useSuggestions.
-  const { groupFor, canStart } = useSuggestions({ setup, enabled: !busy });
+  const { groupFor, canStart } = useSuggestions({
+    setup,
+    enabled: !busy && nightOn,
+  });
 
-  const [starting, setStarting] = useState(false);
-  const dialogRef = useDialog(starting);
-  const close = () => setStarting(false);
+  /** The start form, and what it is being started as: a league's fixture, or a
+   *  game of nobody's but the two players'. */
+  const [starting, setStarting] = useState<{
+    league?: LeagueFixture["tournament"];
+  } | null>(null);
+  const dialogRef = useDialog(starting !== null);
+  const close = () => setStarting(null);
 
   const match = (live ?? []).find((m) => m.table_id === id);
   const pinned = readKioskTable() === id;
@@ -101,6 +114,29 @@ export default function TablePage() {
   if (pinned && match) return null;
 
   const roster = players ?? [];
+  /** Every league still running with a fixture left in it. Derived from the
+   *  fixtures the form needs anyway rather than a second query: a league with
+   *  nothing left to play is not one to offer a table to. */
+  const leagues = [
+    ...new Map(
+      (leagueFixtures ?? []).map((f) => [f.tournament.id, f.tournament]),
+    ).values(),
+  ];
+
+  /** The tap that starts a match is also the club's one reliable user gesture,
+   *  so it is what takes the browser's chrome away.
+   *
+   *  ponytail: document fullscreen, not the kiosk shell — nothing here has that
+   *  ref, and the shell already fills the screen.
+   *
+   *  Awaited, and only then the dialog: the top layer paints in the order
+   *  things entered it, so a fullscreen element that arrives *after*
+   *  showModal() covers the dialog with the page. */
+  const open = async (league?: LeagueFixture["tournament"]) => {
+    await document.documentElement.requestFullscreen?.().catch(() => {});
+    setStarting({ league });
+  };
+
   const seat = (seatId: number | null) =>
     seatId === null ? undefined : roster.find((p) => p.id === seatId);
   const next = groupFor(id);
@@ -215,23 +251,34 @@ export default function TablePage() {
             {/* Kept whatever the offer says: the room is allowed to disagree
                 with the queue, and somebody who has just walked in is not in it
                 at all yet. */}
-            <div className="flex justify-end">
+            {/* A league running is a reason to be at the table that the table
+                should say out loud: the fixture list is the one thing nobody
+                walks over holding. One button per league — clubs run one, and a
+                picker for the second one would be a screen to get through
+                before the form that asks the same question. */}
+            {/* Exactly one thing to press, whatever the club has on: the
+                night's own offer when there is one, else the league, else the
+                game. Full width and stacked — a free table is a card with one
+                question on it, and a row of buttons hugging the right edge
+                reads as three afterthoughts. */}
+            <div className="flex flex-col gap-2">
+              {leagues.map((league) => (
+                <Button
+                  key={league.id}
+                  className="w-full"
+                  variant={next ? "secondary" : "primary"}
+                  onClick={() => void open(league)}
+                  disabled={!player}
+                >
+                  {t("live.playForLeague", { name: league.name })}
+                </Button>
+              ))}
               <Button
-                variant={next ? "ghost" : "primary"}
-                // The tap that starts a match is also the club's one reliable
-                // user gesture, so it is what takes the browser's chrome away.
-                // ponytail: document fullscreen, not the kiosk shell — nothing
-                // here has that ref, and the shell already fills the screen.
-                //
-                // Awaited, and only then the dialog: the top layer paints in
-                // the order things entered it, so a fullscreen element that
-                // arrives *after* showModal() covers the dialog with the page.
-                onClick={async () => {
-                  await document.documentElement
-                    .requestFullscreen?.()
-                    .catch(() => {});
-                  setStarting(true);
-                }}
+                className="w-full"
+                variant={
+                  next ? "ghost" : leagues.length > 0 ? "secondary" : "primary"
+                }
+                onClick={() => void open()}
                 disabled={!player}
               >
                 {t("live.playHere")}
@@ -253,6 +300,7 @@ export default function TablePage() {
         {starting && player && (
           <StartMatchForm
             me={player}
+            league={starting.league}
             // A pinned tablet is scoring for whoever is standing at it, and the
             // device account is one of the seats the database will accept — so
             // the roster it offers is everyone but itself, the same as a phone.

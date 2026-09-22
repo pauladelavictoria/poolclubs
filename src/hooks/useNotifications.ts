@@ -13,7 +13,7 @@ import { useDrillLogs } from "@/hooks/useDrillLogs";
 import { usePlayerLookup } from "@/hooks/usePlayers";
 import { useComments } from "@/hooks/useSocial";
 import { useNow } from "@/hooks/useNow";
-import { isPresent } from "@/libs/algorithms/night";
+import { NIGHT_CALL_WINDOW_MS, isPresent } from "@/libs/algorithms/night";
 import { mentionedSlugs } from "@/libs/algorithms/mentions";
 import { useT } from "@/i18n";
 
@@ -26,10 +26,6 @@ type NotificationKind =
   | "drillAdded"
   | "mention"
   | "nightCall";
-
-/** How long "the club has been called" stays worth saying. The same two hours
- *  call_ranking_night refuses a second call inside — see sql/schema.sql. */
-const NIGHT_CALL_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 /**
  * Whether an event is one this member could have been there for.

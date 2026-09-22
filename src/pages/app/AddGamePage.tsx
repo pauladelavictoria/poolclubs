@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { toast } from "react-toastify";
@@ -7,6 +7,12 @@ import { useAddGame, useGame, useManageGames } from "@/hooks/useAddGame";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  useGameTournaments,
+  useLeagueFixtures,
+  useManageTournaments,
+} from "@/hooks/useTournaments";
+import { fixturesBetween } from "@/libs/algorithms/leagueTable";
 import { PlayerOptions } from "@/components/players/PlayerOptions";
 import PageTitle from "@/components/layout/PageTitle";
 import CancelLink from "@/components/layout/CancelLink";
@@ -78,7 +84,7 @@ export default function AddGamePage() {
   const { data: players, isLoading: playersLoading } = usePlayers();
   // Whoever is filing this, when they are a person: the club's tablet is a
   // device and has never played a game — see PlayerOptions.
-  const { player: me } = useAuth();
+  const { player: me, isClubAdmin } = useAuth();
   const meId = me?.is_device ? undefined : me?.id;
   const { mutate: handleAddGame, isPending } = useAddGame();
 
@@ -90,6 +96,21 @@ export default function AddGamePage() {
   const navigate = useNavigate();
 
   const { data: editing } = useGame(gameId);
+
+  /**
+   * Filing a result that counts for a league.
+   *
+   * The tablet offers this on the way in — a match started as a fixture files
+   * itself as one. This is the way in for everything else: a result written on
+   * a scrap of paper, a game played before anybody thought to start it on the
+   * app, a fixture somebody played as a casual game. Admins only, because the
+   * league table is the club's and not the filer's.
+   */
+  const { data: leagueFixtures } = useLeagueFixtures();
+  const { linkGame } = useManageTournaments();
+  const { data: gameLeagues } = useGameTournaments(gameId ? [gameId] : []);
+  const countsFor = gameId ? gameLeagues?.get(gameId) : undefined;
+  const [fixtureId, setFixtureId] = useState("");
   const { updateGame, deleteGame } = useManageGames();
   const isEdit = !!gameId;
 
@@ -143,6 +164,23 @@ export default function AddGamePage() {
     Number.isFinite(player_1_score) && Number.isFinite(player_2_score);
   const isTie = bothScoresIn && player_1_score === player_2_score;
 
+  /** One per league rather than one per fixture: two legs left between the
+   *  same two names are the same offer twice, and which of them this result
+   *  closes is nobody's question. */
+  const leagueOptions = isDoubles
+    ? []
+    : [
+        ...new Map(
+          fixturesBetween(leagueFixtures ?? [], player_1_id, player_2_id).map(
+            (f) => [f.tournament.id, f],
+          ),
+        ).values(),
+      ];
+  /** Read off the options rather than off the state, so a league picked and
+   *  then a player changed cannot file the result against a fixture those two
+   *  no longer have. */
+  const fixture = leagueOptions.find((f) => f.id === fixtureId);
+
   const problem = hasDuplicatePlayers
     ? t("games.duplicatePlayer")
     : isTie
@@ -185,11 +223,31 @@ export default function AddGamePage() {
       player_2b_id: game.player_2b_id || null,
     };
 
+    /** The pointer, after the game itself is safe — the wrong way round would
+     *  leave a fixture claiming a result that was never saved. A failure here
+     *  is said out loud and leaves the game standing on its own, which is the
+     *  same recovery `recordResult` has: file it against the league again. */
+    const link = (id: string) => {
+      if (!fixture) return;
+      linkGame.mutate(
+        {
+          matchId: fixture.id,
+          gameId: id,
+          winnerId:
+            values.player_1_score > values.player_2_score
+              ? values.player_1_id
+              : values.player_2_id,
+        },
+        { onError },
+      );
+    };
+
     if (isEdit && editing) {
       updateGame.mutate(
         { ...values, id: editing.id },
         {
           onSuccess: () => {
+            link(editing.id);
             toast.success(t("common.saved"));
             toGamesList();
           },
@@ -201,6 +259,8 @@ export default function AddGamePage() {
 
     handleAddGame(values, {
       onSuccess: (saved) => {
+        link(saved.id);
+        setFixtureId("");
         toast.success(t("games.added"));
         if (challenge) {
           respondToChallenge.mutate({
@@ -327,6 +387,33 @@ export default function AddGamePage() {
                 );
               })}
             </div>
+
+            {/* Already pointed at by a fixture: a game counts for one league
+                and the pointer is the fixture's, so this says so rather than
+                offering to move it. */}
+            {countsFor && (
+              <p className="text-caption text-ink-faint">
+                {t("live.forLeague", { name: countsFor.name })}
+              </p>
+            )}
+
+            {isClubAdmin && !countsFor && leagueOptions.length > 0 && (
+              <fieldset className="space-y-1.5">
+                <Label htmlFor="game-league">{t("tournaments.league")}</Label>
+                <Select
+                  id="game-league"
+                  value={fixtureId}
+                  onChange={(e) => setFixtureId(e.target.value)}
+                >
+                  <option value="">{t("games.noLeague")}</option>
+                  {leagueOptions.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.tournament.name}
+                    </option>
+                  ))}
+                </Select>
+              </fieldset>
+            )}
 
             {problem && (
               <p role="alert" className="text-body text-strike">
