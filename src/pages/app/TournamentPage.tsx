@@ -48,7 +48,6 @@ import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Segmented } from "@/components/ui/Segmented";
 import { Select } from "@/components/ui/Select";
-import { FilterBar } from "@/components/ui/FilterBar";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { Fact } from "@/components/ui/Fact";
 import { PageSkeleton } from "@/components/ui/Skeleton";
@@ -99,6 +98,12 @@ export default function TournamentPage() {
   /** Whose league fixtures to show, "" for everyone's. A string because it is
    *  a <select>'s value. */
   const [fixturesOf, setFixturesOf] = useState("");
+  /** Which half of the games card is showing. Played first: it is the short
+   *  half and the one that has news in it — a round robin's pending list is
+   *  every fixture nobody has got to yet. */
+  const [fixturesTab, setFixturesTab] = useState<"played" | "pending">(
+    "played",
+  );
   const [view, setView] = useState<"bracket" | "list">("list");
 
   const entrants = useMemo(
@@ -195,6 +200,17 @@ export default function TournamentPage() {
     match.p2_id === Number(fixturesOf);
   const shownPending = pendingMatches.filter(inFixtures);
   const shownPlayed = playedMatches.filter(inFixtures);
+
+  /** Whether "still to play" is a list anyone can do anything about. Once the
+   *  tournament is done, or there is nothing left in it, the card is a log and
+   *  the choice between the two goes away with it. */
+  const pendingOffered =
+    pendingMatches.length > 0 && tournament.status !== "done";
+  // The tab as it actually lands: a stored "pending" outlives the fixtures it
+  // pointed at, and a tournament that finishes while the card is open should
+  // show the log rather than an empty list.
+  const tab = pendingOffered ? fixturesTab : "played";
+  const shownFixtures = tab === "pending" ? shownPending : shownPlayed;
 
   const findMatch = (a: number, b: number) =>
     findOutstandingMatch(matches, a, b);
@@ -600,8 +616,8 @@ export default function TournamentPage() {
         {tournament.format === "league" && matches.length > 0 && (
           <>
             <Card className="overflow-hidden">
-              <CardHeader title={t("tournaments.standings")} />
               <LeagueTable
+                title={t("tournaments.standings")}
                 rows={standings(entrants, matches, {
                   win: tournament.points_win,
                   play: tournament.points_play,
@@ -621,8 +637,10 @@ export default function TournamentPage() {
                 toggle, just no longer confined to the "open" card, which
                 disappears once the draw is cut. */}
             {tournament.requires_payment && (
-              <Card className="overflow-hidden">
-                <CardHeader title={t("tournaments.paid")} />
+              <CollapsibleCard
+                defaultOpen={false}
+                title={t("tournaments.paid")}
+              >
                 <ul className="divide-y divide-hairline">
                   {entrants.map((playerId) => (
                     <li
@@ -674,86 +692,93 @@ export default function TournamentPage() {
                     </li>
                   ))}
                 </ul>
-              </Card>
-            )}
-            {/* What is left to arrange comes first: the played ones are a log,
-                the pending ones are the thing anyone can act on. Once the
-                tournament is closed nobody can, so they stop being news. */}
-            {/* One name, and both lists below become "what they have played
-                and what they still owe" — which is what an entrant opens a
-                round robin to find out. Between the table and the fixtures
-                because it filters the fixtures, not the table: the standings
-                stay the whole league, since a table of one row is not a
-                standing. */}
-            <FilterBar
-              trailing={t("tournaments.fixturesCount", {
-                played: shownPlayed.length,
-                pending: shownPending.length,
-              })}
-            >
-              <Select
-                size="sm"
-                className="max-w-[14rem]"
-                value={fixturesOf}
-                aria-label={t("tournaments.filterByPlayer")}
-                onChange={(e) => setFixturesOf(e.target.value)}
-              >
-                <option value="">{t("games.allPlayers")}</option>
-                {/* Your own fixtures are what you open a round robin for, so
-                    your name leads the list the same way it leads a result
-                    form — see PlayerOptions. */}
-                <PlayerOptions
-                  players={seeded.map((playerId) => ({
-                    id: playerId,
-                    name: nameOf(playerId),
-                  }))}
-                  meId={meId}
-                />
-              </Select>
-            </FilterBar>
-
-            {/* Both fold: a full round robin is dozens of cards, and the
-                table above them is what most people came for. */}
-            {pendingMatches.length > 0 && tournament.status !== "done" && (
-              <CollapsibleCard
-                title={t("tournaments.stillToPlay", {
-                  n: shownPending.length,
-                })}
-              >
-                {shownPending.length === 0 ? (
-                  <EmptyState title={t("tournaments.noneLeftFor")} />
-                ) : (
-                  <div className="p-3">
-                    <Fixtures
-                      matches={shownPending}
-                      nameOf={nameOf}
-                      index={index}
-                      recorder={recorder}
-                    />
-                  </div>
-                )}
               </CollapsibleCard>
             )}
-            <CollapsibleCard
-              title={t("tournaments.gamesPlayed", {
-                n: shownPlayed.length,
-              })}
-            >
-              {shownPlayed.length === 0 ? (
-                <EmptyState
-                  title={t("tournaments.noGamesYet")}
-                  hint={canPlay ? t("tournaments.noGamesHint") : undefined}
-                />
-              ) : (
-                <div className="p-3">
+            {/* One card, because they are one question asked two ways: what
+                has been played, and what is still owed. Folded, because a full
+                round robin is dozens of cards and the table above them is what
+                most people came for. */}
+            <CollapsibleCard defaultOpen={false} title={t("games.title")}>
+              <div className="space-y-3 p-3">
+                {/* Both controls on one line, wrapping rather than shrinking:
+                    they narrow the same list, and a tab strip and its filter
+                    reading as two separate decks is what a stack makes them. */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* What has happened leads. A round robin is read as a log —
+                      the pending list is hundreds of fixtures nobody drew up to
+                      look at — and once the tournament is closed there is no
+                      pending list at all, so the tab stops being offered. */}
+                  {pendingOffered && (
+                    <Segmented
+                      className="max-sm:w-full max-sm:*:flex-1 max-sm:*:justify-center"
+                      label={t("games.title")}
+                      value={fixturesTab}
+                      onChange={setFixturesTab}
+                      options={[
+                        {
+                          value: "played",
+                          label: t("tournaments.gamesPlayed", {
+                            n: shownPlayed.length,
+                          }),
+                        },
+                        {
+                          value: "pending",
+                          label: t("tournaments.stillToPlay", {
+                            n: shownPending.length,
+                          }),
+                        },
+                      ]}
+                    />
+                  )}
+
+                  {/* One name, and the list becomes "what they have played and
+                      what they still owe" — which is what an entrant opens a
+                      round robin to find out. It filters the fixtures, not the
+                      table: the standings stay the whole league, since a table
+                      of one row is not a standing. */}
+                  <Select
+                    size="sm"
+                    className="max-w-[14rem]"
+                    value={fixturesOf}
+                    aria-label={t("tournaments.filterByPlayer")}
+                    onChange={(e) => setFixturesOf(e.target.value)}
+                  >
+                    <option value="">{t("games.allPlayers")}</option>
+                    {/* Your own fixtures are what you open a round robin for,
+                        so your name leads the list the same way it leads a
+                        result form — see PlayerOptions. */}
+                    <PlayerOptions
+                      players={seeded.map((playerId) => ({
+                        id: playerId,
+                        name: nameOf(playerId),
+                      }))}
+                      meId={meId}
+                    />
+                  </Select>
+                </div>
+
+                {shownFixtures.length === 0 ? (
+                  <EmptyState
+                    title={
+                      tab === "pending"
+                        ? t("tournaments.noneLeftFor")
+                        : t("tournaments.noGamesYet")
+                    }
+                    hint={
+                      tab === "played" && canPlay
+                        ? t("tournaments.noGamesHint")
+                        : undefined
+                    }
+                  />
+                ) : (
                   <Fixtures
-                    matches={shownPlayed}
+                    matches={shownFixtures}
                     nameOf={nameOf}
                     index={index}
                     recorder={recorder}
                   />
-                </div>
-              )}
+                )}
+              </div>
             </CollapsibleCard>
           </>
         )}

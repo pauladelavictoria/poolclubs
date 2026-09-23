@@ -166,8 +166,8 @@ export default function PublicTournamentPage() {
           </Card>
         ) : isLeague ? (
           <Card className="mt-10 overflow-hidden">
-            <CardHeader title={t("tournaments.standings")} />
             <LeagueTable
+              title={t("tournaments.standings")}
               rows={standings(entrantIds, matches, {
                 win: tournament.points_win,
                 play: tournament.points_play,
