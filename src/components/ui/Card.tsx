@@ -22,7 +22,7 @@ export function CardHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-hairline px-4 py-3">
       <h2 className="text-h4 font-semibold text-ink">{title}</h2>
       {action}
     </div>
@@ -41,15 +41,19 @@ export function CardHeader({
 export function CollapsibleCard({
   title,
   className,
+  defaultOpen = true,
   children,
 }: {
   title: React.ReactNode;
   className?: string;
+  /** Off for a card whose title already answers it — a count of what is left
+   *  to play is the whole message; the list behind it is for whoever wants it. */
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <details
-      open
+      open={defaultOpen}
       className={cardClasses({
         className: ["group overflow-hidden", className]
           .filter(Boolean)
