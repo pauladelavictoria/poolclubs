@@ -37,8 +37,8 @@ export const Route = createFileRoute("/_public/clubs/$slug/game/$gameId")({
     if (!loaderData) return {};
     const { club, game, origin } = loaderData;
     const path = `/clubs/${club.slug}/game/${game.id}`;
-    // Prose in Spanish, like every other public head: `head` runs outside React
-    // and cannot reach the dictionary. The score is the title because that is
+    // Prose in Spanish, like every other public head: a crawler's
+    // Accept-Language is not the reader's. The score is the title because that is
     // what a result is — names would need the roster, which the head does not
     // have and would be a second query to get.
     const score = `${game.player_1_score}-${game.player_2_score}`;
@@ -48,8 +48,9 @@ export const Route = createFileRoute("/_public/clubs/$slug/game/$gameId")({
         description: `Resultado ${score} en ${club.name}. Marcador, jugadores y torneo.`,
         path,
         origin,
-        // The scoreline as a picture, drawn on demand.
-        image: `/api/og/games/${game.id}.png`,
+        // The scoreline as a picture, drawn on demand. `v` is a cache-buster
+        // (see the club route): a corrected score is a different picture.
+        image: `/api/og/games/${game.id}.png?v=${score}`,
         wideImage: true,
         fallback: "clubs",
       }),

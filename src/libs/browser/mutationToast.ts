@@ -10,10 +10,9 @@ type T = (key: Key, vars?: Record<string, string | number>) => string;
  * `onSuccess` (cache refresh, usually) still runs regardless — react-query
  * fires both — this only owns the toast.
  *
- * `errorKey` is shown for anything dbKeys doesn't have a better answer for —
- * pass a category in dbKeys (see libs/algorithms/dbError.ts) for a mutation
- * whose failure reason is worth telling apart, e.g. `{ denied: "..." }` for
- * one an RLS policy can plausibly refuse.
+ * Every failure is classified (libs/algorithms/dbError.ts): a refusal says
+ * "not allowed", an expired session says so, and `errorKey` covers the rest.
+ * Pass dbKeys only for a mutation with better wording for one of those.
  *
  * Returns whether it succeeded, so a caller that has more to do on success
  * (closing a modal, say) doesn't do it after a failure.
@@ -30,9 +29,7 @@ export async function runMutation(
     toast.success(t(okKey));
     return true;
   } catch (err) {
-    const key = dbKeys
-      ? dbErrorMessage(err, okKey, { fallback: errorKey, ...dbKeys })
-      : errorKey;
+    const key = dbErrorMessage(err, okKey, { fallback: errorKey, ...dbKeys });
     toast.error(t(key));
     return false;
   }

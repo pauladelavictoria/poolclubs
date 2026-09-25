@@ -12,35 +12,22 @@ import {
   type Category,
   type Discipline,
   type TournamentFormat,
+  type TournamentValues,
 } from "@/types";
 import { useT } from "@/i18n";
 
-export type TournamentValues = {
-  name: string;
-  /** ISO days, as the `date` columns store them. Both null for a tournament
-   *  nobody has dated yet, which is most of them while entries are open. */
-  starts_on: string | null;
-  ends_on: string | null;
-  /** What it costs to enter, in the organiser's own words. */
-  entry_fee: string | null;
-  /** Free text for prizes or anything else worth telling entrants. */
-  notes: string | null;
-  /** Whether entrants owe money to be in the draw — gates the paid tracker on
-   *  the entrant list, and the removal prompt when starting. */
-  requires_payment: boolean;
-  format: TournamentFormat;
-  category: Category | null;
-  legs: 1 | 2;
-  advance: number | null;
-  single_from: number;
-  discipline: Discipline;
-  race_to: number;
-  race_semi: number | null;
-  race_final: number | null;
-  /** Only meaningful for a league — see LeagueTable and libs/algorithms/leagueTable. */
-  points_win: number;
-  points_play: number;
-};
+export type { TournamentValues };
+
+/** A new tournament's settings, and what a setting its format has no use for
+ *  is stored as. Matches the columns' defaults in sql/schema.sql (advance has
+ *  none: it is null unless the format has groups). */
+const DEFAULTS = {
+  advance: 4,
+  single_from: 2,
+  race_to: 5,
+  points_win: 3,
+  points_play: 1,
+} as const;
 
 const ADVANCE = [2, 4, 8, 16];
 
@@ -89,12 +76,18 @@ export default function TournamentForm({
     initialValues?.category ?? null,
   );
   const [legs, setLegs] = useState<1 | 2>(initialValues?.legs ?? 1);
-  const [advance, setAdvance] = useState(initialValues?.advance ?? 4);
-  const [singleFrom, setSingleFrom] = useState(initialValues?.single_from ?? 2);
+  const [advance, setAdvance] = useState(
+    initialValues?.advance ?? DEFAULTS.advance,
+  );
+  const [singleFrom, setSingleFrom] = useState(
+    initialValues?.single_from ?? DEFAULTS.single_from,
+  );
   const [discipline, setDiscipline] = useState<Discipline>(
     initialValues?.discipline ?? "9ball",
   );
-  const [raceTo, setRaceTo] = useState(String(initialValues?.race_to ?? 5));
+  const [raceTo, setRaceTo] = useState(
+    String(initialValues?.race_to ?? DEFAULTS.race_to),
+  );
   const [raceSemi, setRaceSemi] = useState(
     initialValues?.race_semi ? String(initialValues.race_semi) : "",
   );
@@ -102,10 +95,10 @@ export default function TournamentForm({
     initialValues?.race_final ? String(initialValues.race_final) : "",
   );
   const [pointsWin, setPointsWin] = useState(
-    String(initialValues?.points_win ?? 3),
+    String(initialValues?.points_win ?? DEFAULTS.points_win),
   );
   const [pointsPlay, setPointsPlay] = useState(
-    String(initialValues?.points_play ?? 1),
+    String(initialValues?.points_play ?? DEFAULTS.points_play),
   );
 
   const roundRobin = format === "league" || format === "group_knockout";
@@ -141,13 +134,14 @@ export default function TournamentForm({
       category,
       legs,
       advance: format === "group_knockout" ? advance : null,
-      single_from: format === "double_elim" ? singleFrom : 2,
+      single_from: format === "double_elim" ? singleFrom : DEFAULTS.single_from,
       discipline,
       race_to: race,
       race_semi: hasFinal ? optional(raceSemi) : null,
       race_final: hasFinal ? optional(raceFinal) : null,
-      points_win: format === "league" ? Number(pointsWin) : 3,
-      points_play: format === "league" ? Number(pointsPlay) : 1,
+      points_win: format === "league" ? Number(pointsWin) : DEFAULTS.points_win,
+      points_play:
+        format === "league" ? Number(pointsPlay) : DEFAULTS.points_play,
     });
   };
 

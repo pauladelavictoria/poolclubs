@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/libs/supabase/browser";
 import { useAuth } from "@/hooks/useAuth";
-import { keys } from "@/libs/queryKeys";
+import { refreshResults } from "@/libs/browser/refresh";
 import { gameQuery } from "@/queries/games";
 import type { Game } from "@/types";
 
@@ -38,8 +38,7 @@ export const useAddGame = () => {
     // filed from the challenge loop was still missing from the tape and the
     // ranking on the next navigation. The prefix covers the day lists and the
     // calendar's dots as well.
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: keys.games.all }),
+    onSuccess: () => refreshResults(queryClient),
   });
 };
 
@@ -59,13 +58,8 @@ export const useGame = (id?: string) =>
 export const useManageGames = () => {
   const queryClient = useQueryClient();
 
-  // A result is on the tape, in the day's ranking, in the calendar's dots and
-  // in both players' pages, and a correction moves all of them — so the whole
-  // prefix goes, exactly as it does on insert.
-  const refresh = (id: string) => {
-    queryClient.invalidateQueries({ queryKey: keys.games.all });
-    queryClient.invalidateQueries({ queryKey: keys.game.one(id) });
-  };
+  // A correction moves everything an insert does, and a league table too.
+  const refresh = () => refreshResults(queryClient);
 
   return {
     updateGame: useMutation({
@@ -80,7 +74,7 @@ export const useManageGames = () => {
 
         return data as Game;
       },
-      onSuccess: (saved) => refresh(saved.id),
+      onSuccess: refresh,
     }),
 
     deleteGame: useMutation({

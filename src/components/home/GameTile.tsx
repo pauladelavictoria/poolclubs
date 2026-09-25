@@ -1,7 +1,7 @@
 import { Avatar } from "@/components/ui/Avatar";
 import { cardClasses } from "@/components/ui/cardStyles";
 import { usePlayerLookup } from "@/hooks/usePlayers";
-import { dayLabel, hasTime, timeOf } from "@/libs/algorithms/dayLabel";
+import { dayLabel, playedTimeOf } from "@/libs/algorithms/dayLabel";
 import type { Game } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -70,12 +70,7 @@ export default function GameTile({ game }: { game: Game }) {
     >
       <p className="truncate text-caption text-ink-ghost">
         <span suppressHydrationWarning>{dayLabel(played, t, locale)}</span>
-        {hasTime(played) && (
-          <>
-            {" · "}
-            {timeOf(played, locale)}
-          </>
-        )}
+        {playedTimeOf(played, locale) && ` · ${playedTimeOf(played, locale)}`}
       </p>
       {side(
         [game.player_1_id, doubles ? game.player_1b_id : null],

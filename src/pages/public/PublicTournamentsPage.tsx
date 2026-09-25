@@ -15,8 +15,7 @@ import { Pager } from "@/components/ui/Pager";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";
 import { eventDates } from "@/libs/algorithms/eventDates";
-import { placings, resolveBracket } from "@/libs/algorithms/bracket";
-import { leaguePodium, standings } from "@/libs/algorithms/leagueTable";
+import { resolveBracket, tournamentResults } from "@/libs/algorithms/bracket";
 import { PUBLIC_PAGE_SIZE } from "@/queries/public/shared";
 import {
   publicTournamentsQuery,
@@ -350,16 +349,11 @@ function CardPodium({ tournament }: { tournament: PublicTournamentListItem }) {
     ),
   );
 
-  const resolved = resolveBracket(matches);
-  const places =
-    tournament.format === "league"
-      ? leaguePodium(
-          standings([...byId.keys()], resolved, {
-            win: tournament.points_win,
-            play: tournament.points_play,
-          }),
-        )
-      : placings(resolved);
+  const { podium: places } = tournamentResults(
+    tournament,
+    [...byId.keys()],
+    resolveBracket(matches),
+  );
 
   if (places.first === null) return null;
 

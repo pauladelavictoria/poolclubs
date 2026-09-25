@@ -94,7 +94,6 @@ export default function ClubMembersPage() {
       toast.error(
         t(
           dbErrorMessage(err, "updatePlayer", {
-            denied: "common.deniedError",
             fallback: "players.updateError",
           }),
         ),
@@ -124,14 +123,12 @@ export default function ClubMembersPage() {
           t,
           "players.updated",
           "players.updateError",
-          { denied: "common.deniedError" },
         )
       : await runMutation(
           createPlayer.mutateAsync(values),
           t,
           "players.created",
           "players.createError",
-          { denied: "common.deniedError" },
         );
     if (ok) closeModal();
   };
@@ -287,13 +284,7 @@ export default function ClubMembersPage() {
                         return;
                       removeMember.mutate(m.id, {
                         onError: (err) =>
-                          toast.error(
-                            t(
-                              dbErrorMessage(err, "removeMember", {
-                                denied: "common.deniedError",
-                              }),
-                            ),
-                          ),
+                          toast.error(t(dbErrorMessage(err, "removeMember"))),
                       });
                     }}
                   >

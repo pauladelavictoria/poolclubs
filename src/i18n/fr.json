@@ -14,6 +14,7 @@
   "common.error": "Une erreur est survenue",
   "common.duplicateError": "Cela existe déjà.",
   "common.deniedError": "Vous n'êtes pas autorisé à faire cela.",
+  "common.sessionExpired": "Votre session a expiré. Reconnectez-vous et réessayez.",
   "common.seeAll": "Tout voir",
   "common.pts": "{n} pts",
   "common.clear": "Effacer",

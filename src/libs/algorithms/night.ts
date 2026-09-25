@@ -181,3 +181,38 @@ export function unbump(match: LiveMatch, side: 1 | 2) {
     last_side: null,
   };
 }
+
+/**
+ * Who may score a live match — and, with no seats, who may put two other
+ * people in one. Mirrors can_score_live_match in sql/schema.sql: the club's
+ * admin, the club's tablet, or somebody in one of the seats. The database is
+ * the boundary; this only decides what the screen offers.
+ */
+export const canScore = (
+  viewer: Pick<Player, "id" | "is_device"> | null | undefined,
+  isAdmin: boolean,
+  seats: number[] = [],
+): boolean =>
+  isAdmin ||
+  viewer?.is_device === true ||
+  (!!viewer && seats.includes(viewer.id));
+
+/**
+ * Who a freed table is offered to next. The night's own suggestion for it when
+ * there is one; failing that, the winner stays on — but only against the one
+ * person left waiting, the case where the room cannot make a fresh pair. In
+ * doubles nobody stays (`stays` is null) and the table goes back to the queue.
+ *
+ * `winnerStays` is said on screen, because it is the one offer that is not the
+ * queue's answer.
+ */
+export const nextAtTable = <P>(
+  paired: P[] | undefined,
+  stays: P | null,
+  waiting: P[],
+): { group: P[]; winnerStays: boolean } | undefined => {
+  if (paired) return { group: paired, winnerStays: false };
+  if (stays !== null && waiting.length === 1)
+    return { group: [stays, waiting[0]], winnerStays: true };
+  return undefined;
+};

@@ -20,6 +20,7 @@ import { useWhoIsHere } from "@/hooks/useNight";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { DEFAULT_SETUP, type DaySetup } from "@/libs/algorithms/today";
 import { fixturesBetween, hasFixture } from "@/libs/algorithms/leagueTable";
+import { canScore, seatsOf } from "@/libs/algorithms/night";
 import type { LeagueFixture } from "@/queries/tournaments";
 import { useT } from "@/i18n";
 
@@ -120,27 +121,16 @@ export default function StartMatchForm({
 
   // Somebody on a table right now is not a name for a second one.
   const { data: live } = useLiveMatches();
-  const playing = new Set(
-    (live ?? []).flatMap((m) => [
-      m.player_1_id,
-      m.player_2_id,
-      m.player_1b_id,
-      m.player_2b_id,
-    ]),
-  );
+  const playing = new Set((live ?? []).flatMap(seatsOf));
 
   const roster = (rosterProp ?? opponents)
     .filter((p) => p.id !== me.id && !playing.has(p.id))
     .sort(byPresenceThenName);
 
-  // Who may put two other people in a match.
-  //
-  // Mirrors can_score_live_match in sql/schema.sql: the club's admin, the
-  // club's tablet, or somebody who is one of the seats. Any other member
-  // picking two other names would have the insert refused, which is not a
-  // choice worth offering.
+  // Who may put two other people in a match: canScore with no seats — any
+  // other member picking two other names would have the insert refused.
   const isDevice = me.is_device === true;
-  const forOthers = isDevice || isClubAdmin;
+  const forOthers = canScore(me, isClubAdmin);
 
   /** An <option> cannot be styled, so presence is a mark in the text. */
   const label = (p: Player) =>

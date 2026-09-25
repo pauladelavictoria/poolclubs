@@ -75,7 +75,6 @@ export default function DrillDetailPage() {
         toast.error(
           t(
             dbErrorMessage(err, "deleteDrill", {
-              denied: "common.deniedError",
               fallback: "drills.deleteError",
             }),
           ),

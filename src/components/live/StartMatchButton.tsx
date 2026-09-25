@@ -11,7 +11,7 @@ import { useDialog } from "@/hooks/useDialog";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useLeagueFixtures } from "@/hooks/useTournaments";
-import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
+import { START_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 
 /**
@@ -72,30 +72,18 @@ export default function StartMatchButton({
             busyTableIds={busy}
             leagueFixtures={leagueFixtures}
             onSubmit={(values) =>
-              startMatch.mutate(
-                {
-                  player1: values.player1,
-                  player2: values.player2,
-                  partner1: values.partner1,
-                  partner2: values.partner2,
-                  tableId: values.tableId,
-                  discipline: values.discipline,
-                  raceTo: values.raceTo,
-                  tournamentMatchId: values.tournamentMatchId,
+              startMatch.mutate(values, {
+                onSuccess: (row) => {
+                  close();
+                  appNavigate("/app/$clubSlug/live/$liveId", {
+                    liveId: row.id,
+                  });
                 },
-                {
-                  onSuccess: (row) => {
-                    close();
-                    appNavigate("/app/$clubSlug/live/$liveId", {
-                      liveId: row.id,
-                    });
-                  },
-                  onError: (err) =>
-                    toast.error(
-                      t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
-                    ),
-                },
-              )
+                onError: (err) =>
+                  toast.error(
+                    t(dbErrorMessage(err, "startMatch", START_MATCH_KEYS)),
+                  ),
+              })
             }
             onCancel={close}
             isSubmitting={startMatch.isPending}

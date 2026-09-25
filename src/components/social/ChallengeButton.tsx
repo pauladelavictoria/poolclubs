@@ -79,13 +79,7 @@ export default function ChallengeButton({
               setOpen(false);
             },
             onError: (err) =>
-              toast.error(
-                t(
-                  dbErrorMessage(err, "sendChallenge", {
-                    denied: "common.deniedError",
-                  }),
-                ),
-              ),
+              toast.error(t(dbErrorMessage(err, "sendChallenge"))),
           },
         );
       }}

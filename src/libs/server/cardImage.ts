@@ -232,6 +232,11 @@ const chromeOf = async ({ logoUrl, markUrl, coverUrl }: CardRequest) => {
 
 const EMPTY = Buffer.alloc(0);
 
+const png = (bytes: Uint8Array<ArrayBuffer>): RenderedCard => ({
+  bytes,
+  contentType: "image/png",
+});
+
 export async function renderClubCard(
   spec: ClubCardSpec,
   request: CardRequest & {
@@ -271,17 +276,19 @@ export async function renderClubCard(
 export async function renderPlayerCardPng(
   spec: PlayerCardSpec,
   request: CardRequest,
-): Promise<Uint8Array<ArrayBuffer>> {
+): Promise<RenderedCard> {
   const size = request.size ?? "wide";
   const chrome = await chromeOf(request);
 
-  return encode(size, (ctx) =>
-    paintPlayerCard(ctx, spec, {
-      size,
-      scale: SCALE,
-      font: serverFont,
-      ...chrome,
-    }),
+  return png(
+    await encode(size, (ctx) =>
+      paintPlayerCard(ctx, spec, {
+        size,
+        scale: SCALE,
+        font: serverFont,
+        ...chrome,
+      }),
+    ),
   );
 }
 
@@ -291,21 +298,23 @@ export async function renderGameCardPng(
     /** One list per side, lined up with that side's names. */
     avatarUrls?: (string | null | undefined)[][];
   },
-): Promise<Uint8Array<ArrayBuffer>> {
+): Promise<RenderedCard> {
   const size = request.size ?? "wide";
   const chrome = await chromeOf(request);
   const avatars = await Promise.all(
     (request.avatarUrls ?? []).map((side) => imagesOf(side)),
   );
 
-  return encode(size, (ctx) =>
-    paintGameCard(ctx, spec, {
-      size,
-      scale: SCALE,
-      font: serverFont,
-      ...chrome,
-      avatars,
-    }),
+  return png(
+    await encode(size, (ctx) =>
+      paintGameCard(ctx, spec, {
+        size,
+        scale: SCALE,
+        font: serverFont,
+        ...chrome,
+        avatars,
+      }),
+    ),
   );
 }
 
@@ -317,18 +326,20 @@ export async function renderResultCardPng(
      *  either may be null. */
     avatarUrls?: (string | null | undefined)[];
   },
-): Promise<Uint8Array<ArrayBuffer>> {
+): Promise<RenderedCard> {
   const size = request.size ?? "wide";
   const chrome = await chromeOf(request);
   const avatars = await imagesOf(request.avatarUrls ?? []);
 
-  return encode(size, (ctx) =>
-    paintResultCard(ctx, spec, {
-      size,
-      scale: SCALE,
-      font: serverFont,
-      ...chrome,
-      avatars,
-    }),
+  return png(
+    await encode(size, (ctx) =>
+      paintResultCard(ctx, spec, {
+        size,
+        scale: SCALE,
+        font: serverFont,
+        ...chrome,
+        avatars,
+      }),
+    ),
   );
 }

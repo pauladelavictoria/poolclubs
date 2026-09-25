@@ -110,13 +110,7 @@ function TableDetailsEditor({
           setFelt(undefined);
         },
         onError: (err) =>
-          toast.error(
-            t(
-              dbErrorMessage(err, "updateTableDetails", {
-                denied: "common.deniedError",
-              }),
-            ),
-          ),
+          toast.error(t(dbErrorMessage(err, "updateTableDetails"))),
       },
     );
   };
@@ -285,14 +279,7 @@ export default function ClubTablesCard() {
       return data;
     },
     onSuccess: (code, tableId) => setPairing({ tableId, code }),
-    onError: (err) =>
-      toast.error(
-        t(
-          dbErrorMessage(err, "startPairing", {
-            denied: "common.deniedError",
-          }),
-        ),
-      ),
+    onError: (err) => toast.error(t(dbErrorMessage(err, "startPairing"))),
   });
 
   const add = () => {
@@ -307,7 +294,6 @@ export default function ClubTablesCard() {
           t(
             dbErrorMessage(err, "addTable", {
               duplicate: "tables.duplicate",
-              denied: "common.deniedError",
               fallback: "tables.duplicate",
             }),
           ),

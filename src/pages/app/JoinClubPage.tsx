@@ -73,7 +73,6 @@ export default function JoinClubPage() {
           toast.error(
             t(
               dbErrorMessage(err, "joinClub", {
-                denied: "common.deniedError",
                 fallback: "club.joinError",
               }),
             ),

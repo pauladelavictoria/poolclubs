@@ -19,15 +19,15 @@ import {
   eligibleToAdd,
   findOutstandingMatch,
   groupCount,
-  minimumEntrants,
   raceFor,
   resolveBracket,
   seedEntrants,
   sortPlayedMatches,
-  tournamentPodium,
+  qualifyMarks,
+  tournamentResults,
   type BracketIndex,
 } from "@/libs/algorithms/bracket";
-import { groupStandings, standings } from "@/libs/algorithms/leagueTable";
+import { groupStandings } from "@/libs/algorithms/leagueTable";
 import { eventDates, isUpcoming } from "@/libs/algorithms/eventDates";
 import PageTitle from "@/components/layout/PageTitle";
 import BracketView from "@/components/tournaments/BracketView";
@@ -35,6 +35,7 @@ import LeagueTable from "@/components/tournaments/LeagueTable";
 import MatchCard from "@/components/games/MatchCard";
 import MatchList from "@/components/games/MatchList";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
+import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import SocialBar from "@/components/social/SocialBar";
 import TournamentAdminPanel from "@/components/tournaments/TournamentAdminPanel";
 import PlayGameForm from "@/components/games/PlayGameForm";
@@ -53,7 +54,7 @@ import { Fact } from "@/components/ui/Fact";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useDialog } from "@/hooks/useDialog";
-import { FORMAT_KEY, type TournamentMatch } from "@/types";
+import { FORMAT_KEY, tournamentValues, type TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
 import { getRouteApi } from "@tanstack/react-router";
 import { AppLink } from "@/components/layout/AppLink";
@@ -157,24 +158,19 @@ export default function TournamentPage() {
     );
   }
 
-  const minimum = minimumEntrants(tournament.format, tournament.advance);
   const groups = groupCount(tournament.advance ?? 2);
   const entered = player ? entrants.includes(player.id) : false;
-  const canEnter =
-    tournament.category === null || player?.category === tournament.category;
+  const canEnter = canEnterTournament(tournament.category, player?.category);
 
   /** Who the organiser can still put in: the club roster this tournament is
    *  open to, minus whoever is already entered. */
   const addable = eligibleToAdd(players ?? [], tournament.category, entrants);
 
-  // A knockout's podium is who lost to whom; a league's is just the top of the
-  // table, since there is no final to read it off.
-  const podium = tournamentPodium(tournament.format, entrants, matches);
-
-  const leagueRows = standings(entrants, matches, {
-    win: tournament.points_win,
-    play: tournament.points_play,
-  });
+  const { podium, table: leagueRows } = tournamentResults(
+    tournament,
+    entrants,
+    matches,
+  );
 
   const groupMatches = matches.filter((m) => m.bracket === "group");
   const groupsDone =
@@ -184,6 +180,17 @@ export default function TournamentPage() {
   const canPlay = isMember && tournament.status !== "done";
   const playable = (match: TournamentMatch) =>
     match.winner_id === null && match.p1_id !== null && match.p2_id !== null;
+
+  const togglePaid = (playerId: number) =>
+    runMutation(
+      setPaid.mutateAsync({
+        tournamentId,
+        playerId,
+        paid: !(paidById.get(playerId) ?? false),
+      }),
+      t,
+      "common.saved",
+    );
 
   const recorder = (match: TournamentMatch) =>
     canPlay && playable(match) ? () => setPlaying(match) : null;
@@ -429,8 +436,6 @@ export default function TournamentPage() {
                           : joinTournament.mutateAsync({ tournamentId }),
                         t,
                         entered ? "tournaments.left" : "tournaments.joined",
-                        "common.error",
-                        { denied: "common.deniedError" },
                       )
                     }
                   >
@@ -478,46 +483,14 @@ export default function TournamentPage() {
                         collected — the toggle lives inside this same "open"
                         card rather than following the entrant into the draw —
                         and only for a tournament that actually charges one. */}
-                    {tournament.requires_payment &&
-                      (isClubAdmin ? (
-                        <IconButton
-                          label={t("tournaments.paid")}
-                          title={t("tournaments.paid")}
-                          size="sm"
-                          disabled={setPaid.isPending}
-                          onClick={() =>
-                            runMutation(
-                              setPaid.mutateAsync({
-                                tournamentId,
-                                playerId,
-                                paid: !(paidById.get(playerId) ?? false),
-                              }),
-                              t,
-                              "common.saved",
-                              "common.error",
-                              { denied: "common.deniedError" },
-                            )
-                          }
-                          shape="circle"
-                          className={
-                            paidById.get(playerId)
-                              ? "bg-strike text-pocket hover:bg-strike-light"
-                              : "text-ink-faint"
-                          }
-                        >
-                          <LuBanknote className="h-4 w-4" aria-hidden />
-                        </IconButton>
-                      ) : (
-                        paidById.get(playerId) && (
-                          <span
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-strike text-pocket"
-                            aria-label={t("tournaments.paid")}
-                            title={t("tournaments.paid")}
-                          >
-                            <LuBanknote className="h-4 w-4" aria-hidden />
-                          </span>
-                        )
-                      ))}
+                    {tournament.requires_payment && (
+                      <PaidMark
+                        paid={paidById.get(playerId) ?? false}
+                        canToggle={isClubAdmin}
+                        pending={setPaid.isPending}
+                        onToggle={() => togglePaid(playerId)}
+                      />
+                    )}
                     {isClubAdmin && (
                       <IconButton
                         label={t("tournaments.removeNamed", {
@@ -533,8 +506,6 @@ export default function TournamentPage() {
                             }),
                             t,
                             "tournaments.removed",
-                            "common.error",
-                            { denied: "common.deniedError" },
                           )
                         }
                       >
@@ -581,8 +552,6 @@ export default function TournamentPage() {
                           }),
                           t,
                           "tournaments.added",
-                          "common.error",
-                          { denied: "common.deniedError" },
                         );
                       }}
                     >
@@ -605,7 +574,7 @@ export default function TournamentPage() {
               <LeagueTable
                 rows={rows}
                 nameOf={nameOf}
-                qualify={tournament.status === "groups" ? 2 : 0}
+                qualify={qualifyMarks(tournament.status)}
               />
               <div className="border-t border-hairline p-3">
                 <Fixtures
@@ -655,45 +624,12 @@ export default function TournamentPage() {
                         <span className="min-w-0 flex-1 truncate text-body text-ink">
                           {nameOf(playerId)}
                         </span>
-                        {isClubAdmin ? (
-                          <IconButton
-                            label={t("tournaments.paid")}
-                            title={t("tournaments.paid")}
-                            size="sm"
-                            disabled={setPaid.isPending}
-                            onClick={() =>
-                              runMutation(
-                                setPaid.mutateAsync({
-                                  tournamentId,
-                                  playerId,
-                                  paid: !(paidById.get(playerId) ?? false),
-                                }),
-                                t,
-                                "common.saved",
-                                "common.error",
-                                { denied: "common.deniedError" },
-                              )
-                            }
-                            shape="circle"
-                            className={
-                              paidById.get(playerId)
-                                ? "bg-strike text-pocket hover:bg-strike-light"
-                                : "text-ink-faint"
-                            }
-                          >
-                            <LuBanknote className="h-4 w-4" aria-hidden />
-                          </IconButton>
-                        ) : (
-                          paidById.get(playerId) && (
-                            <span
-                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-strike text-pocket"
-                              aria-label={t("tournaments.paid")}
-                              title={t("tournaments.paid")}
-                            >
-                              <LuBanknote className="h-4 w-4" aria-hidden />
-                            </span>
-                          )
-                        )}
+                        <PaidMark
+                          paid={paidById.get(playerId) ?? false}
+                          canToggle={isClubAdmin}
+                          pending={setPaid.isPending}
+                          onToggle={() => togglePaid(playerId)}
+                        />
                       </li>
                     ))}
                 </ul>
@@ -797,9 +733,7 @@ export default function TournamentPage() {
             <TournamentAdminPanel
               tournament={tournament}
               tournamentId={tournamentId}
-              entrants={entrants}
               seeded={seeded}
-              minimum={minimum}
               groupsDone={groupsDone}
               addable={addable}
               entered={entrantPlayers}
@@ -809,7 +743,6 @@ export default function TournamentPage() {
                 deleteTournament,
                 generateKnockout,
                 updateTournament,
-                leaveTournament,
                 addLateEntrant,
                 removeEntrant,
               }}
@@ -833,25 +766,7 @@ export default function TournamentPage() {
         </h2>
         {isEditOpen && (
           <TournamentForm
-            initialValues={{
-              name: tournament.name,
-              starts_on: tournament.starts_on,
-              ends_on: tournament.ends_on,
-              entry_fee: tournament.entry_fee,
-              notes: tournament.notes,
-              requires_payment: tournament.requires_payment,
-              format: tournament.format,
-              category: tournament.category,
-              legs: tournament.legs,
-              advance: tournament.advance,
-              single_from: tournament.single_from,
-              discipline: tournament.discipline,
-              race_to: tournament.race_to,
-              race_semi: tournament.race_semi,
-              race_final: tournament.race_final,
-              points_win: tournament.points_win,
-              points_play: tournament.points_play,
-            }}
+            initialValues={tournamentValues(tournament)}
             // Once the fixtures exist they were generated from these
             // settings, so the form drops them and keeps the rest.
             locked={tournament.status !== "open"}
@@ -863,8 +778,6 @@ export default function TournamentPage() {
                 updateTournament.mutateAsync({ id: tournamentId, ...values }),
                 t,
                 "common.saved",
-                "common.error",
-                { denied: "common.deniedError" },
               );
             }}
           />
@@ -899,8 +812,6 @@ export default function TournamentPage() {
                 }),
                 t,
                 "tournaments.recorded",
-                "common.error",
-                { denied: "common.deniedError" },
               );
             }}
           />
@@ -913,6 +824,51 @@ export default function TournamentPage() {
 /** Fixtures as cards. No matchday headings: a club league is played whenever
  *  two people are free, so the round a fixture was generated in means nothing
  *  to anybody reading it. */
+/** Whether an entrant has paid: a toggle for the club's admin, a mark for
+ *  everyone else — and nothing at all for an unpaid entrant, whose absence of
+ *  a mark says it. */
+function PaidMark({
+  paid,
+  canToggle,
+  pending,
+  onToggle,
+}: {
+  paid: boolean;
+  canToggle: boolean;
+  pending: boolean;
+  onToggle: () => void;
+}) {
+  const { t } = useT();
+  if (canToggle)
+    return (
+      <IconButton
+        label={t("tournaments.paid")}
+        title={t("tournaments.paid")}
+        size="sm"
+        disabled={pending}
+        onClick={onToggle}
+        shape="circle"
+        className={
+          paid
+            ? "bg-strike text-pocket hover:bg-strike-light"
+            : "text-ink-faint"
+        }
+      >
+        <LuBanknote className="h-4 w-4" aria-hidden />
+      </IconButton>
+    );
+  if (!paid) return null;
+  return (
+    <span
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-strike text-pocket"
+      aria-label={t("tournaments.paid")}
+      title={t("tournaments.paid")}
+    >
+      <LuBanknote className="h-4 w-4" aria-hidden />
+    </span>
+  );
+}
+
 function Fixtures({
   matches,
   nameOf,

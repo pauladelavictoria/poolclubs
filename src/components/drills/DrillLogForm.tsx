@@ -53,13 +53,7 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
           onSuccess?.(result.id);
         },
         onError: (err) => {
-          toast.error(
-            t(
-              dbErrorMessage(err, "addDrillLog", {
-                denied: "common.deniedError",
-              }),
-            ),
-          );
+          toast.error(t(dbErrorMessage(err, "addDrillLog")));
         },
       },
     );

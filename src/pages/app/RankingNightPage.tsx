@@ -31,7 +31,7 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/hooks/useDialog";
 import { readTodaySetup, writeTodaySetup } from "@/libs/prefs";
 import { clampRace, seatsNeeded, type DaySetup } from "@/libs/algorithms/today";
-import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
+import { START_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 import { DISCIPLINES, type ClubTable, type Player } from "@/types";
 
@@ -117,7 +117,7 @@ export default function RankingNightPage() {
       },
       {
         onError: (err) =>
-          toast.error(t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS))),
+          toast.error(t(dbErrorMessage(err, "startMatch", START_MATCH_KEYS))),
       },
     );
 
@@ -152,7 +152,6 @@ export default function RankingNightPage() {
                     t(
                       dbErrorMessage(err, "callNight", {
                         refused: "night.callTooSoon",
-                        denied: "common.deniedError",
                       }),
                     ),
                   ),
@@ -403,13 +402,7 @@ export default function RankingNightPage() {
                           { here: !isHere, playerId: p.id },
                           {
                             onError: (err) =>
-                              toast.error(
-                                t(
-                                  dbErrorMessage(err, "checkIn", {
-                                    denied: "common.deniedError",
-                                  }),
-                                ),
-                              ),
+                              toast.error(t(dbErrorMessage(err, "checkIn"))),
                           },
                         )
                       }
@@ -482,7 +475,7 @@ export default function RankingNightPage() {
                   onSuccess: close,
                   onError: (err) =>
                     toast.error(
-                      t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                      t(dbErrorMessage(err, "startMatch", START_MATCH_KEYS)),
                     ),
                 },
               )

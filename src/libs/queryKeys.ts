@@ -180,6 +180,7 @@ export const keys = {
      *  table offers to tag a match with, not just the signed-in player's own. */
     leagueFixtures: (clubId?: number | null) =>
       ["tournament", "league-fixtures", clubId] as const,
+    allLeagueFixtures: ["tournament", "league-fixtures"] as const,
   },
 
   comments: {

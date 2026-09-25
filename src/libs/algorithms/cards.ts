@@ -30,9 +30,8 @@ export type ClubCardSpec = {
   club?: string;
   /** Where it is — "Valencia, España" — or empty for a club that has not said. */
   subtitle: string;
-  /** "21 jugadores", already pluralised and translated by the caller: this
-   *  module has no dictionary, and the routes that build these run outside
-   *  React where `t()` is not reachable. */
+  /** "21 jugadores", already pluralised and translated by the caller — see
+   *  translate in src/i18n/translate.ts. */
   stat: string;
   fileName: string;
 };
@@ -44,8 +43,7 @@ export type PlayerCardSpec = {
   /** The clubs they play in, already joined into a sentence by the caller. */
   subtitle: string;
   /** Three at most — the row is a headline, not a table. Values and labels are
-   *  both translated by the caller: these routes run outside React, where
-   *  `t()` is not reachable. */
+   *  both translated by the caller. */
   stats: { value: string; label: string }[];
   fileName: string;
 };

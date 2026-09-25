@@ -68,7 +68,6 @@ export default function PlayerSettingsPage() {
           toast.error(
             t(
               dbErrorMessage(err, "updatePlayer", {
-                denied: "common.deniedError",
                 fallback: "players.updateError",
               }),
             ),
@@ -93,7 +92,6 @@ export default function PlayerSettingsPage() {
           toast.error(
             t(
               dbErrorMessage(err, "updatePlayer", {
-                denied: "common.deniedError",
                 fallback: "players.updateError",
               }),
             ),
@@ -277,9 +275,7 @@ export default function PlayerSettingsPage() {
           <p className="text-body font-medium text-ink">
             {t("club.leaveTitle")}
           </p>
-          <p className="mt-1 text-body text-ink-faint">
-            {t("club.leaveHint")}
-          </p>
+          <p className="mt-1 text-body text-ink-faint">{t("club.leaveHint")}</p>
           <div className="mt-4 flex justify-end">
             <Button
               variant="secondary"
@@ -290,12 +286,13 @@ export default function PlayerSettingsPage() {
                   return;
                 leaveClub.mutate(activeClubId, {
                   onSuccess: () =>
-                    toast.success(t("club.leftToast", { club: activeClub.name })),
+                    toast.success(
+                      t("club.leftToast", { club: activeClub.name }),
+                    ),
                   onError: (err) =>
                     toast.error(
                       t(
                         dbErrorMessage(err, "leaveClub", {
-                          denied: "common.deniedError",
                           refused: "club.leaveOwnerError",
                         }),
                       ),

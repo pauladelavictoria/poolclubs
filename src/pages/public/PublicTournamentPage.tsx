@@ -27,16 +27,15 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import {
   bracketIndex,
   groupCount,
-  placings,
   raceFor,
   resolveBracket,
+  qualifyMarks,
+  tournamentResults,
 } from "@/libs/algorithms/bracket";
-import {
-  groupStandings,
-  leaguePodium,
-  standings,
-} from "@/libs/algorithms/leagueTable";
+import { groupStandings } from "@/libs/algorithms/leagueTable";
 import { eventDates } from "@/libs/algorithms/eventDates";
+import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
+import { refreshTournaments } from "@/libs/browser/refresh";
 import { runMutation } from "@/libs/browser/mutationToast";
 import { supabase } from "@/libs/supabase/browser";
 import { useSession } from "@/hooks/useAuth";
@@ -94,14 +93,12 @@ export default function PublicTournamentPage() {
   const groups = groupCount(tournament.advance ?? 2);
   const groupMatches = matches.filter((m) => m.bracket === "group");
 
-  const podium = isLeague
-    ? leaguePodium(standings(entrantIds, matches))
-    : placings(matches);
+  const { podium, table: leagueRows } = tournamentResults(
+    tournament,
+    entrantIds,
+    matches,
+  );
   const finished = tournament.status === "done";
-  const leagueRows = standings(entrantIds, matches, {
-    win: tournament.points_win,
-    play: tournament.points_play,
-  });
 
   const played = matches.filter((m) => m.winner_id !== null).length;
 
@@ -198,7 +195,7 @@ export default function PublicTournamentPage() {
                         rows={rows}
                         nameOf={nameOf}
                         slugOf={slugOf}
-                        qualify={tournament.advance ? 2 : 0}
+                        qualify={qualifyMarks(tournament.status)}
                       />
                     </Card>
                   ),
@@ -489,11 +486,12 @@ function TournamentEntry({
     (m) => m.club_id === tournament.club_id && m.status === "active",
   );
   const entered = !!membership && entrantIds.includes(membership.id);
-  // A tournament limited to one division is not open to the others. Mirrors the
-  // check the club's own page makes.
-  const eligible =
-    tournament.category === null ||
-    membership?.category === tournament.category;
+  // A tournament limited to one division is not open to the others — the same
+  // rule as the club's own page.
+  const eligible = canEnterTournament(
+    tournament.category,
+    membership?.category,
+  );
 
   const entry = useMutation({
     mutationFn: async () => {
@@ -526,6 +524,9 @@ function TournamentEntry({
         staleTime: 0,
       });
       await router.invalidate();
+      // And the app's own copies — the entrant count on the index, "my
+      // entries" — which the same person may open next.
+      refreshTournaments(queryClient);
     },
   });
 
@@ -580,8 +581,6 @@ function TournamentEntry({
           entry.mutateAsync(),
           t,
           entered ? "tournaments.left" : "tournaments.joined",
-          "common.error",
-          { denied: "common.deniedError" },
         )
       }
     >

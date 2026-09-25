@@ -4,11 +4,13 @@ import {
   ABANDON_AFTER_MS,
   PRESENT_WINDOW_MS,
   bump,
+  canScore,
   freeTables,
   isAbandoned,
   isMatchOver,
   isPresent,
   leaderOf,
+  nextAtTable,
   seatsOf,
   seatsOfSide,
   unbump,
@@ -261,5 +263,54 @@ describe("whoIsHere", () => {
 
   it("is empty with no check-ins and no matches", () => {
     expect(whoIsHere(roster, [], NOW)).toEqual([]);
+  });
+});
+
+describe("canScore — mirrors can_score_live_match", () => {
+  const member = { id: 7, is_device: false };
+  const tablet = { id: 99, is_device: true };
+
+  it("lets a player in one of the seats score", () => {
+    expect(canScore(member, false, [3, 7])).toBe(true);
+  });
+
+  it("refuses a member who is not playing", () => {
+    expect(canScore(member, false, [3, 4])).toBe(false);
+  });
+
+  it("lets the admin and the club's tablet score anyone's match", () => {
+    expect(canScore(member, true, [3, 4])).toBe(true);
+    expect(canScore(tablet, false, [3, 4])).toBe(true);
+  });
+
+  it("with no seats, asks who may start a match for two other people", () => {
+    expect(canScore(member, false)).toBe(false);
+    expect(canScore(tablet, false)).toBe(true);
+    expect(canScore(undefined, false, [3])).toBe(false);
+  });
+});
+
+describe("nextAtTable — who a freed table is offered to", () => {
+  it("takes the night's suggestion when there is one", () => {
+    expect(nextAtTable(["a", "b"], "w", ["a", "b"])).toEqual({
+      group: ["a", "b"],
+      winnerStays: false,
+    });
+  });
+
+  it("keeps the winner on against the one person left waiting", () => {
+    expect(nextAtTable(undefined, "w", ["x"])).toEqual({
+      group: ["w", "x"],
+      winnerStays: true,
+    });
+  });
+
+  it("offers nothing with nobody waiting, or a crowd the queue did not pair", () => {
+    expect(nextAtTable(undefined, "w", [])).toBeUndefined();
+    expect(nextAtTable(undefined, "w", ["x", "y"])).toBeUndefined();
+  });
+
+  it("never keeps anyone on in doubles", () => {
+    expect(nextAtTable(undefined, null, ["x"])).toBeUndefined();
   });
 });

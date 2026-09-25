@@ -1423,7 +1423,18 @@ export type Database = {
         Args: { club_name: string; p_owner?: string }
         Returns: number
       }
+      cut_fixtures: {
+        Args: {
+          p_drop?: number[]
+          p_fixtures: Json
+          p_from: string
+          p_to: string
+          p_tournament: number
+        }
+        Returns: undefined
+      }
       finish_live_match: { Args: { p_id: string }; Returns: string }
+      game_winner: { Args: { g: string }; Returns: number }
       hide_member: { Args: { p_person_id: number }; Returns: undefined }
       is_club_admin: { Args: { cid: number }; Returns: boolean }
       is_club_device: { Args: { cid: number }; Returns: boolean }

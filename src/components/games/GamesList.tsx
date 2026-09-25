@@ -6,9 +6,8 @@ import SocialBar from "@/components/social/SocialBar";
 import { LuPencil, LuSwords } from "react-icons/lu";
 import {
   dayLabel,
-  hasTime,
+  playedTimeOf,
   startsNewDay,
-  timeOf,
 } from "@/libs/algorithms/dayLabel";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -248,7 +247,7 @@ export default function GamesList({
                   dateTime={played_at}
                   className="hidden w-12 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
                 >
-                  {hasTime(date) ? timeOf(date, locale) : ""}
+                  {playedTimeOf(date, locale)}
                 </time>
                 <span
                   className={`flex min-w-0 flex-1 flex-col text-right ${side(p1Won)}`}

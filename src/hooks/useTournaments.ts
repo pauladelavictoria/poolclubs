@@ -1,8 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/libs/supabase/browser";
 import { useAuth } from "@/hooks/useAuth";
-import { keys } from "@/libs/queryKeys";
+import { refreshResults, refreshTournaments } from "@/libs/browser/refresh";
 import {
   gameTournamentsQuery,
   leagueFixturesQuery,
@@ -14,23 +13,19 @@ import {
   type TournamentListItem,
 } from "@/queries/tournaments";
 import {
-  buildGroups,
-  buildKnockout,
   buildLateEntry,
-  buildLeague,
-  groupCount,
-  qualifiers,
+  planKnockout,
+  planStart,
+  type FixturePlan,
   type PlannedMatch,
 } from "@/libs/algorithms/bracket";
-import { groupStandings } from "@/libs/algorithms/leagueTable";
 import { sendPush } from "@/libs/server/push.functions";
 import type {
-  Category,
   Discipline,
   Player,
   Tournament,
-  TournamentFormat,
   TournamentMatch,
+  TournamentValues,
 } from "@/types";
 
 export type { TournamentDetail, TournamentListItem };
@@ -38,14 +33,6 @@ export type { TournamentDetail, TournamentListItem };
 /** PostgREST returns the aggregate as a one-row array, or none at all. */
 export const entrantCount = (t: TournamentListItem) =>
   t.tournament_players[0]?.count ?? 0;
-
-/** Both roots go stale together: a result changes the page and the index badge.
- *  The client is passed in because there is one per request under SSR — see
- *  libs/queryClient.ts. */
-const refreshTournaments = (queryClient: QueryClient) => () => {
-  queryClient.invalidateQueries({ queryKey: keys.tournaments.all });
-  queryClient.invalidateQueries({ queryKey: keys.tournament.all });
-};
 
 export const useTournaments = () => {
   const { activeClubId } = useAuth();
@@ -82,47 +69,32 @@ export const useLeagueFixtures = () => {
   return useQuery(leagueFixturesQuery(activeClubId));
 };
 
-type NewTournament = {
-  name: string;
-  /** When it runs, as ISO days. A null start is a tournament with no date yet;
-   *  a null end is a one-day one, or a league whose last week is not fixed. */
-  starts_on: string | null;
-  ends_on: string | null;
-  /** What entry costs, as the organiser wrote it. */
-  entry_fee: string | null;
-  /** Free text for prizes or anything else worth telling entrants. */
-  notes: string | null;
-  /** Whether entrants owe money to be in the draw. */
-  requires_payment: boolean;
-  format: TournamentFormat;
-  category: Category | null;
-  legs: 1 | 2;
-  advance: number | null;
-  /** Players left when a double-elimination draw turns single. 2 is the grand
-   *  final — the whole draw played double elimination. */
-  single_from: number;
-  discipline: Discipline;
-  race_to: number;
-  race_semi: number | null;
-  race_final: number | null;
-  /** Only meaningful for a league — see libs/algorithms/leagueTable. */
-  points_win: number;
-  points_play: number;
-};
-
 /** Rows for one insert. The bracket's pointers are client-side uuids, which is
  *  why they can all be written at once. */
 const rows = (tournamentId: number, matches: PlannedMatch[]) =>
   matches.map((m) => ({ ...m, tournament_id: tournamentId }));
 
+/** One transaction: see cut_fixtures in sql/schema.sql. */
+const cut = async (tournamentId: number, plan: FixturePlan) => {
+  await supabase
+    .rpc("cut_fixtures", {
+      p_tournament: tournamentId,
+      p_from: plan.from,
+      p_to: plan.to,
+      p_fixtures: plan.matches,
+      p_drop: plan.drop,
+    })
+    .throwOnError();
+};
+
 export const useManageTournaments = () => {
   const { activeClubId, player } = useAuth();
   const queryClient = useQueryClient();
-  const refresh = refreshTournaments(queryClient);
+  const refresh = () => refreshTournaments(queryClient);
 
   return {
     createTournament: useMutation({
-      mutationFn: async (values: NewTournament) => {
+      mutationFn: async (values: TournamentValues) => {
         if (!activeClubId) throw new Error("no active club");
 
         const { data } = await supabase
@@ -150,7 +122,7 @@ export const useManageTournaments = () => {
       mutationFn: async ({
         id,
         ...values
-      }: Partial<NewTournament> & {
+      }: Partial<TournamentValues> & {
         id: number;
         status?: Tournament["status"];
       }) => {
@@ -327,81 +299,24 @@ export const useManageTournaments = () => {
 
     /**
      * Cuts the fixtures. `seededIds` is the field strongest first — the caller
-     * has the ranking, so it does the seeding.
-     *
-     * A group tournament stops at 'groups': its bracket cannot be drawn until
-     * the groups have finished and the qualifiers are known.
+     * has the ranking, so it does the seeding. The plan (unpaid out, fixtures,
+     * next status) is planStart's; cut_fixtures applies it in one transaction.
      */
     startTournament: useMutation({
-      mutationFn: async ({
+      mutationFn: ({
         tournament,
         seededIds,
       }: {
-        tournament: Tournament;
+        tournament: TournamentDetail;
         seededIds: number[];
-      }) => {
-        const matches =
-          tournament.format === "league"
-            ? buildLeague(seededIds, tournament.legs)
-            : tournament.format === "double_elim"
-              ? buildKnockout(seededIds, {
-                  doubleElim: true,
-                  singleFrom: tournament.single_from,
-                })
-              : buildGroups(
-                  seededIds,
-                  groupCount(tournament.advance ?? 2),
-                  tournament.legs,
-                );
-
-        if (matches.length === 0) throw new Error("not enough entrants");
-
-        await supabase
-          .from("tournament_matches")
-          .insert(rows(tournament.id, matches))
-          .throwOnError();
-
-        await supabase
-          .from("tournaments")
-          .update({
-            status:
-              tournament.format === "group_knockout" ? "groups" : "running",
-          })
-          .eq("id", tournament.id)
-          .throwOnError();
-      },
+      }) => cut(tournament.id, planStart(tournament, seededIds)),
       onSuccess: refresh,
     }),
 
     /** Second half of a group tournament, once every group match has a result. */
     generateKnockout: useMutation({
-      mutationFn: async (tournament: TournamentDetail) => {
-        const advance = tournament.advance ?? 2;
-        const groups = groupCount(advance);
-        const groupMatches = tournament.tournament_matches.filter(
-          (m) => m.bracket === "group",
-        );
-
-        if (groupMatches.some((m) => m.winner_id === null)) {
-          throw new Error("groups unfinished");
-        }
-
-        const entrants = tournament.tournament_players.map((p) => p.player_id);
-        const tables = groupStandings(entrants, groupMatches, groups);
-        const seeds = qualifiers(tables, advance);
-        const matches = buildKnockout(seeds, { doubleElim: false });
-
-        await supabase
-          .from("tournament_matches")
-          .insert(rows(tournament.id, matches))
-          .throwOnError();
-
-        await supabase
-          .from("tournaments")
-          .update({ status: "running" })
-          .eq("id", tournament.id)
-          .throwOnError();
-      },
+      mutationFn: (tournament: TournamentDetail) =>
+        cut(tournament.id, planKnockout(tournament)),
       onSuccess: refresh,
     }),
 
@@ -454,18 +369,13 @@ export const useManageTournaments = () => {
 
         await supabase
           .from("tournament_matches")
-          .update({
-            game_id: game!.id,
-            winner_id: p1Score > p2Score ? p1.id : p2.id,
-          })
+          // winner_id is derived from the game by the database
+          // (tournament_matches_derive_winner in sql/schema.sql).
+          .update({ game_id: game!.id })
           .eq("id", match.id)
           .throwOnError();
       },
-      onSuccess: () => {
-        refresh();
-        // The game itself belongs to the club feed and the rankings.
-        queryClient.invalidateQueries({ queryKey: keys.games.all });
-      },
+      onSuccess: () => refreshResults(queryClient),
     }),
 
     /**
@@ -481,21 +391,19 @@ export const useManageTournaments = () => {
       mutationFn: async ({
         matchId,
         gameId,
-        winnerId,
       }: {
         matchId: string;
         gameId: string;
-        /** Not derived here: the caller holds the scores, and a fixture with no
-         *  winner is one the table would count as unplayed. */
-        winnerId: number;
       }) => {
+        // winner_id is derived from the game by the database, and re-derived
+        // when the game's score is corrected (tournament_matches_derive_winner in sql/schema.sql).
         await supabase
           .from("tournament_matches")
-          .update({ game_id: gameId, winner_id: winnerId })
+          .update({ game_id: gameId })
           .eq("id", matchId)
           .throwOnError();
       },
-      onSuccess: refresh,
+      onSuccess: () => refreshResults(queryClient),
     }),
   };
 };

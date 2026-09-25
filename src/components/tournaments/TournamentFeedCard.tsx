@@ -6,8 +6,7 @@ import SocialBar from "@/components/social/SocialBar";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { CategoryBadge } from "@/components/ui/Ball";
-import { placings, resolveBracket } from "@/libs/algorithms/bracket";
-import { leaguePodium, standings } from "@/libs/algorithms/leagueTable";
+import { resolveBracket, tournamentResults } from "@/libs/algorithms/bracket";
 import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import { runMutation } from "@/libs/browser/mutationToast";
 import { FORMAT_KEY, type Tournament } from "@/types";
@@ -79,8 +78,6 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
         : joinTournament.mutateAsync({ tournamentId }),
       t,
       entered ? "tournaments.left" : "tournaments.joined",
-      "common.error",
-      { denied: "common.deniedError" },
     );
   };
 
@@ -151,12 +148,7 @@ export function TournamentResultCard({
   const matches = resolveBracket(detail?.tournament_matches ?? []);
   const entrants = (detail?.tournament_players ?? []).map((e) => e.player_id);
 
-  // Same reading as the tournament's own page: a league has no final to read a
-  // podium off, so its table is the podium.
-  const places =
-    tournament.format === "league"
-      ? leaguePodium(standings(entrants, matches))
-      : placings(matches);
+  const { podium: places } = tournamentResults(tournament, entrants, matches);
 
   return (
     <>

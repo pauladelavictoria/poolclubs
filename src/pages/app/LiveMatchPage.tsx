@@ -8,7 +8,12 @@ import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatch, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { useNightOn } from "@/hooks/useNight";
 import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
-import { leaderOf, seatsOf } from "@/libs/algorithms/night";
+import {
+  canScore,
+  leaderOf,
+  nextAtTable,
+  seatsOf,
+} from "@/libs/algorithms/night";
 import { Card } from "@/components/ui/Card";
 import { readTodaySetup } from "@/libs/prefs";
 import { seatsNeeded } from "@/libs/algorithms/today";
@@ -21,7 +26,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { useFullscreen } from "@/hooks/useFullscreen";
 import { readKioskTable } from "@/libs/browser/kiosk";
-import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
+import { START_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 import type { Player } from "@/types";
 
@@ -95,17 +100,10 @@ export default function LiveMatchPage() {
   const freedTable = freed
     ? (tables ?? []).find((tbl) => tbl.id === freed.tableId)
     : undefined;
-  const freedPaired = freed ? groupFor(freed.tableId) : undefined;
-  const freedWinnerStays =
-    freed !== null &&
-    freedPaired === undefined &&
-    freed.stays !== null &&
-    waiting.length === 1;
-  const freedGroup =
-    freed !== null
-      ? (freedPaired ??
-        (freedWinnerStays ? [freed.stays!, waiting[0]] : undefined))
-      : undefined;
+  const next = freed
+    ? nextAtTable(groupFor(freed.tableId), freed.stays, waiting)
+    : undefined;
+  const freedGroup = next?.group;
   // Nobody waiting, or the table is gone: there is nothing to offer and this
   // page has no match left to show.
   const freedGone = freed !== null && (!freedTable || !freedGroup);
@@ -165,7 +163,7 @@ export default function LiveMatchPage() {
                 queue's answer: the winner is on this table because nobody else
                 could be paired for it, and the room should be able to see that
                 rather than wonder why they got another go. */}
-            {freedWinnerStays && (
+            {next?.winnerStays && (
               <p className="mt-2 text-caption text-ink-faint">
                 {t("live.winnerStays", { name: freed.stays!.name })}
               </p>
@@ -200,7 +198,9 @@ export default function LiveMatchPage() {
                         }),
                       onError: (err) =>
                         toast.error(
-                          t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                          t(
+                            dbErrorMessage(err, "startMatch", START_MATCH_KEYS),
+                          ),
                         ),
                     },
                   )
@@ -244,12 +244,8 @@ export default function LiveMatchPage() {
   const seat = (id: number | null) =>
     id === null ? undefined : roster.find((p) => p.id === id);
 
-  // Mirrors can_score_live_match in sql/schema.sql. The database is the
-  // boundary; this is only what decides whether the halves are buttons.
-  const canScore =
-    isClubAdmin ||
-    player?.is_device === true ||
-    (player !== undefined && seatsOf(match).includes(player.id));
+  // Whether the halves are buttons — see canScore in libs/algorithms/night.ts.
+  const scorer = canScore(player, isClubAdmin, seatsOf(match));
 
   /**
    * File it, and optionally rack the same four straight back up.
@@ -288,7 +284,7 @@ export default function LiveMatchPage() {
               // start, so this lands on the table's page rather than nowhere.
               onError: (err) => {
                 toast.error(
-                  t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
+                  t(dbErrorMessage(err, "startMatch", START_MATCH_KEYS)),
                 );
                 void navigate({ to: "/app/$clubSlug", params: { clubSlug } });
               },
@@ -326,7 +322,6 @@ export default function LiveMatchPage() {
           t(
             dbErrorMessage(err, "finishMatch", {
               refused: "live.finishError",
-              denied: "common.deniedError",
               fallback: "live.finishError",
             }),
           ),
@@ -339,8 +334,7 @@ export default function LiveMatchPage() {
     abandonMatch.mutate(match.id, {
       // The row is gone, so this page has nothing left to show.
       onSuccess: () => appNavigate("/app/$clubSlug"),
-      onError: (err) =>
-        toast.error(t(dbErrorMessage(err, "abandonMatch", LIVE_MATCH_KEYS))),
+      onError: (err) => toast.error(t(dbErrorMessage(err, "abandonMatch"))),
     });
 
   return (
@@ -356,7 +350,7 @@ export default function LiveMatchPage() {
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 px-3 py-2">
           {/* Destructive and rarely wanted, so it is the quietest thing on the
               screen — the scoreboard under it is what this page is for. */}
-          {canScore ? (
+          {scorer ? (
             <ConfirmButton
               size="sm"
               variant="ghost"
@@ -386,7 +380,7 @@ export default function LiveMatchPage() {
         p1b={seat(match.player_1b_id)}
         p2={seat(match.player_2_id)}
         p2b={seat(match.player_2b_id)}
-        variant={canScore ? "play" : "spectate"}
+        variant={scorer ? "play" : "spectate"}
         onBump={(side) => bump(match, side)}
         onUnbump={(side) => unbump(match, side)}
         onFinish={() => finish()}

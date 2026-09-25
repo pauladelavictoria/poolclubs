@@ -28,7 +28,6 @@ export default function DrillEditorPage() {
       toast.error(
         t(
           dbErrorMessage(err, "saveDrill", {
-            denied: "common.deniedError",
             fallback: "drills.saveError",
           }),
         ),
@@ -71,7 +70,6 @@ export default function DrillEditorPage() {
         toast.error(
           t(
             dbErrorMessage(err, "deleteDrill", {
-              denied: "common.deniedError",
               fallback: "drills.deleteError",
             }),
           ),

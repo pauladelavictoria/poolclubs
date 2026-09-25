@@ -5,6 +5,7 @@ import type {
 import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/libs/supabase/browser";
 import { keys, type ClubScopedKeys } from "@/libs/queryKeys";
+import { refreshResults, refreshTournaments } from "@/libs/browser/refresh";
 import { removeRow, upsertRow } from "@/libs/algorithms/realtimeRows";
 import type { Comment, LiveMatch, Reaction } from "@/types";
 
@@ -89,6 +90,13 @@ function applyLiveMatch(queryClient: QueryClient) {
   return (payload: RealtimePostgresChangesPayload<LiveMatch>) => {
     toList(payload);
 
+    // Starting or ending a match takes a fixture off the free list or puts it
+    // back — not a rack scored, which is most of this table's traffic.
+    if (payload.eventType !== "UPDATE")
+      queryClient.invalidateQueries({
+        queryKey: keys.tournament.allLeagueFixtures,
+      });
+
     if (payload.eventType === "DELETE") {
       const { id } = payload.old;
       if (id !== undefined)
@@ -104,13 +112,6 @@ function applyLiveMatch(queryClient: QueryClient) {
 const invalidate =
   (queryClient: QueryClient, queryKey: readonly string[]) => () =>
     queryClient.invalidateQueries({ queryKey });
-
-/** Three tables, one screen: the index and the tournament page both go stale
- *  whenever any of them changes. */
-const invalidateTournaments = (queryClient: QueryClient) => () => {
-  queryClient.invalidateQueries({ queryKey: keys.tournaments.all });
-  queryClient.invalidateQueries({ queryKey: keys.tournament.all });
-};
 
 /**
  * One realtime channel for the club being looked at, opened once outside React.
@@ -189,7 +190,7 @@ export function startRealtime({
   const onSharedTable = (table: string) =>
     ({ event: "*", schema: "public", table }) as const;
 
-  const tournaments = invalidateTournaments(queryClient);
+  const tournaments = () => refreshTournaments(queryClient);
 
   /** Whether this channel has ever been anything but SUBSCRIBED — see the
    *  subscribe callback at the bottom. */
@@ -218,11 +219,7 @@ export function startRealtime({
       onSharedTable("people"),
       invalidate(queryClient, keys.players.all),
     )
-    .on(
-      "postgres_changes",
-      onTable("games"),
-      invalidate(queryClient, keys.games.all),
-    )
+    .on("postgres_changes", onTable("games"), () => refreshResults(queryClient))
     // Drill logs share the home feed with games, so they refresh with them.
     .on(
       "postgres_changes",
