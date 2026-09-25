@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import { LuExpand, LuTrash2 } from "react-icons/lu";
+import { LuExpand, LuPlay, LuTrash2 } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatch, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { useNightOn } from "@/hooks/useNight";
+import { useLiveBroadcasts } from "@/hooks/useClubYoutube";
+import YoutubeEmbed from "@/components/live/YoutubeEmbed";
 import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
 import {
   canScore,
@@ -92,6 +94,10 @@ export default function LiveMatchPage() {
     enabled: freed !== null && nightOn,
   });
   const { ref, isFullscreen, toggle } = useFullscreen<HTMLDivElement>();
+  // Not on the pinned tablet: the players are standing next to the real thing.
+  const { data: broadcasts } = useLiveBroadcasts();
+  const broadcastId = pinned ? undefined : broadcasts?.[liveId];
+  const [watching, setWatching] = useState(false);
   const appNavigate = useAppNavigate();
 
   // Worked out ahead of every early return below, so the two effects that
@@ -364,13 +370,39 @@ export default function LiveMatchPage() {
           ) : (
             <span />
           )}
-          <IconButton
-            label={isFullscreen ? t("common.close") : t("ranking.tvMode")}
-            onClick={toggle}
-            className="pointer-events-auto"
-          >
-            <LuExpand className="h-5 w-5" aria-hidden />
-          </IconButton>
+          <div className="flex items-center gap-2">
+            {broadcastId && (
+              <Button
+                size="sm"
+                variant={watching ? "primary" : "secondary"}
+                aria-pressed={watching}
+                onClick={() => setWatching(!watching)}
+                className="pointer-events-auto"
+              >
+                <LuPlay className="h-4 w-4" aria-hidden />
+                {t("live.watch")}
+              </Button>
+            )}
+            <IconButton
+              label={isFullscreen ? t("common.close") : t("ranking.tvMode")}
+              onClick={toggle}
+              className="pointer-events-auto"
+            >
+              <LuExpand className="h-5 w-5" aria-hidden />
+            </IconButton>
+          </div>
+        </div>
+      )}
+
+      {/* Floating over the board rather than under it: the board is the whole
+          screen, and a player below it is a player nobody scrolls to. */}
+      {broadcastId && watching && (
+        <div className="absolute bottom-3 right-3 z-20 w-96 max-w-[calc(100%-1.5rem)] overflow-hidden rounded-card shadow-lg">
+          <YoutubeEmbed
+            broadcastId={broadcastId}
+            title={t("live.watch")}
+            autoplay
+          />
         </div>
       )}
 
