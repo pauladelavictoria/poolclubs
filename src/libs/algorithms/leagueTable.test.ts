@@ -5,6 +5,7 @@ import {
   groupStandings,
   hasFixture,
   leaguePodium,
+  resultFor,
   standings,
 } from "./leagueTable";
 import { buildGroups } from "@/libs/algorithms/bracket";
@@ -164,7 +165,12 @@ describe("groupStandings", () => {
       2,
       1,
       () => `g${++seq}`,
-    ).map((m) => ({ ...m, tournament_id: 1, game_id: null, game: null })) as TournamentMatch[];
+    ).map((m) => ({
+      ...m,
+      tournament_id: 1,
+      game_id: null,
+      game: null,
+    })) as TournamentMatch[];
     const tables = groupStandings([1, 2, 3, 4, 5, 6], matches, 2);
     expect(tables.length).toBe(2);
     for (const table of tables) {
@@ -208,5 +214,26 @@ describe("pending fixtures", () => {
     expect(hasFixture(pending, 3, 2)).toBe(false);
     // Nobody plays themselves, whatever the list says.
     expect(hasFixture(pending, 1, 1)).toBe(false);
+  });
+});
+
+describe("resultFor", () => {
+  it("reads the racks from the game's sides, not the fixture's", () => {
+    const m = fixture(1, 2, { winner: 2, racks: [3, 5] });
+    m.game!.player_1_id = 2; // the game was filed the other way round
+    m.game!.player_1_score = 5;
+    m.game!.player_2_score = 3;
+    expect(resultFor(m, 2)).toEqual({ won: true, mine: 5, theirs: 3 });
+    expect(resultFor(m, 1)).toEqual({ won: false, mine: 3, theirs: 5 });
+  });
+
+  it("is null unplayed, and has no racks for a walkover", () => {
+    expect(resultFor(fixture(1, 2), 1)).toBeNull();
+    const walkover = { ...fixture(1, 2), winner_id: 1 };
+    expect(resultFor(walkover, 1)).toEqual({
+      won: true,
+      mine: null,
+      theirs: null,
+    });
   });
 });

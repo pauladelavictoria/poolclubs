@@ -6,6 +6,8 @@ import type { ViewMode } from "@/components/ranking/Ranking";
 import type { Standing } from "@/libs/algorithms/leagueTable";
 import { CATEGORIES, type Category } from "@/types";
 import { useT } from "@/i18n";
+import ResultsGrid from "@/components/tournaments/ResultsGrid";
+import type { ResultMatch } from "@/libs/algorithms/leagueTable";
 import PlayerLink from "@/components/players/PlayerLink";
 
 type CategoryOf = (id: number) => Category | null | undefined;
@@ -28,6 +30,7 @@ export default function LeagueTable({
   categoryOf,
   qualify = 0,
   showPoints = false,
+  matches,
 }: {
   rows: Standing[];
   /** The card's own heading, rendered here rather than by the caller so the
@@ -47,9 +50,13 @@ export default function LeagueTable({
   /** A league has its own points column; a group table has no points config of
    *  its own, so it stays off rather than show everyone tied at 0. */
   showPoints?: boolean;
+  /** The fixtures behind the table. Given, the card offers the results grid
+   *  beside it — see ResultsGrid. */
+  matches?: (ResultMatch & { round: number })[];
 }) {
   const { t } = useT();
   const [view, setView] = useState<ViewMode>("combined");
+  const [shape, setShape] = useState<"table" | "grid">("table");
   // Which row is open on a phone. One at a time: the table is a ladder, and a
   // ladder with four rows unfolded is no longer one. Ignored from `sm` up,
   // where every column is on screen anyway. It lives out here so a row stays
@@ -64,6 +71,10 @@ export default function LeagueTable({
         rows.some((r) => categoryOf(r.playerId) === cat),
       )
     : [];
+
+  const grid = matches && shape === "grid";
+  // The grid is always the whole field: the divisions split the table only.
+  const split = divisions.length >= 2 && !grid;
 
   const table = (subset: Standing[], perDivision: boolean) => (
     <StandingsTable
@@ -80,33 +91,55 @@ export default function LeagueTable({
     />
   );
 
-  if (divisions.length < 2)
-    return (
-      <>
-        {title && <CardHeader title={title} />}
-        {table(rows, false)}
-      </>
-    );
+  const shapeToggle = matches && (
+    <Segmented
+      className="max-sm:w-full max-sm:*:flex-1 max-sm:*:justify-center"
+      label={t("tournaments.view")}
+      value={shape}
+      onChange={setShape}
+      options={[
+        { value: "table", label: t("tournaments.standings") },
+        { value: "grid", label: t("tournaments.resultsGrid") },
+      ]}
+    />
+  );
+  const divisionToggle = split && (
+    <Segmented
+      className="max-sm:w-full max-sm:*:flex-1 max-sm:*:justify-center"
+      label={t("ranking.view")}
+      value={view}
+      onChange={setView}
+      options={[
+        { value: "combined", label: t("ranking.combined") },
+        { value: "byCategory", label: t("ranking.byCategory") },
+      ]}
+    />
+  );
 
   return (
     <>
-      <CardHeader
-        title={title}
-        action={
-          <Segmented
-            className="max-sm:w-full max-sm:*:flex-1 max-sm:*:justify-center"
-            label={t("ranking.view")}
-            value={view}
-            onChange={setView}
-            options={[
-              { value: "combined", label: t("ranking.combined") },
-              { value: "byCategory", label: t("ranking.byCategory") },
-            ]}
-          />
-        }
-      />
+      {(title || shapeToggle || divisionToggle) && (
+        <CardHeader
+          title={title}
+          action={
+            (shapeToggle || divisionToggle) && (
+              <div className="flex flex-wrap justify-end gap-2 max-sm:w-full">
+                {shapeToggle}
+                {divisionToggle}
+              </div>
+            )
+          }
+        />
+      )}
 
-      {view === "combined" ? (
+      {grid ? (
+        <ResultsGrid
+          players={rows.map((r) => r.playerId)}
+          matches={matches}
+          nameOf={nameOf}
+          slugOf={slugOf}
+        />
+      ) : !split || view === "combined" ? (
         table(rows, false)
       ) : (
         <div className="divide-y divide-hairline">

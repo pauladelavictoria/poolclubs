@@ -44,9 +44,7 @@ export default function TournamentPodium({
       ? [{ rank: 2, playerIds: [places.second] }]
       : []),
     ...(places.first !== null ? [{ rank: 1, playerIds: [places.first] }] : []),
-    ...(places.third.length > 0
-      ? [{ rank: 3, playerIds: places.third }]
-      : []),
+    ...(places.third.length > 0 ? [{ rank: 3, playerIds: places.third }] : []),
   ];
 
   if (steps.length === 0) return null;

@@ -98,6 +98,10 @@ export default function PublicTournamentPage() {
     ? leaguePodium(standings(entrantIds, matches))
     : placings(matches);
   const finished = tournament.status === "done";
+  const leagueRows = standings(entrantIds, matches, {
+    win: tournament.points_win,
+    play: tournament.points_play,
+  });
 
   const played = matches.filter((m) => m.winner_id !== null).length;
 
@@ -168,10 +172,8 @@ export default function PublicTournamentPage() {
           <Card className="mt-10 overflow-hidden">
             <LeagueTable
               title={t("tournaments.standings")}
-              rows={standings(entrantIds, matches, {
-                win: tournament.points_win,
-                play: tournament.points_play,
-              })}
+              rows={leagueRows}
+              matches={matches}
               nameOf={nameOf}
               slugOf={slugOf}
               categoryOf={
