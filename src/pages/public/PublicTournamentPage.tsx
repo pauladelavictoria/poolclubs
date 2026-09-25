@@ -13,7 +13,10 @@ import TournamentSocialBar from "@/components/social/TournamentSocialBar";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
 import MatchList from "@/components/games/MatchList";
-import { PlayerHighlight } from "@/components/players/PlayerLink";
+import {
+  PlayerCountries,
+  PlayerHighlight,
+} from "@/components/players/PlayerLink";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -44,6 +47,7 @@ import { publicTournamentQuery } from "@/queries/public/tournaments";
 import type { PublicTournament } from "@/queries/public/tournaments";
 import { FORMAT_KEY, type TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
+import { CountryFlag } from "@/components/ui/Flag";
 
 const route = getRouteApi("/_public/tournaments/$tournamentId");
 
@@ -105,191 +109,194 @@ export default function PublicTournamentPage() {
   const url = `${origin}/tournaments/${tournament.id}`;
 
   return (
-    <PlayerHighlight>
-      <TournamentHero
-        tournament={tournament}
-        entrantIds={entrantIds}
-        matchesTotal={matches.length}
-        matchesPlayed={played}
-        url={url}
-      />
+    <PlayerCountries players={roster}>
+      <PlayerHighlight>
+        <TournamentHero
+          tournament={tournament}
+          entrantIds={entrantIds}
+          matchesTotal={matches.length}
+          matchesPlayed={played}
+          url={url}
+        />
 
-      <PublicShell>
-        {/* Only while it is still open. Once it is under way the standings, the
+        <PublicShell>
+          {/* Only while it is still open. Once it is under way the standings, the
             bracket and the results say who is in it and how they are doing — a
             flat grid of faces above them is the same list with the answer taken
             out. */}
-        {tournament.status === "open" && entrantIds.length > 0 && (
-          <section className="mt-6">
-            <SectionHead title={t("public.publicTournament.entrantsLabel")} />
-            <div className="mt-5 grid grid-cols-4 gap-4 sm:grid-cols-6 lg:grid-cols-8">
-              {entrantIds.map((id) => {
-                const player = byId.get(id);
-                return (
-                  <Link
-                    key={id}
-                    to="/players/$playerSlug"
-                    params={{ playerSlug: player?.slug ?? "" }}
-                    className="group flex flex-col items-center gap-1.5 text-center"
-                  >
-                    <Avatar
-                      name={player?.name ?? "—"}
-                      url={player?.avatar_url}
-                      seed={id}
-                      className="h-14 w-14 transition-transform duration-150 group-hover:scale-105 sm:h-16 sm:w-16"
-                    />
-                    <span className="w-full truncate text-caption text-ink-soft group-hover:text-ink">
-                      {player?.name ?? "—"}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {finished && (
-          <section className="wash wash-soft mt-10 overflow-hidden rounded-sheet border border-hairline">
-            <h2 className="px-6 pt-6 text-h3 font-semibold tracking-tight text-ink">
-              {t("tournaments.results")}
-            </h2>
-            <TournamentPodium places={podium} byId={byId} />
-          </section>
-        )}
-
-        {matches.length === 0 ? (
-          <Card className="mt-10">
-            <EmptyState
-              icon={<LuGitFork className="h-5 w-5" aria-hidden />}
-              title={t("public.publicTournament.notDrawnTitle")}
-              hint={t("public.publicTournament.notDrawnHint")}
-            />
-          </Card>
-        ) : isLeague ? (
-          <Card className="mt-10 overflow-hidden">
-            <LeagueTable
-              title={t("tournaments.standings")}
-              rows={leagueRows}
-              matches={matches}
-              nameOf={nameOf}
-              slugOf={slugOf}
-              categoryOf={
-                tournament.category === null
-                  ? (id) => byId.get(id)?.category
-                  : undefined
-              }
-              showPoints
-            />
-          </Card>
-        ) : (
-          <>
-            {isGroups && (
-              <div className="mt-10 grid gap-4 lg:grid-cols-2">
-                {groupStandings(entrantIds, groupMatches, groups).map(
-                  (rows, group) => (
-                    <Card key={group} className="overflow-hidden">
-                      <CardHeader
-                        title={t("tournaments.group", { n: group + 1 })}
+          {tournament.status === "open" && entrantIds.length > 0 && (
+            <section className="mt-6">
+              <SectionHead title={t("public.publicTournament.entrantsLabel")} />
+              <div className="mt-5 grid grid-cols-4 gap-4 sm:grid-cols-6 lg:grid-cols-8">
+                {entrantIds.map((id) => {
+                  const player = byId.get(id);
+                  return (
+                    <Link
+                      key={id}
+                      to="/players/$playerSlug"
+                      params={{ playerSlug: player?.slug ?? "" }}
+                      className="group flex flex-col items-center gap-1.5 text-center"
+                    >
+                      <Avatar
+                        name={player?.name ?? "—"}
+                        url={player?.avatar_url}
+                        seed={id}
+                        className="h-14 w-14 transition-transform duration-150 group-hover:scale-105 sm:h-16 sm:w-16"
                       />
-                      <LeagueTable
-                        rows={rows}
-                        nameOf={nameOf}
-                        slugOf={slugOf}
-                        qualify={qualifyMarks(tournament.status)}
-                      />
-                    </Card>
-                  ),
+                      <span className="w-full truncate text-caption text-ink-soft group-hover:text-ink">
+                        {player?.name ?? "—"}
+                        <CountryFlag country={player?.country} />
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {finished && (
+            <section className="wash wash-soft mt-10 overflow-hidden rounded-sheet border border-hairline">
+              <h2 className="px-6 pt-6 text-h3 font-semibold tracking-tight text-ink">
+                {t("tournaments.results")}
+              </h2>
+              <TournamentPodium places={podium} byId={byId} />
+            </section>
+          )}
+
+          {matches.length === 0 ? (
+            <Card className="mt-10">
+              <EmptyState
+                icon={<LuGitFork className="h-5 w-5" aria-hidden />}
+                title={t("public.publicTournament.notDrawnTitle")}
+                hint={t("public.publicTournament.notDrawnHint")}
+              />
+            </Card>
+          ) : isLeague ? (
+            <Card className="mt-10 overflow-hidden">
+              <LeagueTable
+                title={t("tournaments.standings")}
+                rows={leagueRows}
+                matches={matches}
+                nameOf={nameOf}
+                slugOf={slugOf}
+                categoryOf={
+                  tournament.category === null
+                    ? (id) => byId.get(id)?.category
+                    : undefined
+                }
+                showPoints
+              />
+            </Card>
+          ) : (
+            <>
+              {isGroups && (
+                <div className="mt-10 grid gap-4 lg:grid-cols-2">
+                  {groupStandings(entrantIds, groupMatches, groups).map(
+                    (rows, group) => (
+                      <Card key={group} className="overflow-hidden">
+                        <CardHeader
+                          title={t("tournaments.group", { n: group + 1 })}
+                        />
+                        <LeagueTable
+                          rows={rows}
+                          nameOf={nameOf}
+                          slugOf={slugOf}
+                          qualify={qualifyMarks(tournament.status)}
+                        />
+                      </Card>
+                    ),
+                  )}
+                </div>
+              )}
+
+              <div className="mt-10 flex items-center justify-between gap-3">
+                <h2 className="text-h3 font-semibold text-ink">
+                  {t("public.publicTournament.draw")}
+                </h2>
+                <Segmented
+                  label={t("tournaments.view")}
+                  value={view}
+                  onChange={setView}
+                  options={[
+                    {
+                      value: "bracket",
+                      label: t("tournaments.viewBracket"),
+                      icon: <LuGitFork className="h-3.5 w-3.5" aria-hidden />,
+                    },
+                    {
+                      value: "list",
+                      label: t("tournaments.viewList"),
+                      icon: <LuList className="h-3.5 w-3.5" aria-hidden />,
+                    },
+                  ]}
+                />
+              </div>
+
+              <div className="mt-3">
+                {view === "bracket" ? (
+                  <BracketView
+                    matches={matches}
+                    nameOf={nameOf}
+                    slugOf={slugOf}
+                    clubSlug={tournament.club?.slug}
+                    index={index}
+                    raceFor={raceOf}
+                    onRecord={() => null}
+                  />
+                ) : (
+                  <MatchList
+                    matches={matches}
+                    nameOf={nameOf}
+                    slugOf={slugOf}
+                    clubSlug={tournament.club?.slug}
+                    index={index}
+                    raceFor={raceOf}
+                    onRecord={() => null}
+                  />
                 )}
               </div>
-            )}
+            </>
+          )}
 
-            <div className="mt-10 flex items-center justify-between gap-3">
-              <h2 className="text-h3 font-semibold text-ink">
-                {t("public.publicTournament.draw")}
-              </h2>
-              <Segmented
-                label={t("tournaments.view")}
-                value={view}
-                onChange={setView}
-                options={[
-                  {
-                    value: "bracket",
-                    label: t("tournaments.viewBracket"),
-                    icon: <LuGitFork className="h-3.5 w-3.5" aria-hidden />,
-                  },
-                  {
-                    value: "list",
-                    label: t("tournaments.viewList"),
-                    icon: <LuList className="h-3.5 w-3.5" aria-hidden />,
-                  },
-                ]}
-              />
-            </div>
-
-            <div className="mt-3">
-              {view === "bracket" ? (
-                <BracketView
-                  matches={matches}
-                  nameOf={nameOf}
-                  slugOf={slugOf}
-                  clubSlug={tournament.club?.slug}
-                  index={index}
-                  raceFor={raceOf}
-                  onRecord={() => null}
-                />
-              ) : (
-                <MatchList
-                  matches={matches}
-                  nameOf={nameOf}
-                  slugOf={slugOf}
-                  clubSlug={tournament.club?.slug}
-                  index={index}
-                  raceFor={raceOf}
-                  onRecord={() => null}
-                />
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Under the results, not beside them: the draw is what the page is
+          {/* Under the results, not beside them: the draw is what the page is
             for, and the talk about it is what you reach after reading it. */}
-        <TournamentSocialBar
-          tournamentId={tournament.id}
-          clubId={tournament.club_id}
-        />
+          <TournamentSocialBar
+            tournamentId={tournament.id}
+            clubId={tournament.club_id}
+          />
 
-        {tournament.club && (
-          <Link
-            to="/clubs/$slug"
-            params={{ slug: tournament.club.slug }}
-            className="wash wash-soft lift mt-10 flex flex-col items-center gap-4 rounded-sheet border border-hairline p-8 text-center sm:flex-row sm:justify-between sm:text-left"
-          >
-            <div className="flex items-center gap-3">
-              <Avatar
-                name={tournament.club.name}
-                url={tournament.club.logo_url}
-                mark
-                className="h-14 w-14"
-              />
-              <div>
-                <p className="text-caption text-ink-faint">
-                  {t("public.publicTournament.hostedBy")}
-                </p>
-                <p className="text-h3 font-semibold text-ink">
-                  {tournament.club.name}
-                </p>
-              </div>
-            </div>
-            <span
-              className={buttonClasses({ variant: "secondary", size: "sm" })}
+          {tournament.club && (
+            <Link
+              to="/clubs/$slug"
+              params={{ slug: tournament.club.slug }}
+              className="wash wash-soft lift mt-10 flex flex-col items-center gap-4 rounded-sheet border border-hairline p-8 text-center sm:flex-row sm:justify-between sm:text-left"
             >
-              {t("public.publicPlayer.viewClub")}
-            </span>
-          </Link>
-        )}
-      </PublicShell>
-    </PlayerHighlight>
+              <div className="flex items-center gap-3">
+                <Avatar
+                  name={tournament.club.name}
+                  url={tournament.club.logo_url}
+                  mark
+                  className="h-14 w-14"
+                />
+                <div>
+                  <p className="text-caption text-ink-faint">
+                    {t("public.publicTournament.hostedBy")}
+                  </p>
+                  <p className="text-h3 font-semibold text-ink">
+                    {tournament.club.name}
+                  </p>
+                </div>
+              </div>
+              <span
+                className={buttonClasses({ variant: "secondary", size: "sm" })}
+              >
+                {t("public.publicPlayer.viewClub")}
+              </span>
+            </Link>
+          )}
+        </PublicShell>
+      </PlayerHighlight>
+    </PlayerCountries>
   );
 }
 

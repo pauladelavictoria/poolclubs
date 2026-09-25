@@ -12,6 +12,7 @@ import { runMutation } from "@/libs/browser/mutationToast";
 import { FORMAT_KEY, type Tournament } from "@/types";
 import { useT, type Key } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
+import { PlayerFlag } from "@/components/players/PlayerLink";
 
 /** Name, discipline and format — the same line the tournament's own page leads
  *  with, so a card in the feed reads as that tournament and not as a summary of
@@ -124,6 +125,7 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
                   />
                   <span className="truncate text-caption text-ink-soft transition-colors duration-150 group-hover:text-strike">
                     {byId.get(id)?.name ?? "—"}
+                    <PlayerFlag playerId={id} />
                   </span>
                 </AppLink>
               </li>

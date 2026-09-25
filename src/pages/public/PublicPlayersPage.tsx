@@ -19,6 +19,7 @@ import {
 } from "@/queries/public/players";
 import { CATEGORIES } from "@/types";
 import { useT } from "@/i18n";
+import { CountryFlag } from "@/components/ui/Flag";
 
 const route = getRouteApi("/_public/players/");
 
@@ -268,6 +269,7 @@ export function PersonRow({ person }: { person: PublicPersonWithClubs }) {
       <div className="min-w-0 flex-1">
         <h3 className="truncate text-caption font-medium text-ink transition-colors duration-150 group-hover:text-strike">
           {person.name}
+          <CountryFlag country={person.country} />
         </h3>
         {/* The club logos, the same pile the club header uses for its roster,
             one size down: at card width the names never fit past the second

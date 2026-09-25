@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import type { Drill } from "@/types";
 import { useT } from "@/i18n";
+import { CountryFlag } from "@/components/ui/Flag";
 
 interface DrillLogFormProps {
   drill: Drill;
@@ -67,7 +68,10 @@ export default function DrillLogForm({ drill, onSuccess }: DrillLogFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
       <p className="text-caption text-ink-faint">
         {t("drillLog.loggingAs")}{" "}
-        <span className="font-medium text-ink">{player.name}</span>
+        <span className="font-medium text-ink">
+          {player.name}
+          <CountryFlag country={player.country} />
+        </span>
       </p>
 
       <div className="flex flex-col gap-1.5">

@@ -170,6 +170,8 @@
   "players.noGamesHint": "{name} apparaîtra au classement dès le premier match joué.",
   "players.accountSettings": "Paramètres du compte",
   "players.publicProfile": "M'afficher dans les listes publiques",
+  "players.country": "Pays",
+  "players.noCountry": "Aucun",
   "players.publicProfileHint": "Vous ajoute à l'annuaire Joueurs et à la liste publique de votre club. Votre nom apparaît toujours dans les résultats, les classements et les tableaux — c'est l'historique du club, pas votre profil — et vous comptez toujours dans le total du club.",
   "players.viewPublicProfile": "Voir mon profil public",
   "drills.title": "Exercices",

@@ -34,6 +34,7 @@ import { clampRace, seatsNeeded, type DaySetup } from "@/libs/algorithms/today";
 import { START_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 import { DISCIPLINES, type ClubTable, type Player } from "@/types";
+import { CountryFlag } from "@/components/ui/Flag";
 
 /**
  * The ranking night, on one page.
@@ -429,6 +430,7 @@ export default function RankingNightPage() {
                       />
                       <span className="w-full truncate text-center text-caption text-ink">
                         {p.name}
+                        <CountryFlag country={p.country} />
                       </span>
                     </button>
                   </li>

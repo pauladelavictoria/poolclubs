@@ -12,13 +12,14 @@ import {
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 import GameLinkOverlay from "@/components/games/GameLinkOverlay";
+import { CountryFlag } from "@/components/ui/Flag";
 
 const NAME_LINK = "transition-colors duration-150 hover:text-strike";
 
 /** What this list needs to turn a game's player id into a linked name. Games
  *  stopped carrying a copy of the name when names moved to people, so the
  *  roster is now an input rather than a convenience. */
-type GamesListPlayer = Pick<Player, "id" | "name" | "slug">;
+type GamesListPlayer = Pick<Player, "id" | "name" | "slug" | "country">;
 
 /**
  * One player's name on the tape.
@@ -47,9 +48,13 @@ function Name({
       className={NAME_LINK}
     >
       {player.name}
+      <CountryFlag country={player.country} />
     </Link>
   ) : (
-    <>{player.name}</>
+    <>
+      {player.name}
+      <CountryFlag country={player.country} />
+    </>
   );
 }
 

@@ -8,6 +8,7 @@ import { useDialog } from "@/hooks/useDialog";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import type { LiveMatch, Player } from "@/types";
 import { useT } from "@/i18n";
+import { CountryFlag } from "@/components/ui/Flag";
 
 type ScoreboardVariant = "play" | "spectate" | "tv";
 
@@ -213,6 +214,7 @@ export default function Scoreboard({
                   style={{ fontSize: "var(--text-scoreboard-name)" }}
                 >
                   {p.name}
+                  <CountryFlag country={p.country} />
                 </span>
               </div>
             ))}

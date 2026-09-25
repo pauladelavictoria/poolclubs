@@ -1,6 +1,8 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Outlet, getRouteApi } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PlayerCountries } from "@/components/players/PlayerLink";
+import { playersQuery } from "@/queries/players";
 import { startRealtime } from "@/libs/browser/realtime";
 import AppHeader from "@/components/layout/AppHeader";
 import JoinRequestBanner from "@/components/layout/JoinRequestBanner";
@@ -28,6 +30,12 @@ export default function ClubLayout() {
   const { player } = useAuth();
   const queryClient = useQueryClient();
   const refreshSession = useSessionRefresh();
+  // Feeds the flag after every PlayerLink in the club. Same cache the pages
+  // read, prefetched by the route's loader.
+  const { data: roster } = useQuery({
+    ...playersQuery(activeClubId),
+    enabled: isMember,
+  });
 
   // The app's one realtime channel, opened here rather than at the root because
   // this is the highest place that knows which club to ask for — see
@@ -85,31 +93,33 @@ export default function ClubLayout() {
     return (
       <>
         {accent}
-        <div
-          ref={kioskRef}
-          className="relative flex h-dvh flex-col overflow-hidden bg-pocket"
-        >
-          {/* The tablet's only chrome. The pages below render content and
+        <PlayerCountries players={roster}>
+          <div
+            ref={kioskRef}
+            className="relative flex h-dvh flex-col overflow-hidden bg-pocket"
+          >
+            {/* The tablet's only chrome. The pages below render content and
               nothing else — a second header on a scoreboard is a second header
               on the one screen that wants the whole display. On the pages that
               say they want the display to themselves it is laid over the page
               rather than stacked above it, for the same reason. */}
-          <KioskBar
-            tableId={kioskTable}
-            containerRef={kioskRef}
-            floating={bareOnDevice}
-          />
-          <main className="min-h-0 flex-1 overflow-hidden pb-[env(safe-area-inset-bottom)]">
-            <Suspense fallback={<PageSkeleton />}>
-              <Outlet />
-            </Suspense>
-          </main>
-        </div>
+            <KioskBar
+              tableId={kioskTable}
+              containerRef={kioskRef}
+              floating={bareOnDevice}
+            />
+            <main className="min-h-0 flex-1 overflow-hidden pb-[env(safe-area-inset-bottom)]">
+              <Suspense fallback={<PageSkeleton />}>
+                <Outlet />
+              </Suspense>
+            </main>
+          </div>
+        </PlayerCountries>
       </>
     );
 
   return (
-    <>
+    <PlayerCountries players={roster}>
       {accent}
       {/* Both nav forms, each hiding itself outside its own width. Nothing here
           asks how wide the window is: every one of these is a CSS breakpoint, so
@@ -180,6 +190,6 @@ export default function ClubLayout() {
           </Suspense>
         </main>
       </div>
-    </>
+    </PlayerCountries>
   );
 }

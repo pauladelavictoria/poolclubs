@@ -170,6 +170,8 @@
   "players.noGamesHint": "{name} aparecerá en la clasificación en cuanto juegue el primero.",
   "players.accountSettings": "Ajustes de cuenta",
   "players.publicProfile": "Aparecer en las listas públicas",
+  "players.country": "País",
+  "players.noCountry": "Ninguno",
   "players.publicProfileHint": "Te incluye en el directorio de Jugadores y en la lista pública de tu club. Tu nombre sigue apareciendo en resultados, clasificaciones y cuadros, porque son el historial del club y no tu perfil, y siempre cuentas en el total del club.",
   "players.viewPublicProfile": "Ver mi perfil público",
   "drills.title": "Ejercicios",

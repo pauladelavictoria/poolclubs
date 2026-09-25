@@ -23,6 +23,7 @@ import { fixturesBetween, hasFixture } from "@/libs/algorithms/leagueTable";
 import { canScore, seatsOf } from "@/libs/algorithms/night";
 import type { LeagueFixture } from "@/queries/tournaments";
 import { useT } from "@/i18n";
+import { CountryFlag } from "@/components/ui/Flag";
 
 /**
  * Who you are playing, where, and what you are playing to.
@@ -435,7 +436,10 @@ export default function StartMatchForm({
               />
             </Select>
           ) : (
-            <p className="truncate text-body font-medium text-ink">{me.name}</p>
+            <p className="truncate text-body font-medium text-ink">
+              {me.name}
+              <CountryFlag country={me.country} />
+            </p>
           )}
 
           {mode === "doubles" && (
@@ -467,6 +471,7 @@ export default function StartMatchForm({
           {lockedOpponent ? (
             <p className="truncate text-body font-medium text-ink">
               {lockedOpponent.name}
+              <CountryFlag country={lockedOpponent.country} />
             </p>
           ) : (
             <Select

@@ -170,6 +170,8 @@
   "players.noGamesHint": "{name} will appear in the standings after playing the first one.",
   "players.accountSettings": "Account settings",
   "players.publicProfile": "List me on the public site",
+  "players.country": "Country",
+  "players.noCountry": "None",
   "players.publicProfileHint": "Puts you in the Players directory and on your club's public roster. Your name still appears in results, standings and draws — those are the club's record, not your profile — and you always count towards your club's total.",
   "players.viewPublicProfile": "View my public profile",
   "drills.title": "Drills",

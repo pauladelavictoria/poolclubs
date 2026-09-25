@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { ViewMode } from "./Ranking";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
+import { PlayerFlag } from "@/components/players/PlayerLink";
 
 interface RankingTableProps {
   entries: DailyRankingEntry[];
@@ -107,6 +108,7 @@ export default function RankingTable({
                 }`}
               >
                 {entry.playerName}
+                <PlayerFlag playerId={entry.playerId} />
               </AppLink>
             </td>
 

@@ -1,5 +1,6 @@
 import { Avatar } from "@/components/ui/Avatar";
 import type { Player } from "@/types";
+import { CountryFlag } from "@/components/ui/Flag";
 
 /**
  * A suggested match, as faces and names.
@@ -36,9 +37,13 @@ export default function SuggestedGroup({
         ))}
       </div>
       <span className="min-w-0 truncate text-body text-ink">
-        {seats === 4
-          ? `${group[0].name} & ${group[1].name} — ${group[2].name} & ${group[3].name}`
-          : `${group[0].name} — ${group[1].name}`}
+        {group.map((p, i) => (
+          <span key={p.id}>
+            {i > 0 && (seats === 4 && i !== 2 ? " & " : " — ")}
+            {p.name}
+            <CountryFlag country={p.country} />
+          </span>
+        ))}
       </span>
     </div>
   );

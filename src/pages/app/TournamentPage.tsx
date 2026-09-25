@@ -58,6 +58,7 @@ import { FORMAT_KEY, tournamentValues, type TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
 import { getRouteApi } from "@tanstack/react-router";
 import { AppLink } from "@/components/layout/AppLink";
+import { PlayerFlag } from "@/components/players/PlayerLink";
 
 const route = getRouteApi("/app/_authed/$clubSlug/tournaments/$tournamentId");
 
@@ -472,6 +473,7 @@ export default function TournamentPage() {
                         className="transition-colors duration-150 hover:text-strike"
                       >
                         {nameOf(playerId)}
+                        <PlayerFlag playerId={playerId} />
                       </AppLink>
                       {playerId === player?.id && (
                         <span className="ml-2 text-caption text-ink-faint">
@@ -623,6 +625,7 @@ export default function TournamentPage() {
                       >
                         <span className="min-w-0 flex-1 truncate text-body text-ink">
                           {nameOf(playerId)}
+                          <PlayerFlag playerId={playerId} />
                         </span>
                         <PaidMark
                           paid={paidById.get(playerId) ?? false}

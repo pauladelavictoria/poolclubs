@@ -28,6 +28,7 @@ import { useDialog } from "@/hooks/useDialog";
 import type { Player, Category } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
+import { CountryFlag } from "@/components/ui/Flag";
 
 /**
  * The way into the club, and everyone who took it.
@@ -112,7 +113,11 @@ export default function ClubMembersPage() {
     setIsModalOpen(false);
   };
 
-  const savePlayer = async (values: { name: string; category: Category }) => {
+  const savePlayer = async (values: {
+    name: string;
+    category: Category;
+    country: string | null;
+  }) => {
     const ok = editingPlayer
       ? await runMutation(
           updatePlayer.mutateAsync({
@@ -209,6 +214,7 @@ export default function ClubMembersPage() {
                     className="transition-colors duration-150 hover:text-strike"
                   >
                     {m.name}
+                    <CountryFlag country={m.country} />
                   </AppLink>
                   {m.id === player?.id && (
                     <span className="ml-2 text-caption text-ink-faint">
@@ -320,6 +326,7 @@ export default function ClubMembersPage() {
                 ? {
                     name: editingPlayer.name,
                     category: editingPlayer.category,
+                    country: editingPlayer.country,
                   }
                 : undefined
             }

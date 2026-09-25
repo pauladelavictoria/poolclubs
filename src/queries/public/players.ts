@@ -1,13 +1,19 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
-import { CLUB_COLS, PERSON_COLS, PLAYER_COLS, contains, rangeOf } from "./shared";
+import {
+  CLUB_COLS,
+  PERSON_COLS,
+  PLAYER_COLS,
+  contains,
+  rangeOf,
+} from "./shared";
 import type { PublicClub } from "./clubs";
 import type { Person } from "@/types";
 
 type PublicPerson = Pick<
   Person,
-  "id" | "slug" | "name" | "avatar_url" | "is_public"
+  "id" | "slug" | "name" | "avatar_url" | "is_public" | "country"
 >;
 
 /**

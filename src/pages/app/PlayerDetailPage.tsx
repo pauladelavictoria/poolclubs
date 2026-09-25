@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
+import { CountryFlag } from "@/components/ui/Flag";
 
 // Lazy: recharts is large and only this page (plus DrillProgressChart) uses
 // it, so a static import here would put it in the shared chunk every route
@@ -145,7 +146,14 @@ export default function PlayerDetailPage({ playerId }: { playerId: number }) {
   return (
     <>
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
-        <PageTitle title={player.name}>
+        <PageTitle
+          title={
+            <>
+              {player.name}
+              <CountryFlag country={player.country} />
+            </>
+          }
+        >
           <CategoryBadge category={player.category} full />
         </PageTitle>
         {user && <ChallengeButton toPlayerId={player.id} />}

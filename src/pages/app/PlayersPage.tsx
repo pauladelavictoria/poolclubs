@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { CATEGORIES, type Category, type Player } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
+import { CountryFlag } from "@/components/ui/Flag";
 
 type SortMode = "here" | "name" | "category";
 
@@ -52,6 +53,7 @@ function PlayerCard({
         <div className="min-w-0">
           <h3 className="truncate text-body font-medium text-ink transition-colors duration-150 group-hover:text-strike">
             {player.name}
+            <CountryFlag country={player.country} />
           </h3>
           <p className="flex items-center gap-1.5 truncate text-caption text-ink-faint">
             {isHere && (
