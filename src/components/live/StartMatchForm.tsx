@@ -277,8 +277,9 @@ export default function StartMatchForm({
           // A match with no table is a real thing in a busy club, and it is
           // what "every table is taken but we are playing anyway" writes.
           tableId: table?.id ?? (tableId ? Number(tableId) : null),
-          recordOptIn: streamed && recordOptIn,
-          recordPrivacy: streamed && recordOptIn ? recordPrivacy : null,
+          recordOptIn: streamed && !forLeague && recordOptIn,
+          recordPrivacy:
+            streamed && !forLeague && recordOptIn ? recordPrivacy : null,
           tournamentMatchId: forLeague ? fixture!.id : undefined,
         });
       }}
@@ -551,7 +552,7 @@ export default function StartMatchForm({
           fixture is always recorded already (agreed once at registration),
           and a table with no club_streams row has nothing to record onto.
           See docs/youtube-streaming.md §2.5. */}
-      {streamed && (
+      {streamed && !forLeague && (
         <div className="space-y-2 rounded-card border border-hairline p-3">
           <Toggle
             checked={recordOptIn}

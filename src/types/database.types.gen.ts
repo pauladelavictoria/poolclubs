@@ -992,6 +992,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           error: string | null
+          game_id: string | null
           id: number
           live_match_id: string
           notified_at: string | null
@@ -1009,6 +1010,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           error?: string | null
+          game_id?: string | null
           id?: number
           live_match_id: string
           notified_at?: string | null
@@ -1026,6 +1028,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           error?: string | null
+          game_id?: string | null
           id?: number
           live_match_id?: string
           notified_at?: string | null
@@ -1043,6 +1046,13 @@ export type Database = {
             columns: ["club_stream_id"]
             isOneToOne: false
             referencedRelation: "club_streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_sessions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
             referencedColumns: ["id"]
           },
         ]

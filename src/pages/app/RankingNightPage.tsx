@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { LuBellRing, LuMinus, LuPlus, LuTv } from "react-icons/lu";
+import { LuBellRing, LuMinus, LuPlay, LuPlus, LuTv } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
+import { useLiveBroadcasts } from "@/hooks/useClubYoutube";
+import YoutubeEmbed from "@/components/live/YoutubeEmbed";
 import {
   useCallNight,
   useCheckIn,
@@ -53,6 +55,10 @@ export default function RankingNightPage() {
   const { data: players, isLoading } = usePlayers();
   const { data: tables } = useClubTables();
   const { data: live } = useLiveMatches();
+  const { data: broadcasts } = useLiveBroadcasts();
+  // One player open at a time, and only on a tap: an iframe per live table
+  // is a video decode per table on somebody's phone.
+  const [watching, setWatching] = useState<string | null>(null);
   const { startMatch } = useManageLiveMatch();
   const checkIn = useCheckIn();
   const callNight = useCallNight();
@@ -256,6 +262,7 @@ export default function RankingNightPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             {(tables ?? []).map((table) => {
               const match = matchOn(table.id);
+              const broadcastId = match ? broadcasts?.[match.id] : undefined;
 
               return (
                 <Card key={table.id} className="p-4">
@@ -268,9 +275,26 @@ export default function RankingNightPage() {
                       {table.label}
                     </AppLink>
                     {match ? (
-                      <span className="flex items-center gap-1.5 text-caption text-strike">
-                        <span className="live-dot h-1.5 w-1.5 rounded-full bg-strike" />
-                        {t("live.now")}
+                      <span className="flex items-center gap-3">
+                        {broadcastId && (
+                          <button
+                            type="button"
+                            aria-pressed={watching === broadcastId}
+                            onClick={() =>
+                              setWatching(
+                                watching === broadcastId ? null : broadcastId,
+                              )
+                            }
+                            className="flex items-center gap-1 text-caption font-semibold text-ink hover:text-strike"
+                          >
+                            <LuPlay aria-hidden className="h-3.5 w-3.5" />
+                            {t("live.watch")}
+                          </button>
+                        )}
+                        <span className="flex items-center gap-1.5 text-caption text-strike">
+                          <span className="live-dot h-1.5 w-1.5 rounded-full bg-strike" />
+                          {t("live.now")}
+                        </span>
                       </span>
                     ) : (
                       <span className="text-caption text-ink-faint">
@@ -279,7 +303,7 @@ export default function RankingNightPage() {
                     )}
                   </div>
 
-                  {match ? (
+                  {match && (
                     <AppLink
                       to="/app/$clubSlug/live/$liveId"
                       params={{ liveId: match.id }}
@@ -300,7 +324,19 @@ export default function RankingNightPage() {
                         {t("live.raceTo", { n: match.race_to })}
                       </p>
                     </AppLink>
-                  ) : (
+                  )}
+
+                  {broadcastId && watching === broadcastId && (
+                    <div className="mt-3">
+                      <YoutubeEmbed
+                        broadcastId={broadcastId}
+                        title={`${t("live.watch")} · ${table.label}`}
+                        autoplay
+                      />
+                    </div>
+                  )}
+
+                  {!match && (
                     <Button
                       className="mt-3 w-full"
                       variant="secondary"

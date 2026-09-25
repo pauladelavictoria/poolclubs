@@ -615,6 +615,10 @@ BEGIN
     WHERE id = m.tournament_match_id AND winner_id IS NULL;
   END IF;
 
+  -- The recording outlives the live row: this is what lets the game's own
+  -- page find it (getGameRecording). No-op when nothing was recorded.
+  UPDATE stream_sessions SET game_id = g WHERE live_match_id = p_id;
+
   DELETE FROM live_matches WHERE id = p_id;
   RETURN g;
 END $$;
@@ -2076,6 +2080,7 @@ CREATE TABLE IF NOT EXISTS "public"."stream_sessions" (
     "player_2_id" bigint,
     "player_1b_id" bigint,
     "player_2b_id" bigint,
+    "game_id" "uuid",
     CONSTRAINT "stream_sessions_privacy_status_check" CHECK (("privacy_status" = ANY (ARRAY['public'::"text", 'unlisted'::"text"]))),
     CONSTRAINT "stream_sessions_state_check" CHECK (("state" = ANY (ARRAY['created'::"text", 'bound'::"text", 'live'::"text", 'complete'::"text", 'error'::"text"])))
 );
@@ -2537,6 +2542,10 @@ CREATE UNIQUE INDEX "reactions_tournament_once" ON "public"."reactions" USING "b
 
 
 
+CREATE INDEX "stream_sessions_game_id_idx" ON "public"."stream_sessions" USING "btree" ("game_id");
+
+
+
 CREATE INDEX "tournament_matches_t_idx" ON "public"."tournament_matches" USING "btree" ("tournament_id", "bracket", "group_no", "round", "slot");
 
 
@@ -2840,6 +2849,11 @@ ALTER TABLE ONLY "public"."reactions"
 
 ALTER TABLE ONLY "public"."stream_sessions"
     ADD CONSTRAINT "stream_sessions_club_stream_id_fkey" FOREIGN KEY ("club_stream_id") REFERENCES "public"."club_streams"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."stream_sessions"
+    ADD CONSTRAINT "stream_sessions_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
 
 
 
