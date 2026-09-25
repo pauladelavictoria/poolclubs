@@ -5,7 +5,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
-import { useCallNight, useCheckIn, useWhoIsHere } from "@/hooks/useNight";
+import {
+  useCallNight,
+  useCheckIn,
+  useNightOn,
+  useWhoIsHere,
+} from "@/hooks/useNight";
 import { useSuggestions, seatsOfGroup } from "@/hooks/useSuggestions";
 import { sideNames } from "@/libs/algorithms/night";
 import { zoneOf } from "@/libs/algorithms/day";
@@ -50,6 +55,8 @@ export default function RankingNightPage() {
   const { startMatch } = useManageLiveMatch();
   const checkIn = useCheckIn();
   const callNight = useCallNight();
+  // The board only exists once an admin has called the night.
+  const nightOn = useNightOn();
   const here = useWhoIsHere();
 
   /**
@@ -126,77 +133,109 @@ export default function RankingNightPage() {
           <LuTv className="h-4 w-4" aria-hidden />
           {t("tv.open")}
         </AppLink>
+        {/* Calling the night is what opens the ranking-night board below, so
+            the button lives up here rather than on a board that is not there
+            yet. Hidden while the night is on: call_ranking_night refuses a
+            second call inside the window anyway. It buzzes every member's
+            phone, so it asks first. */}
+        {isClubAdmin && !nightOn && (
+          <ConfirmButton
+            size="sm"
+            variant="secondary"
+            confirmLabel={t("night.callConfirm")}
+            disabled={callNight.isPending}
+            onConfirm={() =>
+              callNight.mutate(undefined, {
+                onSuccess: () => toast.success(t("night.callSent")),
+                onError: (err) =>
+                  toast.error(
+                    t(
+                      dbErrorMessage(err, "callNight", {
+                        refused: "night.callTooSoon",
+                        denied: "common.deniedError",
+                      }),
+                    ),
+                  ),
+              })
+            }
+          >
+            <LuBellRing className="h-4 w-4" aria-hidden />
+            {t("night.call")}
+          </ConfirmButton>
+        )}
       </PageTitle>
 
       {/* What the club is playing. One answer for the room rather than the same
           three questions on every match — the start form still opens with these
           and can still be argued with per match. */}
-      <section className="space-y-2">
-        <p className="px-1 text-caption text-ink-faint">{t("night.setup")}</p>
-        <Card className="flex flex-wrap items-end gap-x-4 gap-y-3 p-3">
-          <div className="space-y-1.5">
-            <Label>{t("live.format")}</Label>
-            <Segmented
-              value={setup.mode}
-              onChange={(mode) => change({ mode })}
-              label={t("live.format")}
-              options={[
-                { value: "single", label: t("games.single") },
-                { value: "doubles", label: t("games.doubles") },
-              ]}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>{t("live.discipline")}</Label>
-            <Segmented
-              value={setup.discipline}
-              onChange={(discipline) => change({ discipline })}
-              label={t("live.discipline")}
-              options={DISCIPLINES.map((d) => ({
-                value: d,
-                label: t(`discipline.${d}`),
-              }))}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>{t("live.race")}</Label>
-            <div className="flex items-center gap-1.5">
-              <Button
-                type="button"
-                variant="secondary"
-                aria-label={t("live.raceDown")}
-                onClick={() => change({ raceTo: clampRace(setup.raceTo - 1) })}
-                disabled={setup.raceTo <= 1}
-                className="h-11 w-11 px-0"
-              >
-                <LuMinus className="h-4 w-4" aria-hidden />
-              </Button>
-              <span className="w-10 text-center font-mono text-h4 tabular-nums text-ink">
-                {setup.raceTo}
-              </span>
-              <Button
-                type="button"
-                variant="secondary"
-                aria-label={t("live.raceUp")}
-                onClick={() => change({ raceTo: clampRace(setup.raceTo + 1) })}
-                disabled={setup.raceTo >= 50}
-                className="h-11 w-11 px-0"
-              >
-                <LuPlus className="h-4 w-4" aria-hidden />
-              </Button>
+      {nightOn && (
+        <section className="space-y-2">
+          <p className="px-1 text-caption text-ink-faint">{t("night.setup")}</p>
+          <Card className="flex flex-wrap items-end gap-x-4 gap-y-3 p-3">
+            <div className="space-y-1.5">
+              <Label>{t("live.format")}</Label>
+              <Segmented
+                value={setup.mode}
+                onChange={(mode) => change({ mode })}
+                label={t("live.format")}
+                options={[
+                  { value: "single", label: t("games.single") },
+                  { value: "doubles", label: t("games.doubles") },
+                ]}
+              />
             </div>
-          </div>
-        </Card>
-      </section>
+
+            <div className="space-y-1.5">
+              <Label>{t("live.discipline")}</Label>
+              <Segmented
+                value={setup.discipline}
+                onChange={(discipline) => change({ discipline })}
+                label={t("live.discipline")}
+                options={DISCIPLINES.map((d) => ({
+                  value: d,
+                  label: t(`discipline.${d}`),
+                }))}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>{t("live.race")}</Label>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  aria-label={t("live.raceDown")}
+                  onClick={() =>
+                    change({ raceTo: clampRace(setup.raceTo - 1) })
+                  }
+                  disabled={setup.raceTo <= 1}
+                  className="h-11 w-11 px-0"
+                >
+                  <LuMinus className="h-4 w-4" aria-hidden />
+                </Button>
+                <span className="w-10 text-center font-mono text-h4 tabular-nums text-ink">
+                  {setup.raceTo}
+                </span>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  aria-label={t("live.raceUp")}
+                  onClick={() =>
+                    change({ raceTo: clampRace(setup.raceTo + 1) })
+                  }
+                  disabled={setup.raceTo >= 50}
+                  className="h-11 w-11 px-0"
+                >
+                  <LuPlus className="h-4 w-4" aria-hidden />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
 
       {/* The tables, first: it is the question anybody walking in asks. */}
       <section className="space-y-3">
-        <h2 className="px-1 text-h4 font-semibold text-ink">
-          {t("tables.title")}
-        </h2>
-
         {isLoading ? (
           <SkeletonRows />
         ) : (tables ?? []).length === 0 ? (
@@ -322,121 +361,90 @@ export default function RankingNightPage() {
           recognising yourself rather than reading a name.
           Anybody in the club may tap anybody's face, either way: the guard in
           sql/schema.sql asks for membership and nothing more. */}
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-2 px-1">
-          <h2 className="text-h4 font-semibold text-ink">
-            {t("tonight.heading")}
-          </h2>
-          <div className="flex items-baseline gap-3">
-            <span className="text-caption tabular-nums text-ink-faint">
-              {t("tonight.count", { n: here.length })}
-            </span>
-            {/* Half the club not being here is the reason this button exists,
-                which is why it sits on the headcount rather than at the top of
-                the page. It buzzes every member's phone, so it asks first.
-
-                No two-hour countdown on it: the limit is call_ranking_night's,
-                and a disabled state derived from the clock would differ between
-                the server's render and the browser's. Pressing it too soon is
-                refused and says so. */}
-            {isClubAdmin && (
-              <ConfirmButton
-                size="sm"
-                variant="secondary"
-                confirmLabel={t("night.callConfirm")}
-                disabled={callNight.isPending}
-                onConfirm={() =>
-                  callNight.mutate(undefined, {
-                    onSuccess: () => toast.success(t("night.callSent")),
-                    onError: (err) =>
-                      toast.error(
-                        t(
-                          dbErrorMessage(err, "callNight", {
-                            refused: "night.callTooSoon",
-                            denied: "common.deniedError",
-                          }),
-                        ),
-                      ),
-                  })
-                }
-              >
-                <LuBellRing className="h-4 w-4" aria-hidden />
-                {t("night.call")}
-              </ConfirmButton>
-            )}
+      {nightOn && (
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-2 px-1">
+            <h2 className="text-h4 font-semibold text-ink">
+              {t("tonight.heading")}
+            </h2>
+            <div className="flex items-baseline gap-3">
+              <span className="text-caption tabular-nums text-ink-faint">
+                {t("tonight.count", { n: here.length })}
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* Said once, quietly, under the board: the admin who just pressed it
+          {/* Said once, quietly, under the board: the admin who just pressed it
             wants to know it went, and the next admin to look wants to know it
             has already gone. */}
-        {calledAt !== null && (
-          <p className="px-1 text-caption text-ink-faint">
-            {t("night.called", { when: calledAt })}
-          </p>
-        )}
+          {calledAt !== null && (
+            <p className="px-1 text-caption text-ink-faint">
+              {t("night.called", { when: calledAt })}
+            </p>
+          )}
 
-        {isLoading ? (
-          <SkeletonRows rows={4} />
-        ) : (
-          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-            {roster.map((p) => {
-              const isHere = hereIds.has(p.id);
-              const mine = p.id === player?.id;
-              const can = mine || canCheckOthers;
+          {isLoading ? (
+            <SkeletonRows rows={4} />
+          ) : (
+            <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+              {roster.map((p) => {
+                const isHere = hereIds.has(p.id);
+                const mine = p.id === player?.id;
+                const can = mine || canCheckOthers;
 
-              return (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    disabled={!can || checkIn.isPending}
-                    aria-pressed={isHere}
-                    onClick={() =>
-                      checkIn.mutate(
-                        { here: !isHere, playerId: p.id },
-                        {
-                          onError: (err) =>
-                            toast.error(
-                              t(
-                                dbErrorMessage(err, "checkIn", {
-                                  denied: "common.deniedError",
-                                }),
+                return (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      disabled={!can || checkIn.isPending}
+                      aria-pressed={isHere}
+                      onClick={() =>
+                        checkIn.mutate(
+                          { here: !isHere, playerId: p.id },
+                          {
+                            onError: (err) =>
+                              toast.error(
+                                t(
+                                  dbErrorMessage(err, "checkIn", {
+                                    denied: "common.deniedError",
+                                  }),
+                                ),
                               ),
-                            ),
-                        },
-                      )
-                    }
-                    className={[
-                      "flex w-full flex-col items-center gap-2 rounded-card border p-3",
-                      "transition-[background-color,border-color,transform] duration-150 ease-[var(--ease-out)]",
-                      can ? "active:scale-[0.97]" : "cursor-default",
-                      // Present is a filled state, not a badge on a face: the
-                      // board is read as "which of these are lit".
-                      isHere
-                        ? "border-strike/60 bg-felt-raised"
-                        : "border-hairline opacity-60 hover:opacity-100",
-                    ].join(" ")}
-                  >
-                    {/* No seed: a face without a picture is a grey disc rather
+                          },
+                        )
+                      }
+                      className={[
+                        "flex w-full flex-col items-center gap-2 rounded-card border p-3",
+                        "transition-[background-color,border-color,transform] duration-150 ease-[var(--ease-out)]",
+                        can ? "active:scale-[0.97]" : "cursor-default",
+                        // Present is a filled state, not a badge on a face: the
+                        // board is read as "which of these are lit".
+                        isHere
+                          ? "border-strike/60 bg-felt-raised"
+                          : "border-hairline opacity-60 hover:opacity-100",
+                      ].join(" ")}
+                    >
+                      {/* No seed: a face without a picture is a grey disc rather
                         than a solid ball colour. Forty of them in the club's own
                         accent is a board that reads as forty buttons — what is
                         being asked here is which of these are lit, and that is
                         the border and the fill saying it. */}
-                    <Avatar
-                      name={p.name}
-                      url={p.avatar_url}
-                      className="h-12 w-12"
-                    />
-                    <span className="w-full truncate text-center text-caption text-ink">
-                      {p.name}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+                      <Avatar
+                        name={p.name}
+                        url={p.avatar_url}
+                        className="h-12 w-12"
+                      />
+                      <span className="w-full truncate text-center text-caption text-ink">
+                        {p.name}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
 
       <dialog
         ref={dialogRef}

@@ -12,7 +12,17 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", onClick, ...props }, ref) => (
+  (
+    {
+      className,
+      variant = "primary",
+      size = "md",
+      onClick,
+      children,
+      ...props
+    },
+    ref,
+  ) => (
     <button
       ref={ref}
       onClick={(e) => {
@@ -21,10 +31,33 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       }}
       className={buttonClasses({ variant, size, className: className || "" })}
       {...props}
-    />
+    >
+      {textInSpans(children)}
+    </button>
   ),
 );
 Button.displayName = "Button";
+
+/** Runs of bare text become one <span>, so buttonClasses can truncate them. */
+function textInSpans(children: React.ReactNode) {
+  const out: React.ReactNode[] = [];
+  let text: React.ReactNode[] = [];
+  const flush = () => {
+    if (text.length) out.push(<span key={`text-${out.length}`}>{text}</span>);
+    text = [];
+  };
+  // toArray keys the elements, which they need once they sit in an array.
+  React.Children.toArray(children).forEach((child) => {
+    if (typeof child === "string" || typeof child === "number") {
+      text.push(child);
+    } else {
+      flush();
+      out.push(child);
+    }
+  });
+  flush();
+  return out;
+}
 
 const ICON_SIZES = {
   sm: "h-9 w-9",

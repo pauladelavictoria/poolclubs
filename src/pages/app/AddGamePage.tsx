@@ -84,7 +84,7 @@ export default function AddGamePage() {
   const { data: players, isLoading: playersLoading } = usePlayers();
   // Whoever is filing this, when they are a person: the club's tablet is a
   // device and has never played a game — see PlayerOptions.
-  const { player: me, isClubAdmin } = useAuth();
+  const { player: me } = useAuth();
   const meId = me?.is_device ? undefined : me?.id;
   const { mutate: handleAddGame, isPending } = useAddGame();
 
@@ -103,8 +103,9 @@ export default function AddGamePage() {
    * The tablet offers this on the way in — a match started as a fixture files
    * itself as one. This is the way in for everything else: a result written on
    * a scrap of paper, a game played before anybody thought to start it on the
-   * app, a fixture somebody played as a casual game. Admins only, because the
-   * league table is the club's and not the filer's.
+   * app, a fixture somebody played as a casual game. Any member, same as
+   * filing a fixture from the league's own page — the RLS on
+   * tournament_matches lets members set game_id and winner_id.
    */
   const { data: leagueFixtures } = useLeagueFixtures();
   const { linkGame } = useManageTournaments();
@@ -397,7 +398,7 @@ export default function AddGamePage() {
               </p>
             )}
 
-            {isClubAdmin && !countsFor && leagueOptions.length > 0 && (
+            {!countsFor && leagueOptions.length > 0 && (
               <fieldset className="space-y-1.5">
                 <Label htmlFor="game-league">{t("tournaments.league")}</Label>
                 <Select

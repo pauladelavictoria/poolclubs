@@ -17,6 +17,7 @@ import {
 } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useWhoIsHere } from "@/hooks/useNight";
+import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { DEFAULT_SETUP, type DaySetup } from "@/libs/algorithms/today";
 import { fixturesBetween, hasFixture } from "@/libs/algorithms/leagueTable";
 import type { LeagueFixture } from "@/queries/tournaments";
@@ -41,6 +42,7 @@ export default function StartMatchForm({
   lockedOpponent,
   table,
   tables,
+  busyTableIds,
   streamed = false,
   leagueFixtures,
   league,
@@ -57,8 +59,10 @@ export default function StartMatchForm({
   lockedOpponent?: Player;
   /** Already decided — started from that table. */
   table?: ClubTable;
-  /** Offer a choice of these. Free tables only; the caller knows which. */
+  /** Offer a choice of these. Busy ones are listed but can't be picked. */
   tables?: ClubTable[];
+  /** Tables with a match on them right now. */
+  busyTableIds?: Set<number>;
   /** Every pending fixture of a running league in the club. Singles picked
    *  who happen to match one are offered the fixture's own race and
    *  discipline, and a live match tagged with it — see useLeagueFixtures. */
@@ -114,8 +118,19 @@ export default function StartMatchForm({
     Number(hereIds.has(b.id)) - Number(hereIds.has(a.id)) ||
     a.name.localeCompare(b.name);
 
+  // Somebody on a table right now is not a name for a second one.
+  const { data: live } = useLiveMatches();
+  const playing = new Set(
+    (live ?? []).flatMap((m) => [
+      m.player_1_id,
+      m.player_2_id,
+      m.player_1b_id,
+      m.player_2b_id,
+    ]),
+  );
+
   const roster = (rosterProp ?? opponents)
-    .filter((p) => p.id !== me.id)
+    .filter((p) => p.id !== me.id && !playing.has(p.id))
     .sort(byPresenceThenName);
 
   // Who may put two other people in a match.
@@ -137,11 +152,14 @@ export default function StartMatchForm({
   const mode = league ? "single" : pickedMode;
   const [partner1Id, setPartner1Id] = useState("");
   const [partner2Id, setPartner2Id] = useState("");
-  const [tableId, setTableId] = useState(String(tables?.[0]?.id ?? ""));
-  // Nobody, where the side is a question at all: an admin is as often starting
-  // somebody else's match as their own, and a name already in the box is one
-  // that gets left there.
-  const [player1Id, setPlayer1Id] = useState(forOthers ? "" : String(me.id));
+  const isBusy = (id: number) => !!busyTableIds?.has(id);
+  // Nothing picked: which table is a choice, not a default to overlook.
+  const [tableId, setTableId] = useState("");
+  // Whoever is holding the phone — the likeliest answer, and one tap to change.
+  // Not the tablet, which is a device and never a player.
+  const [player1Id, setPlayer1Id] = useState(
+    isDevice || playing.has(me.id) ? "" : String(me.id),
+  );
   const [discipline, setDiscipline] = useState<Discipline>(defaults.discipline);
   const [raceTo, setRaceTo] = useState(String(defaults.raceTo));
   // Off by default, per §2.5 — a casual game has given no prior consent to
@@ -161,7 +179,10 @@ export default function StartMatchForm({
   // Sorted in with everybody else rather than pinned to the top: whoever is in
   // the room is a better guess than whoever is holding the phone, and a name at
   // the head of a list reads as the answer.
-  const sideOne = isDevice ? roster : [...roster, me].sort(byPresenceThenName);
+  const sideOne =
+    isDevice || playing.has(me.id)
+      ? roster
+      : [...roster, me].sort(byPresenceThenName);
 
   // Matched against the same list the select for side two renders — whoever
   // can be side one can be side two, `sideOne` for both despite the name.
@@ -237,6 +258,8 @@ export default function StartMatchForm({
   );
 
   const valid =
+    // Offered a choice of tables, one has to be free to start on.
+    (!tables?.length || (!!tableId && !isBusy(Number(tableId)))) &&
     !!player1 &&
     !!opponent &&
     // Nothing to file it against, so there is nothing to start.
@@ -275,6 +298,28 @@ export default function StartMatchForm({
           are two seats or four, so asking it after the players is asking them
           to fill in a form that changes shape underneath them. */}
       <div className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-card border border-hairline bg-felt-raised p-3">
+        {/* Where, first: it is the one thing on the row that is not about
+            the game itself. */}
+        {tables && tables.length > 0 && (
+          <div className="basis-full space-y-1.5">
+            <Select
+              id="live-table"
+              aria-label={t("live.table")}
+              value={tableId}
+              onChange={(e) => setTableId(e.target.value)}
+              disabled={isSubmitting}
+            >
+              <option value="">{t("live.selectTable")}</option>
+              {tables.map((tbl) => (
+                <option key={tbl.id} value={tbl.id} disabled={isBusy(tbl.id)}>
+                  {isBusy(tbl.id)
+                    ? `${tbl.label} (${t("tables.busy")})`
+                    : tbl.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
         {/* A league match has no settings: singles, and the league's own game
             and race. So the row says what they are instead of asking, and the
             only thing left on it is which table. */}
@@ -298,8 +343,11 @@ export default function StartMatchForm({
 
         {!league && (
           <>
-            <div className="space-y-1.5">
+            {/* One control per line on a phone, each the full width: side by
+                side they wrap at different points and nothing lines up. */}
+            <div className="space-y-1.5 max-sm:w-full">
               <Segmented
+                className="max-sm:w-full max-sm:*:flex-1 max-sm:*:justify-center"
                 value={mode}
                 onChange={setMode}
                 label={t("live.format")}
@@ -310,8 +358,9 @@ export default function StartMatchForm({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 max-sm:w-full">
               <Segmented
+                className="max-sm:w-full max-sm:*:flex-1 max-sm:*:justify-center"
                 value={effectiveDiscipline}
                 onChange={setDiscipline}
                 label={t("live.discipline")}
@@ -323,7 +372,7 @@ export default function StartMatchForm({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 max-sm:w-full">
               {/* The tablet on the rail is the one that sets this up, and it has no
               keyboard worth opening for a number under fifty — the native
               spinner being two arrows a few pixels tall. The field stays
@@ -348,7 +397,7 @@ export default function StartMatchForm({
                   max={50}
                   value={effectiveRaceTo}
                   onChange={(e) => setRaceTo(e.target.value)}
-                  className="h-11 w-16 text-center font-mono"
+                  className="h-11 w-16 text-center font-mono max-sm:flex-1"
                   disabled={isSubmitting || forLeague}
                   required
                 />
@@ -365,25 +414,6 @@ export default function StartMatchForm({
               </div>
             </div>
           </>
-        )}
-
-        {tables && tables.length > 0 && (
-          <div className="min-w-[8rem] flex-1 space-y-1.5">
-            <Label htmlFor="live-table">{t("live.table")}</Label>
-            <Select
-              id="live-table"
-              value={tableId}
-              onChange={(e) => setTableId(e.target.value)}
-              disabled={isSubmitting}
-            >
-              {tables.map((tbl) => (
-                <option key={tbl.id} value={tbl.id}>
-                  {tbl.label}
-                </option>
-              ))}
-              <option value="">{t("live.noTable")}</option>
-            </Select>
-          </div>
         )}
       </div>
 
