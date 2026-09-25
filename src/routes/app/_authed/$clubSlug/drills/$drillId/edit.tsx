@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import DrillEditorPage from "@/pages/app/DrillEditorPage";
 import { drillQuery } from "@/queries/drills";
 import { canEditDrill } from "@/libs/algorithms/drillPermissions";
-import { ADMIN_PLAYER_ID } from "@/hooks/useAuth";
+import { isOperator } from "@/hooks/useAuth";
 
 export const Route = createFileRoute(
   "/app/_authed/$clubSlug/drills/$drillId/edit",
@@ -26,8 +26,8 @@ export const Route = createFileRoute(
     // the same query, once drillId is set but useDrill comes back empty.
     if (!drill) return null;
 
-    const isAdmin = context.player.id === ADMIN_PLAYER_ID;
-    if (!canEditDrill(drill.created_by, context.user.id, isAdmin)) {
+    const admin = isOperator(context.memberships);
+    if (!canEditDrill(drill.created_by, context.user.id, admin)) {
       throw redirect({ to: "/app/$clubSlug/drills/$drillId", params });
     }
 

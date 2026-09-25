@@ -3,6 +3,7 @@ import type { Category } from "@/types";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
+import { CountrySelect } from "@/components/ui/Flag";
 import { Button } from "@/components/ui/Button";
 import { useT } from "@/i18n";
 
@@ -10,8 +11,13 @@ type PlayerFormProps = {
   initialValues?: {
     name: string;
     category: Category;
+    country: string | null;
   };
-  onSubmit: (values: { name: string; category: Category }) => void;
+  onSubmit: (values: {
+    name: string;
+    category: Category;
+    country: string | null;
+  }) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 };
@@ -27,11 +33,12 @@ export default function PlayerForm({
   const [category, setCategory] = useState<Category>(
     initialValues?.category ?? 3,
   );
+  const [country, setCountry] = useState(initialValues?.country ?? null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    onSubmit({ name, category });
+    onSubmit({ name, category, country });
   };
 
   return (
@@ -60,6 +67,16 @@ export default function PlayerForm({
           <option value={2}>{t("category.2")}</option>
           <option value={3}>{t("category.3")}</option>
         </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="country">{t("players.country")}</Label>
+        <CountrySelect
+          id="country"
+          value={country}
+          onChange={setCountry}
+          disabled={isSubmitting}
+        />
       </div>
 
       <div className="flex justify-end gap-3 pt-2">

@@ -7,11 +7,43 @@ import {
   type MouseEventHandler,
   type ReactNode,
 } from "react";
+import { CountryFlag } from "@/components/ui/Flag";
+
+const CountryContext = createContext<Map<number, string | null> | null>(null);
+
+/**
+ * Every player's country, keyed by player id, for the PlayerLinks inside it.
+ *
+ * ponytail: a context rather than a `country` threaded through every nameOf /
+ * slugOf pair in the bracket, league and fixture components. ClubLayout
+ * provides the roster; a public page provides whoever it loaded.
+ */
+export function PlayerCountries({
+  players,
+  children,
+}: {
+  players: readonly { id: number; country: string | null }[] | undefined;
+  children: ReactNode;
+}) {
+  const map = useMemo(
+    () => new Map((players ?? []).map((p) => [p.id, p.country])),
+    [players],
+  );
+  return (
+    <CountryContext.Provider value={map}>{children}</CountryContext.Provider>
+  );
+}
 
 const HighlightContext = createContext<{
   active: number | null;
   toggle: (playerId: number) => void;
 } | null>(null);
+
+/** The flag for a player id, from the nearest PlayerCountries — for a name
+ *  that is not a PlayerLink. Nothing outside a provider. */
+export function PlayerFlag({ playerId }: { playerId: number }) {
+  return <CountryFlag country={useContext(CountryContext)?.get(playerId)} />;
+}
 
 /**
  * Turns every player's name inside it from a link into a highlighter.
@@ -57,9 +89,12 @@ export default function PlayerLink({
   playerSlug,
   className,
   onClick,
-  children,
+  country,
+  children: name,
 }: {
   playerId: number;
+  /** Overrides the PlayerCountries lookup, for a caller that has it to hand. */
+  country?: string | null;
   /** The person's slug, which is what the public URL is keyed on since people
    *  split out of players. Absent means the caller could not resolve it — a
    *  player no longer on the roster — and the public branch then renders the
@@ -73,6 +108,13 @@ export default function PlayerLink({
 }) {
   const { clubSlug } = useParams({ strict: false });
   const highlight = useContext(HighlightContext);
+  const countries = useContext(CountryContext);
+  const children = (
+    <>
+      {name}
+      <CountryFlag country={country ?? countries?.get(playerId)} />
+    </>
+  );
 
   // Inside a <PlayerHighlight>, the name marks the player's fixtures instead of
   // navigating. `data-highlight` is what the rows around it key their own

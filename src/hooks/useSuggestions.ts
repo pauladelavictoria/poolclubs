@@ -5,7 +5,11 @@ import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { useAuth } from "@/hooks/useAuth";
 import { useWhoIsHere } from "@/hooks/useNight";
-import { freeTables as freeTablesOf, seatsOf } from "@/libs/algorithms/night";
+import {
+  canScore,
+  freeTables as freeTablesOf,
+  seatsOf,
+} from "@/libs/algorithms/night";
 import { dayKeyOf, zoneOf } from "@/libs/algorithms/day";
 import { useNow } from "@/hooks/useNow";
 import {
@@ -215,9 +219,11 @@ export function useSuggestions({
   }, [enabled, live, gamesToday, here, exclude, seats, freeTables]);
 
   const canStart = (group: Player[]) =>
-    isClubAdmin ||
-    player?.is_device === true ||
-    group.some((p) => p.id === player?.id);
+    canScore(
+      player,
+      isClubAdmin,
+      group.map((p) => p.id),
+    );
 
   /** A busy table is not in `freeTables`, so findIndex gives -1 and this gives
    *  undefined — which is what a table with a match on it should offer. */

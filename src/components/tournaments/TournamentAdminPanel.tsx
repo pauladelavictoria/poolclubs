@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { PlayerOptions } from "@/components/players/PlayerOptions";
 import { runMutation } from "@/libs/browser/mutationToast";
+import { startField } from "@/libs/algorithms/bracket";
 import type {
   TournamentDetail,
   useManageTournaments,
@@ -23,7 +24,6 @@ type Manage = Pick<
   | "deleteTournament"
   | "generateKnockout"
   | "updateTournament"
-  | "leaveTournament"
   | "addLateEntrant"
   | "removeEntrant"
 >;
@@ -47,9 +47,7 @@ const CONFIRM_WORD = "DELETE";
 export default function TournamentAdminPanel({
   tournament,
   tournamentId,
-  entrants,
   seeded,
-  minimum,
   groupsDone,
   addable,
   entered,
@@ -59,9 +57,7 @@ export default function TournamentAdminPanel({
 }: {
   tournament: TournamentDetail;
   tournamentId: number;
-  entrants: number[];
   seeded: number[];
-  minimum: number;
   groupsDone: boolean;
   /** Club players eligible for this tournament and not yet in it. */
   addable: { id: number; name: string }[];
@@ -78,45 +74,27 @@ export default function TournamentAdminPanel({
     deleteTournament,
     generateKnockout,
     updateTournament,
-    leaveTournament,
     addLateEntrant,
     removeEntrant,
   } = manage;
   const [adding, setAdding] = useState("");
   const [removing, setRemoving] = useState("");
 
-  // Unpaid entrants only exist to be caught here: the setting that makes them
-  // meaningful also decides whether they can slip into a draw un-caught. A
-  // league has no fixed bracket size to protect, so an unpaid entrant is the
-  // club chasing a payment, not a reason to remove them from the table.
-  const unpaidIds =
-    tournament.requires_payment && tournament.format !== "league"
-      ? tournament.tournament_players
-          .filter((e) => !e.paid)
-          .map((e) => e.player_id)
-      : [];
+  // Who the draw is cut for — the unpaid are dropped in the same transaction
+  // that cuts it, and the minimum is counted on who is left. See startField.
+  const { drop: unpaidIds, field, minimum } = startField(tournament);
 
-  const handleStart = async () => {
+  const handleStart = () => {
     if (
       unpaidIds.length > 0 &&
       !confirm(t("tournaments.removeUnpaidConfirm", { n: unpaidIds.length }))
     )
       return;
 
-    // Out before the draw, not after: a bracket already reshapes around a
-    // withdrawal, so dropping them first is the one path that needs no
-    // special case in the seeding itself.
-    for (const playerId of unpaidIds) {
-      await leaveTournament.mutateAsync({ tournamentId, playerId });
-    }
-
-    const seededIds = seeded.filter((id) => !unpaidIds.includes(id));
     runMutation(
-      startTournament.mutateAsync({ tournament, seededIds }),
+      startTournament.mutateAsync({ tournament, seededIds: seeded }),
       t,
       "tournaments.started",
-      "common.error",
-      { denied: "common.deniedError" },
     );
   };
 
@@ -124,20 +102,16 @@ export default function TournamentAdminPanel({
     return (
       <ManagePanel title={t("tournaments.manage")}>
         <p className="text-body text-ink-soft">
-          {entrants.length < minimum
+          {field.length < minimum
             ? t("tournaments.needMore", {
-                n: minimum - entrants.length,
+                n: minimum - field.length,
                 min: minimum,
               })
-            : t("tournaments.readyToStart", { n: entrants.length })}
+            : t("tournaments.readyToStart", { n: field.length })}
         </p>
         <div className="flex flex-wrap gap-2">
           <Button
-            disabled={
-              entrants.length < minimum ||
-              startTournament.isPending ||
-              leaveTournament.isPending
-            }
+            disabled={field.length < minimum || startTournament.isPending}
             onClick={handleStart}
           >
             {t("tournaments.start")}
@@ -156,8 +130,6 @@ export default function TournamentAdminPanel({
                 deleteTournament.mutateAsync(tournamentId),
                 t,
                 "tournaments.deleted",
-                "common.error",
-                { denied: "common.deniedError" },
               );
             }}
           >
@@ -185,8 +157,6 @@ export default function TournamentAdminPanel({
                 generateKnockout.mutateAsync(tournament),
                 t,
                 "tournaments.knockoutReady",
-                "common.error",
-                { denied: "common.deniedError" },
               )
             }
           >
@@ -237,8 +207,6 @@ export default function TournamentAdminPanel({
                       addLateEntrant.mutateAsync({ tournament, playerId }),
                       t,
                       "tournaments.added",
-                      "common.error",
-                      { denied: "common.deniedError" },
                     );
                   }}
                 >
@@ -296,8 +264,6 @@ export default function TournamentAdminPanel({
                     removeEntrant.mutateAsync({ tournament, playerId }),
                     t,
                     "tournaments.removed",
-                    "common.error",
-                    { denied: "common.deniedError" },
                   );
                 }}
               >
@@ -318,8 +284,6 @@ export default function TournamentAdminPanel({
                 }),
                 t,
                 "tournaments.closed",
-                "common.error",
-                { denied: "common.deniedError" },
               )
             }
           >
@@ -349,8 +313,6 @@ export default function TournamentAdminPanel({
                 deleteTournament.mutateAsync(tournamentId),
                 t,
                 "tournaments.deleted",
-                "common.error",
-                { denied: "common.deniedError" },
               );
             }}
           >

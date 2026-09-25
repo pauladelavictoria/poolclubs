@@ -6,20 +6,20 @@ import SocialBar from "@/components/social/SocialBar";
 import { LuPencil, LuSwords } from "react-icons/lu";
 import {
   dayLabel,
-  hasTime,
+  playedTimeOf,
   startsNewDay,
-  timeOf,
 } from "@/libs/algorithms/dayLabel";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 import GameLinkOverlay from "@/components/games/GameLinkOverlay";
+import { CountryFlag } from "@/components/ui/Flag";
 
 const NAME_LINK = "transition-colors duration-150 hover:text-strike";
 
 /** What this list needs to turn a game's player id into a linked name. Games
  *  stopped carrying a copy of the name when names moved to people, so the
  *  roster is now an input rather than a convenience. */
-type GamesListPlayer = Pick<Player, "id" | "name" | "slug">;
+type GamesListPlayer = Pick<Player, "id" | "name" | "slug" | "country">;
 
 /**
  * One player's name on the tape.
@@ -48,9 +48,13 @@ function Name({
       className={NAME_LINK}
     >
       {player.name}
+      <CountryFlag country={player.country} />
     </Link>
   ) : (
-    <>{player.name}</>
+    <>
+      {player.name}
+      <CountryFlag country={player.country} />
+    </>
   );
 }
 
@@ -248,7 +252,7 @@ export default function GamesList({
                   dateTime={played_at}
                   className="hidden w-12 shrink-0 font-mono text-caption tabular-nums text-ink-ghost sm:block"
                 >
-                  {hasTime(date) ? timeOf(date, locale) : ""}
+                  {playedTimeOf(date, locale)}
                 </time>
                 <span
                   className={`flex min-w-0 flex-1 flex-col text-right ${side(p1Won)}`}

@@ -122,3 +122,44 @@ export function dayRange(
     to: new Date(instantOf(shiftKey(key, 1), startHour, tz)).toISOString(),
   };
 }
+
+/**
+ * A result's `played_at` from the date the form holds — a night's key, as
+ * `dayKeyOf` gives it, in the club's zone.
+ *
+ * - A correction (`original`) keeps its own time and only moves by whole days
+ *   if the date was changed: re-saving a game filed at 23:51 must not move it.
+ * - A result filed for tonight is stamped now.
+ * - A result backdated to an earlier night has no real time to attach, so it
+ *   gets the instant that night starts: inside the night it was played in (a
+ *   midnight stamp would fall in the night before), and on the quarter-hour
+ *   that `hasPlayedTime` reads as "no time recorded".
+ *
+ * ponytail: the day shift is 24h, so a corrected date across a DST change
+ * moves the time by an hour. Still the same night.
+ */
+export function playedAtFor(
+  key: string,
+  tz: string,
+  original?: Date,
+  now: Date = new Date(),
+): string {
+  if (original) {
+    const days =
+      (Date.parse(key) - Date.parse(dayKeyOf(original, tz))) / 86_400_000;
+    return new Date(original.getTime() + days * 86_400_000).toISOString();
+  }
+  if (key === dayKeyOf(now, tz)) return now.toISOString();
+  return dayRange(key, tz).from;
+}
+
+/**
+ * False for a backdated result — one stamped by `playedAtFor` at a night's
+ * start, or by the older form at local midnight. Both sit exactly on a
+ * quarter-hour in every zone; a filed result carries seconds and milliseconds.
+ * Zone-free, so a list card needs no club to ask it.
+ *
+ * ponytail: a result really stamped on the quarter-hour to the millisecond
+ * reads as untimed. One in ~900,000.
+ */
+export const hasPlayedTime = (date: Date) => date.getTime() % 900_000 !== 0;

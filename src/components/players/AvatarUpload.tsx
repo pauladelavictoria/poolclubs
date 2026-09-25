@@ -49,7 +49,6 @@ export default function AvatarUpload({
       toast.error(
         t(
           dbErrorMessage(err, "avatarUpload", {
-            denied: "common.deniedError",
             fallback: "players.avatarError",
           }),
         ),

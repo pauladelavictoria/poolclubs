@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/libs/supabase/browser";
 import { useAuth } from "@/hooks/useAuth";
 import { keys } from "@/libs/queryKeys";
+import { refreshLive, refreshResults } from "@/libs/browser/refresh";
 import { uuid } from "@/libs/algorithms/uuid";
 import { liveMatchQuery, liveMatchesQuery } from "@/queries/live";
 import {
@@ -127,10 +129,7 @@ export const useManageLiveMatch = () => {
     // The optimistic patch was a guess about the row we were shown. Whatever
     // the server ends up holding is the truth and it arrives over the socket —
     // this only covers a write that failed outright.
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: keys.liveMatches.all });
-      queryClient.invalidateQueries({ queryKey: keys.liveMatch.all });
-    },
+    onError: () => refreshLive(queryClient),
   });
 
   return {
@@ -194,8 +193,7 @@ export const useManageLiveMatch = () => {
 
         return data as LiveMatch;
       },
-      onSuccess: () =>
-        queryClient.invalidateQueries({ queryKey: keys.liveMatches.all }),
+      onSuccess: () => refreshLive(queryClient),
     }),
 
     scoreMatch,
@@ -228,11 +226,8 @@ export const useManageLiveMatch = () => {
       // The socket tells everyone else. This is so the tab that pressed the
       // button does not sit on a stale feed for its own round trip.
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: keys.liveMatches.all });
-        queryClient.invalidateQueries({ queryKey: keys.games.all });
-        queryClient.invalidateQueries({ queryKey: keys.challenges.all });
-        queryClient.invalidateQueries({ queryKey: keys.tournaments.all });
-        queryClient.invalidateQueries({ queryKey: keys.tournament.all });
+        refreshLive(queryClient);
+        refreshResults(queryClient);
       },
     }),
 
@@ -245,8 +240,23 @@ export const useManageLiveMatch = () => {
           .eq("id", id)
           .throwOnError();
       },
-      onSuccess: () =>
-        queryClient.invalidateQueries({ queryKey: keys.liveMatches.all }),
+      onSuccess: () => refreshLive(queryClient),
     }),
   };
+};
+
+/**
+ * Realtime drops frames while a tab is hidden, and react-query's default
+ * staleness would then render the score from before the phone went in a
+ * pocket. The scoreboard is the one place where being confidently wrong shows.
+ */
+export const useRefetchLiveOnVisible = () => {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refreshLive(queryClient);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [queryClient]);
 };

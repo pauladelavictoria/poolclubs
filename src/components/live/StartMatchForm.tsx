@@ -20,8 +20,10 @@ import { useWhoIsHere } from "@/hooks/useNight";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { DEFAULT_SETUP, type DaySetup } from "@/libs/algorithms/today";
 import { fixturesBetween, hasFixture } from "@/libs/algorithms/leagueTable";
+import { canScore, seatsOf } from "@/libs/algorithms/night";
 import type { LeagueFixture } from "@/queries/tournaments";
 import { useT } from "@/i18n";
+import { CountryFlag } from "@/components/ui/Flag";
 
 /**
  * Who you are playing, where, and what you are playing to.
@@ -120,27 +122,16 @@ export default function StartMatchForm({
 
   // Somebody on a table right now is not a name for a second one.
   const { data: live } = useLiveMatches();
-  const playing = new Set(
-    (live ?? []).flatMap((m) => [
-      m.player_1_id,
-      m.player_2_id,
-      m.player_1b_id,
-      m.player_2b_id,
-    ]),
-  );
+  const playing = new Set((live ?? []).flatMap(seatsOf));
 
   const roster = (rosterProp ?? opponents)
     .filter((p) => p.id !== me.id && !playing.has(p.id))
     .sort(byPresenceThenName);
 
-  // Who may put two other people in a match.
-  //
-  // Mirrors can_score_live_match in sql/schema.sql: the club's admin, the
-  // club's tablet, or somebody who is one of the seats. Any other member
-  // picking two other names would have the insert refused, which is not a
-  // choice worth offering.
+  // Who may put two other people in a match: canScore with no seats — any
+  // other member picking two other names would have the insert refused.
   const isDevice = me.is_device === true;
-  const forOthers = isDevice || isClubAdmin;
+  const forOthers = canScore(me, isClubAdmin);
 
   /** An <option> cannot be styled, so presence is a mark in the text. */
   const label = (p: Player) =>
@@ -286,8 +277,9 @@ export default function StartMatchForm({
           // A match with no table is a real thing in a busy club, and it is
           // what "every table is taken but we are playing anyway" writes.
           tableId: table?.id ?? (tableId ? Number(tableId) : null),
-          recordOptIn: streamed && recordOptIn,
-          recordPrivacy: streamed && recordOptIn ? recordPrivacy : null,
+          recordOptIn: streamed && !forLeague && recordOptIn,
+          recordPrivacy:
+            streamed && !forLeague && recordOptIn ? recordPrivacy : null,
           tournamentMatchId: forLeague ? fixture!.id : undefined,
         });
       }}
@@ -445,7 +437,10 @@ export default function StartMatchForm({
               />
             </Select>
           ) : (
-            <p className="truncate text-body font-medium text-ink">{me.name}</p>
+            <p className="truncate text-body font-medium text-ink">
+              {me.name}
+              <CountryFlag country={me.country} />
+            </p>
           )}
 
           {mode === "doubles" && (
@@ -477,6 +472,7 @@ export default function StartMatchForm({
           {lockedOpponent ? (
             <p className="truncate text-body font-medium text-ink">
               {lockedOpponent.name}
+              <CountryFlag country={lockedOpponent.country} />
             </p>
           ) : (
             <Select
@@ -556,7 +552,7 @@ export default function StartMatchForm({
           fixture is always recorded already (agreed once at registration),
           and a table with no club_streams row has nothing to record onto.
           See docs/youtube-streaming.md §2.5. */}
-      {streamed && (
+      {streamed && !forLeague && (
         <div className="space-y-2 rounded-card border border-hairline p-3">
           <Toggle
             checked={recordOptIn}

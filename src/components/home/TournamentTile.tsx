@@ -45,8 +45,6 @@ export default function TournamentTile({
       joinTournament.mutateAsync({ tournamentId: tournament.id }),
       t,
       "tournaments.joined",
-      "common.error",
-      { denied: "common.deniedError" },
     );
 
   return (

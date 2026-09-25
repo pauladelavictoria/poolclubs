@@ -22,7 +22,7 @@ import { useDialog } from "@/hooks/useDialog";
 import { pinKiosk, readKioskTable } from "@/libs/browser/kiosk";
 import { readTodaySetup } from "@/libs/prefs";
 import { seatsNeeded } from "@/libs/algorithms/today";
-import { LIVE_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
+import { START_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 import type { Player } from "@/types";
 import type { LeagueFixture } from "@/queries/tournaments";
@@ -162,7 +162,7 @@ export default function TablePage() {
         // tapped, and the next thing anybody wants from it is the score.
         onSuccess: (row) => goLive(row.id),
         onError: (err) =>
-          toast.error(t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS))),
+          toast.error(t(dbErrorMessage(err, "startMatch", START_MATCH_KEYS))),
       },
     );
 
@@ -309,30 +309,16 @@ export default function TablePage() {
             streamed={(streamedTableIds ?? []).includes(table.id)}
             leagueFixtures={leagueFixtures}
             onSubmit={(values) =>
-              startMatch.mutate(
-                {
-                  player1: values.player1,
-                  player2: values.player2,
-                  partner1: values.partner1,
-                  partner2: values.partner2,
-                  tableId: values.tableId,
-                  discipline: values.discipline,
-                  raceTo: values.raceTo,
-                  recordOptIn: values.recordOptIn,
-                  recordPrivacy: values.recordPrivacy,
-                  tournamentMatchId: values.tournamentMatchId,
+              startMatch.mutate(values, {
+                onSuccess: (row) => {
+                  close();
+                  goLive(row.id);
                 },
-                {
-                  onSuccess: (row) => {
-                    close();
-                    goLive(row.id);
-                  },
-                  onError: (err) =>
-                    toast.error(
-                      t(dbErrorMessage(err, "startMatch", LIVE_MATCH_KEYS)),
-                    ),
-                },
-              )
+                onError: (err) =>
+                  toast.error(
+                    t(dbErrorMessage(err, "startMatch", START_MATCH_KEYS)),
+                  ),
+              })
             }
             onCancel={close}
             isSubmitting={startMatch.isPending}

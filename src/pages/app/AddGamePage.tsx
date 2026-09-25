@@ -13,6 +13,7 @@ import {
   useManageTournaments,
 } from "@/hooks/useTournaments";
 import { fixturesBetween } from "@/libs/algorithms/leagueTable";
+import { dayKeyOf, playedAtFor, zoneOf } from "@/libs/algorithms/day";
 import { PlayerOptions } from "@/components/players/PlayerOptions";
 import PageTitle from "@/components/layout/PageTitle";
 import CancelLink from "@/components/layout/CancelLink";
@@ -29,62 +30,26 @@ import { useT } from "@/i18n";
 
 const SIDES = [1, 2] as const;
 
-/** Today, in the reader's own timezone — an ISO date would give the server's
- *  or UTC's, which is the wrong day for whoever is west of it come evening. */
-const todayLocal = () => {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
-
-/** The date input hands back "YYYY-MM-DD"; combined with a time of day rather
- *  than midnight, so today's games keep sorting exactly as they did before this
- *  field existed.
- *
- *  `clock` is now for a new result filed on the day it was played, and the
- *  result's own time for a correction: re-saving a game filed at 23:51 must
- *  not move it to whenever the fix was made, which on a club night is a
- *  different night. A new result backdated to an earlier day has no real
- *  time to attach — "now" would just be the moment it was typed in, not when
- *  the match happened — so it gets midnight, which the display reads as "no
- *  time recorded". */
-const toPlayedAt = (dateStr: string, clock?: Date) => {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const time = clock ?? (dateStr === todayLocal() ? new Date() : null);
-  return new Date(
-    y,
-    m - 1,
-    d,
-    time?.getHours() ?? 0,
-    time?.getMinutes() ?? 0,
-    time?.getSeconds() ?? 0,
-  ).toISOString();
-};
-
-/** A stored timestamp back into what the date input reads, in the reader's own
- *  zone for the same reason `todayLocal` is. */
-const toDateInput = (playedAt: string) => {
-  const d = new Date(playedAt);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
-
 export default function AddGamePage() {
   const { t } = useT();
+  // Whoever is filing this, when they are a person: the club's tablet is a
+  // device and has never played a game — see PlayerOptions.
+  const { player: me, activeClub } = useAuth();
+  // The date field names a club night, in the club's zone — the same night
+  // the ranking and the calendar file the result under (libs/algorithms/day.ts).
+  const tz = zoneOf(activeClub);
+  const [tonight] = useState(() => dayKeyOf(Date.now(), tz));
   const { register, handleSubmit, reset, control, setValue } = useForm<Game>({
     // 9-ball is what the club plays, and what every game recorded
     // before the column existed was backfilled to.
     defaultValues: {
       mode: "single",
       discipline: "9ball",
-      played_at: todayLocal(),
+      played_at: tonight,
     },
   });
 
   const { data: players, isLoading: playersLoading } = usePlayers();
-  // Whoever is filing this, when they are a person: the club's tablet is a
-  // device and has never played a game — see PlayerOptions.
-  const { player: me } = useAuth();
   const meId = me?.is_device ? undefined : me?.id;
   const { mutate: handleAddGame, isPending } = useAddGame();
 
@@ -132,8 +97,8 @@ export default function AddGamePage() {
   // rather than in defaultValues.
   useEffect(() => {
     if (!editing) return;
-    reset({ ...editing, played_at: toDateInput(editing.played_at) });
-  }, [editing, reset]);
+    reset({ ...editing, played_at: dayKeyOf(new Date(editing.played_at), tz) });
+  }, [editing, reset, tz]);
 
   // `useWatch`, not `watch()`: the hook form is memoizable, so React Compiler
   // doesn't bail out of optimising this whole component.
@@ -205,9 +170,7 @@ export default function AddGamePage() {
     navigate({ to: "/app/$clubSlug/games", params: { clubSlug: clubSlug! } });
 
   const onError = (err: unknown) =>
-    toast.error(
-      t(dbErrorMessage(err, "addGame", { denied: "common.deniedError" })),
-    );
+    toast.error(t(dbErrorMessage(err, "addGame")));
 
   const onSubmit = (game: Game) => {
     // The selects hold ids now rather than names, so there is nothing left to
@@ -215,8 +178,9 @@ export default function AddGamePage() {
     // people. See sql/schema.sql.
     const values = {
       ...game,
-      played_at: toPlayedAt(
+      played_at: playedAtFor(
         game.played_at,
+        tz,
         editing ? new Date(editing.played_at) : undefined,
       ),
       // An unpicked partner select submits "", which is not a bigint.
@@ -230,17 +194,7 @@ export default function AddGamePage() {
      *  same recovery `recordResult` has: file it against the league again. */
     const link = (id: string) => {
       if (!fixture) return;
-      linkGame.mutate(
-        {
-          matchId: fixture.id,
-          gameId: id,
-          winnerId:
-            values.player_1_score > values.player_2_score
-              ? values.player_1_id
-              : values.player_2_id,
-        },
-        { onError },
-      );
+      linkGame.mutate({ matchId: fixture.id, gameId: id }, { onError });
     };
 
     if (isEdit && editing) {
@@ -324,7 +278,7 @@ export default function AddGamePage() {
               <Label>{t("games.playedAt")}</Label>
               <Input
                 type="date"
-                max={todayLocal()}
+                max={tonight}
                 {...register("played_at", { required: true })}
               />
             </fieldset>

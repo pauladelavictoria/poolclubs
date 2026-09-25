@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
+import { CountrySelect } from "@/components/ui/Flag";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useT } from "@/i18n";
 
@@ -68,7 +69,6 @@ export default function PlayerSettingsPage() {
           toast.error(
             t(
               dbErrorMessage(err, "updatePlayer", {
-                denied: "common.deniedError",
                 fallback: "players.updateError",
               }),
             ),
@@ -78,22 +78,24 @@ export default function PlayerSettingsPage() {
   };
 
   /**
-   * Listed or not, saved the moment it is flipped.
+   * Listed or not, and country, each saved the moment it is changed.
    *
-   * One boolean with nothing to review and nothing to get half-right, so it
+   * One value with nothing to review and nothing to get half-right, so it
    * takes effect on change like the notifications switch above it rather than
    * waiting behind a Save button that would be the only thing on this card.
    */
-  const savePublic = (next: boolean) => {
+  const savePerson = (patch: {
+    is_public?: boolean;
+    country?: string | null;
+  }) => {
     if (!player) return;
     updatePlayer.mutate(
-      { id: player.id, personId: player.person_id, is_public: next },
+      { id: player.id, personId: player.person_id, ...patch },
       {
         onError: (err) =>
           toast.error(
             t(
               dbErrorMessage(err, "updatePlayer", {
-                denied: "common.deniedError",
                 fallback: "players.updateError",
               }),
             ),
@@ -179,6 +181,18 @@ export default function PlayerSettingsPage() {
               </Button>
             </div>
           </form>
+
+          {/* Saved on change, like the listing switch: one pick, nothing to
+              review. It is the flag beside the name on stream overlays. */}
+          <div className="space-y-1.5 border-t border-hairline pt-4">
+            <Label htmlFor="player-country">{t("players.country")}</Label>
+            <CountrySelect
+              id="player-country"
+              value={player.country}
+              onChange={(country) => savePerson({ country })}
+              disabled={updatePlayer.isPending}
+            />
+          </div>
         </div>
       </Card>
 
@@ -253,7 +267,7 @@ export default function PlayerSettingsPage() {
       <Card className="p-4">
         <Toggle
           checked={player.is_public}
-          onChange={savePublic}
+          onChange={(is_public) => savePerson({ is_public })}
           label={t("players.publicProfile")}
           hint={t("players.publicProfileHint")}
           disabled={updatePlayer.isPending}
@@ -277,9 +291,7 @@ export default function PlayerSettingsPage() {
           <p className="text-body font-medium text-ink">
             {t("club.leaveTitle")}
           </p>
-          <p className="mt-1 text-body text-ink-faint">
-            {t("club.leaveHint")}
-          </p>
+          <p className="mt-1 text-body text-ink-faint">{t("club.leaveHint")}</p>
           <div className="mt-4 flex justify-end">
             <Button
               variant="secondary"
@@ -290,12 +302,13 @@ export default function PlayerSettingsPage() {
                   return;
                 leaveClub.mutate(activeClubId, {
                   onSuccess: () =>
-                    toast.success(t("club.leftToast", { club: activeClub.name })),
+                    toast.success(
+                      t("club.leftToast", { club: activeClub.name }),
+                    ),
                   onError: (err) =>
                     toast.error(
                       t(
                         dbErrorMessage(err, "leaveClub", {
-                          denied: "common.deniedError",
                           refused: "club.leaveOwnerError",
                         }),
                       ),

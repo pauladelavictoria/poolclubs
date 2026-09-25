@@ -6,13 +6,13 @@ import SocialBar from "@/components/social/SocialBar";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { CategoryBadge } from "@/components/ui/Ball";
-import { placings, resolveBracket } from "@/libs/algorithms/bracket";
-import { leaguePodium, standings } from "@/libs/algorithms/leagueTable";
+import { resolveBracket, tournamentResults } from "@/libs/algorithms/bracket";
 import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import { runMutation } from "@/libs/browser/mutationToast";
 import { FORMAT_KEY, type Tournament } from "@/types";
 import { useT, type Key } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
+import { PlayerFlag } from "@/components/players/PlayerLink";
 
 /** Name, discipline and format — the same line the tournament's own page leads
  *  with, so a card in the feed reads as that tournament and not as a summary of
@@ -79,8 +79,6 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
         : joinTournament.mutateAsync({ tournamentId }),
       t,
       entered ? "tournaments.left" : "tournaments.joined",
-      "common.error",
-      { denied: "common.deniedError" },
     );
   };
 
@@ -127,6 +125,7 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
                   />
                   <span className="truncate text-caption text-ink-soft transition-colors duration-150 group-hover:text-strike">
                     {byId.get(id)?.name ?? "—"}
+                    <PlayerFlag playerId={id} />
                   </span>
                 </AppLink>
               </li>
@@ -151,12 +150,7 @@ export function TournamentResultCard({
   const matches = resolveBracket(detail?.tournament_matches ?? []);
   const entrants = (detail?.tournament_players ?? []).map((e) => e.player_id);
 
-  // Same reading as the tournament's own page: a league has no final to read a
-  // podium off, so its table is the podium.
-  const places =
-    tournament.format === "league"
-      ? leaguePodium(standings(entrants, matches))
-      : placings(matches);
+  const { podium: places } = tournamentResults(tournament, entrants, matches);
 
   return (
     <>

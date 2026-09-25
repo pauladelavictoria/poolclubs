@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   eligibleToAdd,
   findOutstandingMatch,
+  planKnockout,
+  planStart,
   seedEntrants,
   sortPlayedMatches,
-  tournamentPodium,
+  tournamentResults,
 } from "./view";
 import type { TournamentMatch } from "@/types";
 
@@ -49,9 +51,11 @@ describe("seedEntrants", () => {
   it("sinks anyone with no games yet to the bottom, ordered by name", () => {
     const ranking = [{ playerId: 2 }];
     // 1 and 3 have no ranking entry; they fall back to name order.
-    expect(seedEntrants([3, 1, 2], ranking, (id) =>
-      id === 1 ? "Alex" : id === 3 ? "Zoe" : "Middle",
-    )).toEqual([2, 1, 3]);
+    expect(
+      seedEntrants([3, 1, 2], ranking, (id) =>
+        id === 1 ? "Alex" : id === 3 ? "Zoe" : "Middle",
+      ),
+    ).toEqual([2, 1, 3]);
   });
 
   it("handles no ranking at all — everyone sorts by name", () => {
@@ -63,20 +67,42 @@ describe("seedEntrants", () => {
   });
 });
 
-describe("tournamentPodium", () => {
+describe("tournamentResults", () => {
+  const league = { format: "league" as const, points_win: 3, points_play: 1 };
+
   it("reads a league's podium off the standings table, not the match graph", () => {
     const matches = [fixture(1, 2, { winner: 1, racks: [5, 3] })];
-    expect(tournamentPodium("league", [1, 2], matches)).toEqual({
+    expect(tournamentResults(league, [1, 2], matches).podium).toEqual({
       first: 1,
       second: 2,
       third: [],
     });
   });
 
+  it("crowns whoever tops the points table — podium and table can't disagree", () => {
+    // 2: one win, two played → 1 + 2 = 3 points; 1: one win, one played → 2.
+    // Ranked on wins alone, 1 would top it (tie on wins, better racks).
+    const { table, podium } = tournamentResults(
+      { format: "league", points_win: 1, points_play: 1 },
+      [1, 2, 3],
+      [
+        fixture(1, 2, { winner: 1, racks: [5, 0] }),
+        fixture(2, 3, { winner: 2, racks: [5, 4] }),
+      ],
+    );
+    expect(podium.first).toBe(2);
+    expect([podium.first, podium.second, ...podium.third]).toEqual(
+      table.map((r) => r.playerId),
+    );
+  });
+
   it("reads a knockout's podium off who lost to whom", () => {
     const final = fixture(1, 2, { winner: 1, racks: [5, 3] });
     final.bracket = "final";
-    expect(tournamentPodium("double_elim", [1, 2], [final])).toEqual({
+    expect(
+      tournamentResults({ ...league, format: "double_elim" }, [1, 2], [final])
+        .podium,
+    ).toEqual({
       first: 1,
       second: 2,
       third: [],
@@ -127,9 +153,7 @@ describe("eligibleToAdd", () => {
   ];
 
   it("excludes players already entered", () => {
-    expect(eligibleToAdd(players, null, [1]).map((p) => p.id)).toEqual([
-      2, 3,
-    ]);
+    expect(eligibleToAdd(players, null, [1]).map((p) => p.id)).toEqual([2, 3]);
   });
 
   it("restricts to one division when the tournament has one", () => {
@@ -153,5 +177,88 @@ describe("eligibleToAdd", () => {
       1, 2, 3,
     ]);
     expect(eligibleToAdd(withGuest, 1, []).map((p) => p.id)).toEqual([1, 3]);
+  });
+});
+
+describe("planStart — cutting a draw", () => {
+  const entrants = (ids: number[], unpaid: number[] = []) =>
+    ids.map((player_id) => ({ player_id, paid: !unpaid.includes(player_id) }));
+  const base = {
+    advance: 4,
+    legs: 1 as const,
+    single_from: 2,
+    requires_payment: true,
+  };
+
+  it("counts the minimum on who is left once the unpaid are dropped", () => {
+    // Four groups need 12; 12 entered but 5 unpaid is 7 — too thin.
+    const t = {
+      ...base,
+      format: "group_knockout" as const,
+      advance: 8,
+      tournament_players: entrants(
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        [8, 9, 10, 11, 12],
+      ),
+    };
+    expect(() => planStart(t, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])).toThrow(
+      "not enough entrants",
+    );
+  });
+
+  it("drops the unpaid from a knockout and seeds only who is left", () => {
+    const plan = planStart(
+      {
+        ...base,
+        format: "double_elim",
+        tournament_players: entrants([1, 2, 3, 4], [4]),
+      },
+      [4, 1, 2, 3],
+    );
+    expect(plan.drop).toEqual([4]);
+    expect(plan).toMatchObject({ from: "open", to: "running" });
+    const seated = plan.matches.flatMap((m) => [m.p1_id, m.p2_id]);
+    expect(seated).not.toContain(4);
+  });
+
+  it("keeps a league's unpaid in the table", () => {
+    const plan = planStart(
+      {
+        ...base,
+        format: "league",
+        tournament_players: entrants([1, 2, 3], [3]),
+      },
+      [1, 2, 3],
+    );
+    expect(plan.drop).toEqual([]);
+    expect(plan.matches).toHaveLength(3);
+  });
+
+  it("stops a group tournament at groups", () => {
+    const plan = planStart(
+      {
+        ...base,
+        format: "group_knockout",
+        advance: 2,
+        tournament_players: entrants([1, 2, 3]),
+      },
+      [1, 2, 3],
+    );
+    expect(plan.to).toBe("groups");
+  });
+});
+
+describe("planKnockout", () => {
+  it("refuses while a group match is unplayed", () => {
+    const m = fixture(1, 2);
+    m.bracket = "group";
+    m.group_no = 1;
+    expect(() =>
+      planKnockout({
+        advance: 2,
+        tournament_players: [{ player_id: 1 }, { player_id: 2 }],
+        tournament_matches: [m],
+      }),
+    ).toThrow("groups unfinished");
   });
 });

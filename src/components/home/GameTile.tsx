@@ -1,10 +1,11 @@
 import { Avatar } from "@/components/ui/Avatar";
 import { cardClasses } from "@/components/ui/cardStyles";
 import { usePlayerLookup } from "@/hooks/usePlayers";
-import { dayLabel, hasTime, timeOf } from "@/libs/algorithms/dayLabel";
+import { dayLabel, playedTimeOf } from "@/libs/algorithms/dayLabel";
 import type { Game } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
+import { CountryFlag } from "@/components/ui/Flag";
 
 /**
  * A finished match, small enough to sit in a row of them.
@@ -44,7 +45,15 @@ export default function GameTile({ game }: { game: Game }) {
             won ? "font-semibold text-ink" : "text-ink-faint"
           }`}
         >
-          {people.length > 0 ? people.map((p) => p.name).join(" / ") : "—"}
+          {people.length > 0
+            ? people.map((p, i) => (
+                <span key={p.id}>
+                  {i > 0 && " / "}
+                  {p.name}
+                  <CountryFlag country={p.country} />
+                </span>
+              ))
+            : "—"}
         </span>
         <span
           className={`shrink-0 font-mono text-body tabular-nums ${
@@ -70,12 +79,7 @@ export default function GameTile({ game }: { game: Game }) {
     >
       <p className="truncate text-caption text-ink-ghost">
         <span suppressHydrationWarning>{dayLabel(played, t, locale)}</span>
-        {hasTime(played) && (
-          <>
-            {" · "}
-            {timeOf(played, locale)}
-          </>
-        )}
+        {playedTimeOf(played, locale) && ` · ${playedTimeOf(played, locale)}`}
       </p>
       {side(
         [game.player_1_id, doubles ? game.player_1b_id : null],

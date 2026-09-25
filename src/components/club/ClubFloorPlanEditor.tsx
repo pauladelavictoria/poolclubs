@@ -220,14 +220,7 @@ export default function ClubFloorPlanEditor() {
     });
     saveTableLayout.mutate(payload, {
       onSuccess: () => editor.markSaved(),
-      onError: (err) =>
-        toast.error(
-          t(
-            dbErrorMessage(err, "saveTableLayout", {
-              denied: "common.deniedError",
-            }),
-          ),
-        ),
+      onError: (err) => toast.error(t(dbErrorMessage(err, "saveTableLayout"))),
     });
   };
 

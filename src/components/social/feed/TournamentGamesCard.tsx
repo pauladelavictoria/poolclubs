@@ -1,7 +1,7 @@
 import { LuChevronRight, LuTrophy } from "react-icons/lu";
 import SocialBar from "@/components/social/SocialBar";
 import { usePlayerLookup } from "@/hooks/usePlayers";
-import { hasTime, timeOf } from "@/libs/algorithms/dayLabel";
+import { playedTimeOf } from "@/libs/algorithms/dayLabel";
 import type { Game, Tournament } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -126,9 +126,7 @@ export default function TournamentGamesCard({
                   className="shrink-0 pl-1 font-mono text-caption tabular-nums text-ink-ghost transition-colors duration-150 hover:text-strike"
                 >
                   <time dateTime={game.played_at}>
-                    {hasTime(new Date(game.played_at))
-                      ? timeOf(new Date(game.played_at), locale)
-                      : ""}
+                    {playedTimeOf(new Date(game.played_at), locale)}
                   </time>
                 </AppLink>
                 <div className="min-w-0 flex-1">

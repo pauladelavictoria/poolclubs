@@ -1,4 +1,5 @@
 import type { Key } from "@/i18n";
+import { hasPlayedTime } from "@/libs/algorithms/day";
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
@@ -18,12 +19,10 @@ const TIME: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
 export const timeOf = (date: Date, locale: string) =>
   fmt(locale, TIME).format(date);
 
-/** False for a backdated result, which is stamped at midnight rather than a
- *  fabricated "now" — see toPlayedAt in AddGamePage. Not a perfect test (a
- *  match really played at 00:00:00 reads the same), but a rack finishing on
- *  the stroke of midnight is not a case worth a real flag for. */
-export const hasTime = (date: Date) =>
-  date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0;
+/** "14:35", or nothing for a backdated result that has no time of its own —
+ *  see playedAtFor in libs/algorithms/day.ts. */
+export const playedTimeOf = (date: Date, locale: string) =>
+  hasPlayedTime(date) ? timeOf(date, locale) : "";
 
 const midnight = (d: Date) =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -62,8 +61,7 @@ export const dayLabel = (
   }).format(date);
 };
 
-const sameDay = (a: Date, b: Date) =>
-  a.toDateString() === b.toDateString();
+const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
 
 export const startsNewDay = (date: Date, previous?: Date) =>
   !previous || !sameDay(date, previous);

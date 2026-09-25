@@ -57,8 +57,6 @@ export default function TournamentsPage() {
       createTournament.mutateAsync(values),
       t,
       "tournaments.created",
-      "common.error",
-      { denied: "common.deniedError" },
     );
     if (ok) setIsModalOpen(false);
   };

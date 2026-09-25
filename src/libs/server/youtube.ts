@@ -84,11 +84,28 @@ export async function createReusableStream(
   };
 }
 
-export async function deleteYoutubeStream(accessToken: string, streamId: string) {
+export async function deleteYoutubeStream(
+  accessToken: string,
+  streamId: string,
+) {
   await fetch(`${API}/liveStreams?id=${streamId}`, {
     method: "DELETE",
     headers: { authorization: `Bearer ${accessToken}` },
   });
+}
+
+/** liveBroadcasts.delete. A broadcast already gone (404) counts as deleted:
+ *  the point is that it is not on the channel. */
+export async function deleteBroadcast(
+  accessToken: string,
+  broadcastId: string,
+) {
+  const res = await fetch(`${API}/liveBroadcasts?id=${broadcastId}`, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok && res.status !== 404)
+    throw new Error(`youtube: delete broadcast failed: ${await res.text()}`);
 }
 
 /** §2.1: liveBroadcasts.insert. scheduledStartTime is required by the API but
@@ -126,13 +143,19 @@ export async function bindBroadcast(
 }
 
 /** liveStreams.list, the 1-unit poll the doc's quota section leans on while
- *  waiting for OBS to connect (§2.1a). */
-export async function isStreamActive(accessToken: string, streamId: string) {
+ *  waiting for OBS to connect (§2.1a). The raw streamStatus ("active",
+ *  "ready", "inactive", "error"…), not a boolean, so the reconciler can log
+ *  what YouTube actually said while it waits — undefined when the stream is
+ *  not found at all. */
+export async function streamStatus(
+  accessToken: string,
+  streamId: string,
+): Promise<string | undefined> {
   const res = await youtubeFetch(
     accessToken,
     `/liveStreams?part=status&id=${streamId}`,
   );
-  return res.items?.[0]?.status?.streamStatus === "active";
+  return res.items?.[0]?.status?.streamStatus;
 }
 
 export async function transitionBroadcast(

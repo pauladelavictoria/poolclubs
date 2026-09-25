@@ -43,6 +43,7 @@ import {
 } from "@/libs/algorithms/schedule";
 import { publicTournamentsQuery } from "@/queries/public/tournaments";
 import { useT, type Key } from "@/i18n";
+import { CountryFlag } from "@/components/ui/Flag";
 
 const route = getRouteApi("/_public/clubs/$slug");
 
@@ -422,6 +423,7 @@ export function ClubPlayersTab() {
             />
             <span className="w-full truncate text-caption text-ink-soft group-hover:text-ink">
               {player.name}
+              <CountryFlag country={player.country} />
             </span>
           </Link>
         ))}

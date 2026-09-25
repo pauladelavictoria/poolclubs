@@ -137,14 +137,7 @@ export default function ClubInfoPage() {
           setSchedule(undefined);
           toast.success(t("common.saved"));
         },
-        onError: (err) =>
-          toast.error(
-            t(
-              dbErrorMessage(err, "updateClub", {
-                denied: "common.deniedError",
-              }),
-            ),
-          ),
+        onError: (err) => toast.error(t(dbErrorMessage(err, "updateClub"))),
       },
     );
   };

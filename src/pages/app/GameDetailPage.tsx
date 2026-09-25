@@ -2,6 +2,8 @@ import { getRouteApi } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useGame } from "@/hooks/useAddGame";
 import { useGameTournaments } from "@/hooks/useTournaments";
+import { useGameRecording } from "@/hooks/useClubYoutube";
+import YoutubeEmbed from "@/components/live/YoutubeEmbed";
 import { fmt } from "@/libs/algorithms/dayLabel";
 import PageTitle from "@/components/layout/PageTitle";
 import FeedMatchCard from "@/components/social/feed/FeedMatchCard";
@@ -32,6 +34,7 @@ export default function GameDetailPage() {
   // The same lookup the feed uses, asked for one game: a fixture belongs to its
   // bracket, and the card says so at the top when it does.
   const { data: gameTournaments } = useGameTournaments(game ? [game.id] : []);
+  const { data: recording } = useGameRecording(gameId);
 
   if (isLoading) {
     return (
@@ -97,6 +100,10 @@ export default function GameDetailPage() {
           detail
         />
       </Card>
+
+      {recording && (
+        <YoutubeEmbed broadcastId={recording} title={t("games.recording")} />
+      )}
     </div>
   );
 }

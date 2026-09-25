@@ -12,14 +12,13 @@ import {
  * Every card's layout, drawn against a Canvas-2D-shaped context and nothing
  * else.
  *
- * Two places paint them: a browser canvas, for the PNG a phone hands to its
- * share sheet (libs/browser/resultCard.ts), and pureimage on the server, for
- * the link previews every crawler fetches (libs/server/cardImage.ts). The two
- * must agree — a club that shares a card and a stranger who sees a preview are
- * looking at the same thing — so the geometry lives here once and the callers
- * differ only in how they make a context, load an image and name a font.
+ * Painted by pureimage on the server (libs/server/cardImage.ts), behind the
+ * routes in routes/api/og — for the link previews crawlers fetch and for the
+ * PNG a phone's share button fetches from the same route (`?size=square`).
+ * The context is an interface rather than pureimage's own type so the geometry
+ * here does not care which rasteriser draws it.
  *
- * Three cards, one chrome: the felt, the accent rule, the club and our mark in
+ * Four cards, one chrome: the felt, the accent rule, the club and our mark in
  * the header, a title and a subtitle. `paintChrome` draws all of that and hands
  * back the measurements; each card then paints its own body underneath.
  */

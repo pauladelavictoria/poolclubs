@@ -54,7 +54,6 @@ export default function PendingClubPanel({
           toast.error(
             t(
               dbErrorMessage(err, "joinClub", {
-                denied: "common.deniedError",
                 fallback: "club.joinError",
               }),
             ),

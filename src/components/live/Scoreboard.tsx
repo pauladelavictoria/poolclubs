@@ -1,15 +1,14 @@
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { LuMinus, LuPlus, LuX } from "react-icons/lu";
 import { Avatar } from "@/components/ui/Avatar";
 import { DisciplineBall } from "@/components/ui/Ball";
 import { Button, IconButton } from "@/components/ui/Button";
-import { keys } from "@/libs/queryKeys";
+import { useRefetchLiveOnVisible } from "@/hooks/useLiveMatch";
 import { isMatchOver, leaderOf } from "@/libs/algorithms/night";
 import { useDialog } from "@/hooks/useDialog";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import type { LiveMatch, Player } from "@/types";
 import { useT } from "@/i18n";
+import { CountryFlag } from "@/components/ui/Flag";
 
 type ScoreboardVariant = "play" | "spectate" | "tv";
 
@@ -61,25 +60,13 @@ export default function Scoreboard({
   isFinishing?: boolean;
 }) {
   const { t } = useT();
-  const queryClient = useQueryClient();
   const canScore = variant === "play";
 
   // The wall display holds one for the whole screen; a lock per match on it
   // would be four sentinels doing one job.
   useWakeLock(variant !== "tv");
 
-  // Realtime drops frames while a tab is hidden, and react-query's default
-  // staleness would then render the score from before the phone went in a
-  // pocket. This screen is the one place where being confidently wrong shows.
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState !== "visible") return;
-      queryClient.invalidateQueries({ queryKey: keys.liveMatch.all });
-      queryClient.invalidateQueries({ queryKey: keys.liveMatches.all });
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [queryClient]);
+  useRefetchLiveOnVisible();
 
   const over = isMatchOver(match);
   const leader = leaderOf(match);
@@ -227,6 +214,7 @@ export default function Scoreboard({
                   style={{ fontSize: "var(--text-scoreboard-name)" }}
                 >
                   {p.name}
+                  <CountryFlag country={p.country} />
                 </span>
               </div>
             ))}

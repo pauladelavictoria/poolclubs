@@ -5,10 +5,18 @@ import { sessionQuery } from "@/queries/session";
 import type { Membership } from "@/types";
 
 /** Owner of the GLOBAL drill library — not a club role. Drills are shared by
- *  every club, so this stays a single hardcoded player. Mirrored by the RLS
- *  policies on `drills` in sql/schema.sql — change both together.
- *  Club permissions are `isClubAdmin` below and live in the clubs table. */
-export const ADMIN_PLAYER_ID = 1;
+ *  every club, so this stays a single hardcoded player. Club permissions are
+ *  `isClubAdmin` below and live in the clubs table. */
+const ADMIN_PLAYER_ID = 1;
+
+/**
+ * Whether this person is the operator: whoever owns player #1, from whichever
+ * club they happen to be looking at. Mirrors is_drill_admin in sql/schema.sql —
+ * any membership, not the active club's, which is what the drill pages used to
+ * check and why the operator lost the edit button in every other club.
+ */
+export const isOperator = (memberships: { id: number }[]) =>
+  memberships.some((m) => m.id === ADMIN_PLAYER_ID);
 
 const clubRoute = getRouteApi("/app/_authed/$clubSlug");
 const rootRoute = getRouteApi("__root__");
@@ -68,7 +76,7 @@ export const useAuth = () => {
     player: ctx.player as Membership,
     isMember: ctx.isMember,
     isClubAdmin: ctx.isClubAdmin,
-    isAdmin: ctx.player.id === ADMIN_PLAYER_ID,
+    isAdmin: isOperator(ctx.memberships),
 
     // Switching club is a navigation now, not a localStorage write followed by
     // wiping the whole query cache: the cache keys are already club-scoped, and

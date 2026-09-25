@@ -3,14 +3,18 @@ import PublicTournamentPage from "@/pages/public/PublicTournamentPage";
 import { publicClubRosterQuery } from "@/queries/public/clubs";
 import { publicTournamentQuery } from "@/queries/public/tournaments";
 import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
-// Shared with the card route this page's og:image points at, so the sentence
-// and the picture cannot disagree about what phase the tournament is in.
+import { resolveBracket, tournamentResults } from "@/libs/algorithms/bracket";
+import { podiumIds } from "@/libs/algorithms/cards";
+// The dictionary, not the reader's language: link previews are Spanish — a
+// crawler's Accept-Language is not the reader's — and the card route this
+// page's og:image points at says the same status from the same key.
 //
 // The entrant count was in the description instead of the status, and a card
 // cached by a chat app the day entries opened kept claiming "4 entrants" for
 // the rest of the tournament. Status goes stale too, but only once per phase
 // and in the safe direction.
-import { FORMAT_PROSE, STATUS_PROSE } from "@/libs/algorithms/tournamentProse";
+import { translate } from "@/i18n/translate";
+import { FORMAT_KEY, type TournamentMatch } from "@/types";
 
 export const Route = createFileRoute("/_public/tournaments/$tournamentId")({
   loader: async ({ context, params }) => {
@@ -35,6 +39,13 @@ export const Route = createFileRoute("/_public/tournaments/$tournamentId")({
   head: ({ loaderData }) => {
     if (!loaderData) return {};
     const { tournament, origin } = loaderData;
+    // The same reading the card route draws from, so the version changes
+    // exactly when the picture does — a corrected result included.
+    const { podium } = tournamentResults(
+      tournament,
+      tournament.tournament_players.map((e) => e.player_id),
+      resolveBracket(tournament.tournament_matches as TournamentMatch[]),
+    );
     const path = `/tournaments/${tournament.id}`;
     const club = tournament.club?.name;
     return {
@@ -42,8 +53,8 @@ export const Route = createFileRoute("/_public/tournaments/$tournamentId")({
         title: `${tournament.name} · PoolClubs`,
         description: [
           club && `${club}.`,
-          `${STATUS_PROSE[tournament.status]},`,
-          `${FORMAT_PROSE[tournament.format]}.`,
+          `${translate("es", `tournaments.status.${tournament.status}`)},`,
+          `${translate("es", `tournaments.${FORMAT_KEY[tournament.format]}`).toLowerCase()}.`,
           "Cuadro, clasificación y resultados.",
         ]
           .filter(Boolean)
@@ -55,9 +66,9 @@ export const Route = createFileRoute("/_public/tournaments/$tournamentId")({
         // back the podium card once a member's browser has drawn one, and the
         // app's default card until then.
         // `v` is a cache-buster, not a parameter the route reads — see the club
-        // route for why. A tournament's card is the default one until it
-        // finishes and a podium exists, so its status is what has to change.
-        image: `/api/og/tournaments/${tournament.id}.png?v=${tournament.status}`,
+        // route for why. The card is the phase until it finishes and the
+        // podium after, so both are what has to change it.
+        image: `/api/og/tournaments/${tournament.id}.png?v=${tournament.status}-${podiumIds(podium).join(".")}`,
         // 1200x630, whether it is the podium card or the default one the route
         // falls back to. Without this the card previews as a thumbnail.
         wideImage: true,

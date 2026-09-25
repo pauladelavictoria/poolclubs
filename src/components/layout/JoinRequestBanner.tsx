@@ -44,13 +44,7 @@ export default function JoinRequestBanner() {
               onClick={() =>
                 approveMember.mutate(m.id, {
                   onError: (err) =>
-                    toast.error(
-                      t(
-                        dbErrorMessage(err, "approveMember", {
-                          denied: "common.deniedError",
-                        }),
-                      ),
-                    ),
+                    toast.error(t(dbErrorMessage(err, "approveMember"))),
                 })
               }
             >
@@ -62,13 +56,7 @@ export default function JoinRequestBanner() {
               onClick={() =>
                 rejectMember.mutate(m.id, {
                   onError: (err) =>
-                    toast.error(
-                      t(
-                        dbErrorMessage(err, "rejectMember", {
-                          denied: "common.deniedError",
-                        }),
-                      ),
-                    ),
+                    toast.error(t(dbErrorMessage(err, "rejectMember"))),
                 })
               }
             >

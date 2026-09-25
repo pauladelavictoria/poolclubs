@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import OperatorPage from "@/pages/app/OperatorPage";
-import { ADMIN_PLAYER_ID } from "@/hooks/useAuth";
+import { isOperator } from "@/hooks/useAuth";
 
 /**
  * The operator's own page: every club at once.
@@ -15,10 +15,7 @@ import { ADMIN_PLAYER_ID } from "@/hooks/useAuth";
  */
 export const Route = createFileRoute("/app/_authed/ops")({
   beforeLoad: ({ context }) => {
-    const isOperator = context.memberships.some(
-      (m) => m.id === ADMIN_PLAYER_ID,
-    );
-    if (!isOperator) throw redirect({ to: "/app" });
+    if (!isOperator(context.memberships)) throw redirect({ to: "/app" });
   },
   component: OperatorPage,
 });

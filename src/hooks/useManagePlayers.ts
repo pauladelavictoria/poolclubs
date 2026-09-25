@@ -7,6 +7,7 @@ import type { Category } from "@/types";
 type CreatePlayerInput = {
   name: string;
   category: Category;
+  country?: string | null;
 };
 
 /**
@@ -29,6 +30,8 @@ type UpdatePlayerInput = {
    *  an account goes through hideMember below instead. See sql/schema.sql for
    *  what this does and does not hide. */
   is_public?: boolean;
+  /** ISO 3166 alpha-2, or null for none. Same reach as `name`. */
+  country?: string | null;
 };
 
 export const useManagePlayers = () => {
@@ -64,6 +67,23 @@ export const useManagePlayers = () => {
           })
           .throwOnError();
 
+        // ponytail: add_guest_player takes no country, so it is set after, on
+        // the person the RPC just made. Fold it into the RPC if this ever
+        // needs to be one transaction.
+        if (newPlayer.country) {
+          const { data: row } = await supabase
+            .from("players")
+            .select("person_id")
+            .eq("id", data as number)
+            .single()
+            .throwOnError();
+          await supabase
+            .from("people")
+            .update({ country: newPlayer.country })
+            .eq("id", row.person_id)
+            .throwOnError();
+        }
+
         return data as number;
       },
       onSuccess,
@@ -90,10 +110,15 @@ export const useManagePlayers = () => {
         // Spelt out rather than filtered from an object: Supabase types an
         // update by its literal keys, and a Record built at runtime widens to a
         // string index that satisfies none of them.
-        const personPatch: { name?: string; is_public?: boolean } = {};
+        const personPatch: {
+          name?: string;
+          is_public?: boolean;
+          country?: string | null;
+        } = {};
         if (person.name !== undefined) personPatch.name = person.name;
         if (person.is_public !== undefined)
           personPatch.is_public = person.is_public;
+        if (person.country !== undefined) personPatch.country = person.country;
 
         if (Object.keys(personPatch).length > 0) {
           // .select(), and the row count checked: an UPDATE that no policy lets

@@ -8,6 +8,8 @@ import {
   createClubStream,
   deleteClubStream,
   getStreamedTableIds,
+  getLiveBroadcasts,
+  getGameRecording,
   revealClubStream,
 } from "@/libs/server/youtube.functions";
 
@@ -44,6 +46,26 @@ export const useStreamedTableIds = () => {
     enabled: !!activeClubId,
   });
 };
+
+/** Broadcasts live now, keyed by live match id. Polled at the reconciler's
+ *  own pace: it only moves a session to live once a minute. */
+export const useLiveBroadcasts = () => {
+  const { activeClubId } = useAuth();
+  return useQuery({
+    queryKey: keys.liveBroadcasts.in(activeClubId),
+    queryFn: () => getLiveBroadcasts({ data: { clubId: activeClubId! } }),
+    enabled: !!activeClubId,
+    refetchInterval: 60_000,
+  });
+};
+
+/** A filed game's YouTube broadcast id, or null. Not polled: a finished
+ *  game's recording is there by the time anyone opens its page, or never. */
+export const useGameRecording = (gameId: string) =>
+  useQuery({
+    queryKey: keys.gameRecording.of(gameId),
+    queryFn: () => getGameRecording({ data: { gameId } }),
+  });
 
 export const useManageClubYoutube = () => {
   const queryClient = useQueryClient();

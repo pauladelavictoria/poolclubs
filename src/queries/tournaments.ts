@@ -160,7 +160,7 @@ export const leagueFixturesQuery = (clubId: number | null | undefined) =>
       const { data } = await supabase
         .from("tournament_matches")
         .select(
-          "id, p1_id, p2_id, tournament:tournaments!inner(id, name, discipline, race_to)",
+          "id, p1_id, p2_id, tournament:tournaments!inner(id, name, discipline, race_to), live:live_matches(id)",
         )
         .eq("tournament.club_id", clubId!)
         .eq("tournament.format", "league")
@@ -170,6 +170,10 @@ export const leagueFixturesQuery = (clubId: number | null | undefined) =>
         .not("p2_id", "is", null)
         .throwOnError();
 
-      return data as unknown as LeagueFixture[];
+      // One already on a table is taken: live_matches_tournament_match_key
+      // would refuse a second live match for it anyway.
+      return (
+        data as unknown as (LeagueFixture & { live: { id: string }[] })[]
+      ).filter((f) => f.live.length === 0);
     },
   });

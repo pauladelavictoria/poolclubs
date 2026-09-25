@@ -157,6 +157,15 @@ export const keys = {
     in: (clubId?: number | null) => ["streamed_table_ids", clubId] as const,
   },
 
+  /** Live broadcast ids by live match — the Watch player on /night. */
+  liveBroadcasts: {
+    all: ["live_broadcasts"] as const,
+    in: (clubId?: number | null) => ["live_broadcasts", clubId] as const,
+  },
+  gameRecording: {
+    of: (gameId: string) => ["game_recording", gameId] as const,
+  },
+
   tournaments: {
     all: ["tournaments"] as const,
     in: (clubId?: number | null) => ["tournaments", clubId] as const,
@@ -180,6 +189,7 @@ export const keys = {
      *  table offers to tag a match with, not just the signed-in player's own. */
     leagueFixtures: (clubId?: number | null) =>
       ["tournament", "league-fixtures", clubId] as const,
+    allLeagueFixtures: ["tournament", "league-fixtures"] as const,
   },
 
   comments: {

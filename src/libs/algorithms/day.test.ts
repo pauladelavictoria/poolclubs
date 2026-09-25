@@ -4,6 +4,8 @@ import {
   DAY_START_HOUR,
   dayKeyOf,
   dayRange,
+  hasPlayedTime,
+  playedAtFor,
   shiftKey,
   zoneOf,
 } from "./day";
@@ -95,9 +97,7 @@ describe("dayRange — the range the database is asked for", () => {
     ]) {
       const key = dayKeyOf(Date.parse(iso));
       const { from, to } = dayRange(key);
-      expect(iso >= from && iso < to, `${iso} is not inside ${key}`).toBe(
-        true,
-      );
+      expect(iso >= from && iso < to, `${iso} is not inside ${key}`).toBe(true);
     }
   });
 });
@@ -132,5 +132,43 @@ describe("zoneOf — the club's own zone", () => {
     expect(dayRange("2026-08-26", "Atlantic/Canary").from).not.toBe(
       dayRange("2026-08-26", "Europe/Madrid").from,
     );
+  });
+});
+
+describe("playedAtFor — a form date into played_at", () => {
+  const tz = "Europe/Madrid";
+  // 2026-09-25 21:30 in Madrid (UTC+2).
+  const now = new Date("2026-09-25T19:30:12.345Z");
+
+  it("backdates into the night it names, not the one before", () => {
+    const at = playedAtFor("2026-09-20", tz, undefined, now);
+    expect(dayKeyOf(new Date(at), tz)).toBe("2026-09-20");
+    expect(hasPlayedTime(new Date(at))).toBe(false);
+  });
+
+  it("stamps tonight's result now", () => {
+    expect(playedAtFor("2026-09-25", tz, undefined, now)).toBe(
+      now.toISOString(),
+    );
+    expect(hasPlayedTime(now)).toBe(true);
+  });
+
+  it("tonight is still yesterday's night before the start hour", () => {
+    const late = new Date("2026-09-25T23:10:05.001Z"); // 01:10 on the 26th
+    expect(playedAtFor("2026-09-25", tz, undefined, late)).toBe(
+      late.toISOString(),
+    );
+  });
+
+  it("a correction keeps its time, and moves by whole days if re-dated", () => {
+    const filed = new Date("2026-09-19T21:51:03.200Z"); // 23:51 on the 19th
+    expect(playedAtFor("2026-09-19", tz, filed, now)).toBe(filed.toISOString());
+    const moved = new Date(playedAtFor("2026-09-18", tz, filed, now));
+    expect(dayKeyOf(moved, tz)).toBe("2026-09-18");
+    expect(moved.getTime() - filed.getTime()).toBe(-86_400_000);
+  });
+
+  it("reads the old local-midnight stamps as untimed too", () => {
+    expect(hasPlayedTime(new Date("2026-09-19T22:00:00.000Z"))).toBe(false);
   });
 });

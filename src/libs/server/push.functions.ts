@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseServer } from "@/libs/supabase/server";
-import { pushText, type PushKey } from "@/libs/algorithms/pushText";
+import { translate, type Key } from "@/i18n/translate";
 
 /**
  * Sending a web push.
@@ -86,7 +86,7 @@ export const sendPush = createServerFn({ method: "POST" })
           },
           JSON.stringify({
             title: text.title,
-            body: pushText(target.lang, text.key, text.vars),
+            body: translate(target.lang, text.key, text.vars),
             url: text.url,
             tag: text.tag,
           } satisfies PushPayload),
@@ -145,7 +145,7 @@ function log(reason: string, data: z.infer<typeof input>): null {
  *  translating and tells a member of two clubs which one just buzzed. */
 type PushText = {
   title: string;
-  key: PushKey;
+  key: Key;
   vars: Record<string, string>;
   url: string;
   /** Same composite ids the bell uses for AppNotification.id, so re-sending an

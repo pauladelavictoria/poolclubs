@@ -56,7 +56,6 @@ export default function TrainingPlanPage() {
           toast.error(
             t(
               dbErrorMessage(err, "generatePlan", {
-                denied: "common.deniedError",
                 fallback: "drills.planError",
               }),
             ),

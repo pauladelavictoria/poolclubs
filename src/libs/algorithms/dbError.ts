@@ -8,10 +8,14 @@ import type { Key } from "@/i18n";
  * it is not: somebody reads a generic message when the real answer was that
  * the row was refused by a policy, or that it already existed.
  *
- * Postgres says which. 23505 is a unique index; 42501 and PostgREST's own
- * PGRST301/PGRST116 are RLS turning the write away; a `RAISE EXCEPTION` from
- * one of the database's own guards (sql/schema.sql, for the live-match
- * ones) arrives as P0001 carrying its own sentence.
+ * Postgres says which. 23505 is a unique index; 42501 is RLS turning the
+ * write away, and so is PGRST116 — an update RLS filtered to zero rows is what
+ * `.single()` then finds nothing in. PGRST3xx is the session's token being
+ * refused (expired, most often), which is not a permissions answer and must
+ * not read like one. A `RAISE EXCEPTION` from one of the database's own guards
+ * (sql/schema.sql) arrives as P0001 carrying its own sentence. Every other
+ * PostgREST code (a schema mismatch, a missing function) is a bug, not
+ * something the reader can act on, so it falls back.
  *
  * The caller supplies the key for each category it can tell a better story
  * about — a duplicate table label reads differently from a duplicate
@@ -27,8 +31,12 @@ const asDbError = (error: unknown): DbError =>
 export type DbErrorKeys = {
   /** 23505 — a unique index refused it. */
   duplicate?: Key;
-  /** 42501 or a PostgREST PGRST3xx/PGRST1xx — RLS turned it away. */
+  /** 42501 or PGRST116 — RLS turned it away. Defaults to
+   *  `common.deniedError`. */
   denied?: Key;
+  /** PGRST3xx — the session's token was refused. Defaults to
+   *  `common.sessionExpired`. */
+  expired?: Key;
   /** P0001 — one of the database's own guards raised it. Only worth a key
    *  when the guard's message is itself the useful part. */
   refused?: Key;
@@ -38,9 +46,9 @@ export type DbErrorKeys = {
   fallback?: Key;
 };
 
-/** Starting or abandoning a live match — the one place all three categories
- *  have their own accurate wording today. */
-export const LIVE_MATCH_KEYS: DbErrorKeys = {
+/** Starting a live match — the one place all three categories have their own
+ *  accurate wording today. Not for abandoning one: that wording says "start". */
+export const START_MATCH_KEYS: DbErrorKeys = {
   duplicate: "live.startError",
   denied: "live.startDenied",
   refused: "live.startRefused",
@@ -59,10 +67,12 @@ export function dbErrorMessage(
   console.error(`${where}:`, db?.code ?? "(no code)", db?.message, error);
 
   const fallback = keys.fallback ?? "common.error";
-  if (db?.code === "23505") return keys.duplicate ?? fallback;
-  if (db?.code === "42501" || db?.code?.startsWith("PGRST"))
-    return keys.denied ?? fallback;
-  if (db?.code === "P0001" && db.message) return keys.refused ?? fallback;
+  const code = db?.code ?? "";
+  if (code === "23505") return keys.duplicate ?? fallback;
+  if (code === "42501" || code === "PGRST116")
+    return keys.denied ?? "common.deniedError";
+  if (code.startsWith("PGRST3")) return keys.expired ?? "common.sessionExpired";
+  if (code === "P0001" && db?.message) return keys.refused ?? fallback;
 
   return fallback;
 }

@@ -67,13 +67,7 @@ export default function ChallengesPage() {
 
   const { nameOf } = usePlayerLookup();
   const onError = (err: unknown) =>
-    toast.error(
-      t(
-        dbErrorMessage(err, "challenge", {
-          denied: "common.deniedError",
-        }),
-      ),
-    );
+    toast.error(t(dbErrorMessage(err, "challenge")));
 
   const open = (challenges ?? []).filter(
     (c) => c.status === "pending" || c.status === "accepted",

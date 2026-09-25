@@ -992,6 +992,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           error: string | null
+          game_id: string | null
           id: number
           live_match_id: string
           notified_at: string | null
@@ -1009,6 +1010,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           error?: string | null
+          game_id?: string | null
           id?: number
           live_match_id: string
           notified_at?: string | null
@@ -1026,6 +1028,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           error?: string | null
+          game_id?: string | null
           id?: number
           live_match_id?: string
           notified_at?: string | null
@@ -1043,6 +1046,13 @@ export type Database = {
             columns: ["club_stream_id"]
             isOneToOne: false
             referencedRelation: "club_streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_sessions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
             referencedColumns: ["id"]
           },
         ]
@@ -1423,7 +1433,18 @@ export type Database = {
         Args: { club_name: string; p_owner?: string }
         Returns: number
       }
+      cut_fixtures: {
+        Args: {
+          p_drop?: number[]
+          p_fixtures: Json
+          p_from: string
+          p_to: string
+          p_tournament: number
+        }
+        Returns: undefined
+      }
       finish_live_match: { Args: { p_id: string }; Returns: string }
+      game_winner: { Args: { g: string }; Returns: number }
       hide_member: { Args: { p_person_id: number }; Returns: undefined }
       is_club_admin: { Args: { cid: number }; Returns: boolean }
       is_club_device: { Args: { cid: number }; Returns: boolean }

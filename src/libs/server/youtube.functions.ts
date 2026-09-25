@@ -54,6 +54,55 @@ export const getStreamedTableIds = createServerFn({ method: "GET" })
     return (rows ?? []).map((r) => r.table_id);
   });
 
+/**
+ * Broadcasts live right now, by live_match_id — the Watch player on /night.
+ * Unlisted ones included, so gated on membership rather than just a session:
+ * an unlisted id is the whole secret, and only the players' own club sees it.
+ */
+export const getLiveBroadcasts = createServerFn({ method: "GET" })
+  .validator(clubIdInput)
+  .handler(async ({ data }) => {
+    const { data: isMember } = await getSupabaseServer().rpc(
+      "is_club_member",
+      { cid: data.clubId },
+    );
+    if (!isMember) throw new Error("not a club member");
+
+    const { data: rows } = await getSupabaseServiceRole()
+      .from("stream_sessions")
+      .select("live_match_id, broadcast_id, club_streams!inner(club_id)")
+      .eq("state", "live")
+      .eq("club_streams.club_id", data.clubId);
+    return Object.fromEntries(
+      (rows ?? [])
+        .filter((r) => r.broadcast_id)
+        .map((r) => [r.live_match_id, r.broadcast_id!]),
+    ) as Record<string, string>;
+  });
+
+/**
+ * The recording of one filed game, if it has one — the player on the game's
+ * page. Stamped onto the session by finish_live_match(). Same member gate as
+ * getLiveBroadcasts, checked against the camera's club once the row is found.
+ */
+export const getGameRecording = createServerFn({ method: "GET" })
+  .validator(z.object({ gameId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    const { data: row } = await getSupabaseServiceRole()
+      .from("stream_sessions")
+      .select("broadcast_id, club_streams!inner(club_id)")
+      .eq("game_id", data.gameId)
+      .in("state", ["live", "complete"])
+      .maybeSingle();
+    if (!row?.broadcast_id) return null;
+
+    const { data: isMember } = await getSupabaseServer().rpc(
+      "is_club_member",
+      { cid: row.club_streams.club_id },
+    );
+    return isMember ? row.broadcast_id : null;
+  });
+
 /** Connection state only — channel_title / connected_at, never the token
  *  (§2.2's "Security" note: owners see this through a narrow read, never the
  *  refresh_token_enc column). */

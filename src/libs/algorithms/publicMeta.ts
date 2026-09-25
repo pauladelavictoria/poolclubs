@@ -33,8 +33,8 @@ const FALLBACK_IMAGE: Record<OgFallback, string> = {
 };
 
 /** The size of every file in FALLBACK_IMAGE and of every generated card — the
- *  files in public/og, libs/server/cardImage.ts and libs/browser/resultCard.ts
- *  are all 1200x630. Declaring it lets a preview renderer lay the card out
+ *  files in public/og and libs/server/cardImage.ts's wide cards are all
+ *  1200x630. Declaring it lets a preview renderer lay the card out
  *  before the image has downloaded, which is the difference between a wide card
  *  and a small one in the feeds that give up waiting. Omitted for a club logo or
  *  an avatar, whose size we do not know. */

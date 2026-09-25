@@ -54,7 +54,6 @@ export default function ClubRequestPage() {
           toast.error(
             t(
               dbErrorMessage(err, "requestClub", {
-                denied: "common.deniedError",
                 fallback: "clubRequest.error",
               }),
             ),

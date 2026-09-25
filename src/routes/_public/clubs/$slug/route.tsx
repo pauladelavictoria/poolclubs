@@ -1,4 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import { translate } from "@/i18n/translate";
 import PublicClubPage from "@/pages/public/PublicClubPage";
 import {
   publicClubUnclaimedQuery,
@@ -54,7 +55,7 @@ export const Route = createFileRoute("/_public/clubs/$slug")({
     return {
       meta: publicMeta({
         title: `${club.name} · PoolClubs`,
-        description: `${club.name}: ${club.member_count} miembros, con rankings, resultados de partidas y torneos.`,
+        description: `${club.name}: ${translate("es", "public.publicClubs.members", { n: club.member_count })}, con rankings, resultados de partidas y torneos.`,
         path,
         origin,
         // The club's own card — name, city, the faces of who plays there —

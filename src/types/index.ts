@@ -85,11 +85,7 @@ export type Person = Row<"people">;
  *  "7ft" English Pool table are different tables that happen to round to the
  *  same nominal length. */
 export type TableType =
-  | "american_pool"
-  | "english_pool"
-  | "snooker"
-  | "carom"
-  | "chinese_pool";
+  "american_pool" | "english_pool" | "snooker" | "carom" | "chinese_pool";
 
 export const TABLE_TYPES: TableType[] = [
   "american_pool",
@@ -170,9 +166,7 @@ export type Challenge = Omit<Stamped<Row<"challenges">>, "status"> & {
  *  CHECK. A tournament is the one target readable outside its club: it is what
  *  a public results page carries. */
 export type SocialTarget =
-  | { gameId: string }
-  | { drillLogId: number }
-  | { tournamentId: number };
+  { gameId: string } | { drillLogId: number } | { tournamentId: number };
 
 export type Comment = Stamped<Row<"comments">>;
 
@@ -317,6 +311,40 @@ export type Tournament = Omit<
   /** Times each pair meets in a league or inside a group. */
   legs: 1 | 2;
 };
+
+/** What the tournament form edits, and what creating one writes — the
+ *  organiser's choices, nothing the app or the database fills in. Picked off
+ *  the row so a new column is one edit, not four. */
+export const TOURNAMENT_FIELDS = [
+  "name",
+  "starts_on",
+  "ends_on",
+  "entry_fee",
+  "notes",
+  "requires_payment",
+  "format",
+  "category",
+  "legs",
+  "advance",
+  "single_from",
+  "discipline",
+  "race_to",
+  "race_semi",
+  "race_final",
+  "points_win",
+  "points_play",
+] as const;
+
+export type TournamentValues = Pick<
+  Tournament,
+  (typeof TOURNAMENT_FIELDS)[number]
+>;
+
+/** A tournament's own settings, off the row — what the edit form starts from. */
+export const tournamentValues = (t: Tournament): TournamentValues =>
+  Object.fromEntries(
+    TOURNAMENT_FIELDS.map((field) => [field, t[field]]),
+  ) as TournamentValues;
 
 export type TournamentPlayer = Row<"tournament_players">;
 

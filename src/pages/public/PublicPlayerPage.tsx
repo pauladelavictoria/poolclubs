@@ -17,6 +17,7 @@ import {
 } from "@/queries/public/clubs";
 import type { PublicPersonWithClubs } from "@/queries/public/players";
 import { useT } from "@/i18n";
+import { CountryFlag } from "@/components/ui/Flag";
 
 const route = getRouteApi("/_public/players/$playerSlug");
 
@@ -276,6 +277,7 @@ function PlayerHero({
             <div className="min-w-0">
               <h1 className={headlineClasses("display", "truncate")}>
                 {person.name}
+                <CountryFlag country={person.country} />
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
                 {person.memberships.map(({ id, club }) => (

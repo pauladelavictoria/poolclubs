@@ -534,6 +534,44 @@ END $$;
 ALTER FUNCTION "public"."create_club"("club_name" "text", "p_owner" "uuid") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."cut_fixtures"("p_tournament" integer, "p_from" "text", "p_to" "text", "p_fixtures" "jsonb", "p_drop" integer[] DEFAULT '{}'::integer[]) RETURNS "void"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  current_status text;
+BEGIN
+  IF NOT is_club_admin(tournament_club(p_tournament)) THEN
+    RAISE EXCEPTION 'only the club can start a tournament'
+      USING ERRCODE = '42501';
+  END IF;
+
+  -- The lock is what makes a double tap, or two admins, one draw.
+  SELECT status INTO current_status FROM tournaments
+  WHERE id = p_tournament FOR UPDATE;
+  IF current_status IS DISTINCT FROM p_from THEN
+    RAISE EXCEPTION 'this tournament has already moved on';
+  END IF;
+
+  IF jsonb_array_length(p_fixtures) = 0 THEN
+    RAISE EXCEPTION 'not enough entrants';
+  END IF;
+
+  DELETE FROM tournament_players
+  WHERE tournament_id = p_tournament AND player_id = ANY (p_drop);
+
+  INSERT INTO tournament_matches
+  SELECT (jsonb_populate_record(NULL::tournament_matches,
+            f || jsonb_build_object('tournament_id', p_tournament))).*
+  FROM jsonb_array_elements(p_fixtures) AS f;
+
+  UPDATE tournaments SET status = p_to WHERE id = p_tournament;
+END $$;
+
+
+ALTER FUNCTION "public"."cut_fixtures"("p_tournament" integer, "p_from" "text", "p_to" "text", "p_fixtures" "jsonb", "p_drop" integer[]) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."finish_live_match"("p_id" "uuid") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -541,7 +579,6 @@ CREATE OR REPLACE FUNCTION "public"."finish_live_match"("p_id" "uuid") RETURNS "
 DECLARE
   m public.live_matches;
   g uuid;
-  w bigint;
 BEGIN
   SELECT * INTO m FROM live_matches WHERE id = p_id FOR UPDATE;
   IF m.id IS NULL THEN
@@ -573,13 +610,14 @@ BEGIN
   END IF;
 
   IF m.tournament_match_id IS NOT NULL THEN
-    w := CASE WHEN m.player_1_score > m.player_2_score
-              THEN m.player_1_id ELSE m.player_2_id END;
-    -- tournament_match_guard still fires and permits exactly these two columns
-    -- for a non-admin, which is the validation this would otherwise repeat.
-    UPDATE tournament_matches SET game_id = g, winner_id = w
-    WHERE id = m.tournament_match_id;
+    -- winner_id is derived by tournament_matches_derive_winner.
+    UPDATE tournament_matches SET game_id = g
+    WHERE id = m.tournament_match_id AND winner_id IS NULL;
   END IF;
+
+  -- The recording outlives the live row: this is what lets the game's own
+  -- page find it (getGameRecording). No-op when nothing was recorded.
+  UPDATE stream_sessions SET game_id = g WHERE live_match_id = p_id;
 
   DELETE FROM live_matches WHERE id = p_id;
   RETURN g;
@@ -587,6 +625,32 @@ END $$;
 
 
 ALTER FUNCTION "public"."finish_live_match"("p_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."game_rederive_fixture"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  UPDATE tournament_matches SET game_id = NEW.id WHERE game_id = NEW.id;
+  RETURN NULL;
+END $$;
+
+
+ALTER FUNCTION "public"."game_rederive_fixture"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."game_winner"("g" "uuid") RETURNS bigint
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT CASE WHEN player_1_score > player_2_score
+              THEN player_1_id ELSE player_2_id END
+  FROM games WHERE id = g
+$$;
+
+
+ALTER FUNCTION "public"."game_winner"("g" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."hide_member"("p_person_id" bigint) RETURNS "void"
@@ -1433,6 +1497,36 @@ $$;
 ALTER FUNCTION "public"."tournament_club"("tid" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."tournament_match_derive_winner"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  -- One fixture, one result: a member can't file a second game over it. The
+  -- club admin can, which is how a wrong link gets corrected.
+  IF OLD.winner_id IS NOT NULL
+     AND NEW.game_id IS DISTINCT FROM OLD.game_id
+     AND NEW.game_id IS NOT NULL
+     AND NOT public.is_club_admin(public.tournament_club(NEW.tournament_id))
+  THEN
+    RAISE EXCEPTION 'this fixture already has a result';
+  END IF;
+
+  IF NEW.game_id IS NOT NULL THEN
+    NEW.winner_id := public.game_winner(NEW.game_id);
+  ELSIF OLD.game_id IS NOT NULL THEN
+    -- The game was deleted (FK ON DELETE SET NULL) or unlinked: the fixture
+    -- is unplayed again, not won by a result that no longer exists.
+    NEW.winner_id := NULL;
+  END IF;
+
+  RETURN NEW;
+END $$;
+
+
+ALTER FUNCTION "public"."tournament_match_derive_winner"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."tournament_match_guard"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     SET "search_path" TO 'public'
@@ -1986,6 +2080,7 @@ CREATE TABLE IF NOT EXISTS "public"."stream_sessions" (
     "player_2_id" bigint,
     "player_1b_id" bigint,
     "player_2b_id" bigint,
+    "game_id" "uuid",
     CONSTRAINT "stream_sessions_privacy_status_check" CHECK (("privacy_status" = ANY (ARRAY['public'::"text", 'unlisted'::"text"]))),
     CONSTRAINT "stream_sessions_state_check" CHECK (("state" = ANY (ARRAY['created'::"text", 'bound'::"text", 'live'::"text", 'complete'::"text", 'error'::"text"])))
 );
@@ -2395,6 +2490,10 @@ CREATE UNIQUE INDEX "live_matches_one_per_table" ON "public"."live_matches" USIN
 
 
 
+CREATE UNIQUE INDEX "live_matches_tournament_match_key" ON "public"."live_matches" USING "btree" ("tournament_match_id") WHERE ("tournament_match_id" IS NOT NULL);
+
+
+
 CREATE UNIQUE INDEX "people_slug_key" ON "public"."people" USING "btree" ("slug");
 
 
@@ -2443,6 +2542,10 @@ CREATE UNIQUE INDEX "reactions_tournament_once" ON "public"."reactions" USING "b
 
 
 
+CREATE INDEX "stream_sessions_game_id_idx" ON "public"."stream_sessions" USING "btree" ("game_id");
+
+
+
 CREATE INDEX "tournament_matches_t_idx" ON "public"."tournament_matches" USING "btree" ("tournament_id", "bracket", "group_no", "round", "slot");
 
 
@@ -2456,6 +2559,10 @@ CREATE OR REPLACE TRIGGER "clubs_set_slug" BEFORE INSERT ON "public"."clubs" FOR
 
 
 CREATE OR REPLACE TRIGGER "clubs_timezone_check" BEFORE INSERT OR UPDATE OF "timezone" ON "public"."clubs" FOR EACH ROW EXECUTE FUNCTION "public"."clubs_timezone_guard"();
+
+
+
+CREATE OR REPLACE TRIGGER "games_rederive_fixture" AFTER UPDATE OF "player_1_id", "player_2_id", "player_1_score", "player_2_score" ON "public"."games" FOR EACH ROW EXECUTE FUNCTION "public"."game_rederive_fixture"();
 
 
 
@@ -2484,6 +2591,10 @@ CREATE OR REPLACE TRIGGER "players_guard_membership" BEFORE UPDATE ON "public"."
 
 
 CREATE OR REPLACE TRIGGER "players_recount_members" AFTER INSERT OR DELETE OR UPDATE OF "status", "club_id" ON "public"."players" FOR EACH ROW EXECUTE FUNCTION "public"."clubs_recount_members"();
+
+
+
+CREATE OR REPLACE TRIGGER "tournament_matches_derive_winner" BEFORE UPDATE ON "public"."tournament_matches" FOR EACH ROW EXECUTE FUNCTION "public"."tournament_match_derive_winner"();
 
 
 
@@ -2738,6 +2849,11 @@ ALTER TABLE ONLY "public"."reactions"
 
 ALTER TABLE ONLY "public"."stream_sessions"
     ADD CONSTRAINT "stream_sessions_club_stream_id_fkey" FOREIGN KEY ("club_stream_id") REFERENCES "public"."club_streams"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."stream_sessions"
+    ADD CONSTRAINT "stream_sessions_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
 
 
 
@@ -3540,9 +3656,27 @@ GRANT ALL ON FUNCTION "public"."create_club"("club_name" "text", "p_owner" "uuid
 
 
 
+GRANT ALL ON FUNCTION "public"."cut_fixtures"("p_tournament" integer, "p_from" "text", "p_to" "text", "p_fixtures" "jsonb", "p_drop" integer[]) TO "anon";
+GRANT ALL ON FUNCTION "public"."cut_fixtures"("p_tournament" integer, "p_from" "text", "p_to" "text", "p_fixtures" "jsonb", "p_drop" integer[]) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."cut_fixtures"("p_tournament" integer, "p_from" "text", "p_to" "text", "p_fixtures" "jsonb", "p_drop" integer[]) TO "service_role";
+
+
+
 REVOKE ALL ON FUNCTION "public"."finish_live_match"("p_id" "uuid") FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."finish_live_match"("p_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."finish_live_match"("p_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."game_rederive_fixture"() TO "anon";
+GRANT ALL ON FUNCTION "public"."game_rederive_fixture"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."game_rederive_fixture"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."game_winner"("g" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."game_winner"("g" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."game_winner"("g" "uuid") TO "service_role";
 
 
 
@@ -3725,6 +3859,12 @@ GRANT ALL ON FUNCTION "public"."stream_session_recipients"("p_player_1_id" bigin
 GRANT ALL ON FUNCTION "public"."tournament_club"("tid" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."tournament_club"("tid" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."tournament_club"("tid" integer) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."tournament_match_derive_winner"() TO "anon";
+GRANT ALL ON FUNCTION "public"."tournament_match_derive_winner"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."tournament_match_derive_winner"() TO "service_role";
 
 
 

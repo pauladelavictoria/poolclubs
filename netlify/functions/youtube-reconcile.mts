@@ -6,9 +6,15 @@ import {
   refreshYoutubeAccessToken,
   insertBroadcast,
   bindBroadcast,
-  isStreamActive,
+  deleteBroadcast,
+  streamStatus,
   transitionBroadcast,
 } from "../../src/libs/server/youtube";
+import {
+  nextStreamStep,
+  wantedMatch,
+  type ActiveSession,
+} from "../../src/libs/algorithms/streamSession";
 import type { Database } from "../../src/types/database.types.gen";
 
 /**
@@ -30,21 +36,24 @@ import type { Database } from "../../src/types/database.types.gen";
  * sets no `[functions] directory`. If they conflict at deploy, the doc's
  * fallback is Supabase pg_cron + pg_net hitting a server route instead.
  */
-type StreamSession = Database["public"]["Tables"]["stream_sessions"]["Row"];
 type ClubStream = Pick<
   Database["public"]["Tables"]["club_streams"]["Row"],
   "id" | "club_id" | "table_id" | "youtube_stream_id" | "label"
 >;
 
 export default async () => {
+  const db = getSupabaseServiceRole();
+
+  // Before the YouTube gate, not after: a completed session can still be
+  // waiting on its mail after the YouTube credentials were removed.
+  await deliverCompletedSessions(db);
+
   if (!process.env.YOUTUBE_CLIENT_ID || !process.env.TOKEN_ENCRYPTION_KEY) {
     // Same bargain as VAPID/Resend elsewhere in the app: a build with no
     // YouTube secrets configured (dev, CI, a fresh deploy before OAuth is
     // set up) no-ops rather than failing every cron tick.
     return new Response("youtube not configured");
   }
-
-  const db = getSupabaseServiceRole();
 
   const [{ data: streams }, { data: connections }] = await Promise.all([
     db
@@ -84,13 +93,17 @@ export default async () => {
     }
   }
 
-  await deliverCompletedSessions(db);
-
   return new Response("ok");
 };
 
 export const config = { schedule: "* * * * *" };
 
+/**
+ * One table's tick: ask nextStreamStep what to do, do it, ask again — until it
+ * says wait, or the step is one that only a later tick can move on (opening a
+ * session, polling the encoder). The decisions, and their tests, are in
+ * libs/algorithms/streamSession.ts; this is only the I/O.
+ */
 async function reconcileTable(
   db: ReturnType<typeof getSupabaseServiceRole>,
   stream: ClubStream,
@@ -103,16 +116,12 @@ async function reconcileTable(
     )
     .eq("table_id", stream.table_id)
     .maybeSingle();
+  const wanted = wantedMatch(liveRow);
 
-  const wanted =
-    liveRow && (liveRow.tournament_match_id !== null || liveRow.record_opt_in)
-      ? liveRow
-      : null;
-
-  let active: StreamSession | null = (
+  let active: ActiveSession | null = (
     await db
       .from("stream_sessions")
-      .select("*")
+      .select("id, live_match_id, state, broadcast_id, privacy_status")
       .eq("club_stream_id", stream.id)
       .in("state", ["created", "bound", "live"])
       .order("created_at", { ascending: false })
@@ -120,84 +129,111 @@ async function reconcileTable(
       .maybeSingle()
   ).data;
 
-  // The match this session was tracking ended — the table went idle, or a
-  // new match already replaced it. Finalize before anything below runs.
-  if (active && active.live_match_id !== (wanted?.id ?? null)) {
-    const accessToken = await getAccessToken();
-    if (active.state === "live" && active.broadcast_id) {
-      await transitionBroadcast(accessToken, active.broadcast_id, "complete");
-      await db
-        .from("stream_sessions")
-        .update({ state: "complete", completed_at: new Date().toISOString() })
-        .eq("id", active.id);
-    } else {
-      // Never reached 'live' — nothing was actually broadcast, so there is
-      // no VOD to preserve and transition(complete) only accepts a
-      // broadcast that has been live or testing, so this is filed as an
-      // error rather than an API call YouTube would refuse.
-      await db
-        .from("stream_sessions")
-        .update({
+  const update = (
+    id: number,
+    patch: Database["public"]["Tables"]["stream_sessions"]["Update"],
+  ) => db.from("stream_sessions").update(patch).eq("id", id).throwOnError();
+
+  // Bounded: at most finish → insert → bind → poll in one tick.
+  for (let i = 0; i < 4; i++) {
+    const step = nextStreamStep(wanted, active);
+    switch (step.kind) {
+      case "wait":
+        return;
+
+      case "complete":
+        await transitionBroadcast(
+          await getAccessToken(),
+          step.broadcastId,
+          "complete",
+        );
+        await update(step.sessionId, {
+          state: "complete",
+          completed_at: new Date().toISOString(),
+        });
+        active = null;
+        break;
+
+      case "abandon":
+        // Nothing was broadcast, so there is nothing to keep: delete the
+        // empty broadcast rather than leave it on the club's channel.
+        if (step.broadcastId)
+          await deleteBroadcast(await getAccessToken(), step.broadcastId);
+        await update(step.sessionId, {
           state: "error",
           error: "match ended before the encoder connected",
-        })
-        .eq("id", active.id);
+        });
+        active = null;
+        break;
+
+      case "open":
+        await db
+          .from("stream_sessions")
+          .insert({
+            club_stream_id: stream.id,
+            live_match_id: step.matchId,
+            privacy_status: step.privacy,
+            state: "created",
+            // Snapshotted now because live_matches won't exist by the time
+            // this session reaches 'complete' — finish_live_match() deletes it
+            // the instant the match ends, which is exactly when
+            // deliverCompletedSessions needs to know who to email (§2.5).
+            player_1_id: liveRow!.player_1_id,
+            player_2_id: liveRow!.player_2_id,
+            player_1b_id: liveRow!.player_1b_id,
+            player_2b_id: liveRow!.player_2b_id,
+          })
+          .throwOnError();
+        return;
+
+      case "insert": {
+        const broadcastId = await insertBroadcast(
+          await getAccessToken(),
+          stream.label,
+          step.privacy,
+        );
+        // Saved before binding: a bind that fails now is retried against
+        // this broadcast, not answered with a new one every minute.
+        await update(step.sessionId, { broadcast_id: broadcastId });
+        active = { ...active!, broadcast_id: broadcastId };
+        break;
+      }
+
+      case "bind":
+        await bindBroadcast(
+          await getAccessToken(),
+          step.broadcastId,
+          stream.youtube_stream_id,
+        );
+        await update(step.sessionId, { state: "bound" });
+        active = { ...active!, state: "bound" };
+        break;
+
+      case "poll": {
+        const accessToken = await getAccessToken();
+        const status = await streamStatus(
+          accessToken,
+          stream.youtube_stream_id,
+        );
+        if (status !== "active") {
+          // Logged every tick while waiting: no session has gone live in
+          // production yet, and this is what says whether OBS is sending.
+          console.log(
+            `youtube-reconcile: table ${stream.table_id} waiting, streamStatus=${status}`,
+          );
+          return;
+        }
+        // transition(live) fails until the encoder is actually receiving data
+        // (§2.1's Constraints) — the status above is what confirms that.
+        await transitionBroadcast(accessToken, step.broadcastId, "live");
+        await update(step.sessionId, {
+          state: "live",
+          went_live_at: new Date().toISOString(),
+        });
+        return;
+      }
     }
-    active = null;
   }
-
-  if (!wanted) return;
-
-  if (!active) {
-    await db.from("stream_sessions").insert({
-      club_stream_id: stream.id,
-      live_match_id: wanted.id,
-      privacy_status: wanted.tournament_match_id
-        ? "public"
-        : (wanted.record_privacy ?? "unlisted"),
-      state: "created",
-      // Snapshotted now because live_matches won't exist by the time this
-      // session reaches 'complete' — finish_live_match() deletes it the
-      // instant the match ends, which is exactly when deliverCompletedSessions
-      // below needs to know who to email (§2.5).
-      player_1_id: wanted.player_1_id,
-      player_2_id: wanted.player_2_id,
-      player_1b_id: wanted.player_1b_id,
-      player_2b_id: wanted.player_2b_id,
-    });
-    return;
-  }
-
-  const accessToken = await getAccessToken();
-
-  if (active.state === "created") {
-    const broadcastId = await insertBroadcast(
-      accessToken,
-      stream.label,
-      active.privacy_status as "public" | "unlisted",
-    );
-    await bindBroadcast(accessToken, broadcastId, stream.youtube_stream_id);
-    await db
-      .from("stream_sessions")
-      .update({ broadcast_id: broadcastId, state: "bound" })
-      .eq("id", active.id);
-    return;
-  }
-
-  if (
-    active.state === "bound" &&
-    (await isStreamActive(accessToken, stream.youtube_stream_id))
-  ) {
-    // transition(live) fails until the encoder is actually receiving data
-    // (§2.1's Constraints) — isStreamActive above is what confirms that.
-    await transitionBroadcast(accessToken, active.broadcast_id!, "live");
-    await db
-      .from("stream_sessions")
-      .update({ state: "live", went_live_at: new Date().toISOString() })
-      .eq("id", active.id);
-  }
-  // Otherwise: still waiting for the encoder, or already 'live' with
-  // nothing to do until the match ends — both retried next tick.
 }
 
 /**
@@ -206,9 +242,9 @@ async function reconcileTable(
  * into reconcileTable's per-table loop — a crash between marking 'complete'
  * and stamping notified_at must not lose the mail, and a session no longer
  * counts as "active" the moment it's complete, so nothing else would ever
- * revisit it. Not gated behind YOUTUBE_CLIENT_ID like the rest of this file:
- * a completed session can still be waiting on notified_at even if the
- * YouTube credentials were since removed.
+ * revisit it. Runs before the YOUTUBE_CLIENT_ID gate in the handler: a
+ * completed session can still be waiting on notified_at even if the YouTube
+ * credentials were since removed.
  */
 async function deliverCompletedSessions(
   db: ReturnType<typeof getSupabaseServiceRole>,
@@ -249,7 +285,9 @@ async function deliverCompletedSessions(
     }
 
     const videoUrl = `https://youtu.be/${session.broadcast_id}`;
-    await Promise.all(
+    // allSettled: one address whose send throws must not leave the session
+    // unstamped, or everyone on it is mailed again next tick.
+    await Promise.allSettled(
       (recipients ?? [])
         .filter((r) => r.email)
         .map((r) =>

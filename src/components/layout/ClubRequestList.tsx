@@ -22,8 +22,9 @@ export default function ClubRequestList() {
   const { data: requests, isLoading } = useQuery(clubRequestsQuery());
   const { approveRequest, rejectRequest } = useClubRequests();
 
-  const fail = (op: "approveClubRequest" | "rejectClubRequest") => (err: unknown) =>
-    toast.error(t(dbErrorMessage(err, op, { denied: "common.deniedError" })));
+  const fail =
+    (op: "approveClubRequest" | "rejectClubRequest") => (err: unknown) =>
+      toast.error(t(dbErrorMessage(err, op)));
 
   return (
     <Card className="overflow-hidden">
