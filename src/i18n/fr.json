@@ -807,6 +807,8 @@
   "tournaments.played": "J",
   "tournaments.racks": "Manches",
   "tournaments.wins": "G",
+  "tournaments.losses": "P",
+  "tournaments.resultsGrid": "Grille des résultats",
   "tournaments.points": "Pts",
   "tournaments.statusLabel": "Statut",
   "notifications.title": "Notifications",

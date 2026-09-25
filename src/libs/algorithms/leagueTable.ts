@@ -175,3 +175,19 @@ export const hasFixture = <F extends Seats>(
   against == null
     ? fixtures.some((f) => f.p1_id === id || f.p2_id === id)
     : id !== against && fixturesBetween(fixtures, id, against).length > 0;
+
+/**
+ * One played fixture read from `id`'s side: whether they won and the racks
+ * each way — null racks for a walkover, which has no game. Null while the
+ * fixture is unplayed. The game keeps its own sides, as in `standings`.
+ */
+export const resultFor = (match: ResultMatch, id: number) => {
+  if (match.winner_id === null) return null;
+  const game = match.game;
+  const first = game?.player_1_id === id;
+  return {
+    won: match.winner_id === id,
+    mine: game ? (first ? game.player_1_score : game.player_2_score) : null,
+    theirs: game ? (first ? game.player_2_score : game.player_1_score) : null,
+  };
+};

@@ -807,6 +807,8 @@
   "tournaments.played": "PJ",
   "tournaments.racks": "Juegos",
   "tournaments.wins": "PG",
+  "tournaments.losses": "PP",
+  "tournaments.resultsGrid": "Cuadro de resultados",
   "tournaments.points": "Pts",
   "tournaments.statusLabel": "Estado",
   "notifications.title": "Notificaciones",

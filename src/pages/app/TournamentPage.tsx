@@ -171,6 +171,11 @@ export default function TournamentPage() {
   // table, since there is no final to read it off.
   const podium = tournamentPodium(tournament.format, entrants, matches);
 
+  const leagueRows = standings(entrants, matches, {
+    win: tournament.points_win,
+    play: tournament.points_play,
+  });
+
   const groupMatches = matches.filter((m) => m.bracket === "group");
   const groupsDone =
     groupMatches.length > 0 && groupMatches.every((m) => m.winner_id !== null);
@@ -618,10 +623,8 @@ export default function TournamentPage() {
             <Card className="overflow-hidden">
               <LeagueTable
                 title={t("tournaments.standings")}
-                rows={standings(entrants, matches, {
-                  win: tournament.points_win,
-                  play: tournament.points_play,
-                })}
+                rows={leagueRows}
+                matches={matches}
                 nameOf={nameOf}
                 categoryOf={
                   tournament.category === null
