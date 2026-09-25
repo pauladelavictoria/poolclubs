@@ -45,11 +45,13 @@ export default function RankingTable({
             #
           </th>
           {/* Its own column, not a tail on the name: a left-anchored strip of
-              divisions can be scanned down, an inline badge can't. */}
+              divisions can be scanned down, an inline badge can't. Below `sm`
+              the row is only position, name and points, same as the league
+              table, so the points never get pushed off the screen. */}
           {viewMode === "combined" && (
             <th
               scope="col"
-              className="w-14 py-2 pl-3 pr-3 text-left font-medium"
+              className="hidden w-14 py-2 pl-3 pr-3 text-left font-medium sm:table-cell"
             >
               {t("ranking.categoryShort")}
             </th>
@@ -89,7 +91,7 @@ export default function RankingTable({
             </td>
 
             {viewMode === "combined" && (
-              <td className="py-2 pl-3 pr-3">
+              <td className="hidden py-2 pl-3 pr-3 sm:table-cell">
                 <CategoryBadge category={entry.category} />
               </td>
             )}
@@ -98,7 +100,7 @@ export default function RankingTable({
               <AppLink
                 to="/app/$clubSlug/players/$playerId"
                 params={{ playerId: entry.playerId }}
-                className={`block truncate text-ink transition-colors duration-150 hover:text-strike ${
+                className={`block max-w-[10rem] truncate text-ink sm:max-w-none transition-colors duration-150 hover:text-strike ${
                   entry.playerId === player?.id
                     ? "font-semibold"
                     : "font-medium"
@@ -106,10 +108,6 @@ export default function RankingTable({
               >
                 {entry.playerName}
               </AppLink>
-              {/* Form drops under the name once the column is gone */}
-              <div className="mt-1 sm:hidden">
-                <ScoreString results={entry.last10Games ?? []} />
-              </div>
             </td>
 
             <td className="hidden py-2 pr-6 text-right md:table-cell">

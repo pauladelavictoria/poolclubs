@@ -1,6 +1,7 @@
 import { LuPlus, LuSwords } from "react-icons/lu";
 import ActivityFeed from "@/components/social/ActivityFeed";
 import TonightPanel from "@/components/live/TonightPanel";
+import StartMatchButton from "@/components/live/StartMatchButton";
 import DrillCard from "@/components/drills/DrillCard";
 import GameTile from "@/components/home/GameTile";
 import TournamentTile from "@/components/home/TournamentTile";
@@ -86,18 +87,26 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-3 py-4">
-
       {/* First, and the one block that stays put when it is empty: filing a
           result is what a club does every night, and a club with no matches is
           a club that has not started. */}
       <HomeSection titleKey="games.title" to="/app/$clubSlug/games">
-        <AppLink
-          to="/app/$clubSlug/games/new"
-          className={buttonClasses({ className: "w-full justify-center" })}
-        >
-          <LuPlus className="h-4 w-4" aria-hidden />
-          {t("games.add")}
-        </AppLink>
+        {/* Playing it now, or filing one already played. Starting needs a
+            member — the start is refused for anybody else. */}
+        <div className="flex flex-wrap gap-2">
+          {isMember && (
+            <StartMatchButton className="flex-1 basis-50 justify-center" />
+          )}
+          <AppLink
+            to="/app/$clubSlug/games/new"
+            className={buttonClasses({
+              className: "flex-1 basis-50 justify-center",
+            })}
+          >
+            <LuPlus className="h-4 w-4" aria-hidden />
+            <span>{t("games.add")}</span>
+          </AppLink>
+        </div>
         {games.length > 0 ? (
           <Carousel wide>
             {games.map((game) => (

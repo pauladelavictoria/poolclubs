@@ -18,8 +18,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
  * gives the button the height, and this is what fills it.
  */
 const SIZES: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-caption gap-1.5 pointer-coarse:px-4 pointer-coarse:text-body",
-  md: "h-10 px-4 text-body gap-2 pointer-coarse:px-5 pointer-coarse:text-h4",
+  sm: "h-8 px-2 text-caption gap-1.5 pointer-coarse:px-3 pointer-coarse:text-body",
+  md: "h-10 px-3 text-body gap-2 pointer-coarse:px-3 pointer-coarse:text-h4",
 };
 
 /**
@@ -60,6 +60,10 @@ export function buttonClasses({
     // .tap is the 44px touch floor in index.css — carried here rather than left
     // to the `button` selector because these classes dress links too.
     "tap inline-flex items-center justify-center rounded-control font-medium",
+    // One line, always: a label too long for its button ends in "…" rather
+    // than wrapping. The ellipsis needs the text in its own box — Button wraps
+    // it in a <span>; a link dressed as a button wraps its own.
+    "min-w-0 whitespace-nowrap [&>span]:min-w-0 [&>span]:truncate",
     "transition-[background-color,border-color,color,transform] duration-150 ease-[var(--ease-out)]",
     // Tactile confirmation the UI heard the click
     "active:scale-[0.97] disabled:pointer-events-none",

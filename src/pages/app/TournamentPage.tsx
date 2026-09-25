@@ -642,55 +642,57 @@ export default function TournamentPage() {
                 title={t("tournaments.paid")}
               >
                 <ul className="divide-y divide-hairline">
-                  {entrants.map((playerId) => (
-                    <li
-                      key={playerId}
-                      className="flex items-center gap-3 px-4 py-2.5"
-                    >
-                      <span className="min-w-0 flex-1 truncate text-body text-ink">
-                        {nameOf(playerId)}
-                      </span>
-                      {isClubAdmin ? (
-                        <IconButton
-                          label={t("tournaments.paid")}
-                          title={t("tournaments.paid")}
-                          size="sm"
-                          disabled={setPaid.isPending}
-                          onClick={() =>
-                            runMutation(
-                              setPaid.mutateAsync({
-                                tournamentId,
-                                playerId,
-                                paid: !(paidById.get(playerId) ?? false),
-                              }),
-                              t,
-                              "common.saved",
-                              "common.error",
-                              { denied: "common.deniedError" },
-                            )
-                          }
-                          shape="circle"
-                          className={
-                            paidById.get(playerId)
-                              ? "bg-strike text-pocket hover:bg-strike-light"
-                              : "text-ink-faint"
-                          }
-                        >
-                          <LuBanknote className="h-4 w-4" aria-hidden />
-                        </IconButton>
-                      ) : (
-                        paidById.get(playerId) && (
-                          <span
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-strike text-pocket"
-                            aria-label={t("tournaments.paid")}
+                  {[...entrants]
+                    .sort((a, b) => nameOf(a).localeCompare(nameOf(b)))
+                    .map((playerId) => (
+                      <li
+                        key={playerId}
+                        className="flex items-center gap-3 px-4 py-2.5"
+                      >
+                        <span className="min-w-0 flex-1 truncate text-body text-ink">
+                          {nameOf(playerId)}
+                        </span>
+                        {isClubAdmin ? (
+                          <IconButton
+                            label={t("tournaments.paid")}
                             title={t("tournaments.paid")}
+                            size="sm"
+                            disabled={setPaid.isPending}
+                            onClick={() =>
+                              runMutation(
+                                setPaid.mutateAsync({
+                                  tournamentId,
+                                  playerId,
+                                  paid: !(paidById.get(playerId) ?? false),
+                                }),
+                                t,
+                                "common.saved",
+                                "common.error",
+                                { denied: "common.deniedError" },
+                              )
+                            }
+                            shape="circle"
+                            className={
+                              paidById.get(playerId)
+                                ? "bg-strike text-pocket hover:bg-strike-light"
+                                : "text-ink-faint"
+                            }
                           >
                             <LuBanknote className="h-4 w-4" aria-hidden />
-                          </span>
-                        )
-                      )}
-                    </li>
-                  ))}
+                          </IconButton>
+                        ) : (
+                          paidById.get(playerId) && (
+                            <span
+                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-strike text-pocket"
+                              aria-label={t("tournaments.paid")}
+                              title={t("tournaments.paid")}
+                            >
+                              <LuBanknote className="h-4 w-4" aria-hidden />
+                            </span>
+                          )
+                        )}
+                      </li>
+                    ))}
                 </ul>
               </CollapsibleCard>
             )}

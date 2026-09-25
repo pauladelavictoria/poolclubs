@@ -96,8 +96,9 @@ export default function ChallengesPage() {
     .sort((a, b) => Number(bothHere(b)) - Number(bothHere(a)));
 
   // A table with a match on it is not free, and a busy club may have none.
-  const busy = new Set((live ?? []).map((m) => m.table_id));
-  const freeTables = (tables ?? []).filter((tbl) => !busy.has(tbl.id));
+  const busy = new Set(
+    (live ?? []).flatMap((m) => (m.table_id === null ? [] : [m.table_id])),
+  );
 
   const closeStart = () => setStartingWith(null);
   const outgoing = open.filter(
@@ -313,7 +314,8 @@ export default function ChallengesPage() {
             opponents={[]}
             roster={players ?? []}
             lockedOpponent={startingWith}
-            tables={freeTables}
+            tables={tables ?? []}
+            busyTableIds={busy}
             onSubmit={(values) => {
               const challenge = accepted.find(
                 (c) =>
