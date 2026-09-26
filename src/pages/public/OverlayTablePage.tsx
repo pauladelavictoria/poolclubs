@@ -1,10 +1,21 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import OverlayScoreboard from "@/components/live/OverlayScoreboard";
 import { publicClubRosterQuery } from "@/queries/public/clubs";
 import { publicLiveMatchByTableQuery } from "@/queries/public/live";
+import { wantedMatch } from "@/libs/algorithms/streamSession";
 
 const route = getRouteApi("/overlay/table/$clubSlug/$tableId");
+
+/** Kept streaming this long after a recorded match ends: a rematch within it
+ *  never drops the connection, and the reconciler (once a minute) has
+ *  completed the old broadcast before the encoder goes away. */
+const STOP_AFTER_MS = 2 * 60_000;
+
+/** What obs-browser puts on `window` for a source whose page permission is
+ *  "Full access" (obsSceneCollection.ts sets it). Absent in a normal browser. */
+type ObsStudio = { startStreaming(): void; stopStreaming(): void };
 
 /**
  * Whatever is live on one table right now — see
@@ -22,6 +33,22 @@ export default function OverlayTablePage() {
     ...publicLiveMatchByTableQuery(clubSlug, id),
     enabled: valid,
   });
+  // Inside OBS, this page decides when its instance uploads: only while the
+  // table's match is going to be recorded (wantedMatch, the same rule the
+  // reconciler uses to open a broadcast). Starting an already-running stream
+  // is a no-op in OBS, so a refetch re-running this is harmless.
+  const recording = wantedMatch(live ?? null) !== null;
+  useEffect(() => {
+    const obs = (window as { obsstudio?: ObsStudio }).obsstudio;
+    if (!obs) return;
+    if (recording) {
+      obs.startStreaming();
+      return;
+    }
+    const timer = setTimeout(() => obs.stopStreaming(), STOP_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [recording]);
+
   const { data: roster } = useQuery({
     ...publicClubRosterQuery(live?.club_id ?? -1),
     enabled: !!live,

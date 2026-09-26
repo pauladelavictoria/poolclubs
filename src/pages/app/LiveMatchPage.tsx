@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { LuExpand, LuPlay, LuTrash2 } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +9,8 @@ import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatch, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { useNightOn } from "@/hooks/useNight";
 import { useLiveBroadcasts } from "@/hooks/useClubYoutube";
+import { tableEncoderQuery } from "@/queries/live";
+import { encoderDown, wantedMatch } from "@/libs/algorithms/streamSession";
 import YoutubeEmbed from "@/components/live/YoutubeEmbed";
 import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
 import {
@@ -99,6 +102,16 @@ export default function LiveMatchPage() {
   const broadcastId = pinned ? undefined : broadcasts?.[liveId];
   const [watching, setWatching] = useState(false);
   const appNavigate = useAppNavigate();
+  // Only the pinned tablet asks, and only while this match is being recorded:
+  // it is the one screen the people who can fix the streaming computer see.
+  const { data: encoder, dataUpdatedAt } = useQuery({
+    ...tableEncoderQuery(match?.table_id ?? -1),
+    enabled: pinned && !!match && wantedMatch(match) !== null,
+  });
+  // dataUpdatedAt, not Date.now(): it moves on every poll, so the grace
+  // running out re-renders the page even when the row itself hasn't changed.
+  const streamDown =
+    pinned && encoderDown(match ?? null, encoder ?? null, dataUpdatedAt);
 
   // Worked out ahead of every early return below, so the two effects that
   // follow can read them unconditionally — see the note on each effect for
@@ -391,6 +404,15 @@ export default function LiveMatchPage() {
               <LuExpand className="h-5 w-5" aria-hidden />
             </IconButton>
           </div>
+        </div>
+      )}
+
+      {streamDown && (
+        <div
+          role="alert"
+          className="absolute inset-x-0 top-0 z-30 bg-accent-red px-3 py-2 text-center text-sm font-semibold text-white"
+        >
+          {t("live.streamDown")}
         </div>
       )}
 

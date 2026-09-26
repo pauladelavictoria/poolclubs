@@ -101,3 +101,28 @@ export function nextStreamStep(
   // Live, with its match still on: nothing to do until it ends.
   return { kind: "wait" };
 }
+
+/** How long a recorded match gets before its tablet complains: long enough
+ *  for OBS to start pushing and the reconciler's next tick to see it. */
+const ENCODER_GRACE_MS = 2 * 60_000;
+/** A status older than this means the reconciler itself stopped checking —
+ *  which loses the recording just the same. It asks once a minute. */
+const ENCODER_STALE_MS = 3 * 60_000;
+
+/**
+ * Whether a table's tablet should warn that its stream isn't reaching YouTube.
+ * Only for a match that is going to be recorded, only once its grace is up,
+ * and never for a table with no stream (no table_encoders row).
+ */
+export function encoderDown(
+  match: (WantedMatch & { started_at: string }) | null,
+  encoder: { status: string; checked_at: string } | null,
+  now = Date.now(),
+) {
+  if (!wantedMatch(match) || !encoder) return false;
+  if (now - Date.parse(match!.started_at) < ENCODER_GRACE_MS) return false;
+  return (
+    encoder.status !== "active" ||
+    now - Date.parse(encoder.checked_at) > ENCODER_STALE_MS
+  );
+}

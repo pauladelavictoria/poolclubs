@@ -941,6 +941,7 @@
   "live.nowHeading": "En las mesas",
   "live.playHere": "Jugar aquí",
   "live.watch": "Ver en directo",
+  "live.streamDown": "No se está grabando: revisa el ordenador de streaming",
   "live.playForLeague": "Jugar para {name}",
   "live.nextTitle": "Siguiente en la mesa {name}",
   "live.winnerStays": "{name} se queda — no hay nadie más esperando partida.",

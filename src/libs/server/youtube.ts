@@ -142,20 +142,27 @@ export async function bindBroadcast(
   );
 }
 
-/** liveStreams.list, the 1-unit poll the doc's quota section leans on while
- *  waiting for OBS to connect (§2.1a). The raw streamStatus ("active",
- *  "ready", "inactive", "error"…), not a boolean, so the reconciler can log
- *  what YouTube actually said while it waits — undefined when the stream is
- *  not found at all. */
-export async function streamStatus(
+/** liveStreams.list, the 1-unit poll the doc's quota section leans on (§2.1a)
+ *  — one call for every stream asked about, so a club's whole room costs what
+ *  one table does. The raw streamStatus ("active", "ready", "inactive",
+ *  "error"…) by stream id, not a boolean, so the reconciler can log what
+ *  YouTube actually said; a stream YouTube doesn't know is simply absent. */
+export async function streamStatuses(
   accessToken: string,
-  streamId: string,
-): Promise<string | undefined> {
+  streamIds: string[],
+): Promise<Map<string, string>> {
   const res = await youtubeFetch(
     accessToken,
-    `/liveStreams?part=status&id=${streamId}`,
+    `/liveStreams?part=status&maxResults=50&id=${streamIds.join(",")}`,
   );
-  return res.items?.[0]?.status?.streamStatus;
+  return new Map(
+    (res.items ?? []).map(
+      (item: { id: string; status?: { streamStatus?: string } }) => [
+        item.id,
+        item.status?.streamStatus ?? "",
+      ],
+    ),
+  );
 }
 
 export async function transitionBroadcast(

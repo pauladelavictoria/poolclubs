@@ -97,3 +97,24 @@ export const clubTablesQuery = (clubId: number) =>
       return (data ?? []) as ClubTable[];
     },
   });
+
+/**
+ * Whether this table's encoder is reaching YouTube — see encoderDown in
+ * libs/algorithms/streamSession.ts. Polled, not pushed: table_encoders is kept
+ * out of the realtime publication (a heartbeat a minute would wake every
+ * device in the club), and only the tablet of a recorded match asks.
+ */
+export const tableEncoderQuery = (tableId: number) =>
+  queryOptions({
+    queryKey: keys.tableEncoder(tableId),
+    queryFn: async () => {
+      const { data } = await getSupabase()
+        .from("table_encoders")
+        .select("status, checked_at")
+        .eq("table_id", tableId)
+        .maybeSingle()
+        .throwOnError();
+      return data;
+    },
+    refetchInterval: 60_000,
+  });
