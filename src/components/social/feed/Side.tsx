@@ -50,7 +50,8 @@ export default function Side({
             <PlayerLink
               playerId={person.id}
               playerSlug={person.slug}
-              className="transition-colors duration-150 hover:text-strike"
+              // relative: above a GameLinkOverlay laid over the card.
+              className="relative transition-colors duration-150 hover:text-strike"
             >
               {person.name}
             </PlayerLink>

@@ -4,6 +4,11 @@ import { useT } from "@/i18n";
 import { stageLabel } from "@/libs/algorithms/broadcastTitle";
 import GameLinkOverlay from "@/components/games/GameLinkOverlay";
 import PlayerLink from "@/components/players/PlayerLink";
+import {
+  LiveDot,
+  WatchButton,
+  type MatchLive,
+} from "@/components/games/MatchCard";
 
 /** Reading order of a tournament: groups, then the main draw, then the repêchage
  *  it feeds, then the match everything has been building to. Kept in step with
@@ -31,6 +36,7 @@ export default function MatchList({
   index,
   raceFor,
   onRecord,
+  liveOf,
 }: {
   matches: TournamentMatch[];
   nameOf: (id: number) => string;
@@ -45,6 +51,8 @@ export default function MatchList({
   raceFor: (match: TournamentMatch) => number;
   /** Returns null for a match this viewer cannot file a result for. */
   onRecord: (match: TournamentMatch) => (() => void) | null;
+  /** Running score and video per fixture — the public page only. */
+  liveOf?: (match: TournamentMatch) => MatchLive | undefined;
 }) {
   const { t } = useT();
 
@@ -99,6 +107,7 @@ export default function MatchList({
                   slugOf={slugOf}
                   clubSlug={clubSlug}
                   onRecord={onRecord(match) ?? undefined}
+                  live={liveOf?.(match)}
                 />
               </li>
             ))}
@@ -116,6 +125,7 @@ function Row({
   slugOf,
   clubSlug,
   onRecord,
+  live,
 }: {
   match: TournamentMatch;
   index: BracketIndex;
@@ -123,6 +133,7 @@ function Row({
   slugOf?: (id: number) => string | undefined;
   clubSlug?: string;
   onRecord?: () => void;
+  live?: MatchLive;
 }) {
   const { t } = useT();
   const game = match.game;
@@ -171,7 +182,8 @@ function Row({
           ? "text-ink-faint"
           : "text-ink";
 
-  const score = (playerId: number | null) => {
+  const score = (playerId: number | null, slot: 1 | 2) => {
+    if (live?.score) return String(live.score[slot - 1]);
     const racks = racksFor(playerId);
     if (racks !== null) return String(racks);
     // A walkover has no racks; the winner still needs something in the column.
@@ -183,26 +195,36 @@ function Row({
   const content = (
     // Names share the leftover width evenly, so a long one cannot push the
     // scores off centre.
-    <div className="grid w-full grid-cols-[1.75rem_1fr_auto_auto_1fr] items-center gap-2 px-3 py-2.5">
+    <div
+      className={`grid w-full items-center gap-2 px-3 py-2.5 ${
+        live?.onWatch
+          ? "grid-cols-[1.75rem_1fr_auto_auto_1fr_auto]"
+          : "grid-cols-[1.75rem_1fr_auto_auto_1fr]"
+      }`}
+    >
       <span className="font-mono text-caption tabular-nums text-ink-ghost">
-        {index.number(match.id)}
+        {live?.score ? <LiveDot /> : index.number(match.id)}
       </span>
       <span
         className={`min-w-0 truncate text-right text-body ${tone(match.p1_id)}`}
       >
         {nameNode(match.p1_id, 1)}
       </span>
-      {played ? (
+      {played || live?.score ? (
         <>
           <span
-            className={`w-5 text-center font-mono text-body tabular-nums ${tone(match.p1_id)}`}
+            className={`w-5 text-center font-mono text-body tabular-nums ${
+              live?.score ? "font-semibold text-strike" : tone(match.p1_id)
+            }`}
           >
-            {score(match.p1_id)}
+            {score(match.p1_id, 1)}
           </span>
           <span
-            className={`w-5 text-center font-mono text-body tabular-nums ${tone(match.p2_id)}`}
+            className={`w-5 text-center font-mono text-body tabular-nums ${
+              live?.score ? "font-semibold text-strike" : tone(match.p2_id)
+            }`}
           >
-            {score(match.p2_id)}
+            {score(match.p2_id, 2)}
           </span>
         </>
       ) : (
@@ -216,6 +238,7 @@ function Row({
       <span className={`min-w-0 truncate text-body ${tone(match.p2_id)}`}>
         {nameNode(match.p2_id, 2)}
       </span>
+      {live?.onWatch && <WatchButton onWatch={live.onWatch} />}
     </div>
   );
 

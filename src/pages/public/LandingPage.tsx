@@ -17,6 +17,7 @@ import {
   LuCheck,
   LuChevronDown,
   LuRocket,
+  LuVideo,
 } from "react-icons/lu";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Shot } from "@/components/ui/Shot";
@@ -82,8 +83,8 @@ const STEPS: { icon: typeof LuTrophy; title: Key; body: Key }[] = [
 ];
 
 /**
- * The six areas of the product, as an asymmetric bento: 7/5, 5/7, 7/5. Six
- * items, six cells, no filler tile.
+ * The areas of the product, as an asymmetric bento: 7/5, 5/7, 7/5, then video
+ * across the full width to close it. Seven items, seven cells, no filler tile.
  *
  * `art` alternates deliberately. Two cells reserve a screenshot slot, two carry
  * a washed band of real drawn objects (the three discipline balls, the eight
@@ -96,7 +97,7 @@ type Feature = {
   body: Key;
   points: readonly [Key, Key, Key];
   span: string;
-  art?: "ranking" | "drill" | "disciplines" | "palette";
+  art?: "ranking" | "drill" | "disciplines" | "palette" | "video";
 };
 
 const FEATURES: Feature[] = [
@@ -146,11 +147,18 @@ const FEATURES: Feature[] = [
     span: "lg:col-span-5",
     art: "palette",
   },
+  {
+    icon: LuVideo,
+    title: "landing.f7Title",
+    body: "landing.f7Body",
+    points: ["landing.f7a", "landing.f7b", "landing.f7c"],
+    span: "lg:col-span-12",
+    art: "video",
+  },
 ];
 
-/** What's shipped: the six feature-grid titles above (already translated
- *  there, so reused rather than duplicated) plus the one shipped thing that
- *  doesn't get its own card, match streaming. */
+/** What's shipped: the feature-grid titles above, already translated there,
+ *  so reused rather than duplicated. */
 const SHIPPED: Key[] = [
   "landing.f1Title",
   "landing.f2Title",
@@ -158,7 +166,7 @@ const SHIPPED: Key[] = [
   ...(DRILLS_ENABLED ? (["landing.f4Title"] as Key[]) : []),
   "landing.f5Title",
   "landing.f6Title",
-  "landing.rStreamingTitle",
+  "landing.f7Title",
 ];
 
 const ROADMAP: { title: Key; body: Key }[] = [
@@ -168,7 +176,7 @@ const ROADMAP: { title: Key; body: Key }[] = [
   { title: "landing.rSeasonsTitle", body: "landing.rSeasonsBody" },
 ];
 
-/** Nine questions is past the point where a stacked list reads, so they fold.
+/** Ten questions is past the point where a stacked list reads, so they fold.
  *  Native <details>: keyboard and screen-reader behaviour for free, and it
  *  works before hydration, which matters on the page a stranger arrives at. */
 const FAQ: { q: Key; a: Key }[] = [
@@ -181,6 +189,7 @@ const FAQ: { q: Key; a: Key }[] = [
   { q: "landing.q7", a: "landing.a7" },
   { q: "landing.q8", a: "landing.a8" },
   { q: "landing.q9", a: "landing.a9" },
+  { q: "landing.q10", a: "landing.a10" },
 ];
 
 const INSTALL: { icon: typeof LuApple; title: Key; body: Key }[] = [
@@ -339,15 +348,17 @@ export default function LandingPage() {
 
         <div className="mt-12 grid gap-4 lg:grid-cols-12">
           {/* The drills card leaves with the feature (libs/features). Dropping a
-              7-wide cell would leave the last one orphaned on its own row, so
-              whatever ends the list runs the full width instead. */}
+              7-wide cell would orphan the card left before the full-width video
+              one, so that card runs the full width instead. */}
           {FEATURES.filter(
             (feature) => DRILLS_ENABLED || feature.art !== "drill",
           ).map(({ icon: Icon, title, body, points, span, art }, i, shown) => (
             <article
               key={title}
               className={cardClasses({
-                className: `pop-in flex flex-col overflow-hidden ${!DRILLS_ENABLED && i === shown.length - 1
+                // The full-width video card sits side by side on desktop, or its
+                // shot alone would be taller than any other card.
+                className: `pop-in flex flex-col overflow-hidden ${art === "video" ? "lg:flex-row" : ""} ${!DRILLS_ENABLED && i === shown.length - 2
                     ? "lg:col-span-12"
                     : span
                   }`,
@@ -393,6 +404,17 @@ export default function LandingPage() {
                     name="drill"
                     alt={t("landing.altDrill")}
                     size={[2000, 1527]}
+                    className="rounded-t-card border-x border-t border-hairline"
+                  />
+                </div>
+              )}
+
+              {art === "video" && (
+                <div className="mt-auto px-6 pb-0 sm:px-8 lg:w-7/12 lg:shrink-0 lg:pt-8 lg:pl-0">
+                  <Shot
+                    name="overlay"
+                    alt={t("landing.altOverlay")}
+                    size={[1920, 1080]}
                     className="rounded-t-card border-x border-t border-hairline"
                   />
                 </div>

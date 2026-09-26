@@ -1,25 +1,29 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { headlineClasses } from "@/components/layout/publicTitleStyles";
 import {
   useMutation,
+  useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { Link, getRouteApi, useRouter } from "@tanstack/react-router";
-import { LuGitFork, LuList } from "react-icons/lu";
+import { LuGitFork, LuList, LuX } from "react-icons/lu";
 import PublicShell from "@/components/layout/PublicShell";
 import ShareButton from "@/components/social/ShareButton";
 import TournamentSocialBar from "@/components/social/TournamentSocialBar";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
 import MatchList from "@/components/games/MatchList";
+import MatchCard, { type MatchLive } from "@/components/games/MatchCard";
+import LeagueFixtures from "@/components/tournaments/LeagueFixtures";
+import YoutubeEmbed from "@/components/live/YoutubeEmbed";
 import {
   PlayerCountries,
   PlayerHighlight,
 } from "@/components/players/PlayerLink";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { Avatar } from "@/components/ui/Avatar";
-import { Button } from "@/components/ui/Button";
+import { Button, IconButton } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/ui/Ball";
 import { Fact } from "@/components/ui/Fact";
@@ -42,7 +46,12 @@ import { refreshTournaments } from "@/libs/browser/refresh";
 import { runMutation } from "@/libs/browser/mutationToast";
 import { supabase } from "@/libs/supabase/browser";
 import { useSession } from "@/hooks/useAuth";
-import { publicClubRosterQuery } from "@/queries/public/clubs";
+import {
+  publicClubRosterQuery,
+  publicClubTablesQuery,
+} from "@/queries/public/clubs";
+import { publicTournamentLiveQuery } from "@/queries/public/live";
+import { useTournamentBroadcasts } from "@/hooks/useClubYoutube";
 import { publicTournamentQuery } from "@/queries/public/tournaments";
 import type { PublicTournament } from "@/queries/public/tournaments";
 import { FORMAT_KEY, type TournamentMatch } from "@/types";
@@ -108,6 +117,58 @@ export default function PublicTournamentPage() {
 
   const url = `${origin}/tournaments/${tournament.id}`;
 
+  // What is on the tables right now, and what there is to watch. Polled only
+  // while a fixture can still be in play; a finished event is a snapshot.
+  const running =
+    tournament.status === "running" || tournament.status === "groups";
+  const { data: live = [] } = useQuery({
+    ...publicTournamentLiveQuery(
+      tournament.id,
+      tournament.club_id,
+      new Set(matches.map((m) => m.id)),
+    ),
+    enabled: running,
+  });
+  const { data: broadcasts } = useTournamentBroadcasts(tournament.id, running);
+  const { data: tables } = useQuery({
+    ...publicClubTablesQuery(tournament.club_id),
+    enabled: live.length > 0,
+  });
+  const [watching, setWatching] = useState<string | null>(null);
+
+  const liveByFixture = new Map(live.map((l) => [l.tournament_match_id!, l]));
+  const liveOf = (match: TournamentMatch): MatchLive | undefined => {
+    const row = liveByFixture.get(match.id);
+    const broadcast = row
+      ? broadcasts?.live[row.id]
+      : match.game_id
+        ? broadcasts?.games[match.game_id]
+        : undefined;
+    const onWatch = broadcast ? () => setWatching(broadcast) : undefined;
+    if (!row) return onWatch && { onWatch };
+    // The live row seats whoever sat down first; the card reads fixture order.
+    const flipped = row.player_1_id !== match.p1_id;
+    return {
+      score: flipped
+        ? [row.player_2_score, row.player_1_score]
+        : [row.player_1_score, row.player_2_score],
+      onWatch,
+    };
+  };
+
+  // A live row going away is a result being filed: reload the draw so the
+  // winner moves on. ponytail: can trail by the public CDN TTL (a minute).
+  const router = useRouter();
+  const liveKey = live.map((l) => l.id).join();
+  const lastLive = useRef(liveKey);
+  useEffect(() => {
+    const gone = lastLive.current
+      .split(",")
+      .some((id) => id && !liveKey.includes(id));
+    lastLive.current = liveKey;
+    if (gone) void router.invalidate();
+  }, [liveKey, router]);
+
   return (
     <PlayerCountries players={roster}>
       <PlayerHighlight>
@@ -163,6 +224,43 @@ export default function PublicTournamentPage() {
             </section>
           )}
 
+          {live.length > 0 && (
+            <section className="mt-10">
+              <h2 className="flex items-center gap-2 text-h3 font-semibold text-ink">
+                <span
+                  className="live-dot h-2 w-2 rounded-full bg-strike"
+                  aria-hidden
+                />
+                {t("public.publicTournament.liveNow")}
+              </h2>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {matches
+                  .filter((m) => liveByFixture.has(m.id))
+                  .map((match) => {
+                    const table = tables?.find(
+                      (tb) => tb.id === liveByFixture.get(match.id)!.table_id,
+                    );
+                    return (
+                      <div key={match.id}>
+                        <p className="mb-1 px-1 text-caption text-ink-faint">
+                          {table && `${t("live.table")} ${table.label} · `}
+                          {t("tournaments.raceLabel", { n: raceOf(match) })}
+                        </p>
+                        <MatchCard
+                          match={match}
+                          nameOf={nameOf}
+                          slugOf={slugOf}
+                          clubSlug={tournament.club?.slug}
+                          index={index}
+                          live={liveOf(match)}
+                        />
+                      </div>
+                    );
+                  })}
+              </div>
+            </section>
+          )}
+
           {matches.length === 0 ? (
             <Card className="mt-10">
               <EmptyState
@@ -185,6 +283,10 @@ export default function PublicTournamentPage() {
                     : undefined
                 }
                 showPoints
+                points={{
+                  win: tournament.points_win,
+                  play: tournament.points_play,
+                }}
               />
             </Card>
           ) : (
@@ -242,6 +344,7 @@ export default function PublicTournamentPage() {
                     index={index}
                     raceFor={raceOf}
                     onRecord={() => null}
+                    liveOf={liveOf}
                   />
                 ) : (
                   <MatchList
@@ -252,10 +355,23 @@ export default function PublicTournamentPage() {
                     index={index}
                     raceFor={raceOf}
                     onRecord={() => null}
+                    liveOf={liveOf}
                   />
                 )}
               </div>
             </>
+          )}
+
+          {isLeague && matches.length > 0 && (
+            <div className="mt-10">
+              <LeagueFixtures
+                matches={matches}
+                personOf={(id) => byId.get(id)}
+                clubSlug={tournament.club?.slug}
+                playerIds={entrantIds}
+                liveOf={liveOf}
+              />
+            </div>
           )}
 
           {/* Under the results, not beside them: the draw is what the page is
@@ -295,6 +411,26 @@ export default function PublicTournamentPage() {
             </Link>
           )}
         </PublicShell>
+
+        {watching && (
+          <div className="fixed bottom-4 right-4 z-40 w-96 max-w-[calc(100%-2rem)] overflow-hidden rounded-card bg-felt-raised shadow-lg">
+            <div className="flex justify-end">
+              <IconButton
+                label={t("common.close")}
+                size="sm"
+                onClick={() => setWatching(null)}
+              >
+                <LuX className="h-4 w-4" aria-hidden />
+              </IconButton>
+            </div>
+            <YoutubeEmbed
+              key={watching}
+              broadcastId={watching}
+              title={t("live.watch")}
+              autoplay
+            />
+          </div>
+        )}
       </PlayerHighlight>
     </PlayerCountries>
   );

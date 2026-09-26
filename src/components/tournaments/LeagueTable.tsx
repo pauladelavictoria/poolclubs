@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LuGrid3X3, LuListOrdered, LuTrendingUp } from "react-icons/lu";
 import { BallBadge, CategoryBadge } from "@/components/ui/Ball";
 import { CardHeader } from "@/components/ui/Card";
 import { Segmented } from "@/components/ui/Segmented";
@@ -7,7 +8,8 @@ import type { Standing } from "@/libs/algorithms/leagueTable";
 import { CATEGORIES, type Category } from "@/types";
 import { useT } from "@/i18n";
 import ResultsGrid from "@/components/tournaments/ResultsGrid";
-import type { ResultMatch } from "@/libs/algorithms/leagueTable";
+import StandingsChart from "@/components/tournaments/StandingsChart";
+import type { LeaguePoints, ResultMatch } from "@/libs/algorithms/leagueTable";
 import PlayerLink from "@/components/players/PlayerLink";
 
 type CategoryOf = (id: number) => Category | null | undefined;
@@ -31,6 +33,7 @@ export default function LeagueTable({
   qualify = 0,
   showPoints = false,
   matches,
+  points,
 }: {
   rows: Standing[];
   /** The card's own heading, rendered here rather than by the caller so the
@@ -53,10 +56,12 @@ export default function LeagueTable({
   /** The fixtures behind the table. Given, the card offers the results grid
    *  beside it — see ResultsGrid. */
   matches?: (ResultMatch & { round: number })[];
+  /** The league's scoring, so the chart can replay the table the same way. */
+  points?: LeaguePoints;
 }) {
   const { t } = useT();
   const [view, setView] = useState<ViewMode>("combined");
-  const [shape, setShape] = useState<"table" | "grid">("table");
+  const [shape, setShape] = useState<"table" | "grid" | "chart">("table");
   // Which row is open on a phone. One at a time: the table is a ladder, and a
   // ladder with four rows unfolded is no longer one. Ignored from `sm` up,
   // where every column is on screen anyway. It lives out here so a row stays
@@ -73,23 +78,41 @@ export default function LeagueTable({
     : [];
 
   const grid = matches && shape === "grid";
-  // The grid is always the whole field: the divisions split the table only.
-  const split = divisions.length >= 2 && !grid;
+  const chart = matches && shape === "chart";
+  const split = divisions.length >= 2;
 
-  const table = (subset: Standing[], perDivision: boolean) => (
-    <StandingsTable
-      rows={subset}
-      nameOf={nameOf}
-      slugOf={slugOf}
-      // Split out, the badge on every row would say what the heading above it
-      // already says.
-      categoryOf={perDivision ? undefined : categoryOf}
-      qualify={perDivision ? 0 : qualify}
-      showPoints={showPoints}
-      open={open}
-      setOpen={setOpen}
-    />
-  );
+  const table = (subset: Standing[], perDivision: boolean) =>
+    grid ? (
+      // A division's rows against the whole field: a combined league plays
+      // everyone, so its columns never split.
+      <ResultsGrid
+        players={subset.map((r) => r.playerId)}
+        columns={rows.map((r) => r.playerId)}
+        matches={matches}
+        nameOf={nameOf}
+        slugOf={slugOf}
+      />
+    ) : chart ? (
+      <StandingsChart
+        rows={subset}
+        matches={matches}
+        points={points}
+        nameOf={nameOf}
+      />
+    ) : (
+      <StandingsTable
+        rows={subset}
+        nameOf={nameOf}
+        slugOf={slugOf}
+        // Split out, the badge on every row would say what the heading above it
+        // already says.
+        categoryOf={perDivision ? undefined : categoryOf}
+        qualify={perDivision ? 0 : qualify}
+        showPoints={showPoints}
+        open={open}
+        setOpen={setOpen}
+      />
+    );
 
   const shapeToggle = matches && (
     <Segmented
@@ -98,8 +121,22 @@ export default function LeagueTable({
       value={shape}
       onChange={setShape}
       options={[
-        { value: "table", label: t("tournaments.standings") },
-        { value: "grid", label: t("tournaments.resultsGrid") },
+        {
+          value: "table",
+          // The card's title already says "standings"; the tab names the shape.
+          label: t("tournaments.viewTable"),
+          icon: <LuListOrdered className="h-3.5 w-3.5" aria-hidden />,
+        },
+        {
+          value: "grid",
+          label: t("tournaments.resultsGrid"),
+          icon: <LuGrid3X3 className="h-3.5 w-3.5" aria-hidden />,
+        },
+        {
+          value: "chart",
+          label: t("tournaments.standingsChart"),
+          icon: <LuTrendingUp className="h-3.5 w-3.5" aria-hidden />,
+        },
       ]}
     />
   );
@@ -132,14 +169,7 @@ export default function LeagueTable({
         />
       )}
 
-      {grid ? (
-        <ResultsGrid
-          players={rows.map((r) => r.playerId)}
-          matches={matches}
-          nameOf={nameOf}
-          slugOf={slugOf}
-        />
-      ) : !split || view === "combined" ? (
+      {!split || view === "combined" ? (
         table(rows, false)
       ) : (
         <div className="divide-y divide-hairline">

@@ -191,3 +191,45 @@ export const resultFor = (match: ResultMatch, id: number) => {
     theirs: game ? (first ? game.player_2_score : game.player_1_score) : null,
   };
 };
+
+/** Every entrant's place in the table at the end of one day of results —
+ *  only those who had played by then, so a line starts at its first result. */
+export type DayPositions = { day: string; positions: Map<number, number> };
+
+/**
+ * The table replayed a day at a time — the standings chart. Days are the
+ * reader's calendar days (`dayOf`); a walkover has no game and so no day, and
+ * counts from the start. Places are among `playerIds` only — a division's
+ * chart ranks its own players, on the same results as the combined table.
+ * ponytail: one standings() per day, O(days × matches);
+ * a season is ~100 days of ~800 fixtures, so nothing to optimise yet.
+ */
+export function positionsByDay(
+  playerIds: number[],
+  matches: ResultMatch[],
+  points: LeaguePoints | undefined,
+  dayOf: (playedAt: string) => string,
+): DayPositions[] {
+  const settled = matches.filter((m) => m.winner_id !== null);
+  const dayFor = (m: ResultMatch) =>
+    m.game?.played_at ? dayOf(m.game.played_at) : "";
+  const days = [...new Set(settled.map(dayFor))].filter(Boolean).sort();
+  // standings() also rows up any opponent it meets, from other divisions too.
+  const own = new Set(playerIds);
+
+  return days.map((day) => {
+    const table = standings(
+      playerIds,
+      settled.filter((m) => dayFor(m) <= day),
+      points,
+    ).filter((r) => own.has(r.playerId));
+    return {
+      day,
+      positions: new Map(
+        table.flatMap((r, i) =>
+          r.played > 0 ? [[r.playerId, i + 1] as const] : [],
+        ),
+      ),
+    };
+  });
+}

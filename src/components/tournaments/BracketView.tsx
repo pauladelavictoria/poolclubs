@@ -1,4 +1,4 @@
-import MatchCard from "@/components/games/MatchCard";
+import MatchCard, { type MatchLive } from "@/components/games/MatchCard";
 import type { BracketIndex } from "@/libs/algorithms/bracket";
 import type { BracketSide, TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
@@ -35,6 +35,7 @@ export default function BracketView({
   index,
   raceFor,
   onRecord,
+  liveOf,
 }: {
   matches: TournamentMatch[];
   nameOf: (id: number) => string;
@@ -49,6 +50,8 @@ export default function BracketView({
   raceFor: (match: TournamentMatch) => number;
   /** Returns null for a match this viewer cannot file a result for. */
   onRecord: (match: TournamentMatch) => (() => void) | null;
+  /** Running score and video per fixture — the public page only. */
+  liveOf?: (match: TournamentMatch) => MatchLive | undefined;
 }) {
   const { t } = useT();
 
@@ -119,6 +122,7 @@ export default function BracketView({
                               clubSlug={clubSlug}
                               index={index}
                               onRecord={onRecord(match) ?? undefined}
+                              live={liveOf?.(match)}
                             />
                           </div>
                         ))}

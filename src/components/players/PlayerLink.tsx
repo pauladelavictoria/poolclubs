@@ -45,6 +45,10 @@ export function PlayerFlag({ playerId }: { playerId: number }) {
   return <CountryFlag country={useContext(CountryContext)?.get(playerId)} />;
 }
 
+/** The player PlayerHighlight has marked, and its toggle — for a chart that
+ *  follows the same thread the names do. Null outside a provider. */
+export const usePlayerHighlight = () => useContext(HighlightContext);
+
 /**
  * Turns every player's name inside it from a link into a highlighter.
  *

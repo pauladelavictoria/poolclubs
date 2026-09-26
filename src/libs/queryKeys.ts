@@ -269,6 +269,10 @@ export const keys = {
       ["public", "live-match", tournamentMatchId] as const,
     liveMatchByTable: (clubSlug?: string, tableId?: number) =>
       ["public", "live-match-table", clubSlug, tableId] as const,
+    tournamentLive: (tournamentId: number) =>
+      ["public", "tournament-live", tournamentId] as const,
+    tournamentBroadcasts: (tournamentId: number) =>
+      ["public", "tournament-broadcasts", tournamentId] as const,
   },
 };
 

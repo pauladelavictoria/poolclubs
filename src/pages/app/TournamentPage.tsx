@@ -22,18 +22,18 @@ import {
   raceFor,
   resolveBracket,
   seedEntrants,
-  sortPlayedMatches,
   qualifyMarks,
   tournamentResults,
-  type BracketIndex,
 } from "@/libs/algorithms/bracket";
 import { groupStandings } from "@/libs/algorithms/leagueTable";
 import { eventDates, isUpcoming } from "@/libs/algorithms/eventDates";
 import PageTitle from "@/components/layout/PageTitle";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
-import MatchCard from "@/components/games/MatchCard";
 import MatchList from "@/components/games/MatchList";
+import LeagueFixtures, {
+  Fixtures,
+} from "@/components/tournaments/LeagueFixtures";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import SocialBar from "@/components/social/SocialBar";
@@ -97,15 +97,6 @@ export default function TournamentPage() {
   const [playing, setPlaying] = useState<TournamentMatch | "new" | null>(null);
   const recordRef = useDialog(!!playing);
   const [adding, setAdding] = useState("");
-  /** Whose league fixtures to show, "" for everyone's. A string because it is
-   *  a <select>'s value. */
-  const [fixturesOf, setFixturesOf] = useState("");
-  /** Which half of the games card is showing. Played first: it is the short
-   *  half and the one that has news in it — a round robin's pending list is
-   *  every fixture nobody has got to yet. */
-  const [fixturesTab, setFixturesTab] = useState<"played" | "pending">(
-    "played",
-  );
   const [view, setView] = useState<"bracket" | "list">("list");
 
   const entrants = useMemo(
@@ -196,34 +187,7 @@ export default function TournamentPage() {
   const recorder = (match: TournamentMatch) =>
     canPlay && playable(match) ? () => setPlaying(match) : null;
 
-  /** Most recent first — a league is read as "what happened lately", not as a
-   *  calendar. Fixtures generated at the same time have no order of their own,
-   *  so an unplayed one falls back to its number. */
-  const playedMatches = sortPlayedMatches(
-    matches.filter((m) => m.winner_id !== null),
-  );
   const pendingMatches = matches.filter((m) => m.winner_id === null);
-
-  /** The league's two fixture lists, narrowed to one entrant. A round robin is
-   *  n(n−1)/2 cards and only n−1 of them are yours: without this, "what have I
-   *  still got to play" is a read of the whole list. */
-  const inFixtures = (match: TournamentMatch) =>
-    fixturesOf === "" ||
-    match.p1_id === Number(fixturesOf) ||
-    match.p2_id === Number(fixturesOf);
-  const shownPending = pendingMatches.filter(inFixtures);
-  const shownPlayed = playedMatches.filter(inFixtures);
-
-  /** Whether "still to play" is a list anyone can do anything about. Once the
-   *  tournament is done, or there is nothing left in it, the card is a log and
-   *  the choice between the two goes away with it. */
-  const pendingOffered =
-    pendingMatches.length > 0 && tournament.status !== "done";
-  // The tab as it actually lands: a stored "pending" outlives the fixtures it
-  // pointed at, and a tournament that finishes while the card is open should
-  // show the log rather than an empty list.
-  const tab = pendingOffered ? fixturesTab : "played";
-  const shownFixtures = tab === "pending" ? shownPending : shownPlayed;
 
   const findMatch = (a: number, b: number) =>
     findOutstandingMatch(matches, a, b);
@@ -603,6 +567,10 @@ export default function TournamentPage() {
                     : undefined
                 }
                 showPoints
+                points={{
+                  win: tournament.points_win,
+                  play: tournament.points_play,
+                }}
               />
             </Card>
             {/* A league keeps its unpaid entrants rather than removing them at
@@ -642,88 +610,13 @@ export default function TournamentPage() {
                 has been played, and what is still owed. Folded, because a full
                 round robin is dozens of cards and the table above them is what
                 most people came for. */}
-            <CollapsibleCard defaultOpen={false} title={t("games.title")}>
-              <div className="space-y-3 p-3">
-                {/* Both controls on one line, wrapping rather than shrinking:
-                    they narrow the same list, and a tab strip and its filter
-                    reading as two separate decks is what a stack makes them. */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* What has happened leads. A round robin is read as a log —
-                      the pending list is hundreds of fixtures nobody drew up to
-                      look at — and once the tournament is closed there is no
-                      pending list at all, so the tab stops being offered. */}
-                  {pendingOffered && (
-                    <Segmented
-                      className="max-sm:w-full max-sm:*:flex-1 max-sm:*:justify-center"
-                      label={t("games.title")}
-                      value={fixturesTab}
-                      onChange={setFixturesTab}
-                      options={[
-                        {
-                          value: "played",
-                          label: t("tournaments.gamesPlayed", {
-                            n: shownPlayed.length,
-                          }),
-                        },
-                        {
-                          value: "pending",
-                          label: t("tournaments.stillToPlay", {
-                            n: shownPending.length,
-                          }),
-                        },
-                      ]}
-                    />
-                  )}
-
-                  {/* One name, and the list becomes "what they have played and
-                      what they still owe" — which is what an entrant opens a
-                      round robin to find out. It filters the fixtures, not the
-                      table: the standings stay the whole league, since a table
-                      of one row is not a standing. */}
-                  <Select
-                    size="sm"
-                    className="max-w-[14rem]"
-                    value={fixturesOf}
-                    aria-label={t("tournaments.filterByPlayer")}
-                    onChange={(e) => setFixturesOf(e.target.value)}
-                  >
-                    <option value="">{t("games.allPlayers")}</option>
-                    {/* Your own fixtures are what you open a round robin for,
-                        so your name leads the list the same way it leads a
-                        result form — see PlayerOptions. */}
-                    <PlayerOptions
-                      players={seeded.map((playerId) => ({
-                        id: playerId,
-                        name: nameOf(playerId),
-                      }))}
-                      meId={meId}
-                    />
-                  </Select>
-                </div>
-
-                {shownFixtures.length === 0 ? (
-                  <EmptyState
-                    title={
-                      tab === "pending"
-                        ? t("tournaments.noneLeftFor")
-                        : t("tournaments.noGamesYet")
-                    }
-                    hint={
-                      tab === "played" && canPlay
-                        ? t("tournaments.noGamesHint")
-                        : undefined
-                    }
-                  />
-                ) : (
-                  <Fixtures
-                    matches={shownFixtures}
-                    nameOf={nameOf}
-                    index={index}
-                    recorder={recorder}
-                  />
-                )}
-              </div>
-            </CollapsibleCard>
+            <LeagueFixtures
+              matches={matches}
+              personOf={(id) => byId.get(id)}
+              playerIds={seeded}
+              meId={meId}
+              emptyHint={canPlay ? t("tournaments.noGamesHint") : undefined}
+            />
           </>
         )}
 
@@ -824,9 +717,6 @@ export default function TournamentPage() {
   );
 }
 
-/** Fixtures as cards. No matchday headings: a club league is played whenever
- *  two people are free, so the round a fixture was generated in means nothing
- *  to anybody reading it. */
 /** Whether an entrant has paid: a toggle for the club's admin, a mark for
  *  everyone else — and nothing at all for an unpaid entrant, whose absence of
  *  a mark says it. */
@@ -869,31 +759,5 @@ function PaidMark({
     >
       <LuBanknote className="h-4 w-4" aria-hidden />
     </span>
-  );
-}
-
-function Fixtures({
-  matches,
-  nameOf,
-  index,
-  recorder,
-}: {
-  matches: TournamentMatch[];
-  nameOf: (id: number) => string;
-  index: BracketIndex;
-  recorder: (match: TournamentMatch) => (() => void) | null;
-}) {
-  return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      {matches.map((match) => (
-        <MatchCard
-          key={match.id}
-          match={match}
-          nameOf={nameOf}
-          index={index}
-          onRecord={recorder(match) ?? undefined}
-        />
-      ))}
-    </div>
   );
 }

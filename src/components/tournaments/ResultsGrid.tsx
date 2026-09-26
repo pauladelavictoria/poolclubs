@@ -13,20 +13,30 @@ import { useT } from "@/i18n";
  * answers that. The column numbers are the row numbers.
  *
  * Two legs put two results in a cell, in the order they were drawn.
+ *
+ * `columns` widens the top axis past the rows — one division's players
+ * against the whole combined field. A row keeps its column's number, so the
+ * numbers still match across.
  */
 export default function ResultsGrid({
   players,
+  columns,
   matches,
   nameOf,
   slugOf,
 }: {
   players: number[];
+  /** Opponents along the top; the rows' own players when omitted. */
+  columns?: number[];
   matches: (ResultMatch & { round: number })[];
   nameOf: (id: number) => string;
   slugOf?: (id: number) => string | undefined;
 }) {
   const { t } = useT();
-  const order = [...players].sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+  const byName = (a: number, b: number) => nameOf(a).localeCompare(nameOf(b));
+  const order = [...players].sort(byName);
+  const cols = [...(columns ?? players)].sort(byName);
+  const numberOf = new Map(cols.map((id, i) => [id, i + 1]));
 
   return (
     <>
@@ -43,7 +53,7 @@ export default function ResultsGrid({
               >
                 <span className="sr-only">{t("ranking.player")}</span>
               </th>
-              {order.map((id, i) => (
+              {cols.map((id, i) => (
                 <th
                   key={id}
                   scope="col"
@@ -57,7 +67,7 @@ export default function ResultsGrid({
             </tr>
           </thead>
           <tbody>
-            {order.map((rowId, r) => (
+            {order.map((rowId) => (
               // Striped for reading across. Opaque, not a tint: the name cell is
               // sticky and would show the scrolled cells through it.
               <tr
@@ -70,7 +80,7 @@ export default function ResultsGrid({
                 >
                   <span className="flex items-center gap-2">
                     <span className="w-5 shrink-0 font-mono text-caption tabular-nums text-ink-faint">
-                      {r + 1}
+                      {numberOf.get(rowId)}
                     </span>
                     <PlayerLink
                       playerId={rowId}
@@ -81,7 +91,7 @@ export default function ResultsGrid({
                     </PlayerLink>
                   </span>
                 </th>
-                {order.map((colId) => {
+                {cols.map((colId) => {
                   if (colId === rowId)
                     return (
                       <td

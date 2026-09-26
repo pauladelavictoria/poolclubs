@@ -3,19 +3,19 @@ import ProsePage from "@/pages/public/ProsePage";
 import { publicMeta, canonical } from "@/libs/algorithms/publicMeta";
 
 /**
- * The price, while there isn't one.
+ * The price.
  *
  * A club owner looks for this page before looking at the product, and its
- * absence reads as "there is a price and they won't say it". The answer today
- * is free for the beta, and the page says plainly that a per-club fee comes
- * afterwards, announced before it starts. No free-forever promise.
+ * absence reads as "there is a price and they won't say it". So it says the
+ * number: €15 a month per club, with the first month free for clubs that
+ * join during the beta. No free-forever promise.
  */
 export const Route = createFileRoute("/_public/pricing")({
   head: ({ match }) => ({
     meta: publicMeta({
       title: "Precios · PoolClubs",
       description:
-        "Gratis para los clubes durante la beta. Después, una cuota por club y mes, avisada con antelación. Los jugadores no pagan nunca.",
+        "15 € al mes por club. Los clubes que entran durante la beta tienen el primer mes gratis. Los jugadores no pagan nunca.",
       path: "/pricing",
       origin: match.context.origin,
       fallback: "default",
