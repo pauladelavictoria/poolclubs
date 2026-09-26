@@ -28,7 +28,7 @@ export const Route = createFileRoute("/api/clubs/$slug/obs-scenes.json")({
 
         const { data: club } = await supabase
           .from("clubs")
-          .select("id, name, slug")
+          .select("id, slug")
           .eq("slug", params.slug)
           .maybeSingle();
         if (!club) return new Response(null, { status: 404 });
@@ -57,7 +57,6 @@ export const Route = createFileRoute("/api/clubs/$slug/obs-scenes.json")({
         );
 
         const collection = buildObsSceneCollection({
-          clubName: club.name,
           clubSlug: club.slug,
           tables: (tables ?? []).map((table) => ({
             ...table,
