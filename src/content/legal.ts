@@ -46,7 +46,7 @@ export type LegalDoc = {
 
 export type LegalDocId = "privacy" | "terms" | "aviso-legal";
 
-const UPDATED = "2026-09-04";
+const UPDATED = "2026-09-26";
 /** Privacy alone changed to mention the YouTube streaming feature — bumping
  *  the shared UPDATED above would wrongly date terms and aviso-legal too. */
 const PRIVACY_UPDATED = "2026-09-15";
@@ -371,8 +371,8 @@ const termsEs: LegalDoc = {
     {
       heading: "5. Beta y gratuidad",
       body: [
-        "El servicio está en beta abierta. Los jugadores no pagan nunca; para los clubes es gratuito durante la beta.",
-        "Más adelante habrá una cuota por club. Lo avisaremos con antelación razonable y ningún club empieza a pagar sin haberlo aceptado: quien no acepte pasa a modo lectura y puede exportar sus datos.",
+        "El servicio está en beta abierta. Los jugadores no pagan nunca.",
+        "Los clubes pagan una cuota de 15 € al mes. Los clubes que se dan de alta durante la beta no pagan el primer mes. Avisaremos antes de que termine ese periodo y ningún club empieza a pagar sin haberlo aceptado: quien no acepte pasa a modo lectura y puede exportar sus datos.",
         "Si en el futuro un club con cuota deja de pagar, sus datos no se borran: el club pasa a modo lectura y su página pública sigue en pie.",
       ],
     },
@@ -449,8 +449,8 @@ const termsEn: LegalDoc = {
     {
       heading: "5. Beta and pricing",
       body: [
-        "The service is in open beta. Players never pay; for clubs it is free during the beta.",
-        "Later there will be a fee per club. We will give reasonable advance notice and no club starts paying without agreeing to it: a club that does not agree becomes read-only and can export its data.",
+        "The service is in open beta. Players never pay.",
+        "Clubs pay a fee of €15 a month. Clubs that sign up during the beta pay nothing for their first month. We will give notice before that period ends and no club starts paying without agreeing to it: a club that does not agree becomes read-only and can export its data.",
         "If a paying club later stops paying, its data is not deleted: the club becomes read-only and its public page stays up.",
       ],
     },
@@ -527,8 +527,8 @@ const termsFr: LegalDoc = {
     {
       heading: "5. Bêta et gratuité",
       body: [
-        "Le service est en bêta ouverte. Les joueurs ne paient jamais ; pour les clubs, c'est gratuit pendant la bêta.",
-        "Plus tard, il y aura un tarif par club. Nous préviendrons dans un délai raisonnable et aucun club ne commence à payer sans l'avoir accepté : un club qui refuse passe en lecture seule et peut exporter ses données.",
+        "Le service est en bêta ouverte. Les joueurs ne paient jamais.",
+        "Les clubs paient un tarif de 15 € par mois. Les clubs inscrits pendant la bêta ne paient rien pendant leur premier mois. Nous préviendrons avant la fin de cette période et aucun club ne commence à payer sans l'avoir accepté : un club qui refuse passe en lecture seule et peut exporter ses données.",
         "Si un club payant cesse un jour de payer, ses données ne sont pas supprimées : le club passe en lecture seule et sa page publique reste en ligne.",
       ],
     },

@@ -5,6 +5,7 @@ import {
   groupStandings,
   hasFixture,
   leaguePodium,
+  positionsByDay,
   resultFor,
   standings,
 } from "./leagueTable";
@@ -235,5 +236,43 @@ describe("resultFor", () => {
       mine: null,
       theirs: null,
     });
+  });
+});
+
+describe("positionsByDay", () => {
+  it("replays the table one day at a time", () => {
+    const on = (m: TournamentMatch, day: string) => ({
+      ...m,
+      game: { ...m.game!, played_at: `${day}T20:00:00Z` },
+    });
+    const matches = [
+      on(fixture(1, 2, { winner: 2, racks: [3, 5] }), "2026-01-01"),
+      on(fixture(1, 3, { winner: 1, racks: [5, 0] }), "2026-01-02"),
+      on(fixture(1, 2, { winner: 1, racks: [5, 1] }), "2026-01-02"),
+      fixture(2, 3),
+    ];
+    const days = positionsByDay([1, 2, 3], matches, { win: 3, play: 1 }, (at) =>
+      at.slice(0, 10),
+    );
+    expect(days.map((d) => d.day)).toEqual(["2026-01-01", "2026-01-02"]);
+    // Player 3 has not played on day one: no place yet, so no line.
+    expect([...days[0].positions]).toEqual([
+      [2, 1],
+      [1, 2],
+    ]);
+    expect(days[1].positions.get(1)).toBe(1);
+    expect(days[1].positions.get(3)).toBe(3);
+
+    // A division of players 1 and 3: ranked between themselves only.
+    const division = positionsByDay(
+      [1, 3],
+      matches,
+      { win: 3, play: 1 },
+      (at) => at.slice(0, 10),
+    );
+    expect([...division[1].positions]).toEqual([
+      [1, 1],
+      [3, 2],
+    ]);
   });
 });

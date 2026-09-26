@@ -79,3 +79,34 @@ export const publicLiveMatchByTableQuery = (clubSlug: string, tableId: number) =
     },
     ...OVERLAY_LIVE,
   });
+
+/**
+ * Every fixture of one tournament being played right now — the public page's
+ * "Live now" strip and the running scores on its draw. Read by club and kept
+ * to the tournament's own fixtures here: a round robin's id list outgrows a
+ * request URL. 10s rather than the overlay's 5s: nobody reads a bracket at
+ * camera speed.
+ */
+export const publicTournamentLiveQuery = (
+  tournamentId: number,
+  clubId: number,
+  fixtureIds: Set<string>,
+) =>
+  queryOptions({
+    queryKey: keys.public.tournamentLive(tournamentId),
+    queryFn: async (): Promise<LiveMatch[]> => {
+      const since = new Date(Date.now() - ABANDON_AFTER_MS).toISOString();
+      const { data } = await getSupabase()
+        .from("live_matches")
+        .select("*")
+        .eq("club_id", clubId)
+        .not("tournament_match_id", "is", null)
+        .gt("updated_at", since)
+        .throwOnError();
+      return ((data ?? []) as LiveMatch[]).filter((m) =>
+        fixtureIds.has(m.tournament_match_id!),
+      );
+    },
+    staleTime: 0,
+    refetchInterval: 10_000,
+  });

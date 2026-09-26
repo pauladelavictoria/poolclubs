@@ -1,8 +1,41 @@
+import { LuPlay } from "react-icons/lu";
 import type { BracketIndex } from "@/libs/algorithms/bracket";
 import type { TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
 import GameLinkOverlay from "@/components/games/GameLinkOverlay";
 import PlayerLink from "@/components/players/PlayerLink";
+import { IconButton } from "@/components/ui/Button";
+
+/** What a fixture is doing on camera, on the public side: its running score
+ *  in fixture seat order while it is being played, and a way to watch it —
+ *  live, or back once it is a result. */
+export type MatchLive = { score?: [number, number]; onWatch?: () => void };
+
+/** The watch button a fixture carries when it has video. `relative` lifts it
+ *  over GameLinkOverlay, like the names. */
+export function WatchButton({ onWatch }: { onWatch: () => void }) {
+  const { t } = useT();
+  return (
+    <IconButton
+      label={t("live.watch")}
+      title={t("live.watch")}
+      size="sm"
+      shape="circle"
+      onClick={(e) => {
+        e.stopPropagation();
+        onWatch();
+      }}
+      className="relative shrink-0 text-strike"
+    >
+      <LuPlay className="h-3.5 w-3.5" aria-hidden />
+    </IconButton>
+  );
+}
+
+/** The pulsing dot a fixture in play carries — the hero's own live mark. */
+export const LiveDot = () => (
+  <span className="live-dot h-1.5 w-1.5 shrink-0 rounded-full bg-strike" aria-hidden />
+);
 
 /**
  * One fixture, in every format.
@@ -18,6 +51,7 @@ export default function MatchCard({
   clubSlug,
   index,
   onRecord,
+  live,
 }: {
   match: TournamentMatch;
   nameOf: (id: number) => string;
@@ -31,11 +65,13 @@ export default function MatchCard({
   index?: BracketIndex;
   /** Omitted when the viewer cannot file a result, or the match is not ready. */
   onRecord?: () => void;
+  live?: MatchLive;
 }) {
   const { t } = useT();
 
   const game = match.game;
-  const racksFor = (playerId: number | null) => {
+  const racksFor = (playerId: number | null, slot: 1 | 2) => {
+    if (live?.score) return live.score[slot - 1];
     if (!game || playerId === null) return null;
     return game.player_1_id === playerId
       ? game.player_1_score
@@ -87,8 +123,12 @@ export default function MatchCard({
             </PlayerLink>
           )}
         </span>
-        <span className={`shrink-0 font-mono text-body tabular-nums ${tone}`}>
-          {racksFor(playerId) ?? (won ? t("tournaments.walkoverMark") : "")}
+        <span
+          className={`shrink-0 font-mono text-body tabular-nums ${
+            live?.score ? "font-semibold text-strike" : tone
+          }`}
+        >
+          {racksFor(playerId, slot) ?? (won ? t("tournaments.walkoverMark") : "")}
         </span>
       </div>
     );
@@ -96,10 +136,14 @@ export default function MatchCard({
 
   const body = (
     <div className="flex w-full items-center gap-2.5">
-      {number !== undefined && (
-        <span className="shrink-0 font-mono text-caption tabular-nums text-ink-ghost">
-          {number}
-        </span>
+      {live?.score ? (
+        <LiveDot />
+      ) : (
+        number !== undefined && (
+          <span className="shrink-0 font-mono text-caption tabular-nums text-ink-ghost">
+            {number}
+          </span>
+        )
       )}
       <div className="min-w-0 flex-1 space-y-1">
         {walkover ? (
@@ -116,12 +160,15 @@ export default function MatchCard({
           </>
         )}
       </div>
+      {live?.onWatch && <WatchButton onWatch={live.onWatch} />}
     </div>
   );
 
   // A played match has something in it, so it is the filled one; a fixture that
   // has not happened yet is an outline waiting to be filled in.
-  const surface = `relative w-full rounded-control border border-hairline px-3 py-2 has-[[data-highlight]]:border-strike/40 has-[[data-highlight]]:bg-strike-tint ${
+  const surface = `relative w-full rounded-control border ${
+    live?.score ? "border-strike/60" : "border-hairline"
+  } px-3 py-2 has-[[data-highlight]]:border-strike/40 has-[[data-highlight]]:bg-strike-tint ${
     played ? "bg-felt-raised" : "bg-felt"
   }`;
 

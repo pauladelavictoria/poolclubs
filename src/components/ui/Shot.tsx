@@ -45,6 +45,10 @@ const SHOTS: Record<string, string> = {
   me: "/art/me.png",
   club: "/art/club.jpg",
 
+  // A real frame of a club's YouTube stream with the scoreboard overlay. A
+  // photo, so jpeg, and no dark twin: it reads the same on either theme.
+  overlay: "/art/game-overlay.jpg",
+
   // Empty states, 1/1.
   "empty-clubs": "",
   "empty-players": "",

@@ -10,9 +10,10 @@ import { CONTACT_EMAIL } from "@/content/legal";
  * still belongs in src/i18n.
  *
  * Every claim here has to stay true of the product as shipped. The pricing page
- * is the one that gets quoted back, so it says only what is certain: free for
- * clubs through the beta, one per-club fee afterwards, and notice before it
- * starts. No promise about what a beta club pays later, because there isn't one.
+ * is the one that gets quoted back, so it says only what is certain: €15 a month
+ * per club, the first month free for clubs that join during the beta, and
+ * notice before the free month ends. The same figure is in the landing FAQ
+ * (src/i18n) and the terms (legal.ts); change all three together.
  */
 export type ContentSection = {
   heading?: string;
@@ -33,23 +34,23 @@ export type ContentDoc = {
 
 const PRICING_ES: ContentDoc = {
   title: "Precio",
-  lede: "Los jugadores no pagan nunca. Los clubes, gratis durante la beta.",
+  lede: "Los jugadores no pagan nunca. Los clubes, 15 € al mes, y los que entran durante la beta tienen el primer mes gratis.",
   callout:
-    "PoolClubs es gratis para los clubes mientras dure la beta. Después habrá una cuota por club y mes.",
+    "15 € + IVA al mes por club, sin más. Si tu club entra durante la beta, el primer mes es gratis.",
   sections: [
     {
       heading: "Hoy",
       body: [
-        "Beta abierta y gratuita. Sin plan de pago, sin prueba que caduque y sin tarjeta.",
-        "Un club se crea en un minuto, invita a sus socios con un enlace o un cartel con código QR, y empieza a registrar partidos la misma noche.",
+        "Beta abierta. Los clubes que entran ahora tienen el primer mes gratis, sin tarjeta, y acceso prioritario para decidir qué construimos después.",
+        "Montamos el club contigo, normalmente el mismo día; el club invita a sus socios con un enlace o un cartel con código QR, y empieza a registrar partidos la misma noche.",
       ],
     },
     {
       heading: "Más adelante",
       body: [
-        "Cuando el producto esté cerrado habrá una cuota por club y mes. Una sola: sin asientos, sin tramos, sin extras por socio.",
-        "Lo avisaremos con antelación, dentro de la aplicación y por correo. Ningún club empieza a pagar sin decir que sí, y un club que prefiera no seguir se lleva sus datos.",
-        "La referencia es la que el club ya conoce: menos de lo que factura una mesa en una noche.",
+        "Pasado el mes gratis, 15 € + IVA al mes por club. Una sola cuota: sin asientos, sin tramos, sin extras por socio.",
+        "Lo avisaremos antes de que acabe el mes gratis, dentro de la aplicación y por correo. Ningún club empieza a pagar sin decir que sí, y un club que prefiera no seguir se lleva sus datos.",
+        "Para ponerlo en contexto: menos de lo que factura una mesa en una noche.",
         "Los jugadores seguirán sin pagar. Es un servicio que el club da a sus socios, no una suscripción que cada socio contrata.",
       ],
     },
@@ -59,7 +60,7 @@ const PRICING_ES: ContentDoc = {
         "Ranking Elo del club y ranking diario",
         "Partidos individuales y por parejas, en bola 8, 9 y 10",
         "Retos entre socios",
-        "Torneos: eliminatoria simple, doble y liguilla, con cuadro y walkovers",
+        "Torneos: liga, grupos con cuadro final y doble eliminatoria, con walkovers",
         "Biblioteca de ejercicios y planes de entrenamiento automáticos",
         "Muro de actividad con reacciones y comentarios",
         "Página pública del club, con mapa, para quien busque dónde jugar",
@@ -80,23 +81,23 @@ const PRICING_ES: ContentDoc = {
 
 const PRICING_EN: ContentDoc = {
   title: "Pricing",
-  lede: "Players never pay. Clubs are free for as long as the beta lasts.",
+  lede: "Players never pay. Clubs pay €15 a month, and clubs that join during the beta get their first month free.",
   callout:
-    "PoolClubs is free for clubs while the beta lasts. After that there will be one fee, per club, per month.",
+    "€15 + VAT a month per club, and that is all. If your club joins during the beta, the first month is free.",
   sections: [
     {
       heading: "Today",
       body: [
-        "Open beta, free. No paid plan, no trial that expires, no card.",
-        "A club takes a minute to set up, invites its members with a link or a printed QR poster, and starts recording matches the same night.",
+        "Open beta. Clubs that join now get their first month free, no card, and priority access to shape what we build next.",
+        "We set the club up with you, usually the same day; it invites its members with a link or a printed QR poster, and starts recording matches the same night.",
       ],
     },
     {
       heading: "Later",
       body: [
-        "Once the product is finished there will be one fee, per club, per month. One: no seats, no tiers, no per-member extras.",
-        "We will say so in advance, in the app and by email. No club starts paying without agreeing to it, and a club that would rather stop takes its data with it.",
-        "The benchmark is the one a club already knows: less than one night's table time.",
+        "After the free month, €15 + VAT a month per club. One fee: no seats, no tiers, no per-member extras.",
+        "We will tell you before the free month ends, in the app and by email. No club starts paying without agreeing to it, and a club that would rather stop takes its data with it.",
+        "For scale: less than one night's table time.",
         "Players will still pay nothing. This is a service the club gives its members, not a subscription each member signs up for.",
       ],
     },
@@ -106,7 +107,7 @@ const PRICING_EN: ContentDoc = {
         "Club Elo ranking and daily ranking",
         "Singles and doubles matches, in 8-, 9- and 10-ball",
         "Challenges between members",
-        "Tournaments: single elimination, double elimination and round robin, with brackets and walkovers",
+        "Tournaments: league, groups with a final bracket, and double elimination, with walkovers",
         "Drill library and auto-generated training plans",
         "Activity feed with reactions and comments",
         "A public club page, on the map, for anyone looking for somewhere to play",
@@ -127,23 +128,23 @@ const PRICING_EN: ContentDoc = {
 
 const PRICING_FR: ContentDoc = {
   title: "Tarif",
-  lede: "Les joueurs ne paient jamais. Les clubs, gratuit pendant la bêta.",
+  lede: "Les joueurs ne paient jamais. Les clubs paient 15 € par mois, et ceux qui arrivent pendant la bêta ont leur premier mois gratuit.",
   callout:
-    "PoolClubs est gratuit pour les clubs tant que dure la bêta. Ensuite, il y aura un tarif unique, par club et par mois.",
+    "15 € HT par mois et par club, rien de plus. Si votre club arrive pendant la bêta, le premier mois est gratuit.",
   sections: [
     {
       heading: "Aujourd'hui",
       body: [
-        "Bêta ouverte et gratuite. Aucune offre payante, aucun essai qui expire, aucune carte bancaire.",
-        "Un club se crée en une minute, invite ses membres avec un lien ou une affiche à code QR, et enregistre ses premiers matchs le soir même.",
+        "Bêta ouverte. Les clubs qui arrivent maintenant ont leur premier mois gratuit, sans carte bancaire, et un accès prioritaire pour orienter ce que nous construisons ensuite.",
+        "Nous configurons le club avec vous, en général le jour même ; il invite ses membres avec un lien ou une affiche à code QR, et enregistre ses premiers matchs le soir même.",
       ],
     },
     {
       heading: "Plus tard",
       body: [
-        "Quand le produit sera abouti, il y aura un tarif unique, par club et par mois. Un seul : pas de sièges, pas de paliers, pas de suppléments par membre.",
-        "Nous le préviendrons à l'avance, dans l'application et par e-mail. Aucun club ne commence à payer sans l'avoir accepté, et un club qui préfère s'arrêter repart avec ses données.",
-        "La référence est celle que le club connaît déjà : moins qu'une soirée de table.",
+        "Après le mois gratuit, 15 € HT par mois et par club. Un seul tarif : pas de sièges, pas de paliers, pas de suppléments par membre.",
+        "Nous vous préviendrons avant la fin du mois gratuit, dans l'application et par e-mail. Aucun club ne commence à payer sans l'avoir accepté, et un club qui préfère s'arrêter repart avec ses données.",
+        "Pour donner une idée : moins qu'une soirée de table.",
         "Les joueurs ne paieront toujours rien. C'est un service que le club offre à ses membres, pas un abonnement que chacun souscrit.",
       ],
     },
@@ -153,7 +154,7 @@ const PRICING_FR: ContentDoc = {
         "Classement Elo du club et classement journalier",
         "Matchs en simple et en double, en 8, 9 et 10 billes",
         "Défis entre membres",
-        "Tournois : élimination simple, double élimination et poule, avec tableau et forfaits",
+        "Tournois : championnat, poules avec tableau final et double élimination, avec forfaits",
         "Bibliothèque d'exercices et plans d'entraînement générés automatiquement",
         "Fil d'activité avec réactions et commentaires",
         "Une page publique du club, sur la carte, pour qui cherche où jouer",
@@ -295,7 +296,7 @@ const CONTACT_ES: ContentDoc = {
       heading: "Si eres un club",
       body: [
         "Cuéntanos cuántos socios sois y cómo lleváis hoy el ranking. Podemos montar el club contigo y dejarlo listo antes de que lo enseñes a tus socios.",
-        "Durante la beta el servicio es gratis para el club. Más adelante habrá una cuota por club y mes, avisada con antelación.",
+        "Si entráis durante la beta, el primer mes es gratis; después, 15 € al mes por club.",
       ],
     },
     {
@@ -331,7 +332,7 @@ const CONTACT_EN: ContentDoc = {
       heading: "If you run a club",
       body: [
         "Tell us how many members you have and how the ranking is kept today. We can set the club up with you and have it ready before you show it to your members.",
-        "During the beta the service is free for the club. Later there will be one fee, per club, per month, announced in advance.",
+        "If you join during the beta, your first month is free; after that, €15 a month per club.",
       ],
     },
     {
@@ -365,7 +366,7 @@ const CONTACT_FR: ContentDoc = {
       heading: "Si vous gérez un club",
       body: [
         "Dites-nous combien vous êtes de membres et comment le classement est tenu aujourd'hui. Nous pouvons configurer le club avec vous et le rendre prêt avant que vous ne le montriez à vos membres.",
-        "Pendant la bêta le service est gratuit pour le club. Plus tard, il y aura un tarif unique par club et par mois, annoncé à l'avance.",
+        "Si vous arrivez pendant la bêta, le premier mois est gratuit ; ensuite, 15 € par mois et par club.",
       ],
     },
     {

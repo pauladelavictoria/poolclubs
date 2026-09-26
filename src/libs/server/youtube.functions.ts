@@ -82,25 +82,88 @@ export const getLiveBroadcasts = createServerFn({ method: "GET" })
 
 /**
  * The recording of one filed game, if it has one — the player on the game's
- * page. Stamped onto the session by finish_live_match(). Same member gate as
- * getLiveBroadcasts, checked against the camera's club once the row is found.
+ * page. Stamped onto the session by finish_live_match(). A public broadcast is
+ * public on YouTube already, so anyone gets it; an unlisted one keeps
+ * getLiveBroadcasts' member gate, checked against the camera's club.
  */
 export const getGameRecording = createServerFn({ method: "GET" })
   .validator(z.object({ gameId: z.string().uuid() }))
   .handler(async ({ data }) => {
     const { data: row } = await getSupabaseServiceRole()
       .from("stream_sessions")
-      .select("broadcast_id, club_streams!inner(club_id)")
+      .select("broadcast_id, privacy_status, club_streams!inner(club_id)")
       .eq("game_id", data.gameId)
       .in("state", ["live", "complete"])
       .maybeSingle();
     if (!row?.broadcast_id) return null;
+    if (row.privacy_status === "public") return row.broadcast_id;
 
     const { data: isMember } = await getSupabaseServer().rpc(
       "is_club_member",
       { cid: row.club_streams.club_id },
     );
     return isMember ? row.broadcast_id : null;
+  });
+
+/**
+ * A public tournament's broadcasts, for its public page: live ones keyed by
+ * live match id, finished ones by game id. No gate beyond the club being
+ * public — only `public` broadcasts come back, and those are listed on YouTube
+ * anyway. Unlisted ones (a casual game's opt-in) never do.
+ */
+export const getTournamentBroadcasts = createServerFn({ method: "GET" })
+  .validator(z.object({ tournamentId: z.number().int().positive() }))
+  .handler(async ({ data }) => {
+    const db = getSupabaseServiceRole();
+    const out = { live: {}, games: {} } as {
+      live: Record<string, string>;
+      games: Record<string, string>;
+    };
+
+    const { data: tournament } = await db
+      .from("tournaments")
+      .select(
+        "club_id, created_at, clubs!inner(is_public), tournament_matches(id, game_id)",
+      )
+      .eq("id", data.tournamentId)
+      .maybeSingle();
+    if (!tournament?.clubs.is_public) return out;
+
+    // By club and age rather than by id list: a round robin is hundreds of
+    // fixtures, and an .in() of that many uuids outgrows a request URL.
+    const [{ data: live }, { data: rows }] = await Promise.all([
+      db
+        .from("live_matches")
+        .select("id, tournament_match_id")
+        .eq("club_id", tournament.club_id)
+        .not("tournament_match_id", "is", null),
+      db
+        .from("stream_sessions")
+        .select(
+          "live_match_id, game_id, broadcast_id, state, club_streams!inner(club_id)",
+        )
+        .eq("club_streams.club_id", tournament.club_id)
+        .eq("privacy_status", "public")
+        .in("state", ["live", "complete"])
+        .gte("created_at", tournament.created_at),
+    ]);
+
+    const fixtures = new Set(tournament.tournament_matches.map((m) => m.id));
+    const games = new Set(tournament.tournament_matches.map((m) => m.game_id));
+    const liveIds = new Set(
+      (live ?? [])
+        .filter((l) => fixtures.has(l.tournament_match_id!))
+        .map((l) => l.id),
+    );
+
+    for (const r of rows ?? []) {
+      if (!r.broadcast_id) continue;
+      if (r.state === "live" && liveIds.has(r.live_match_id))
+        out.live[r.live_match_id] = r.broadcast_id;
+      if (r.game_id && games.has(r.game_id))
+        out.games[r.game_id] = r.broadcast_id;
+    }
+    return out;
   });
 
 /** Connection state only — channel_title / connected_at, never the token

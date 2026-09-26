@@ -5,6 +5,8 @@ import ShareButton from "@/components/social/ShareButton";
 import Side from "@/components/social/feed/Side";
 import { PlayerCountries } from "@/components/players/PlayerLink";
 import { Card } from "@/components/ui/Card";
+import YoutubeEmbed from "@/components/live/YoutubeEmbed";
+import { useGameRecording } from "@/hooks/useClubYoutube";
 import { publicClubRosterQuery } from "@/queries/public/clubs";
 import { fmt } from "@/libs/algorithms/dayLabel";
 import { useT } from "@/i18n";
@@ -31,6 +33,7 @@ export default function PublicGamePage() {
   const { t, locale } = useT();
   const { club, game, tournament, origin } = route.useLoaderData();
   const { data: roster } = useSuspenseQuery(publicClubRosterQuery(club.id));
+  const { data: recording } = useGameRecording(game.id);
 
   const byId = new Map(roster.map((player) => [player.id, player]));
   /** One side of the result: one person for singles, two for doubles, and
@@ -123,6 +126,10 @@ export default function PublicGamePage() {
             />
           </div>
         </Card>
+
+        {recording && (
+          <YoutubeEmbed broadcastId={recording} title={t("games.recording")} />
+        )}
       </div>
     </PlayerCountries>
   );

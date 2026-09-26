@@ -10,6 +10,7 @@ import {
   getStreamedTableIds,
   getLiveBroadcasts,
   getGameRecording,
+  getTournamentBroadcasts,
   revealClubStream,
 } from "@/libs/server/youtube.functions";
 
@@ -65,6 +66,15 @@ export const useGameRecording = (gameId: string) =>
   useQuery({
     queryKey: keys.gameRecording.of(gameId),
     queryFn: () => getGameRecording({ data: { gameId } }),
+  });
+
+/** A public tournament's broadcasts — live by live match id, recorded by game
+ *  id. Polled at the reconciler's pace only while matches can still go live. */
+export const useTournamentBroadcasts = (tournamentId: number, running: boolean) =>
+  useQuery({
+    queryKey: keys.public.tournamentBroadcasts(tournamentId),
+    queryFn: () => getTournamentBroadcasts({ data: { tournamentId } }),
+    refetchInterval: running ? 60_000 : false,
   });
 
 export const useManageClubYoutube = () => {
