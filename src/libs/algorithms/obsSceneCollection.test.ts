@@ -12,7 +12,6 @@ import { buildObsSceneCollection } from "./obsSceneCollection";
 describe("buildObsSceneCollection", () => {
   it("emits one camera, one overlay and one scene source per table", () => {
     const collection = buildObsSceneCollection({
-      clubName: "El Billar",
       clubSlug: "el-billar",
       tables: [
         { id: 1, label: "Mesa 1", camera_url: null },
@@ -41,16 +40,12 @@ describe("buildObsSceneCollection", () => {
     const scene = collection.sources.find((s) => s.name === "Mesa 2");
     expect(scene?.id).toBe("scene");
     expect(scene?.settings).toMatchObject({
-      items: [
-        { name: "Mesa 2 — Camera" },
-        { name: "Mesa 2 — Overlay" },
-      ],
+      items: [{ name: "Mesa 2 — Camera" }, { name: "Mesa 2 — Overlay" }],
     });
   });
 
   it("never puts the stream key or any credential in the file", () => {
     const collection = buildObsSceneCollection({
-      clubName: "El Billar",
       clubSlug: "el-billar",
       tables: [{ id: 1, label: "Mesa 1", camera_url: null }],
       origin: "https://poolclubs.example",
@@ -65,7 +60,6 @@ describe("buildObsSceneCollection", () => {
 
   it("handles a club with no tables yet", () => {
     const collection = buildObsSceneCollection({
-      clubName: "El Billar",
       clubSlug: "el-billar",
       tables: [],
       origin: "https://poolclubs.example",
@@ -78,7 +72,6 @@ describe("buildObsSceneCollection", () => {
 
   it("uses an ffmpeg RTSP source instead of the placeholder once a camera_url is on file", () => {
     const collection = buildObsSceneCollection({
-      clubName: "El Billar",
       clubSlug: "el-billar",
       tables: [
         {

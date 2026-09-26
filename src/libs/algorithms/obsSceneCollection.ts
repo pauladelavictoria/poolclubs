@@ -123,13 +123,17 @@ const sceneItem = (name: string, id: number) => ({
   private_settings: {},
 });
 
+/** The collection's name inside OBS. Fixed rather than the club's own name:
+ *  the streaming computer's start-up scripts pass it on the command line
+ *  (streamerSetup.ts), and a constant there can't drift from what an admin
+ *  imported or be broken by a club name that needs quoting. */
+export const OBS_COLLECTION = "PoolClubs";
+
 export function buildObsSceneCollection({
-  clubName,
   clubSlug,
   tables,
   origin,
 }: {
-  clubName: string;
   clubSlug: string;
   tables: ObsSceneTable[];
   /** The scheme+host the overlay URLs point at — from the request that asked
@@ -178,7 +182,7 @@ export function buildObsSceneCollection({
     current_transition: "Fade",
     groups: [],
     modules: {},
-    name: `${clubName} — PoolClubs`,
+    name: OBS_COLLECTION,
     preview_locked: false,
     quick_transitions: [],
     saved_projectors: [],
