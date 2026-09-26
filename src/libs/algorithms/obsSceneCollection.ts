@@ -154,6 +154,11 @@ export function buildObsSceneCollection({
       height: OVERLAY_HEIGHT,
       shutdown: false,
       restart_when_active: true,
+      // "Full access to OBS": the overlay starts and stops this instance's
+      // stream itself, so the laptop only uploads while a match is being
+      // recorded — see OverlayTablePage. ponytail: 5 is obs-browser's
+      // ControlLevel::All; check it against the club's OBS if control fails.
+      webpage_control_level: 5,
     });
 
     // The camera drawn first, the overlay on top — a Browser Source with a

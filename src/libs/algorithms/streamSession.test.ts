@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  encoderDown,
   nextStreamStep,
   wantedMatch,
   type ActiveSession,
@@ -90,5 +91,41 @@ describe("nextStreamStep — created → bound → live → complete", () => {
 
   it("does nothing for an idle table", () => {
     expect(nextStreamStep(null, null)).toEqual({ kind: "wait" });
+  });
+});
+
+describe("encoderDown", () => {
+  const now = Date.parse("2026-09-26T20:10:00Z");
+  const started = (minutesAgo: number) => ({
+    ...match(),
+    started_at: new Date(now - minutesAgo * 60_000).toISOString(),
+  });
+  const encoder = (status: string, minutesAgo = 0) => ({
+    status,
+    checked_at: new Date(now - minutesAgo * 60_000).toISOString(),
+  });
+
+  it("warns for a recorded match whose stream isn't active", () => {
+    expect(encoderDown(started(5), encoder("inactive"), now)).toBe(true);
+    expect(encoderDown(started(5), encoder("active"), now)).toBe(false);
+  });
+
+  it("warns when the status went stale — the reconciler stopped checking", () => {
+    expect(encoderDown(started(10), encoder("active", 4), now)).toBe(true);
+  });
+
+  it("gives a new match time for the encoder to start", () => {
+    expect(encoderDown(started(1), encoder("inactive", 30), now)).toBe(false);
+  });
+
+  it("stays quiet for a match nobody is recording, or a table with no stream", () => {
+    expect(
+      encoderDown(
+        { ...started(5), record_opt_in: false },
+        encoder("inactive"),
+        now,
+      ),
+    ).toBe(false);
+    expect(encoderDown(started(5), null, now)).toBe(false);
   });
 });

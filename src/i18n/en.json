@@ -941,6 +941,7 @@
   "live.nowHeading": "On the tables",
   "live.playHere": "Play here",
   "live.watch": "Watch",
+  "live.streamDown": "Not recording: check the streaming computer",
   "live.playForLeague": "Play for {name}",
   "live.nextTitle": "Next on table {name}",
   "live.winnerStays": "{name} stays on — nobody else is waiting for a game.",

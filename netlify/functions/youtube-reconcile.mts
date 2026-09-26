@@ -2,12 +2,13 @@ import { getSupabaseServiceRole } from "../../src/libs/supabase/serviceRole";
 import { decryptSecret } from "../../src/libs/server/crypto";
 import { sendMail, logger } from "../../src/libs/server/resend";
 import { gameRecordingMail } from "../../src/libs/algorithms/mailText";
+import { broadcastTitle } from "../../src/libs/algorithms/broadcastTitle";
 import {
   refreshYoutubeAccessToken,
   insertBroadcast,
   bindBroadcast,
   deleteBroadcast,
-  streamStatus,
+  streamStatuses,
   transitionBroadcast,
 } from "../../src/libs/server/youtube";
 import {
@@ -77,19 +78,74 @@ export default async () => {
     return cached;
   };
 
-  for (const stream of streams ?? []) {
-    const refreshTokenEnc = refreshTokenByClub.get(stream.club_id);
-    // Disconnected since this row was created, or mid-disconnect — nothing
-    // to drive this tick, and disconnectYoutube already took the row's
-    // sessions down with it.
-    if (!refreshTokenEnc) continue;
+  // Disconnected since its row was created, or mid-disconnect — nothing to
+  // drive this tick, and disconnectYoutube already took its sessions down.
+  const connected = (streams ?? []).filter((s) =>
+    refreshTokenByClub.has(s.club_id),
+  );
 
-    try {
-      await reconcileTable(db, stream, () =>
-        accessTokenFor(stream.club_id, refreshTokenEnc),
-      );
-    } catch (err) {
-      console.error(`youtube-reconcile: table ${stream.table_id}`, err);
+  // Every connected table's current match in one read, rather than one per
+  // table per tick.
+  const { data: liveRows } = await db
+    .from("live_matches")
+    .select(
+      "id, table_id, tournament_match_id, record_opt_in, record_privacy, player_1_id, player_2_id, player_1b_id, player_2b_id",
+    )
+    .in(
+      "table_id",
+      connected.map((s) => s.table_id),
+    );
+  const liveByTable = new Map((liveRows ?? []).map((r) => [r.table_id, r]));
+
+  const clubIds = [...new Set(connected.map((s) => s.club_id))];
+  for (const clubId of clubIds) {
+    const getAccessToken = () =>
+      accessTokenFor(clubId, refreshTokenByClub.get(clubId)!);
+    const clubStreams = connected.filter((s) => s.club_id === clubId);
+
+    // Asked only for tables about to be recorded, all in one call — YouTube
+    // doesn't care about an idle table, and neither does the tablet's banner.
+    const recording = clubStreams.filter(
+      (s) => wantedMatch(liveByTable.get(s.table_id) ?? null) !== null,
+    );
+    let statuses = new Map<string, string>();
+    if (recording.length) {
+      try {
+        statuses = await streamStatuses(
+          await getAccessToken(),
+          recording.map((s) => s.youtube_stream_id),
+        );
+        const checkedAt = new Date().toISOString();
+        await db
+          .from("table_encoders")
+          .upsert(
+            recording.map((s) => ({
+              table_id: s.table_id,
+              club_id: clubId,
+              status: statuses.get(s.youtube_stream_id) ?? "missing",
+              checked_at: checkedAt,
+            })),
+          )
+          .throwOnError();
+      } catch (err) {
+        // Left unstamped: checked_at going stale is itself what puts the
+        // tablet's banner up when this job can't reach YouTube.
+        console.error(`youtube-reconcile: statuses club ${clubId}`, err);
+      }
+    }
+
+    for (const stream of clubStreams) {
+      try {
+        await reconcileTable(
+          db,
+          stream,
+          liveByTable.get(stream.table_id) ?? null,
+          statuses.get(stream.youtube_stream_id),
+          getAccessToken,
+        );
+      } catch (err) {
+        console.error(`youtube-reconcile: table ${stream.table_id}`, err);
+      }
     }
   }
 
@@ -97,6 +153,18 @@ export default async () => {
 };
 
 export const config = { schedule: "* * * * *" };
+
+type LiveRow = Pick<
+  Database["public"]["Tables"]["live_matches"]["Row"],
+  | "id"
+  | "tournament_match_id"
+  | "record_opt_in"
+  | "record_privacy"
+  | "player_1_id"
+  | "player_2_id"
+  | "player_1b_id"
+  | "player_2b_id"
+>;
 
 /**
  * One table's tick: ask nextStreamStep what to do, do it, ask again — until it
@@ -107,15 +175,12 @@ export const config = { schedule: "* * * * *" };
 async function reconcileTable(
   db: ReturnType<typeof getSupabaseServiceRole>,
   stream: ClubStream,
+  liveRow: LiveRow | null,
+  /** This tick's streamStatus for the table's stream, already fetched in the
+   *  club's batch — undefined when it wasn't asked for or the call failed. */
+  status: string | undefined,
   getAccessToken: () => Promise<string>,
 ) {
-  const { data: liveRow } = await db
-    .from("live_matches")
-    .select(
-      "id, tournament_match_id, record_opt_in, record_privacy, player_1_id, player_2_id, player_1b_id, player_2b_id",
-    )
-    .eq("table_id", stream.table_id)
-    .maybeSingle();
   const wanted = wantedMatch(liveRow);
 
   let active: ActiveSession | null = (
@@ -189,7 +254,7 @@ async function reconcileTable(
       case "insert": {
         const broadcastId = await insertBroadcast(
           await getAccessToken(),
-          stream.label,
+          await titleFor(db, active!.live_match_id, stream.label),
           step.privacy,
         );
         // Saved before binding: a bind that fails now is retried against
@@ -210,11 +275,6 @@ async function reconcileTable(
         break;
 
       case "poll": {
-        const accessToken = await getAccessToken();
-        const status = await streamStatus(
-          accessToken,
-          stream.youtube_stream_id,
-        );
         if (status !== "active") {
           // Logged every tick while waiting: no session has gone live in
           // production yet, and this is what says whether OBS is sending.
@@ -225,7 +285,11 @@ async function reconcileTable(
         }
         // transition(live) fails until the encoder is actually receiving data
         // (§2.1's Constraints) — the status above is what confirms that.
-        await transitionBroadcast(accessToken, step.broadcastId, "live");
+        await transitionBroadcast(
+          await getAccessToken(),
+          step.broadcastId,
+          "live",
+        );
         await update(step.sessionId, {
           state: "live",
           went_live_at: new Date().toISOString(),
@@ -234,6 +298,41 @@ async function reconcileTable(
       }
     }
   }
+}
+
+/**
+ * The video's title — tournament, stage and players (broadcastTitle.ts) —
+ * read once, when the broadcast is created. Falls back to the table's label
+ * if the names can't be read: a video titled "Mesa 3" beats no video.
+ */
+async function titleFor(
+  db: ReturnType<typeof getSupabaseServiceRole>,
+  liveMatchId: string,
+  fallback: string,
+) {
+  const { data } = await db
+    .from("live_matches")
+    .select(
+      `club:clubs(name),
+       fixture:tournament_matches(bracket, round, group_no, tournament:tournaments(name)),
+       p1:players!live_matches_player_1_id_fkey(person:people(name)),
+       p1b:players!live_matches_player_1b_id_fkey(person:people(name)),
+       p2:players!live_matches_player_2_id_fkey(person:people(name)),
+       p2b:players!live_matches_player_2b_id_fkey(person:people(name))`,
+    )
+    .eq("id", liveMatchId)
+    .maybeSingle();
+  if (!data?.club) return fallback;
+
+  const names = (...seats: ({ person: { name: string } | null } | null)[]) =>
+    seats.flatMap((seat) => (seat?.person ? [seat.person.name] : []));
+  return broadcastTitle({
+    tournament: data.fixture?.tournament ?? null,
+    match: data.fixture,
+    side1: names(data.p1, data.p1b),
+    side2: names(data.p2, data.p2b),
+    clubName: data.club.name,
+  });
 }
 
 /**

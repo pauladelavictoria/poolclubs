@@ -1,6 +1,7 @@
 import type { BracketIndex } from "@/libs/algorithms/bracket";
 import type { BracketSide, TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
+import { stageLabel } from "@/libs/algorithms/broadcastTitle";
 import GameLinkOverlay from "@/components/games/GameLinkOverlay";
 import PlayerLink from "@/components/players/PlayerLink";
 
@@ -106,16 +107,6 @@ export default function MatchList({
       ))}
     </div>
   );
-}
-
-function stageLabel(match: TournamentMatch, t: ReturnType<typeof useT>["t"]) {
-  if (match.bracket === "group") {
-    return t("tournaments.group", { n: match.group_no ?? 0 });
-  }
-  // A league is one undivided stage, so a heading over it would say nothing.
-  if (match.bracket === "league") return "";
-  if (match.bracket === "final") return t("tournaments.bracket.final");
-  return `${t(`tournaments.bracket.${match.bracket === "winners" ? "winners" : "losers"}`)} · ${t("tournaments.round", { n: match.round })}`;
 }
 
 function Row({

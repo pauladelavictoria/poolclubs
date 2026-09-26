@@ -1057,6 +1057,42 @@ export type Database = {
           },
         ]
       }
+      table_encoders: {
+        Row: {
+          checked_at: string
+          club_id: number
+          status: string
+          table_id: number
+        }
+        Insert: {
+          checked_at?: string
+          club_id: number
+          status: string
+          table_id: number
+        }
+        Update: {
+          checked_at?: string
+          club_id?: number
+          status?: string
+          table_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_encoders_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "table_encoders_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: true
+            referencedRelation: "club_streams"
+            referencedColumns: ["table_id"]
+          },
+        ]
+      }
       tournament_matches: {
         Row: {
           bracket: string
