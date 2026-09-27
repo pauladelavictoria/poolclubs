@@ -8,7 +8,9 @@ import type { Game } from "@/types";
 /** club_id is stamped by the hook, id and created_at by the database.
  *  played_at is the caller's — the form defaults it to now, but it is exactly
  *  the field a backdated result overrides. */
-type NewGame = Omit<Game, "id" | "created_at" | "club_id">;
+/** `racks` stays out: only a live match writes the log, and a correction leaves
+ *  it alone — RackLog hides it once it stops adding up. */
+type NewGame = Omit<Game, "id" | "created_at" | "club_id" | "racks">;
 
 /** The same fields, plus which row they belong to. `club_id` stays out: a
  *  result is corrected, not moved to another club. */

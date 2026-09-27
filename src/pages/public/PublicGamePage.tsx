@@ -6,6 +6,7 @@ import Side from "@/components/social/feed/Side";
 import { PlayerCountries } from "@/components/players/PlayerLink";
 import { Card } from "@/components/ui/Card";
 import YoutubeEmbed from "@/components/live/YoutubeEmbed";
+import RackLog from "@/components/games/RackLog";
 import { useGameRecording } from "@/hooks/useClubYoutube";
 import { publicClubRosterQuery } from "@/queries/public/clubs";
 import { fmt } from "@/libs/algorithms/dayLabel";
@@ -126,6 +127,8 @@ export default function PublicGamePage() {
             />
           </div>
         </Card>
+
+        <RackLog game={game} />
 
         {recording && (
           <YoutubeEmbed broadcastId={recording} title={t("games.recording")} />

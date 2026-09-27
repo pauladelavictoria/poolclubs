@@ -70,7 +70,9 @@ export default function DashboardPage() {
   // offered a button that RLS would refuse.
   const rank = (x: TournamentListItem) => {
     if (x.status !== "open") return 0;
-    return isMember && canEnterTournament(x.category, player?.category) ? 1 : 2;
+    return isMember && canEnterTournament(x.categories, player?.category)
+      ? 1
+      : 2;
   };
 
   const featured = (tournaments ?? [])
@@ -108,7 +110,7 @@ export default function DashboardPage() {
           </AppLink>
         </div>
         {games.length > 0 ? (
-          <Carousel wide>
+          <Carousel>
             {games.map((game) => (
               <GameTile key={game.id} game={game} />
             ))}
@@ -146,9 +148,7 @@ export default function DashboardPage() {
 
       {DRILLS_ENABLED && latestDrills.length > 0 && (
         <HomeSection titleKey="drills.title" to="/app/$clubSlug/drills">
-          {/* Wider slots than the tournaments row: the table is lying down in
-              these, so a narrow card wastes the picture. */}
-          <Carousel wide>
+          <Carousel>
             {latestDrills.map((drill) => (
               <DrillCard key={drill.id} drill={drill} landscape />
             ))}

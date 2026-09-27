@@ -377,14 +377,15 @@ export function qualifiers(
   return [...winners, ...runnersUp].slice(0, advance);
 }
 
-/** Players eligible for a tournament: everyone, or one division — and never the
+/** Players eligible for a tournament: everyone, or its divisions — and never the
  *  guest placeholder, which is one row standing for whoever walked in and so
  *  cannot be an entrant. See libs/algorithms/placeholderPlayer.ts. */
 export const eligible = <T extends { category: Category; name: string }>(
   players: T[],
-  category: Category | null,
+  categories: Category[] | null,
 ) =>
   players.filter(
     (p) =>
-      !isPlaceholderPlayer(p) && (category === null || p.category === category),
+      !isPlaceholderPlayer(p) &&
+      (categories === null || categories.includes(p.category)),
   );

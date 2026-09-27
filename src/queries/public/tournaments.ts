@@ -32,11 +32,15 @@ export type PublicPodiumMatch = Pick<
 
 /** The entrant list with a name attached, so the ids a podium returns can be
  *  drawn without a second round trip. */
+type PodiumPlayer = {
+  id: number;
+  person: { name: string; avatar_url: string | null; slug: string } | null;
+} | null;
+
 export type PublicPodiumEntrant = {
-  player: {
-    id: number;
-    person: { name: string; avatar_url: string | null; slug: string } | null;
-  } | null;
+  player: PodiumPlayer;
+  /** A couples tournament's second half of the pair. */
+  partner: PodiumPlayer;
 };
 
 export type PublicTournamentListItem = PublicTournament & {
@@ -49,7 +53,7 @@ export type PublicTournamentListItem = PublicTournament & {
 };
 
 type PublicTournamentDetail = PublicTournament & {
-  tournament_players: { player_id: number }[];
+  tournament_players: { player_id: number; partner_id: number | null }[];
   tournament_matches: TournamentMatch[];
 };
 
@@ -74,7 +78,9 @@ export type PublicTournamentsFilters = {
  */
 const PODIUM_COLS =
   "tournament_matches(id, bracket, round, p1_id, p2_id, winner_id, winner_to, winner_to_slot, loser_to, loser_to_slot, game:games(player_1_id, player_1_score, player_2_score))," +
-  " roster:tournament_players(player:players(id, person:people(name, avatar_url, slug)))";
+  // Named by foreign key: tournament_players points at players twice, once
+  // for the entrant and once for a couples partner.
+  " roster:tournament_players(player:players!tournament_players_player_id_fkey(id, person:people(name, avatar_url, slug)), partner:players!tournament_players_partner_id_fkey(id, person:people(name, avatar_url, slug)))";
 
 export const publicTournamentsQuery = (
   filters: PublicTournamentsFilters = {},
@@ -122,7 +128,7 @@ export const publicTournamentQuery = (id: number) =>
       const { data } = await supabase
         .from("tournaments")
         .select(
-          `*, club:clubs!inner(${CLUB_COLS}), tournament_players(player_id), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, played_at))`,
+          `*, club:clubs!inner(${CLUB_COLS}), tournament_players(player_id, partner_id), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, played_at))`,
         )
         .eq("id", id)
         .eq("club.is_public", true)

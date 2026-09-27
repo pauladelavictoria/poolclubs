@@ -11,6 +11,7 @@ import {
   isPresent,
   leaderOf,
   nextAtTable,
+  racksLine,
   seatsOf,
   seatsOfSide,
   unbump,
@@ -33,6 +34,7 @@ const match = (over: Partial<LiveMatch> = {}): LiveMatch => ({
   player_2_score: 0,
   race_to: 5,
   last_side: null,
+  racks: [],
   challenge_id: null,
   tournament_match_id: null,
   record_opt_in: false,
@@ -135,6 +137,7 @@ describe("bump", () => {
       player_1_score: 2,
       player_2_score: 3,
       last_side: 1,
+      racks: [{ side: 1, runout: false }],
     });
   });
 
@@ -151,6 +154,7 @@ describe("unbump", () => {
       player_1_score: 4,
       player_2_score: 0,
       last_side: null,
+      racks: [],
     });
   });
 
@@ -165,7 +169,52 @@ describe("unbump", () => {
       player_1_score: 4,
       player_2_score: 2,
       last_side: null,
+      racks: [],
     });
+  });
+});
+
+describe("the rack log", () => {
+  const p1 = { side: 1, runout: false } as const;
+  const p2 = { side: 2, runout: false } as const;
+  const run2 = { side: 2, runout: true } as const;
+  /** Press after press, the way the scoreboard feeds them. */
+  const play = (...steps: ((m: LiveMatch) => Partial<LiveMatch> | null)[]) =>
+    steps.reduce((m, step) => ({ ...m, ...step(m) }), match());
+
+  it("logs a runout on the rack it was pressed for", () => {
+    expect(bump(match(), 2, true)?.racks).toEqual([run2]);
+  });
+
+  it("undoes a run of mis-taps one press at a time, back to nothing", () => {
+    const m = play(
+      (m) => bump(m, 1),
+      (m) => bump(m, 1),
+      (m) => unbump(m, 1),
+      (m) => unbump(m, 1),
+    );
+    expect(m.racks).toEqual([]);
+    expect(m.player_1_score).toBe(0);
+  });
+
+  it("caught late, takes off that side's latest rack and leaves the other side's alone", () => {
+    const m = play(
+      (m) => bump(m, 1),
+      (m) => bump(m, 2, true),
+      (m) => bump(m, 2),
+      (m) => bump(m, 1),
+      (m) => unbump(m, 1),
+    );
+    expect(m.racks).toEqual([p1, run2, p2]);
+  });
+
+  it("reads back as the running score", () => {
+    expect(racksLine([p1, p2, run2, p2])).toEqual([
+      { p1: 1, p2: 0, side: 1, runout: false },
+      { p1: 1, p2: 1, side: 2, runout: false },
+      { p1: 1, p2: 2, side: 2, runout: true },
+      { p1: 1, p2: 3, side: 2, runout: false },
+    ]);
   });
 });
 

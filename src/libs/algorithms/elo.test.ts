@@ -37,6 +37,7 @@ const game = (
   player_2_id: p2,
   player_1_score: s1,
   player_2_score: s2,
+  racks: [],
   player_1b_id: null,
   player_2b_id: null,
   played_at: `2026-03-${String((seq % 28) + 1).padStart(2, "0")}T10:00:00.000Z`,

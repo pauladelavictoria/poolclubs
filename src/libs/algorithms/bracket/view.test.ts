@@ -157,7 +157,7 @@ describe("eligibleToAdd", () => {
   });
 
   it("restricts to one division when the tournament has one", () => {
-    expect(eligibleToAdd(players, 1, []).map((p) => p.id)).toEqual([1, 3]);
+    expect(eligibleToAdd(players, [1], []).map((p) => p.id)).toEqual([1, 3]);
   });
 
   it("allows every division when the tournament has none", () => {
@@ -176,7 +176,7 @@ describe("eligibleToAdd", () => {
     expect(eligibleToAdd(withGuest, null, []).map((p) => p.id)).toEqual([
       1, 2, 3,
     ]);
-    expect(eligibleToAdd(withGuest, 1, []).map((p) => p.id)).toEqual([1, 3]);
+    expect(eligibleToAdd(withGuest, [1], []).map((p) => p.id)).toEqual([1, 3]);
   });
 });
 

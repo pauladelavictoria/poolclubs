@@ -61,8 +61,12 @@ export type Discipline = Database["public"]["Enums"]["Discipline"];
 
 export const DISCIPLINES: Discipline[] = ["8ball", "9ball", "10ball"];
 
+/** One rack, in the order played: who won it and whether they broke and ran
+ *  it. `racks` is jsonb, so the generated type is `Json` — narrowed here. */
+export type Rack = { side: 1 | 2; runout: boolean };
+
 /** Scores are `bigint` columns: numbers, not strings. */
-export type Game = Stamped<Row<"games">>;
+export type Game = Omit<Stamped<Row<"games">>, "racks"> & { racks: Rack[] };
 
 export type Category = 1 | 2 | 3;
 
@@ -136,7 +140,8 @@ export type ClubTable = Omit<Row<"club_tables">, "type" | "size"> & {
  * the status columns below are: the CHECK is the real domain and the generated
  * type is looser than what is ever stored.
  */
-export type LiveMatch = Omit<Row<"live_matches">, "last_side"> & {
+export type LiveMatch = Omit<Row<"live_matches">, "last_side" | "racks"> & {
+  racks: Rack[];
   /** Which side scored the last rack. What undo reads — two counters alone
    *  cannot say, so undo on the other phone would guess. */
   last_side: 1 | 2 | null;
@@ -300,14 +305,14 @@ export const FORMAT_KEY: Record<
 
 export type Tournament = Omit<
   Row<"tournaments">,
-  "format" | "status" | "category" | "legs"
+  "format" | "status" | "categories" | "legs"
 > & {
   /* discipline, race_to, race_semi and race_final come through as they are —
      the enum is narrowed by Postgres and the races are plain numbers. */
   format: TournamentFormat;
   status: TournamentStatus;
-  /** null = combined, every division. */
-  category: Category | null;
+  /** null = combined, every division; else the divisions it takes. */
+  categories: Category[] | null;
   /** Times each pair meets in a league or inside a group. */
   legs: 1 | 2;
 };
@@ -323,7 +328,7 @@ export const TOURNAMENT_FIELDS = [
   "notes",
   "requires_payment",
   "format",
-  "category",
+  "categories",
   "legs",
   "advance",
   "single_from",
@@ -333,6 +338,8 @@ export const TOURNAMENT_FIELDS = [
   "race_final",
   "points_win",
   "points_play",
+  "mode",
+  "pair_min_sum",
 ] as const;
 
 export type TournamentValues = Pick<

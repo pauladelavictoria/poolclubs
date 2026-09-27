@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getSupabase } from "@/libs/supabase";
 import { keys } from "@/libs/queryKeys";
+import { partnersOf } from "@/libs/algorithms/pairs";
 import type { Tournament, TournamentMatch } from "@/types";
 
 export type PendingMatch = Pick<TournamentMatch, "id" | "tournament_id"> & {
@@ -8,7 +9,13 @@ export type PendingMatch = Pick<TournamentMatch, "id" | "tournament_id"> & {
 };
 
 export type LeagueFixture = Pick<TournamentMatch, "id" | "p1_id" | "p2_id"> & {
-  tournament: Pick<Tournament, "id" | "name" | "discipline" | "race_to">;
+  /** Each side's partner in a couples league, off the entries; null in singles. */
+  p1b_id: number | null;
+  p2b_id: number | null;
+  tournament: Pick<
+    Tournament,
+    "id" | "name" | "discipline" | "race_to" | "mode"
+  >;
 };
 
 /** A row on the index: the tournament plus how many have entered it. */
@@ -17,7 +24,11 @@ export type TournamentListItem = Tournament & {
 };
 
 export type TournamentDetail = Tournament & {
-  tournament_players: { player_id: number; paid: boolean }[];
+  tournament_players: {
+    player_id: number;
+    paid: boolean;
+    partner_id: number | null;
+  }[];
   tournament_matches: TournamentMatch[];
 };
 
@@ -54,7 +65,7 @@ export const tournamentQuery = (id: number) =>
       const { data } = await supabase
         .from("tournaments")
         .select(
-          "*, tournament_players(player_id, paid), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, played_at))",
+          "*, tournament_players(player_id, paid, partner_id), tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score, played_at))",
         )
         .eq("id", id)
         .maybeSingle()
@@ -160,7 +171,7 @@ export const leagueFixturesQuery = (clubId: number | null | undefined) =>
       const { data } = await supabase
         .from("tournament_matches")
         .select(
-          "id, p1_id, p2_id, tournament:tournaments!inner(id, name, discipline, race_to), live:live_matches(id)",
+          "id, p1_id, p2_id, tournament:tournaments!inner(id, name, discipline, race_to, mode, entries:tournament_players(player_id, partner_id)), live:live_matches(id)",
         )
         .eq("tournament.club_id", clubId!)
         .eq("tournament.format", "league")
@@ -172,8 +183,24 @@ export const leagueFixturesQuery = (clubId: number | null | undefined) =>
 
       // One already on a table is taken: live_matches_tournament_match_key
       // would refuse a second live match for it anyway.
-      return (
-        data as unknown as (LeagueFixture & { live: { id: string }[] })[]
-      ).filter((f) => f.live.length === 0);
+      type Row = Pick<LeagueFixture, "id" | "p1_id" | "p2_id"> & {
+        tournament: LeagueFixture["tournament"] & {
+          entries: { player_id: number; partner_id: number | null }[];
+        };
+        live: { id: string }[];
+      };
+      return (data as unknown as Row[])
+        .filter((f) => f.live.length === 0)
+        .map(({ tournament: { entries, ...tournament }, ...f }) => {
+          const partners = partnersOf(entries);
+          const partnerOf = (id: number | null) =>
+            (id && partners.get(id)) || null;
+          return {
+            ...f,
+            p1b_id: partnerOf(f.p1_id),
+            p2b_id: partnerOf(f.p2_id),
+            tournament,
+          } satisfies LeagueFixture;
+        });
     },
   });

@@ -36,6 +36,7 @@ import LeagueFixtures, {
 } from "@/components/tournaments/LeagueFixtures";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
+import { canPair, pairNameOf, partnersOf } from "@/libs/algorithms/pairs";
 import SocialBar from "@/components/social/SocialBar";
 import TournamentAdminPanel from "@/components/tournaments/TournamentAdminPanel";
 import PlayGameForm from "@/components/games/PlayGameForm";
@@ -49,12 +50,17 @@ import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Segmented } from "@/components/ui/Segmented";
 import { Select } from "@/components/ui/Select";
-import { CategoryBadge } from "@/components/ui/Ball";
+import { CategoriesBadge } from "@/components/ui/Ball";
 import { Fact } from "@/components/ui/Fact";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useDialog } from "@/hooks/useDialog";
-import { FORMAT_KEY, tournamentValues, type TournamentMatch } from "@/types";
+import {
+  FORMAT_KEY,
+  tournamentValues,
+  type Category,
+  type TournamentMatch,
+} from "@/types";
 import { useT } from "@/i18n";
 import { getRouteApi } from "@tanstack/react-router";
 import { AppLink } from "@/components/layout/AppLink";
@@ -97,11 +103,24 @@ export default function TournamentPage() {
   const [playing, setPlaying] = useState<TournamentMatch | "new" | null>(null);
   const recordRef = useDialog(!!playing);
   const [adding, setAdding] = useState("");
+  const [addingPartner, setAddingPartner] = useState("");
+  const [partnerId, setPartnerId] = useState("");
   const [view, setView] = useState<"bracket" | "list">("list");
 
   const entrants = useMemo(
     () => (tournament?.tournament_players ?? []).map((e) => e.player_id),
     [tournament],
+  );
+
+  // A couples tournament's entrant is the pair, under the id of whoever
+  // entered it — so every view below names entrants through this.
+  const partners = useMemo(
+    () => partnersOf(tournament?.tournament_players ?? []),
+    [tournament],
+  );
+  const entrantName = useMemo(
+    () => pairNameOf(partners, nameOf),
+    [partners, nameOf],
   );
 
   const paidById = new Map(
@@ -151,12 +170,33 @@ export default function TournamentPage() {
   }
 
   const groups = groupCount(tournament.advance ?? 2);
-  const entered = player ? entrants.includes(player.id) : false;
-  const canEnter = canEnterTournament(tournament.category, player?.category);
+  const isDoubles = tournament.mode === "doubles";
+  /** The entry the reader is in, as captain or as partner. */
+  const myEntry = player
+    ? entrants.find((id) => id === player.id || partners.get(id) === player.id)
+    : undefined;
+  const entered = myEntry !== undefined;
+  const canEnter = canEnterTournament(tournament.categories, player?.category);
 
   /** Who the organiser can still put in: the club roster this tournament is
-   *  open to, minus whoever is already entered. */
-  const addable = eligibleToAdd(players ?? [], tournament.category, entrants);
+   *  open to, minus whoever is already entered — partners included, since
+   *  nobody plays in two pairs. */
+  const addable = eligibleToAdd(players ?? [], tournament.categories, [
+    ...entrants,
+    ...partners.values(),
+  ]);
+  /** Who this player may name as their partner. UI mirror of the pair guard. */
+  const partnersFor = (
+    captain: { id: number; category: Category } | undefined,
+  ) =>
+    captain
+      ? addable.filter(
+          (p) =>
+            p.id !== captain.id &&
+            canPair(tournament.pair_min_sum, captain.category, p.category),
+        )
+      : [];
+  const myPartners = player ? partnersFor(player) : [];
 
   const { podium, table: leagueRows } = tournamentResults(
     tournament,
@@ -192,7 +232,11 @@ export default function TournamentPage() {
   const findMatch = (a: number, b: number) =>
     findOutstandingMatch(matches, a, b);
 
-  const entrantPlayers = (players ?? []).filter((p) => entrants.includes(p.id));
+  const entrantPlayers = (players ?? [])
+    .filter((p) => entrants.includes(p.id))
+    .map((p) => ({ ...p, name: entrantName(p.id) }));
+  /** Entrants by id, named as entrants — a pair's two names on one person. */
+  const entrantById = new Map(entrantPlayers.map((p) => [p.id, p]));
 
   /** The race this fixture runs to, from how deep in the draw it sits. */
   const raceOf = (match: TournamentMatch) =>
@@ -253,11 +297,7 @@ export default function TournamentPage() {
             {t(`discipline.${tournament.discipline}`)}
           </Fact>
           <Fact label={t("tournaments.category")}>
-            {tournament.category === null ? (
-              t("tournaments.combined")
-            ) : (
-              <CategoryBadge category={tournament.category} />
-            )}
+            <CategoriesBadge categories={tournament.categories} />
           </Fact>
 
           {/* What a match is. The number carries its unit — a bare "7" under a
@@ -321,7 +361,7 @@ export default function TournamentPage() {
         {tournament.status === "done" && podium && (
           <Card className="overflow-hidden">
             <CardHeader title={t("tournaments.results")} />
-            <TournamentPodium places={podium} byId={byId} />
+            <TournamentPodium places={podium} byId={byId} partners={partners} />
             {/* Same target as the feed card's bar, so it is one thread seen
                 from two places rather than two threads. */}
             <div className="px-4 pb-3">
@@ -363,7 +403,7 @@ export default function TournamentPage() {
               {view === "bracket" ? (
                 <BracketView
                   matches={matches}
-                  nameOf={nameOf}
+                  nameOf={entrantName}
                   index={index}
                   raceFor={raceOf}
                   onRecord={recorder}
@@ -371,7 +411,7 @@ export default function TournamentPage() {
               ) : (
                 <MatchList
                   matches={matches}
-                  nameOf={nameOf}
+                  nameOf={entrantName}
                   index={index}
                   raceFor={raceOf}
                   onRecord={recorder}
@@ -387,7 +427,9 @@ export default function TournamentPage() {
               title={t("tournaments.entrants", { n: entrants.length })}
               action={
                 isMember &&
-                canEnter && (
+                canEnter &&
+                // A pair is entered below, with the partner picked first.
+                (entered || !isDoubles) && (
                   <Button
                     size="sm"
                     variant={entered ? "secondary" : "primary"}
@@ -397,7 +439,10 @@ export default function TournamentPage() {
                     onClick={() =>
                       runMutation(
                         entered
-                          ? leaveTournament.mutateAsync({ tournamentId })
+                          ? leaveTournament.mutateAsync({
+                              tournamentId,
+                              playerId: myEntry,
+                            })
                           : joinTournament.mutateAsync({ tournamentId }),
                         t,
                         entered ? "tournaments.left" : "tournaments.joined",
@@ -413,9 +458,11 @@ export default function TournamentPage() {
               <EmptyState
                 title={t("tournaments.noEntrants")}
                 hint={
-                  !canEnter && tournament.category
+                  !canEnter && tournament.categories
                     ? t("tournaments.notEligible", {
-                        category: t(`category.${tournament.category}`),
+                        category: tournament.categories
+                          .map((c) => t(`category.${c}`))
+                          .join(", "),
                       })
                     : t("tournaments.noEntrantsHint")
                 }
@@ -436,10 +483,10 @@ export default function TournamentPage() {
                         params={{ playerId: playerId }}
                         className="transition-colors duration-150 hover:text-strike"
                       >
-                        {nameOf(playerId)}
+                        {entrantName(playerId)}
                         <PlayerFlag playerId={playerId} />
                       </AppLink>
-                      {playerId === player?.id && (
+                      {playerId === myEntry && (
                         <span className="ml-2 text-caption text-ink-faint">
                           {t("club.you")}
                         </span>
@@ -460,7 +507,7 @@ export default function TournamentPage() {
                     {isClubAdmin && (
                       <IconButton
                         label={t("tournaments.removeNamed", {
-                          name: nameOf(playerId),
+                          name: entrantName(playerId),
                         })}
                         size="sm"
                         tone="danger"
@@ -483,6 +530,50 @@ export default function TournamentPage() {
               </ul>
             )}
 
+            {/* A pair enters in one go: whoever enters names who they play
+                with, from the members they may pair with. */}
+            {isDoubles && isMember && canEnter && !entered && (
+              <div className="border-t border-hairline p-4">
+                {myPartners.length === 0 ? (
+                  <p className="text-caption text-ink-faint">
+                    {t("tournaments.noPartners")}
+                  </p>
+                ) : (
+                  <div className="flex gap-2">
+                    <Select
+                      size="sm"
+                      className="min-w-0 flex-1"
+                      value={partnerId}
+                      aria-label={t("tournaments.partner")}
+                      onChange={(e) => setPartnerId(e.target.value)}
+                    >
+                      <option value="">{t("tournaments.partner")}</option>
+                      <PlayerOptions players={myPartners} />
+                    </Select>
+                    <Button
+                      size="sm"
+                      className="shrink-0"
+                      disabled={!partnerId || joinTournament.isPending}
+                      onClick={() => {
+                        const partner = Number(partnerId);
+                        setPartnerId("");
+                        runMutation(
+                          joinTournament.mutateAsync({
+                            tournamentId,
+                            partnerId: partner,
+                          }),
+                          t,
+                          "tournaments.joined",
+                        );
+                      }}
+                    >
+                      {t("tournaments.join")}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Not everyone waits to be asked twice: the organiser can put a
                 member in directly. Outside the list above, so it is there when
                 nobody has entered yet. */}
@@ -493,28 +584,56 @@ export default function TournamentPage() {
                     {t("tournaments.allEntered")}
                   </p>
                 ) : (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Select
                       size="sm"
                       className="min-w-0 flex-1"
                       value={adding}
                       aria-label={t("tournaments.addPlayer")}
-                      onChange={(e) => setAdding(e.target.value)}
+                      onChange={(e) => {
+                        setAdding(e.target.value);
+                        setAddingPartner("");
+                      }}
                     >
                       <option value="">{t("tournaments.addPlayer")}</option>
                       <PlayerOptions players={addable} meId={meId} />
                     </Select>
+                    {isDoubles && (
+                      <Select
+                        size="sm"
+                        className="min-w-0 flex-1"
+                        value={addingPartner}
+                        disabled={!adding}
+                        aria-label={t("tournaments.partner")}
+                        onChange={(e) => setAddingPartner(e.target.value)}
+                      >
+                        <option value="">{t("tournaments.partner")}</option>
+                        <PlayerOptions
+                          players={partnersFor(byId.get(Number(adding)))}
+                          meId={meId}
+                        />
+                      </Select>
+                    )}
                     <Button
                       size="sm"
                       className="shrink-0"
-                      disabled={!adding || joinTournament.isPending}
+                      disabled={
+                        !adding ||
+                        (isDoubles && !addingPartner) ||
+                        joinTournament.isPending
+                      }
                       onClick={() => {
                         const playerId = Number(adding);
+                        const partner = isDoubles
+                          ? Number(addingPartner)
+                          : undefined;
                         setAdding("");
+                        setAddingPartner("");
                         runMutation(
                           joinTournament.mutateAsync({
                             tournamentId,
                             playerId,
+                            partnerId: partner,
                           }),
                           t,
                           "tournaments.added",
@@ -539,13 +658,13 @@ export default function TournamentPage() {
               <CardHeader title={t("tournaments.group", { n: group + 1 })} />
               <LeagueTable
                 rows={rows}
-                nameOf={nameOf}
+                nameOf={entrantName}
                 qualify={qualifyMarks(tournament.status)}
               />
               <div className="border-t border-hairline p-3">
                 <Fixtures
                   matches={groupMatches.filter((m) => m.group_no === group + 1)}
-                  nameOf={nameOf}
+                  nameOf={entrantName}
                   index={index}
                   recorder={recorder}
                 />
@@ -560,9 +679,9 @@ export default function TournamentPage() {
                 title={t("tournaments.standings")}
                 rows={leagueRows}
                 matches={matches}
-                nameOf={nameOf}
+                nameOf={entrantName}
                 categoryOf={
-                  tournament.category === null
+                  tournament.categories?.length !== 1 && !isDoubles
                     ? (id) => byId.get(id)?.category
                     : undefined
                 }
@@ -585,14 +704,16 @@ export default function TournamentPage() {
               >
                 <ul className="divide-y divide-hairline">
                   {[...entrants]
-                    .sort((a, b) => nameOf(a).localeCompare(nameOf(b)))
+                    .sort((a, b) =>
+                      entrantName(a).localeCompare(entrantName(b)),
+                    )
                     .map((playerId) => (
                       <li
                         key={playerId}
                         className="flex items-center gap-3 px-4 py-2.5"
                       >
                         <span className="min-w-0 flex-1 truncate text-body text-ink">
-                          {nameOf(playerId)}
+                          {entrantName(playerId)}
                           <PlayerFlag playerId={playerId} />
                         </span>
                         <PaidMark
@@ -612,7 +733,7 @@ export default function TournamentPage() {
                 most people came for. */}
             <LeagueFixtures
               matches={matches}
-              personOf={(id) => byId.get(id)}
+              personOf={(id) => entrantById.get(id) ?? byId.get(id)}
               playerIds={seeded}
               meId={meId}
               emptyHint={canPlay ? t("tournaments.noGamesHint") : undefined}
@@ -632,6 +753,9 @@ export default function TournamentPage() {
               seeded={seeded}
               groupsDone={groupsDone}
               addable={addable}
+              partnersFor={
+                isDoubles ? (id) => partnersFor(byId.get(id)) : undefined
+              }
               entered={entrantPlayers}
               meId={meId}
               manage={{
@@ -705,6 +829,12 @@ export default function TournamentPage() {
                 recordResult.mutateAsync({
                   ...values,
                   discipline: tournament.discipline,
+                  partners: isDoubles
+                    ? {
+                        p1: partners.get(values.p1.id)!,
+                        p2: partners.get(values.p2.id)!,
+                      }
+                    : undefined,
                 }),
                 t,
                 "tournaments.recorded",

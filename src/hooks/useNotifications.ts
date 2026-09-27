@@ -15,6 +15,7 @@ import { useComments } from "@/hooks/useSocial";
 import { useNow } from "@/hooks/useNow";
 import { NIGHT_CALL_WINDOW_MS, isPresent } from "@/libs/algorithms/night";
 import { mentionedSlugs } from "@/libs/algorithms/mentions";
+import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import { useT } from "@/i18n";
 
 type NotificationKind =
@@ -274,7 +275,7 @@ export const useNotifications = () => {
     for (const tour of tournaments ?? []) {
       if (tour.status !== "open") continue;
       if (!sinceJoined(tour.created_at)) continue;
-      if (tour.category !== null && tour.category !== player.category) continue;
+      if (!canEnterTournament(tour.categories, player.category)) continue;
       if (myTournamentIds?.has(tour.id)) continue;
 
       list.push({

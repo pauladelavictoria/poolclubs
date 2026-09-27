@@ -1,6 +1,6 @@
-import { Children, type ReactNode } from "react";
+import { Children, useEffect, useRef, type ReactNode } from "react";
 import { LuChevronRight } from "react-icons/lu";
-import type { LinkProps } from "@tanstack/react-router";
+import { useRouter, type LinkProps } from "@tanstack/react-router";
 import { AppLink } from "@/components/layout/AppLink";
 import { useT, type Key } from "@/i18n";
 
@@ -76,15 +76,7 @@ export function HomeSection({
  * row actually clips. Sticky, positioned against the scroller it lives
  * inside, can't drift out of step with it.
  */
-export function Carousel({
-  children,
-  wide = false,
-}: {
-  children: ReactNode;
-  /** For cards carrying two names and a score rather than one line of text.
-   *  Only changes how many fit once there is room for more than three. */
-  wide?: boolean;
-}) {
+export function Carousel({ children }: { children: ReactNode }) {
   const fade = (edge: "start" | "end") => (
     <li
       aria-hidden
@@ -104,8 +96,24 @@ export function Carousel({
     </li>
   );
 
+  // Always opens on the newest. The router's scroll restoration records every
+  // element that scrolls, this row included, and puts it back on reload and on
+  // the way back to the page — which hid the latest match off the left edge,
+  // behind a row that looked like it was starting at the beginning. The
+  // restore runs in a layout effect, so this passive one lands after it: once
+  // on mount — a reload, or arriving here — and on every render after that the
+  // router restores through.
+  const ref = useRef<HTMLUListElement>(null);
+  const router = useRouter();
+  useEffect(() => {
+    const toStart = () => ref.current?.scrollTo({ left: 0 });
+    toStart();
+    return router.subscribe("onRendered", toStart);
+  }, [router]);
+
   return (
     <ul
+      ref={ref}
       className={[
         "-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 scroll-px-3 pb-1",
         // The bar is noise on a block this short, and every platform the app
@@ -118,13 +126,11 @@ export function Carousel({
         <li
           className={[
             "flex shrink-0 snap-start",
-            // 1.5 cards on a phone, 2.5 once a tablet's width is there, and a
-            // row of them on a laptop. Each subtraction is the gaps the whole
-            // cards leave between them: n gaps for n + 0.5 cards.
-            "w-[calc((100%-0.75rem)/1.5)] sm:w-[calc((100%-1.5rem)/2.5)]",
-            wide
-              ? "lg:w-[calc((100%-2.25rem)/3.5)]"
-              : "lg:w-[calc((100%-3rem)/4.5)]",
+            // 1.5 cards on a phone, 2.5 once a tablet's width is there, and 3.5
+            // on a laptop — the same in every row, so the blocks on the home
+            // page line up. Each subtraction is the gaps the whole cards leave
+            // between them: n gaps for n + 0.5 cards.
+            "w-[calc((100%-0.75rem)/1.5)] sm:w-[calc((100%-1.5rem)/2.5)] lg:w-[calc((100%-2.25rem)/3.5)]",
           ].join(" ")}
         >
           {child}

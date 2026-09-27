@@ -160,6 +160,7 @@ export const useManageLiveMatch = () => {
           player_2_score: 0,
           race_to: input.raceTo,
           last_side: null,
+          racks: [],
           challenge_id: input.challengeId ?? null,
           tournament_match_id: input.tournamentMatchId ?? null,
           record_opt_in: input.recordOptIn ?? false,
@@ -197,9 +198,9 @@ export const useManageLiveMatch = () => {
     }),
 
     scoreMatch,
-    /** The plus button on one side. */
-    bump: (match: LiveMatch, side: 1 | 2) =>
-      scoreMatch.mutate({ match, patch: (m) => bumpScore(m, side) }),
+    /** The plus button on one side, or its runout button. */
+    bump: (match: LiveMatch, side: 1 | 2, runout = false) =>
+      scoreMatch.mutate({ match, patch: (m) => bumpScore(m, side, runout) }),
     /** The minus button. On the row, not on the device — so either phone can
      *  correct the other one's mis-press. */
     unbump: (match: LiveMatch, side: 1 | 2) =>

@@ -599,10 +599,10 @@ BEGIN
 
   INSERT INTO games (club_id, mode, discipline, played_at,
                      player_1_id, player_2_id, player_1b_id, player_2b_id,
-                     player_1_score, player_2_score)
+                     player_1_score, player_2_score, racks)
   VALUES (m.club_id, m.mode, m.discipline, now(),
           m.player_1_id, m.player_2_id, m.player_1b_id, m.player_2b_id,
-          m.player_1_score, m.player_2_score)
+          m.player_1_score, m.player_2_score, m.racks)
   RETURNING id INTO g;
 
   IF m.challenge_id IS NOT NULL THEN
@@ -1270,7 +1270,7 @@ BEGIN
       WHERE p.club_id = t.club_id
         AND p.status = 'active'
         AND NOT p.is_device
-        AND (t.category IS NULL OR p.category = t.category)
+        AND (t.categories IS NULL OR round(p.category)::smallint = ANY (t.categories))
         AND pe.user_id IS DISTINCT FROM auth.uid();
 
   ELSIF p_kind = 'commentMention' THEN
@@ -1564,6 +1564,58 @@ END $$;
 
 
 ALTER FUNCTION "public"."tournament_match_guard"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."tournament_player_pair_guard"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  t tournaments;
+  cat_a double precision;
+  cat_b double precision;
+BEGIN
+  SELECT * INTO t FROM tournaments WHERE id = NEW.tournament_id;
+
+  IF (t.mode = 'doubles') <> (NEW.partner_id IS NOT NULL) THEN
+    RAISE EXCEPTION 'a couples tournament is entered as a pair, a singles one alone';
+  END IF;
+  IF NEW.partner_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.partner_id = NEW.player_id THEN
+    RAISE EXCEPTION 'a pair is two players';
+  END IF;
+
+  -- The same bar the entry policy sets for the captain.
+  SELECT category INTO cat_b FROM players
+  WHERE id = NEW.partner_id AND club_id = t.club_id AND status = 'active';
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'the partner must be an active member of the club';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM tournament_players tp
+    WHERE tp.tournament_id = NEW.tournament_id
+      AND (tp.player_id IN (NEW.player_id, NEW.partner_id)
+           OR tp.partner_id IN (NEW.player_id, NEW.partner_id))
+  ) THEN
+    RAISE EXCEPTION 'one of this pair is already entered';
+  END IF;
+
+  IF t.pair_min_sum IS NOT NULL THEN
+    SELECT category INTO cat_a FROM players WHERE id = NEW.player_id;
+    IF round(cat_a) + round(cat_b) < t.pair_min_sum THEN
+      RAISE EXCEPTION 'this pair''s categories add up to less than %', t.pair_min_sum;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END $$;
+
+
+ALTER FUNCTION "public"."tournament_player_pair_guard"() OWNER TO "postgres";
 
 SET default_tablespace = '';
 
@@ -1908,7 +1960,8 @@ CREATE TABLE IF NOT EXISTS "public"."games" (
     "player_2b_id" bigint,
     "club_id" integer NOT NULL,
     "discipline" "public"."Discipline" DEFAULT '9ball'::"public"."Discipline" NOT NULL,
-    "played_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "played_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "racks" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL
 );
 
 
@@ -1935,6 +1988,7 @@ CREATE TABLE IF NOT EXISTS "public"."live_matches" (
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "record_opt_in" boolean DEFAULT false NOT NULL,
     "record_privacy" "text",
+    "racks" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
     CONSTRAINT "live_matches_doubles_check" CHECK ((("mode" = 'doubles'::"public"."GameMode") = (("player_1b_id" IS NOT NULL) AND ("player_2b_id" IS NOT NULL)))),
     CONSTRAINT "live_matches_last_side_check" CHECK ((("last_side" IS NULL) OR ("last_side" = ANY (ARRAY[1, 2])))),
     CONSTRAINT "live_matches_origin_check" CHECK (("num_nonnulls"("challenge_id", "tournament_match_id") <= 1)),
@@ -2141,7 +2195,8 @@ CREATE TABLE IF NOT EXISTS "public"."tournament_players" (
     "tournament_id" integer NOT NULL,
     "player_id" integer NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "paid" boolean DEFAULT false NOT NULL
+    "paid" boolean DEFAULT false NOT NULL,
+    "partner_id" integer
 );
 
 
@@ -2153,7 +2208,6 @@ CREATE TABLE IF NOT EXISTS "public"."tournaments" (
     "club_id" integer NOT NULL,
     "name" "text" NOT NULL,
     "format" "text" NOT NULL,
-    "category" smallint,
     "legs" smallint DEFAULT 1 NOT NULL,
     "advance" smallint,
     "status" "text" DEFAULT 'open'::"text" NOT NULL,
@@ -2170,14 +2224,18 @@ CREATE TABLE IF NOT EXISTS "public"."tournaments" (
     "requires_payment" boolean DEFAULT false NOT NULL,
     "points_win" smallint DEFAULT 3 NOT NULL,
     "points_play" smallint DEFAULT 1 NOT NULL,
+    "mode" "public"."GameMode" DEFAULT 'single'::"public"."GameMode" NOT NULL,
+    "pair_min_sum" smallint,
+    "categories" smallint[],
     CONSTRAINT "tournaments_advance_check" CHECK ((("format" = 'group_knockout'::"text") = ("advance" IS NOT NULL))),
     CONSTRAINT "tournaments_advance_values_check" CHECK (("advance" = ANY (ARRAY[2, 4, 8, 16]))),
-    CONSTRAINT "tournaments_category_check" CHECK (("category" = ANY (ARRAY[1, 2, 3]))),
+    CONSTRAINT "tournaments_categories_check" CHECK ((("categories" IS NULL) OR (("cardinality"("categories") > 0) AND ("categories" <@ ARRAY[(1)::smallint, (2)::smallint, (3)::smallint])))),
     CONSTRAINT "tournaments_dates_check" CHECK ((("ends_on" IS NULL) OR (("starts_on" IS NOT NULL) AND ("ends_on" >= "starts_on")))),
     CONSTRAINT "tournaments_format_check" CHECK (("format" = ANY (ARRAY['double_elim'::"text", 'league'::"text", 'group_knockout'::"text"]))),
     CONSTRAINT "tournaments_legs_check" CHECK (("legs" = ANY (ARRAY[1, 2]))),
     CONSTRAINT "tournaments_name_check" CHECK ((("char_length"("btrim"("name")) >= 1) AND ("char_length"("btrim"("name")) <= 60))),
     CONSTRAINT "tournaments_notes_check" CHECK (("char_length"("notes") <= 2000)),
+    CONSTRAINT "tournaments_pair_min_sum_check" CHECK ((("pair_min_sum" IS NULL) OR (("mode" = 'doubles'::"public"."GameMode") AND (("pair_min_sum" >= 3) AND ("pair_min_sum" <= 6))))),
     CONSTRAINT "tournaments_points_play_check" CHECK ((("points_play" >= 0) AND ("points_play" <= 20))),
     CONSTRAINT "tournaments_points_win_check" CHECK ((("points_win" >= 0) AND ("points_win" <= 20))),
     CONSTRAINT "tournaments_race_final_check" CHECK ((("race_final" IS NULL) OR (("race_final" >= 1) AND ("race_final" <= 50)))),
@@ -2566,6 +2624,10 @@ CREATE INDEX "tournament_matches_t_idx" ON "public"."tournament_matches" USING "
 
 
 
+CREATE UNIQUE INDEX "tournament_players_partner_key" ON "public"."tournament_players" USING "btree" ("tournament_id", "partner_id") WHERE ("partner_id" IS NOT NULL);
+
+
+
 CREATE INDEX "tournaments_club_idx" ON "public"."tournaments" USING "btree" ("club_id", "status");
 
 
@@ -2615,6 +2677,10 @@ CREATE OR REPLACE TRIGGER "tournament_matches_derive_winner" BEFORE UPDATE ON "p
 
 
 CREATE OR REPLACE TRIGGER "tournament_matches_guard" BEFORE UPDATE ON "public"."tournament_matches" FOR EACH ROW EXECUTE FUNCTION "public"."tournament_match_guard"();
+
+
+
+CREATE OR REPLACE TRIGGER "tournament_players_pair_guard" BEFORE INSERT ON "public"."tournament_players" FOR EACH ROW EXECUTE FUNCTION "public"."tournament_player_pair_guard"();
 
 
 
@@ -2919,6 +2985,11 @@ ALTER TABLE ONLY "public"."tournament_matches"
 
 
 ALTER TABLE ONLY "public"."tournament_players"
+    ADD CONSTRAINT "tournament_players_partner_id_fkey" FOREIGN KEY ("partner_id") REFERENCES "public"."players"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."tournament_players"
     ADD CONSTRAINT "tournament_players_player_id_fkey" FOREIGN KEY ("player_id") REFERENCES "public"."players"("id") ON DELETE CASCADE;
 
 
@@ -3049,7 +3120,7 @@ CREATE POLICY "Either side can respond" ON "public"."challenges" FOR UPDATE TO "
 
 
 
-CREATE POLICY "Entrant or admin can withdraw" ON "public"."tournament_players" FOR DELETE TO "authenticated" USING (("public"."is_own_player"("player_id") OR "public"."is_club_admin"("public"."tournament_club"("tournament_id"))));
+CREATE POLICY "Entrant or admin can withdraw" ON "public"."tournament_players" FOR DELETE TO "authenticated" USING (("public"."is_own_player"("player_id") OR "public"."is_own_player"("partner_id") OR "public"."is_club_admin"("public"."tournament_club"("tournament_id"))));
 
 
 
@@ -3904,6 +3975,12 @@ GRANT ALL ON FUNCTION "public"."tournament_match_derive_winner"() TO "service_ro
 GRANT ALL ON FUNCTION "public"."tournament_match_guard"() TO "anon";
 GRANT ALL ON FUNCTION "public"."tournament_match_guard"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."tournament_match_guard"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."tournament_player_pair_guard"() TO "anon";
+GRANT ALL ON FUNCTION "public"."tournament_player_pair_guard"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."tournament_player_pair_guard"() TO "service_role";
 
 
 

@@ -159,6 +159,31 @@ export const fixturesBetween = <F extends Seats>(
           (f.p1_id === a && f.p2_id === b) || (f.p1_id === b && f.p2_id === a),
       );
 
+type PairSeats = Seats & { p1b_id: number | null; p2b_id: number | null };
+
+/**
+ * The same for a couples league, where each side is a pair: the fixtures
+ * between the pair a1 + a2 and the pair b1 + b2, either way round and either
+ * of each pair named first.
+ */
+export const pairFixturesBetween = <F extends PairSeats>(
+  fixtures: F[],
+  a1: number | null | undefined,
+  a2: number | null | undefined,
+  b1: number | null | undefined,
+  b2: number | null | undefined,
+): F[] => {
+  if (a1 == null || a2 == null || b1 == null || b2 == null) return [];
+  const isPair = (x: number | null, y: number | null, s: number, t: number) =>
+    (x === s && y === t) || (x === t && y === s);
+  return fixtures.filter(
+    (f) =>
+      (isPair(f.p1_id, f.p1b_id, a1, a2) &&
+        isPair(f.p2_id, f.p2b_id, b1, b2)) ||
+      (isPair(f.p1_id, f.p1b_id, b1, b2) && isPair(f.p2_id, f.p2b_id, a1, a2)),
+  );
+};
+
 /**
  * Whether this player still has a fixture to play — against one particular
  * opponent once the other side has been picked.

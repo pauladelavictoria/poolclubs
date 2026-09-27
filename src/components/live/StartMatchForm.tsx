@@ -19,7 +19,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWhoIsHere } from "@/hooks/useNight";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { DEFAULT_SETUP, type DaySetup } from "@/libs/algorithms/today";
-import { fixturesBetween, hasFixture } from "@/libs/algorithms/leagueTable";
+import {
+  fixturesBetween,
+  hasFixture,
+  pairFixturesBetween,
+} from "@/libs/algorithms/leagueTable";
 import { canScore, seatsOf } from "@/libs/algorithms/night";
 import type { LeagueFixture } from "@/queries/tournaments";
 import { useT } from "@/i18n";
@@ -65,9 +69,10 @@ export default function StartMatchForm({
   tables?: ClubTable[];
   /** Tables with a match on them right now. */
   busyTableIds?: Set<number>;
-  /** Every pending fixture of a running league in the club. Singles picked
-   *  who happen to match one are offered the fixture's own race and
-   *  discipline, and a live match tagged with it — see useLeagueFixtures. */
+  /** Every pending fixture of a running league in the club. Players picked
+   *  who happen to match one — two names in singles, two pairs in doubles —
+   *  are offered the fixture's own race and discipline, and a live match
+   *  tagged with it — see useLeagueFixtures. */
   leagueFixtures?: LeagueFixture[];
   /** Opened from "play for <league>" rather than from "play a game": this match
    *  *is* a fixture of that league. The terms then come from the league rather
@@ -137,10 +142,10 @@ export default function StartMatchForm({
   const label = (p: Player) =>
     hereIds.has(p.id) ? `\u25CF ${p.name}` : p.name;
   const [opponentId, setOpponentId] = useState("");
-  // A league is played in singles, so its fixtures have two seats and the
-  // format question does not arise — see the note on `league`.
+  // A league is played in singles or in couples, fixed when it was created, so
+  // the format question does not arise — see the note on `league`.
   const [pickedMode, setMode] = useState<GameMode>(defaults.mode);
-  const mode = league ? "single" : pickedMode;
+  const mode = league ? league.mode : pickedMode;
   const [partner1Id, setPartner1Id] = useState("");
   const [partner2Id, setPartner2Id] = useState("");
   const isBusy = (id: number) => !!busyTableIds?.has(id);
@@ -202,12 +207,23 @@ export default function StartMatchForm({
     (f) => !league || f.tournament.id === league.id,
   );
 
-  // Singles only — a league fixture has no partner seats to match against. The
-  // first leg left: which one of two it is changes nothing about the match.
+  // Two names in singles, two pairs in doubles, each against the leagues
+  // played that way. The first leg left: which one of two it is changes
+  // nothing about the match.
   const fixture =
     mode === "single"
-      ? fixturesBetween(fixtures, player1?.id, opponent?.id)[0]
-      : undefined;
+      ? fixturesBetween(
+          fixtures.filter((f) => f.tournament.mode === "single"),
+          player1?.id,
+          opponent?.id,
+        )[0]
+      : pairFixturesBetween(
+          fixtures,
+          player1?.id,
+          partner1?.id,
+          opponent?.id,
+          partner2?.id,
+        )[0];
   // Started as a league match, it is one: the toggle below is the casual case's
   // way out and is not offered here.
   const forLeague = !!fixture && (!!league || fixture.id !== declinedFixtureId);
@@ -242,7 +258,14 @@ export default function StartMatchForm({
    *  not an answer to "who is playing", and once one side is picked the other
    *  list is whoever that side still owes a game. */
   const openings = (against: Player | undefined) => (p: Player) =>
-    !league || hasFixture(fixtures, p.id, against?.id ?? null);
+    !league ||
+    (mode === "doubles"
+      ? // ponytail: anyone in a pair with a fixture left; the pairing itself
+        // is checked once all four are picked.
+        fixtures.some((f) =>
+          [f.p1_id, f.p1b_id, f.p2_id, f.p2b_id].includes(p.id),
+        )
+      : hasFixture(fixtures, p.id, against?.id ?? null));
   const sideOneOptions = sideOne.filter(openings(opponent));
   const sideTwoOptions = (forOthers ? sideOne : roster).filter(
     openings(player1 ?? undefined),
@@ -267,11 +290,25 @@ export default function StartMatchForm({
       onSubmit={(e) => {
         e.preventDefault();
         if (!valid) return;
+        // A couples fixture is filed under each pair's captain (the one who
+        // entered it), so the captain takes the side's first seat: the game's
+        // winner is then the entrant id the fixture expects, and the league
+        // table reads the racks from the right side.
+        const captains =
+          forLeague && mode === "doubles"
+            ? new Set([fixture!.p1_id, fixture!.p2_id])
+            : null;
+        const side = (main: Player, partner: Player | null) =>
+          partner && captains?.has(partner.id)
+            ? ([partner, main] as const)
+            : ([main, partner] as const);
+        const [seat1, seat1b] = side(player1!, partner1);
+        const [seat2, seat2b] = side(opponent!, partner2);
         onSubmit({
-          player1: player1!,
-          player2: opponent!,
-          partner1,
-          partner2,
+          player1: seat1,
+          player2: seat2,
+          partner1: seat1b,
+          partner2: seat2b,
           discipline: effectiveDiscipline,
           raceTo: effectiveRaceTo,
           // A match with no table is a real thing in a busy club, and it is
@@ -312,8 +349,8 @@ export default function StartMatchForm({
             </Select>
           </div>
         )}
-        {/* A league match has no settings: singles, and the league's own game
-            and race. So the row says what they are instead of asking, and the
+        {/* A league match has no settings: the league's own format, game and
+            race. So the row says what they are instead of asking, and the
             only thing left on it is which table. */}
         {league && (
           <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -327,6 +364,7 @@ export default function StartMatchForm({
               </p>
               <p className="text-caption text-ink-faint">
                 {t(`discipline.${league.discipline}`)} ·{" "}
+                {league.mode === "doubles" && <>{t("games.doubles")} · </>}
                 {t("live.raceTo", { n: league.race_to })}
               </p>
             </div>
