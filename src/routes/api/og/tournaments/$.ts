@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pairNameOf, partnersOf } from "@/libs/algorithms/pairs";
 import { ogHandler, peopleOf } from "@/libs/server/ogRoute";
 import { resolveBracket, tournamentResults } from "@/libs/algorithms/bracket";
 import { eventDates } from "@/libs/algorithms/eventDates";
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/api/og/tournaments/$")({
           .select(
             `id, name, format, starts_on, ends_on, status, points_win, points_play,
                club:clubs!inner(name, slug, logo_url, is_public),
-               tournament_players(player_id),
+               tournament_players(player_id, partner_id),
                tournament_matches(*, game:games(player_1_id, player_1_score, player_2_score))`,
           )
           .eq("id", id)
@@ -86,7 +87,17 @@ export const Route = createFileRoute("/api/og/tournaments/$")({
           );
 
         const ids = podiumIds(places);
-        const people = await peopleOf(supabase, ids);
+        // A couples podium names both halves of each pair; the faces stay one
+        // per place, the entrant's.
+        const partners = partnersOf(tournament.tournament_players ?? []);
+        const people = await peopleOf(supabase, [
+          ...ids,
+          ...ids.flatMap((id) => partners.get(id) ?? []),
+        ]);
+        const nameOf = pairNameOf(
+          partners,
+          (id) => people.get(id)?.name ?? "—",
+        );
 
         return cardImage.renderResultCardPng(
           resultCardSpec({
@@ -94,7 +105,7 @@ export const Route = createFileRoute("/api/og/tournaments/$")({
             title: tournament.name,
             subtitle: dates,
             places,
-            nameOf: (playerId) => people.get(playerId)?.name ?? "—",
+            nameOf,
           }),
           {
             ...chrome,

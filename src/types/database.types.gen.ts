@@ -587,6 +587,7 @@ export type Database = {
           player_2_id: number
           player_2_score: number
           player_2b_id: number | null
+          racks: Json
         }
         Insert: {
           club_id: number
@@ -601,6 +602,7 @@ export type Database = {
           player_2_id: number
           player_2_score: number
           player_2b_id?: number | null
+          racks?: Json
         }
         Update: {
           club_id?: number
@@ -615,6 +617,7 @@ export type Database = {
           player_2_id?: number
           player_2_score?: number
           player_2b_id?: number | null
+          racks?: Json
         }
         Relationships: [
           {
@@ -669,6 +672,7 @@ export type Database = {
           player_2_score: number
           player_2b_id: number | null
           race_to: number
+          racks: Json
           record_opt_in: boolean
           record_privacy: string | null
           started_at: string
@@ -690,6 +694,7 @@ export type Database = {
           player_2_score?: number
           player_2b_id?: number | null
           race_to?: number
+          racks?: Json
           record_opt_in?: boolean
           record_privacy?: string | null
           started_at?: string
@@ -711,6 +716,7 @@ export type Database = {
           player_2_score?: number
           player_2b_id?: number | null
           race_to?: number
+          racks?: Json
           record_opt_in?: boolean
           record_privacy?: string | null
           started_at?: string
@@ -1198,22 +1204,32 @@ export type Database = {
         Row: {
           created_at: string
           paid: boolean
+          partner_id: number | null
           player_id: number
           tournament_id: number
         }
         Insert: {
           created_at?: string
           paid?: boolean
+          partner_id?: number | null
           player_id: number
           tournament_id: number
         }
         Update: {
           created_at?: string
           paid?: boolean
+          partner_id?: number | null
           player_id?: number
           tournament_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "tournament_players_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tournament_players_player_id_fkey"
             columns: ["player_id"]
@@ -1233,7 +1249,7 @@ export type Database = {
       tournaments: {
         Row: {
           advance: number | null
-          category: number | null
+          categories: number[] | null
           club_id: number
           created_at: string
           discipline: Database["public"]["Enums"]["Discipline"]
@@ -1242,8 +1258,10 @@ export type Database = {
           format: string
           id: number
           legs: number
+          mode: Database["public"]["Enums"]["GameMode"]
           name: string
           notes: string | null
+          pair_min_sum: number | null
           points_play: number
           points_win: number
           race_final: number | null
@@ -1256,7 +1274,7 @@ export type Database = {
         }
         Insert: {
           advance?: number | null
-          category?: number | null
+          categories?: number[] | null
           club_id: number
           created_at?: string
           discipline?: Database["public"]["Enums"]["Discipline"]
@@ -1265,8 +1283,10 @@ export type Database = {
           format: string
           id?: number
           legs?: number
+          mode?: Database["public"]["Enums"]["GameMode"]
           name: string
           notes?: string | null
+          pair_min_sum?: number | null
           points_play?: number
           points_win?: number
           race_final?: number | null
@@ -1279,7 +1299,7 @@ export type Database = {
         }
         Update: {
           advance?: number | null
-          category?: number | null
+          categories?: number[] | null
           club_id?: number
           created_at?: string
           discipline?: Database["public"]["Enums"]["Discipline"]
@@ -1288,8 +1308,10 @@ export type Database = {
           format?: string
           id?: number
           legs?: number
+          mode?: Database["public"]["Enums"]["GameMode"]
           name?: string
           notes?: string | null
+          pair_min_sum?: number | null
           points_play?: number
           points_win?: number
           race_final?: number | null

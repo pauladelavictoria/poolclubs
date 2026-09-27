@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { TournamentMatch } from "@/types";
 import {
   fixturesBetween,
+  pairFixturesBetween,
   groupStandings,
   hasFixture,
   leaguePodium,
@@ -206,6 +207,15 @@ describe("pending fixtures", () => {
     expect(fixturesBetween(pending, 1, 3).length).toBe(1);
     expect(fixturesBetween(pending, 2, 3)).toEqual([]);
     expect(fixturesBetween(pending, 1, null)).toEqual([]);
+  });
+
+  it("finds a couples fixture from its four names, in any order", () => {
+    const pairs = [{ p1_id: 1, p1b_id: 2, p2_id: 3, p2b_id: 4 }];
+    expect(pairFixturesBetween(pairs, 1, 2, 3, 4)).toEqual(pairs);
+    expect(pairFixturesBetween(pairs, 4, 3, 2, 1)).toEqual(pairs);
+    // Same four people, split differently: not this fixture.
+    expect(pairFixturesBetween(pairs, 1, 3, 2, 4)).toEqual([]);
+    expect(pairFixturesBetween(pairs, 1, 2, 3, null)).toEqual([]);
   });
 
   it("says who still has a fixture, and against whom", () => {

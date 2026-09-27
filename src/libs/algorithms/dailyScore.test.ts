@@ -40,6 +40,7 @@ const game = (
   player_2_id: p2,
   player_1_score: s1,
   player_2_score: s2,
+  racks: [],
   player_1b_id: null,
   player_2b_id: null,
   played_at: at,

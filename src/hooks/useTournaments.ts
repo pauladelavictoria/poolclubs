@@ -142,21 +142,31 @@ export const useManageTournaments = () => {
       onSuccess: refresh,
     }),
 
-    /** Entering yourself. RLS allows your own player row, or any if you own the club. */
+    /** Entering yourself. RLS allows your own player row, or any if you own the club.
+     *  A couples tournament takes the partner in the same row — see
+     *  tournament_player_pair_guard in sql/schema.sql for what it checks. */
     joinTournament: useMutation({
       mutationFn: async ({
         tournamentId,
         playerId,
+        partnerId,
       }: {
         tournamentId: number;
         playerId?: number;
+        partnerId?: number;
       }) => {
         const entrant = playerId ?? player?.id;
         if (!entrant) throw new Error("no player");
 
         await supabase
           .from("tournament_players")
-          .insert([{ tournament_id: tournamentId, player_id: entrant }])
+          .insert([
+            {
+              tournament_id: tournamentId,
+              player_id: entrant,
+              partner_id: partnerId ?? null,
+            },
+          ])
           .throwOnError();
       },
       onSuccess: refresh,
@@ -197,9 +207,12 @@ export const useManageTournaments = () => {
       mutationFn: async ({
         tournament,
         playerId,
+        partnerId,
       }: {
         tournament: TournamentDetail;
         playerId: number;
+        /** A couples league's: the pair enters as one, under playerId. */
+        partnerId?: number;
       }) => {
         if (tournament.format !== "league" || tournament.status !== "running")
           throw new Error("not a running league");
@@ -211,7 +224,13 @@ export const useManageTournaments = () => {
 
         await supabase
           .from("tournament_players")
-          .insert([{ tournament_id: tournament.id, player_id: playerId }])
+          .insert([
+            {
+              tournament_id: tournament.id,
+              player_id: playerId,
+              partner_id: partnerId ?? null,
+            },
+          ])
           .throwOnError();
 
         const fromRound =
@@ -337,6 +356,7 @@ export const useManageTournaments = () => {
         p1Score,
         p2Score,
         discipline,
+        partners,
       }: {
         match: TournamentMatch;
         p1: Player;
@@ -345,6 +365,8 @@ export const useManageTournaments = () => {
         p2Score: number;
         /** The tournament's, not the players' — a tournament is one game. */
         discipline: Discipline;
+        /** Each side's partner, in a couples tournament. */
+        partners?: { p1: number; p2: number };
       }) => {
         if (!activeClubId) throw new Error("no active club");
         if (p1Score === p2Score)
@@ -355,11 +377,15 @@ export const useManageTournaments = () => {
           .insert([
             {
               club_id: activeClubId,
-              mode: "single" as const,
+              mode: partners ? ("doubles" as const) : ("single" as const),
               discipline,
+              // The captain sits in the first seat of each side, so the game's
+              // winner is the entrant id the fixture expects.
               player_1_id: p1.id,
+              player_1b_id: partners?.p1 ?? null,
               player_1_score: p1Score,
               player_2_id: p2.id,
+              player_2b_id: partners?.p2 ?? null,
               player_2_score: p2Score,
             },
           ])

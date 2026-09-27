@@ -5,7 +5,7 @@ import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import SocialBar from "@/components/social/SocialBar";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { CategoryBadge } from "@/components/ui/Ball";
+import { CategoriesBadge } from "@/components/ui/Ball";
 import { resolveBracket, tournamentResults } from "@/libs/algorithms/bracket";
 import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import { runMutation } from "@/libs/browser/mutationToast";
@@ -37,11 +37,7 @@ function Head({ tournament, label }: { tournament: Tournament; label?: Key }) {
         {tournament.name}
       </AppLink>
       <p className="flex flex-wrap items-center gap-x-1 text-caption text-ink-faint">
-        {tournament.category === null ? (
-          t("tournaments.combined")
-        ) : (
-          <CategoryBadge category={tournament.category} />
-        )}
+        <CategoriesBadge categories={tournament.categories} />
         <span className="truncate">
           {" · "}
           {t(`discipline.${tournament.discipline}`)}
@@ -69,7 +65,7 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
   const entered = player ? entrants.includes(player.id) : false;
   // A single-division tournament is only open to that division. Same predicate
   // the lobby filters its open list with — see libs/algorithms/tournamentEntry.
-  const canEnter = canEnterTournament(tournament.category, player?.category);
+  const canEnter = canEnterTournament(tournament.categories, player?.category);
 
   const toggle = async () => {
     const tournamentId = tournament.id;
@@ -102,9 +98,11 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
       <div className="mt-3 border-t border-hairline pt-2">
         <p className="text-caption text-ink-faint">
           {entrants.length === 0
-            ? !canEnter && tournament.category
+            ? !canEnter && tournament.categories
               ? t("tournaments.notEligible", {
-                  category: t(`category.${tournament.category}`),
+                  category: tournament.categories
+                    .map((c) => t(`category.${c}`))
+                    .join(", "),
                 })
               : t("tournaments.noEntrants")
             : t("tournaments.entrants", { n: entrants.length })}

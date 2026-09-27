@@ -1,194 +1,278 @@
-# Multi-club tournaments and a shared ranking
+# Open tournaments, couples, and multi-club seasons
 
-**Status:** planned, not started. Written 2026-09-15.
-**Nothing in this document has been built.** No table, RLS policy or route
-described here exists in the repo yet.
+**Status:** planned, not started. First written 2026-09-15, rewritten
+2026-09-27 around three concrete requirements.
+**Nothing in this document has been built.** No table, column, RLS policy or
+route described here exists in the repo yet.
 
 ---
 
 ## Why this document exists
 
-Every tournament today belongs to exactly one club, and every entrant must
-already be a member of that club — enforced not just by convention but by an
-actual RLS policy (see below). A club that wants to run something bigger
-than its own membership — a city-wide open, a league across five clubs that
-already know each other, a season that feeds one shared leaderboard — cannot
-do it inside a single `tournaments` row as the schema stands.
+Every tournament today belongs to exactly one club, is singles-only, and
+every entrant must already be a member of that club — enforced by an actual
+RLS policy, not just the UI. That rules out three things clubs are asking
+for:
 
-This is the feature that turns PoolClubs from "one app per club" into
-something with real network effects: a club joining the platform becomes
-more valuable to every other club already on it, because now their members
-can play in and be ranked against a bigger pool of opponents. That is a
-materially stronger pitch to a prospective club than anything scoped to a
-single venue.
+1. **Open tournaments.** A club organizes a tournament — for one category,
+   several, or all — and anyone can enter: members of other clubs, or people
+   with no club at all.
+2. **Seasons.** Several clubs run a named, branded season together. Each of
+   its tournaments is organized by one of those clubs and can be played at
+   any venue, and every result feeds a season ranking, per category and
+   combined.
+3. **Couples tournaments.** Pairs enter together and play doubles.
+
+This is the feature set that turns PoolClubs from "one app per club" into
+something with network effects: a club joining the platform becomes more
+valuable to every club already on it, because their players can now play in
+and be ranked against a bigger pool.
 
 ---
 
-## What already exists (verified against the code, 2026-09-15)
+## What already exists (verified against the code, 2026-09-27)
 
 | Fact | Where |
 |---|---|
-| Identity is already cross-club by construction: one `people` row per human, one `players` row per club they belong to. A serial multi-club player already has multiple `players.id`s pointing at the same `people.id` today | `sql/schema.sql` (`people`, `players`) |
-| Cross-club aggregation already has real precedent, just not for a competitive ranking: `playerRecord.ts` sums a person's wins across **all** their `players.id`s at once, explicitly "cross-club by construction"; `PublicPlayersPage` is a cross-club name search; a player's public profile and link-preview card are cross-club by the same mechanism | `src/libs/algorithms/playerRecord.ts`, `src/pages/public/PublicPlayersPage.tsx`, `src/pages/public/PublicPlayerPage.tsx` |
-| **The actual blocker**: entering a tournament requires club membership of *that tournament's* club, enforced in the database, not just the UI — `"Members can enter themselves" ... WITH CHECK (is_club_member(tournament_club(tournament_id)) AND ...)` | `sql/schema.sql:2912` |
-| `tournaments.club_id` is a single, non-nullable integer — a tournament has exactly one owning club today | `sql/schema.sql:2034` (`tournaments`) |
-| Point values for a league-format tournament already exist and are already club-authored per tournament: `points_win`, `points_play` (smallint, club sets these per tournament today) | `sql/schema.sql:2034`, `src/components/tournaments/TournamentForm.tsx` |
-| Standings computation is already a pure function over entrants + matches, independent of club: `standings()` in `leagueTable.ts` takes a list of entrant ids and a list of matches and returns a table — it does not care what club an id belongs to today, because today all the ids it's given happen to share one | `src/libs/algorithms/leagueTable.ts` |
-| Per-club ranking (ELO, daily/night/all-time) is computed from `games`, which is itself club-scoped (`games.club_id` required, both `players.id`s implicitly from that club by how the UI writes them) — this is a *separate* system from tournament standings and is out of scope here; this document is about tournament-driven shared points, not merging every club's day-to-day ELO into one number | `src/hooks/useEloRanking.ts`, `sql/schema.sql:1794` (`games`) |
-| A federation-seeded, unclaimed club directory already exists (`clubs-seed-es.sql`) — clubs that don't yet actively run on the platform are already listed and linkable, which is relevant to "who can a network tournament include" below | `sql/clubs-seed-es.sql`, `src/pages/public/PublicClubPage.tsx` |
-
-The identity model already does the hard part for free — a shared ranking
-keyed by `people.id` rather than `players.id` is a natural aggregation, not
-a redesign. The actual work is entirely on the *entry* side: letting someone
-from Club B into a tournament owned by Club A, safely.
-
----
-
-## Two features, not one
-
-It's worth separating these explicitly, because they have different shapes:
-
-1. **A network tournament** — one event, entrants may come from more than
-   one participating club, one bracket/league table.
-2. **A shared ranking (season)** — points from *multiple* tournaments,
-   possibly run by different clubs on different dates, rolled into one
-   ongoing leaderboard keyed by person, not by club.
-
-A network tournament is useful on its own (one-off city open). A shared
-ranking needs network tournaments as its input but is a bigger commitment —
-it implies an ongoing "season" concept and, eventually, governance over who
-can add a tournament to somebody else's ranking. Recommend building #1
-first and proving it works before committing to #2's data model, since #2's
-shape depends on lessons from real network-tournament usage.
+| Identity is cross-club by construction: one `people` row per human, one `players` row per club they belong to | `sql/schema.sql` (`people`, `players`) |
+| **Clubless users already have a `players` row**, in the sentinel club "PoolClubs Global" (slug `global`). So "anyone with an account" and "anyone who owns some `players` row" are the same set — an open tournament needs no person-keying migration | `create_club` / sentinel-club work |
+| `tournaments` has one owning `club_id`, one nullable `category` (1–3, NULL = all categories), and no `mode` — tournaments are singles-only | `sql/schema.sql:2151` |
+| `tournament_players` is just `tournament_id, player_id, created_at, paid` | `sql/schema.sql:2140` |
+| **Category eligibility is enforced only in the UI**, by `canEnterTournament()`; nothing in RLS checks it. `players.category` is set by each club on its own roster (`double precision`, default 3) | `src/libs/algorithms/tournamentEntry.ts` |
+| The entry blocker: `"Members can enter themselves"` requires membership of the tournament's club *and* that `player_id` is a `players` row of that club | `sql/schema.sql:3084` |
+| Every other tournament policy is gated the same way: viewing (`:3164`, `:3168`, `:3180`), recording results (`:3114`), public read only when the owning club is public (`:3056`, `:3068`, `:3292`). **Opening entry alone is not enough** — an outside entrant must also be able to see the tournament and record their own matches | `sql/schema.sql` |
+| Doubles already exist everywhere below tournaments: `GameMode` (`single`/`doubles`), `player_1b_id`/`player_2b_id` on `games` and `live_matches`; Elo, daily score, cards and the live scoreboard all handle a partner seat | `sql/schema.sql:1899`, `src/libs/algorithms/elo.ts`, `dailyScore.ts` |
+| Tournament results become `games` rows under the tournament's `club_id` (via `finish_live_match`, which also links `tournament_matches.game_id`) | `sql/schema.sql:575` |
+| Standings are a pure function over entrant ids + matches, club-agnostic — but **league format only**. No finishing-position function exists for double elimination or groups + knockout | `src/libs/algorithms/leagueTable.ts:59` (`standings`) |
+| Clubs already have branding: `slug`, `logo_url`, `theme_color` (`BallColor`) | `sql/schema.sql` (`clubs`) |
+| A federation-seeded directory of clubs (including unclaimed ones) already exists — usable as a venue list | `sql/clubs-seed-es.sql`, `src/pages/public/PublicClubPage.tsx` |
+| The name `season` is unused anywhere in the schema | — |
 
 ---
 
-## Core decision: how does a Club-B player enter a Club-A tournament?
+## 1. Open tournaments
 
-Three shapes, in increasing order of complexity:
+### Decision
 
-- **A. Per-tournament guest list.** The owning club's admin explicitly adds
-  specific outside players (by club + player, or by inviting another club's
-  admin to add their own roster). Simplest RLS change: a new policy that
-  checks membership of *any* club on an explicit allow-list for that
-  tournament, not just the tournament's own club. No change to who *owns*
-  the tournament or its data.
-- **B. Open network tournament.** Tournament flagged as open to a set of
-  clubs (or to every public club) rather than an explicit player list;
-  anyone active in one of those clubs can self-enter, same self-service
-  spirit as today's "Members can enter themselves" policy, just with a wider
-  membership check. Needs a new small join table (`tournament_clubs`, see
-  below) rather than a single `club_id`.
-- **C. Person-level entry, no club gate at all.** Drop the membership check
-  entirely for tournaments marked this way — anyone with an account can
-  enter. Simplest schema, but removes the one thing that currently keeps a
-  tournament's entrant list trustworthy (a real human vetted by a real
-  club's join flow), and reopens exactly the fake-account concern the
-  referral document (`promo-referral.md`) designs around on the other side
-  of the app. Not recommended as the default.
+A tournament gets a flag, `tournaments.open boolean NOT NULL DEFAULT false`.
+A closed tournament behaves exactly as today. For an open one, **the
+membership check is dropped entirely**: anyone signed in can enter with any
+`players` row they own — their row at their own club, or their `global` row
+if they have no club.
 
-**B is recommended.** It keeps the trust boundary that already exists
-(entering still requires being a real, active member of *some* participating
-club) while removing the single-club restriction, and it maps directly onto
-"five clubs that already know each other running a joint league" — the
-actual business case a club owner would recognize and want.
+The earlier draft of this document recommended a per-tournament list of
+allowed clubs instead, to keep "vetted by a real club" as the trust
+boundary. That has been decided against: an open city tournament is meant
+to be open, and the organizer club's admin remains the gate (they can
+remove any entrant, and `requires_payment` still applies).
 
----
+### Schema
 
-## Schema changes this implies (Option B, sketched, not final)
+- `tournaments.open boolean NOT NULL DEFAULT false`.
+- `tournaments.venue_club_id integer NULL REFERENCES clubs(id)` — where it is
+  played, when that isn't the organizer's own room (see Seasons). Any club in
+  the directory, claimed or not. NULL = at the organizer.
+- `tournament_players.person_id integer NOT NULL` — filled by a `BEFORE
+  INSERT` trigger from `players.person_id`, with
+  `UNIQUE (tournament_id, person_id)`. This is the one real guard an open
+  tournament needs: a person with rows at two clubs cannot enter twice. It is
+  also what the season ranking keys on.
+- `tournament_players.player_id` **stays a `players.id`**. The entrant still
+  enters as one concrete club row, so `is_own_player`, the withdraw/admin
+  policies, `tournament_matches.p1_id/p2_id` and `standings()` are all
+  unchanged. "Which club does this person play for" is a join through
+  `players.club_id`; the `global` club is shown as "no club".
 
-- **New `tournament_clubs`** — `tournament_id, club_id`, composite PK. The
-  owning club still exists (`tournaments.club_id`, whoever administers the
-  bracket/settings), but this table lists every club whose active members
-  may self-enter. A single-club tournament, which is every tournament today,
-  is just one row in this table matching its own `club_id` — existing
-  tournaments backfill trivially and nothing about them changes.
-- **RLS**: `"Members can enter themselves"` (`sql/schema.sql:2912`) changes
-  its `is_club_member(tournament_club(tournament_id))` check to
-  `EXISTS (SELECT 1 FROM tournament_clubs tc WHERE tc.tournament_id =
-  tournament_players.tournament_id AND is_club_member(tc.club_id))`. Same
-  shape, wider set. The SELECT/read policies (`"Members can view entrants"`,
-  the public one) need the equivalent widening so entrants from every
-  participating club can actually see the bracket.
-- **`tournament_players.player_id` stays a `players.id`, not a `people.id`.**
-  A player entering a network tournament still enters as their
-  *club-specific* `players` row (whichever club's membership let them in) —
-  this keeps `is_own_player`, existing withdraw/admin policies, and
-  `leagueTable.ts`'s existing entrant-id shape all working unchanged.
-  Anywhere the standings need to show "which club is this person playing
-  for," that's a join through `players.club_id`, not a new column.
-- **UI**: `TournamentForm` gains a multi-club picker when creating a
-  tournament (defaulting to just the creating club, i.e. today's behavior
-  unchanged unless a club deliberately opts in). Needs a way for Club A to
-  actually invite Club B — simplest v1 is "pick from clubs you're already
-  connected to somehow" (no such concept exists yet) or, more realistically
-  for a first version, any club admin can add *any* public club to the list
-  without that club's opt-in, the same way anyone can already see any public
-  club's roster today. Whether that's the right trust model is an open
-  question below, not a settled one.
+### RLS
 
----
+- **Enter** (`"Members can enter themselves"`, `:3084`) becomes:
+  `(tournament_is_open(tournament_id) AND is_own_player(player_id))
+  OR <today's check>`. The admin-adds-someone branch stays members-only; an
+  admin of an open tournament can still add their own members.
+- **Read**: tournaments with `open = true`, their entrants and their matches
+  are readable by anyone, `anon` included — the same shape as the existing
+  "…of public clubs are readable by anyone" policies, with
+  `OR tournament_is_open(...)`.
+- **Record results** (`"Members can record results"`, `:3114`): add a branch
+  for "the caller owns a player in this match" (`p1_id`, `p2_id`, or their
+  partners — see Couples), so an outside entrant can report their own match.
+- **Comments/reactions** on the tournament: same widening as read, so
+  outside entrants can take part in the thread.
+- **Withdraw** (`:3052`) already keys on `is_own_player`; no change.
 
-## Shared ranking (season), once network tournaments exist
+`tournament_is_open(tid)` is a `STABLE SECURITY DEFINER` helper next to
+`tournament_club()`.
 
-If/when this is worth building on top of the above:
+### Side effect worth knowing
 
-- **New `series`** (name pending — "league," "circuit," "season" all taken
-  or overloaded elsewhere in the schema) — `id, name, starts_on, ends_on`,
-  probably owned by one club (whoever proposes it) but conceptually neutral.
-- **New `series_tournaments`** — `series_id, tournament_id` — which
-  tournaments feed this season. A tournament need not know at creation time
-  that it will belong to a series; this table is what makes that decision
-  retroactive-friendly (a club runs its normal tournament, someone later
-  proposes folding its results into a season).
-- **Points already exist per tournament** (`points_win`, `points_play`) —
-  the season standing is `sum(points earned across every tournament in
-  series_tournaments, grouped by people.id via players.person_id)`, a pure
-  aggregation function very close in shape to the existing `standings()` in
-  `leagueTable.ts`, just fed from `tournament_matches` across many
-  tournaments instead of one.
-- **Display**: a new public page, `PublicSeriesPage` or similar, sibling to
-  `PublicTournamentPage` — the cross-club precedent (`PublicPlayersPage`,
-  the OG-card renderers) means this is mostly assembly of things that
-  already exist, not new rendering logic.
-
-This layer is deliberately sketched lighter than the network-tournament
-layer above — it is the part most likely to change shape once a club has
-actually run one multi-club event and reports back what they wanted the
-follow-up season to look like.
+A match played in a tournament becomes a `games` row with the organizer's
+`club_id` and, now, `players.id`s from other clubs. Club rankings built from
+the roster (`dailyScore`, Elo) already skip ids that aren't on the roster —
+see the "partner has left the club" test in `dailyScore.test.ts` — so nothing
+breaks, but outside entrants' tournament games won't count toward their own
+club's day-to-day ranking. Listed as an open question below, not redesigned
+here.
 
 ---
 
-## Governance and business questions (not engineering, but block the design)
+## 2. Categories: one, several, or all
 
-- **Who can add a club to a network tournament's list?** Any admin
-  unilaterally (spam/vanity risk — a club stuffing a "we beat everyone"
-  tournament with clubs that never agreed), or does the invited club have to
-  accept? An accept step is a small state machine (`tournament_clubs.status
-  = 'invited' | 'accepted'`) but is real added scope.
-- **Who owns a season's rules once it spans clubs?** Point values today are
-  set per-tournament by that tournament's own club (`points_win`/
-  `points_play`), which is fine for one tournament but gets uncomfortable
-  once five clubs are comparing their members on one leaderboard built from
-  tournaments each club configured independently, with no shared agreement
-  on relative difficulty/weight.
-- **Does PoolClubs itself ever run/administer a season**, e.g. an official
-  platform-wide ranking independent of any single club, the way
-  `is_drill_admin()`/the operator role already exists for drills? That's a
-  materially different product decision (PoolClubs as a competition body,
-  not just infrastructure for clubs) and is out of scope for this document,
-  but worth flagging since it's the natural next question once a shared
-  ranking exists at all.
-- **Dispute handling across clubs** — today a tournament's own admin
-  resolves disputes inside their own membership. A multi-club bracket needs
-  an answer for "Club A's admin and Club B's entrant disagree about a
-  result" that doesn't exist in any single-club flow today.
+- `tournaments.category smallint` → `tournaments.categories smallint[]`
+  (NULL = all categories). The migration wraps the existing value:
+  `categories = CASE WHEN category IS NULL THEN NULL ELSE ARRAY[category] END`.
+- `canEnterTournament()` becomes an `includes` check; its test is updated,
+  not replaced. `TournamentForm`'s single select becomes checkboxes for 1, 2
+  and 3 (none checked = all).
+- **Eligibility moves into the database for the first time.** A `BEFORE
+  INSERT` trigger on `tournament_players` snapshots the entrant's category
+  (`players.category` rounded to 1–3) into `tournament_players.category` and
+  rejects the entry if `categories` is set and doesn't contain it. With open
+  tournaments the UI-only check stops being good enough — anyone can call the
+  API.
+- **The snapshot is what the season ranking groups by.** A result counts for
+  the category the player entered with, even if their club re-categorizes
+  them later. That makes multi-category and all-category tournaments feed the
+  per-category season tables correctly.
+- `LeagueTable` already shows each entrant's own category when the
+  tournament has no single category; it switches to reading the snapshot.
 
-None of these block building option A or B's *tournament* layer (an
-explicit or open guest list is uncontroversial); they matter once a
-recurring, cross-club *season* is on the table, which is why the shared-
-ranking section above is written as a lighter, more provisional sketch than
-the network-tournament section.
+**Caveat:** a category is assigned by each club on its own roster, so two
+clubs can disagree about who is a "1", and clubless players default to 3.
+For v1 the entrant's own club is trusted. A season that wants to own its
+categories is an open question, not v1.
+
+---
+
+## 3. Couples tournaments
+
+**Built for closed (single-club) tournaments on 2026-09-27** — see
+`tournament_player_pair_guard` in `sql/schema.sql` and
+`src/libs/algorithms/pairs.ts`. Built as sketched below, plus
+`tournaments.pair_min_sum`: the least the pair's two categories may add up to
+(4 = a 1st pairs only with a 3rd, two 2nds can pair). Couples league fixtures
+start from the tablet (captains take each side's first seat), and late league
+entry takes a pair. What remains is the open-tournament and season side
+(partner snapshots, `partner_person_id`).
+
+- `tournaments.mode "GameMode" NOT NULL DEFAULT 'single'` — the same enum
+  games already use.
+- `tournament_players` gains `partner_id integer NULL` (a `players.id`), and
+  trigger-filled snapshots `partner_person_id` and `partner_category`.
+- The entry trigger enforces:
+  - a partner iff the tournament's mode is `doubles`;
+  - partner ≠ entrant (by person);
+  - the partner is category-eligible too;
+  - one person in at most one pair per tournament: a unique index on
+    `(tournament_id, partner_person_id)`, plus a check that the partner isn't
+    already an entrant, or the entrant already someone's partner.
+- **The entrant id stays the captain's `player_id`.** Brackets,
+  `tournament_matches.p1_id/p2_id`, `standings()` and the draw code are
+  untouched: one entry is one side. When a fixture becomes a live match or a
+  game, `player_1b_id`/`player_2b_id` are filled from the entry's
+  `partner_id`, and from there doubles already works end to end.
+- For an open doubles tournament the partner may be from any club, or none;
+  for a closed one, both must be members.
+- **Consent (v1):** the captain names the partner; either partner can
+  withdraw the pair (the delete policy gains `OR is_own_player(partner_id)`),
+  and the partner can record results. An invite/accept step can be added if
+  people get entered without asking.
+- Entry UI: the partner picker searches people the same way
+  `PublicPlayersPage` does, and the entrant list shows both names on one row
+  ("Ana / Luis").
+
+---
+
+## 4. Seasons
+
+A season is a named, branded ranking that several clubs feed with
+tournaments. Each tournament still belongs to one organizing club, can be
+played at any venue, and contributes points by finishing position.
+
+### Schema
+
+- **`seasons`** — `id, slug, name, owner_club_id, logo_url, theme_color
+  ("BallColor"), starts_on, ends_on, points smallint[]`.
+  - `slug`, `logo_url` and `theme_color` mirror `clubs`, so the public page,
+    link-preview card and logo upload reuse the club patterns.
+  - `points` is the **placement table**: `points[1]` for 1st, `points[2]` for
+    2nd, and so on (e.g. `{100,80,60,60,40,40,40,40}`); places beyond its
+    length score 0. It is the same for every tournament in the season,
+    regardless of format, so no club's `points_win`/`points_play` settings
+    leak into the season.
+- **`season_clubs`** — `season_id, club_id`, composite PK: the co-organizing
+  clubs. The owner club's admins edit the season and this list.
+- **`tournaments.season_id integer NULL REFERENCES seasons(id)`** — a column,
+  not a join table, because a tournament belongs to at most one season.
+  Setting it is allowed for an admin of `tournaments.club_id` when that club
+  is in `season_clubs`. A tournament can be attached after creation.
+- **Venue** is `tournaments.venue_club_id` (above): a season tournament
+  organized by club A can be played at club C's room, including a directory
+  club that isn't on the platform yet.
+
+### RLS
+
+- `seasons`, `season_clubs`: readable by anyone. Insert by any club admin
+  (as owner); update/delete by the owner club's admins. `season_clubs`
+  insert/delete by the owner club's admins.
+- Season tournaments are expected to be open, but a season doesn't force
+  that — a closed one is allowed and simply only has members as entrants.
+
+### Scoring
+
+Two pure functions in `src/libs/algorithms/`, with one small test file:
+
+- **`placements(tournament, entrants, matches)`** → finishing position per
+  entrant, for all three formats:
+  - `league`: rank in `standings()`.
+  - `double_elim` / `group_knockout`: 1st and 2nd from the final; everyone
+    else by the round they went out in, with ties sharing the position
+    (e.g. both losing semi-finalists are 3rd). Group-stage exits in
+    `group_knockout` share the position after the last knockout place.
+  - Only `done` tournaments count.
+- **`seasonStandings(season, tournaments)`** → for every placement, look up
+  `season.points`. Credit the entrant's `person_id` **and** the partner's
+  `partner_person_id`: both partners get the pair's points in their own
+  personal ranking. Produce:
+  - one table per category, grouped by the snapshot category (`category` /
+    `partner_category`);
+  - one combined table, summing everything per person.
+  Ties are broken by number of 1st places, then 2nds, and so on.
+
+The data is read with one query: the season's tournaments with their
+entrants and matches, the same shape `src/queries/tournaments.ts` already
+loads for a single tournament. No materialized table — a season is at most
+dozens of tournaments.
+
+### Display
+
+- Public **`PublicSeasonPage`** (`/seasons/$slug`): season branding up top;
+  a calendar of its tournaments with organizer and venue; tabs for each
+  category and "Combined". It reuses `PublicTournamentPage` pieces and the
+  player rows from `PublicPlayersPage`.
+- A season's tournament page shows the season badge and links back.
+- Season settings (name, logo, colour, dates, points table, co-organizers)
+  sit in the owner club's admin area.
+
+---
+
+## Governance and business questions
+
+- **Disputes across clubs.** Today a tournament's admin settles disputes
+  among their own members. In an open tournament the organizer club's admin
+  settles them, including for outside entrants — it is their tournament. A
+  dispute the organizer can't settle has no escalation path, and there
+  won't be one in v1.
+- **Categories across clubs.** See the caveat in §2. If seasons get serious,
+  clubs will want the season (or a federation) to assign categories, not
+  each club separately.
+- **Paid open tournaments.** `tournament-payments.md`'s Stripe Connect design
+  pays one connected account, which fits: the organizer club is paid. The
+  case that doesn't fit is a paid tournament whose venue is a *different*
+  club expecting a share. That needs its own follow-up.
+- **Does PoolClubs itself run a season** (an official platform-wide ranking),
+  the way the operator role already exists for drills? That makes PoolClubs a
+  competition body, not just infrastructure — out of scope, but the obvious
+  next question once seasons exist.
 
 ---
 
@@ -196,31 +280,25 @@ the network-tournament section.
 
 | | |
 |---|---|
-| `tournament_clubs` table + RLS widening on entry/read policies | ~1–2 days |
-| `TournamentForm` multi-club picker + backfill existing tournaments into the table | ~1 day |
-| Bracket/standings UI showing which club each entrant plays for | ~0.5–1 day |
-| Public multi-club tournament page (extends `PublicTournamentPage`) | ~0.5 day |
-| **Shared ranking (season)**, if pursued: `series`/`series_tournaments` + aggregation query | ~2–3 days |
-| Public season standings page | ~1 day |
-| Invite/accept flow for adding a club to a tournament, if not left unilateral | ~1–2 days |
+| `open` flag, `person_id` uniqueness, widened entry/read/record/comment policies | ~1–2 days |
+| `categories` array, DB eligibility trigger + snapshot, form and badge updates | ~1 day |
+| Couples: `mode`, `partner_id` + triggers, entry UI, partner seats into live matches/games | ~2 days |
+| `venue_club_id` + showing each entrant's club | ~0.5 day |
+| Seasons: `seasons`/`season_clubs`/`season_id`, settings form, logo upload | ~2 days |
+| `placements()` + `seasonStandings()` with tests | ~1–2 days |
+| `PublicSeasonPage` + OG card | ~1 day |
 
 ---
 
 ## Open questions for whoever implements
 
-1. Option A (explicit guest list) vs. B (open to a set of clubs) vs. C
-   (no club gate) — this document recommends B; confirm that matches the
-   actual use case being sold to clubs before building the RLS change.
-2. Unilateral add vs. invite/accept for putting another club into a
-   tournament's list — affects both trust model and scope.
-3. Does a network tournament's `entry_fee`/`requires_payment` even make
-   sense multi-club, given `tournament-payments.md`'s Stripe Connect design
-   pays out to *one* club's connected account? A paid network tournament
-   likely needs its own follow-up document once both features are closer to
-   real, rather than being assumed solvable by extension.
-4. Is a shared season worth building at all before real usage data exists
-   from network tournaments run under option B? This document's own
-   position is: wait and see.
-5. Whether `points_win`/`points_play` staying per-tournament (club-set) is
-   acceptable for a cross-club season, or whether a season needs its own
-   normalized weighting independent of any one club's settings.
+1. Should tournament games count toward an outside entrant's *own* club
+   ranking? Today they land under the organizer's `club_id` and are ignored
+   by the entrant's club.
+2. Should a partner confirm before they are entered, or is
+   "either partner can withdraw" enough?
+3. Should a season restrict discipline (8/9/10-ball) or mode (singles vs
+   couples), or can it mix them in one ranking?
+4. Should the season, rather than each club, own the categories its rankings
+   use?
+5. Paid tournaments where the venue club is not the organizer.

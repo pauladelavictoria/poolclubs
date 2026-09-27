@@ -1,4 +1,4 @@
-import type { ClubTable, LiveMatch, Player } from "@/types";
+import type { ClubTable, LiveMatch, Player, Rack } from "@/types";
 
 /**
  * The club night's rules, as plain functions.
@@ -152,12 +152,13 @@ export const isMatchOver = (match: LiveMatch) =>
 /** The patch the plus button writes. A rack past the race is refused rather
  *  than clamped — the finish sheet is already up, and a button behind it should
  *  do nothing at all. */
-export function bump(match: LiveMatch, side: 1 | 2) {
+export function bump(match: LiveMatch, side: 1 | 2, runout = false) {
   if (isMatchOver(match)) return null;
   return {
     player_1_score: match.player_1_score + (side === 1 ? 1 : 0),
     player_2_score: match.player_2_score + (side === 2 ? 1 : 0),
     last_side: side,
+    racks: [...match.racks, { side, runout }],
   };
 }
 
@@ -171,16 +172,33 @@ export function bump(match: LiveMatch, side: 1 | 2) {
  * `last_side` is cleared, because a corrected score has no last rack: the row
  * remembers who scored, not a history, and pretending otherwise would let the
  * next correction take a rack off the wrong player.
+ *
+ * The rack log loses that side's latest rack. A mis-tap is almost always the
+ * latest one; caught late, the other side's racks since stay where they are and
+ * only the guess of *which* of this side's racks was the fake one is made.
  */
 export function unbump(match: LiveMatch, side: 1 | 2) {
   const score = side === 1 ? match.player_1_score : match.player_2_score;
   if (score <= 0) return null;
+  const at = match.racks.map((rack) => rack.side).lastIndexOf(side);
   return {
     player_1_score: match.player_1_score - (side === 1 ? 1 : 0),
     player_2_score: match.player_2_score - (side === 2 ? 1 : 0),
     last_side: null,
+    racks: match.racks.filter((_, i) => i !== at),
   };
 }
+
+/** The score after each rack — 1-0, 1-1, 1-2 — with whether it was run out. */
+export const racksLine = (racks: Rack[]) => {
+  let p1 = 0;
+  let p2 = 0;
+  return racks.map((rack) => {
+    if (rack.side === 1) p1++;
+    else p2++;
+    return { p1, p2, side: rack.side, runout: rack.runout };
+  });
+};
 
 /**
  * Who may score a live match — and, with no seats, who may put two other

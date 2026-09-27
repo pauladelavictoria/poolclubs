@@ -20,12 +20,16 @@ const COMPACT_HEIGHT: Record<number, string> = { 1: "h-9", 2: "h-6", 3: "h-4" };
 export default function TournamentPodium({
   places,
   byId,
+  partners,
   compact = false,
 }: {
   places: Places;
   /** A name, a face and the slug the public profile is keyed on — no more, so
-   *  the public tournament page can build it from a redacted roster. */
+   *  the public tournament page can build it from a redacted roster. One per
+   *  person: a pair's partner is looked up here too. */
   byId: Map<number, Pick<Player, "name" | "avatar_url" | "slug">>;
+  /** A couples tournament's: each entrant's partner, who shares the step. */
+  partners?: Map<number, number>;
   /** Faces only, at tile size. Names are dropped rather than shrunk — three
    *  truncated ones say less than three photographs — and with them go the
    *  profile links, which cannot be nested inside the card that is itself a
@@ -39,13 +43,18 @@ export default function TournamentPodium({
    * against each other, so third is shared rather than decided — one step,
    * both faces on it, same as a real bronze tie.
    */
-  const steps: { rank: number; playerIds: number[] }[] = [
-    ...(places.second !== null
-      ? [{ rank: 2, playerIds: [places.second] }]
-      : []),
-    ...(places.first !== null ? [{ rank: 1, playerIds: [places.first] }] : []),
-    ...(places.third.length > 0 ? [{ rank: 3, playerIds: places.third }] : []),
+  const steps: { rank: number; entrants: number[] }[] = [
+    ...(places.second !== null ? [{ rank: 2, entrants: [places.second] }] : []),
+    ...(places.first !== null ? [{ rank: 1, entrants: [places.first] }] : []),
+    ...(places.third.length > 0 ? [{ rank: 3, entrants: places.third }] : []),
   ];
+
+  /** The people behind one entrant: the player, and their partner in a pair. */
+  const peopleOf = (entrant: number) => {
+    const partner = partners?.get(entrant);
+    return partner ? [entrant, partner] : [entrant];
+  };
+  const nameOf = (id: number) => byId.get(id)?.name ?? "—";
 
   if (steps.length === 0) return null;
 
@@ -59,8 +68,8 @@ export default function TournamentPodium({
           : "flex items-end justify-center gap-2 px-3 pt-6 sm:gap-4"
       }
     >
-      {steps.map(({ rank, playerIds }) => {
-        const players = playerIds.map((id) => byId.get(id));
+      {steps.map(({ rank, entrants }) => {
+        const playerIds = entrants.flatMap(peopleOf);
         const avatarSize = compact
           ? rank === 1
             ? "h-10 w-10"
@@ -70,11 +79,12 @@ export default function TournamentPodium({
             : "h-12 w-12";
         return (
           <div
-            key={playerIds.join("-")}
+            key={entrants.join("-")}
             className={
               compact
                 ? "flex min-w-0 flex-1 basis-0 flex-col items-center gap-1.5 sm:max-w-16"
-                : "flex min-w-0 flex-1 basis-0 flex-col items-center gap-2 sm:max-w-40"
+                : // Two names to a line in a couples draw, so wider steps.
+                  `flex min-w-0 flex-1 basis-0 flex-col items-center gap-2 ${partners?.size ? "sm:max-w-64" : "sm:max-w-40"}`
             }
           >
             {/* Two faces share one step exactly as two names share one row
@@ -84,7 +94,7 @@ export default function TournamentPodium({
               {playerIds.map((id) => (
                 <Avatar
                   key={id}
-                  name={byId.get(id)?.name ?? "—"}
+                  name={nameOf(id)}
                   url={byId.get(id)?.avatar_url ?? undefined}
                   className={[
                     avatarSize,
@@ -93,18 +103,24 @@ export default function TournamentPodium({
                 />
               ))}
             </div>
+            {/* One line per entrant, so a shared third between two pairs
+                reads as two pairs and not as four names in a row. */}
             {!compact && (
-              <span className="line-clamp-2 text-center text-caption font-medium text-ink">
-                {playerIds.map((id, i) => (
-                  <span key={id}>
-                    {i > 0 && " / "}
-                    <PlayerLink
-                      playerId={id}
-                      playerSlug={byId.get(id)?.slug}
-                      className="transition-colors duration-150 hover:text-strike"
-                    >
-                      {byId.get(id)?.name ?? "—"}
-                    </PlayerLink>
+              <span className="space-y-1 text-center text-caption font-medium text-ink">
+                {entrants.map((entrant) => (
+                  <span key={entrant} className="line-clamp-2 block">
+                    {peopleOf(entrant).map((id, i) => (
+                      <span key={id}>
+                        {i > 0 && " / "}
+                        <PlayerLink
+                          playerId={id}
+                          playerSlug={byId.get(id)?.slug}
+                          className="transition-colors duration-150 hover:text-strike"
+                        >
+                          {nameOf(id)}
+                        </PlayerLink>
+                      </span>
+                    ))}
                   </span>
                 ))}
               </span>
@@ -126,8 +142,10 @@ export default function TournamentPodium({
             </div>
             <span className="sr-only">
               {t("tournaments.place", { n: rank })}
-              {compact && players.length
-                ? ` — ${players.map((p) => p?.name ?? "—").join(" / ")}`
+              {compact
+                ? ` — ${entrants
+                    .map((e) => peopleOf(e).map(nameOf).join(" / "))
+                    .join(", ")}`
                 : null}
             </span>
           </div>

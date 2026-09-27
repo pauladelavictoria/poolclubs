@@ -1,5 +1,5 @@
 import { AppLink } from "@/components/layout/AppLink";
-import { CategoryBadge } from "@/components/ui/Ball";
+import { CategoriesBadge } from "@/components/ui/Ball";
 import { Button } from "@/components/ui/Button";
 import { cardClasses } from "@/components/ui/cardStyles";
 import {
@@ -79,11 +79,7 @@ export default function TournamentTile({
       </h3>
 
       <p className="flex flex-wrap items-center gap-x-1 text-caption text-ink-faint">
-        {tournament.category === null ? (
-          t("tournaments.combined")
-        ) : (
-          <CategoryBadge category={tournament.category} />
-        )}
+        <CategoriesBadge categories={tournament.categories} />
         <span className="truncate">
           {" · "}
           {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}

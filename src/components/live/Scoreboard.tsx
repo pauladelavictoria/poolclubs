@@ -1,4 +1,4 @@
-import { LuMinus, LuPlus, LuX } from "react-icons/lu";
+import { LuMinus, LuPlus, LuX, LuZap } from "react-icons/lu";
 import { Avatar } from "@/components/ui/Avatar";
 import { DisciplineBall } from "@/components/ui/Ball";
 import { Button, IconButton } from "@/components/ui/Button";
@@ -51,7 +51,8 @@ export default function Scoreboard({
   p2?: Player;
   p2b?: Player;
   variant: ScoreboardVariant;
-  onBump?: (side: 1 | 2) => void;
+  /** `runout`: the rack was broken and run — logged on the rack, same +1. */
+  onBump?: (side: 1 | 2, runout?: boolean) => void;
   onUnbump?: (side: 1 | 2) => void;
   onFinish?: () => void;
   /** File it and rack again with the same four. Absent when a rematch would be
@@ -244,6 +245,18 @@ export default function Scoreboard({
               className="scoreboard-btn"
             >
               <LuPlus aria-hidden />
+            </Button>
+            {/* After the +, not between it and the −: the two a hand reaches
+                for by feel stay side by side. */}
+            <Button
+              variant="secondary"
+              aria-label={t("live.runoutFor", { name: full })}
+              title={t("live.runout")}
+              disabled={over}
+              onClick={() => onBump?.(n, true)}
+              className="scoreboard-btn"
+            >
+              <LuZap aria-hidden />
             </Button>
           </div>
         )}
