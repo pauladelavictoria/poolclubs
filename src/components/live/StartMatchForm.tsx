@@ -3,7 +3,7 @@ import { LuMinus, LuPlus } from "react-icons/lu";
 import { Select } from "@/components/ui/Select";
 import { Avatar } from "@/components/ui/Avatar";
 import PlayerPicker from "@/components/players/PlayerPicker";
-import { DisciplineBall } from "@/components/ui/Ball";
+import { DisciplineBall } from "@/components/ui/DisciplineBall";
 import { PlayerOptions } from "@/components/players/PlayerOptions";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -29,7 +29,7 @@ import {
 import { canScore, seatsOf } from "@/libs/algorithms/night";
 import type { LeagueFixture } from "@/queries/tournaments";
 import { useT } from "@/i18n";
-import { CountryFlag } from "@/components/ui/Flag";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 /**
  * Who you are playing, where, and what you are playing to.

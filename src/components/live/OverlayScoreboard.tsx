@@ -1,4 +1,4 @@
-import { CountryFlag } from "@/components/ui/Flag";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 import { BALL_COLORS } from "@/libs/algorithms/drillGeometry";
 import { useT } from "@/i18n";
 import type { Discipline } from "@/types";
@@ -85,9 +85,7 @@ export default function OverlayScoreboard({
         {(entries.length > 0 ? entries : [{ name: "—", country: null }]).map(
           (entry, i) => (
             <span key={i} className="flex min-w-0 items-center gap-[1vmin]">
-              {i > 0 && (
-                <span className="text-white/50">&amp;</span>
-              )}
+              {i > 0 && <span className="text-white/50">&amp;</span>}
               <span className="flex min-w-0 items-center gap-[1.5vmin] truncate text-[clamp(0.95rem,2.1vmin,1.45rem)] font-semibold tracking-wide text-white">
                 {n === 1 && entry.name}
                 <CountryFlag

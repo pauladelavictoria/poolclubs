@@ -1,13 +1,15 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { LuTarget } from "react-icons/lu";
-import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
+import PublicShell from "@/components/layout/PublicShell";
+import { CtaBand } from "@/components/layout/CtaBand";
 import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import DrillCard from "@/components/drills/DrillCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { FilterGroup, FilterMenu } from "@/components/ui/FilterMenu";
+import { FilterMenu } from "@/components/ui/FilterMenu";
+import { FilterGroup } from "@/components/ui/FilterGroup";
 import { FilterPills } from "@/components/ui/FilterPills";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";

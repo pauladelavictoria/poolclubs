@@ -5,15 +5,16 @@ import { useAuth } from "@/hooks/useAuth";
 import PageTitle from "@/components/layout/PageTitle";
 import ChallengeButton from "@/components/social/ChallengeButton";
 import GamesList from "@/components/games/GamesList";
-import { Card, CardHeader } from "@/components/ui/Card";
-import { CategoryBadge } from "@/components/ui/Ball";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
+import { CategoryBadge } from "@/components/ui/CategoryBadge";
 import { Stat } from "@/components/ui/Stat";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
-import { CountryFlag } from "@/components/ui/Flag";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 // Lazy: recharts is large and only this page (plus DrillProgressChart) uses
 // it, so a static import here would put it in the shared chunk every route

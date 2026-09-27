@@ -1,5 +1,5 @@
 import { Avatar } from "@/components/ui/Avatar";
-import { ballTone } from "@/components/ui/Ball";
+import { ballTone } from "@/components/ui/ballTones";
 import type { Places } from "@/libs/algorithms/bracket";
 import type { Player } from "@/types";
 import { useT } from "@/i18n";

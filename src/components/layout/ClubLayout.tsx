@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Outlet, getRouteApi } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlayerCountries } from "@/components/players/PlayerLink";
+import { PlayerCountries } from "@/components/players/PlayerCountries";
 import { playersQuery } from "@/queries/players";
 import { startRealtime } from "@/libs/browser/realtime";
 import AppHeader from "@/components/layout/AppHeader";
@@ -9,7 +9,7 @@ import JoinRequestBanner from "@/components/layout/JoinRequestBanner";
 import AppPrompts from "@/components/layout/AppPrompts";
 import NavDrawer from "@/components/layout/NavDrawer";
 import NavRail from "@/components/layout/NavRail";
-import { PageSkeleton } from "@/components/ui/Skeleton";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
 import PendingClubPanel from "@/components/layout/PendingClubPanel";
 import ClubThemeStyle from "@/components/club/ClubThemeStyle";
 import { useRouteMeta } from "@/libs/routeMeta";

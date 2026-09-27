@@ -61,8 +61,13 @@ export const Route = createFileRoute("/api/youtube/callback")({
           }),
         });
         if (!tokenRes.ok) {
-          console.error("youtube callback: token exchange", await tokenRes.text());
-          return new Response("Google declined the connection.", { status: 502 });
+          console.error(
+            "youtube callback: token exchange",
+            await tokenRes.text(),
+          );
+          return new Response("Google declined the connection.", {
+            status: 502,
+          });
         }
 
         const tokens = (await tokenRes.json()) as {
@@ -83,8 +88,7 @@ export const Route = createFileRoute("/api/youtube/callback")({
           headers: { authorization: `Bearer ${tokens.access_token}` },
         });
         const channel = (await channelRes.json())?.items?.[0] as
-          | { id: string; snippet: { title: string } }
-          | undefined;
+          { id: string; snippet: { title: string } } | undefined;
         if (!channel) {
           console.error("youtube callback: no channel for this account");
           return new Response("No YouTube channel on that account.", {

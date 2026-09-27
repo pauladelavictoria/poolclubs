@@ -20,12 +20,13 @@ import {
   useClubStreams,
   useManageClubYoutube,
 } from "@/hooks/useClubYoutube";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { useT } from "@/i18n";
 
 type ScriptPlatform = "windows" | "unix";

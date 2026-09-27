@@ -19,7 +19,8 @@ import type { Database } from "@/types/database.types.gen";
  * Vite's client-bundle inlining.
  */
 export function getSupabaseServiceRole() {
-  const url = import.meta.env?.VITE_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+  const url =
+    import.meta.env?.VITE_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
   return createClient<Database>(url, key, {

@@ -3,7 +3,7 @@ import type { Category } from "@/types";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
-import { CountrySelect } from "@/components/ui/Flag";
+import { CountrySelect } from "@/components/ui/CountrySelect";
 import { Button } from "@/components/ui/Button";
 import { useT } from "@/i18n";
 

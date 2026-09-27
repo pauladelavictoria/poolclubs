@@ -22,7 +22,7 @@ import { AppLink, useAppNavigate } from "@/components/layout/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { dialogClasses } from "@/components/ui/cardStyles";
-import { PageSkeleton } from "@/components/ui/Skeleton";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
 import { useDialog, useLingering } from "@/hooks/useDialog";
 import { pinKiosk, readKioskTable } from "@/libs/browser/kiosk";
 import { readTodaySetup } from "@/libs/prefs";

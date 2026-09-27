@@ -57,9 +57,7 @@ describe("Array/String.prototype.at shim", () => {
     expect([1, 2, 3].at(1.7)).toBe(2);
     expect([1, 2, 3].at(-1.7)).toBe(3);
     expect([1, 2, 3].at(NaN)).toBe(1);
-    expect(
-      ([1, 2, 3] as unknown as { at(i?: unknown): number }).at(),
-    ).toBe(1);
+    expect(([1, 2, 3] as unknown as { at(i?: unknown): number }).at()).toBe(1);
   });
 
   it("works on strings too", () => {

@@ -210,10 +210,35 @@ async function photon(q) {
  * else in an address line is a chance to recognise the answer.
  */
 const STREET_WORDS = new Set([
-  "calle", "carrer", "rua", "avenida", "avinguda", "avda", "plaza", "placa",
-  "plaça", "passeig", "paseo", "rambla", "ronda", "camino", "cami", "carretera",
-  "travessera", "poligono", "poligon", "industrial", "nave", "bajo", "baixos",
-  "planta", "local", "esquina", "junto", "frente", "numero",
+  "calle",
+  "carrer",
+  "rua",
+  "avenida",
+  "avinguda",
+  "avda",
+  "plaza",
+  "placa",
+  "plaça",
+  "passeig",
+  "paseo",
+  "rambla",
+  "ronda",
+  "camino",
+  "cami",
+  "carretera",
+  "travessera",
+  "poligono",
+  "poligon",
+  "industrial",
+  "nave",
+  "bajo",
+  "baixos",
+  "planta",
+  "local",
+  "esquina",
+  "junto",
+  "frente",
+  "numero",
 ]);
 
 /**
@@ -296,7 +321,8 @@ async function nominatim(street, city) {
       // Nominatim's usage policy asks for an identifiable agent, and refuses
       // requests without one.
       headers: {
-        "User-Agent": "PoolClubs directory (https://github.com/pauladelavictoria)",
+        "User-Agent":
+          "PoolClubs directory (https://github.com/pauladelavictoria)",
       },
       signal: AbortSignal.timeout(10000),
     });
@@ -361,7 +387,10 @@ async function geocode(club) {
     // rosters like to append ("(Edificio Ateneo Mar)") taken out.
     const variants = [
       club.address,
-      club.address.replace(/\([^)]*\)/g, "").replace(/\s+/g, " ").trim(),
+      club.address
+        .replace(/\([^)]*\)/g, "")
+        .replace(/\s+/g, " ")
+        .trim(),
     ];
     for (const street of [...new Set(variants)].filter(Boolean)) {
       const hit = await nominatim(street, club.city);
@@ -608,7 +637,9 @@ export function verify(sql, rows) {
     return !line.startsWith("    (") || !line.endsWith(last ? ")" : "),");
   });
   if (bad !== -1)
-    throw new Error(`malformed VALUES row ${bad + 1}: ${lines[bad].slice(0, 80)}`);
+    throw new Error(
+      `malformed VALUES row ${bad + 1}: ${lines[bad].slice(0, 80)}`,
+    );
   return sql;
 }
 
@@ -674,7 +705,12 @@ async function selftest() {
     1,
   );
   // The same club listed twice where only one listing would geocode.
-  const vigo = { name: "Val Miñor Pool", city: "Gondomar", lat: 42.1, lon: -8.75 };
+  const vigo = {
+    name: "Val Miñor Pool",
+    city: "Gondomar",
+    lat: 42.1,
+    lon: -8.75,
+  };
   assert.equal(
     merge([vigo, { name: "Val Miñor Pool", city: "Gondomar", lat: null }]).kept
       .length,
@@ -695,7 +731,9 @@ async function selftest() {
     true,
   );
   assert.equal(
-    mentions("Calle Doctor Fleming, 12", { street: "Carrer del Doctor Flèming" }),
+    mentions("Calle Doctor Fleming, 12", {
+      street: "Carrer del Doctor Flèming",
+    }),
     true,
   );
   // Same town, wrong street: this is the check that stopped two Valencian clubs

@@ -4,21 +4,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubTables, useManageClubTables } from "@/hooks/useClubTables";
 import { useTableFloorPlanEditor } from "@/hooks/useTableFloorPlanEditor";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
-import {
-  footprintOf,
-  mmToUnits,
-  rotateHandlePoint,
-  type AlignGuide,
-  type SpacingGuide,
-  type TablePlacement,
-} from "@/libs/algorithms/tableFloorPlan";
 import TableFloorPlanSvg from "@/components/club/TableFloorPlanSvg";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import type { ClubTable } from "@/types";
 import { useT } from "@/i18n";
+import { FloorPlanRotateHandle } from "./FloorPlanRotateHandle";
+import { FloorPlanSpawnGhost } from "./FloorPlanSpawnGhost";
+import { FloorPlanGuideLines } from "./FloorPlanGuideLines";
 
 const TRAY_CHIP_CLASSES = [
   "flex shrink-0 cursor-grab touch-none items-center gap-1.5 rounded-control",
@@ -33,143 +29,6 @@ const TRAY_CHIP_CLASSES = [
  *  setState every render and locks the page into React's max-render-depth
  *  error before it ever finishes loading. */
 const NO_TABLES: ClubTable[] = [];
-
-/** Where the selected table's rotate handle sits, drawn as a small ring with
- *  a spoke back to the table's own centre — the only rotate affordance in
- *  the app, so it has to read as "drag this" on its own. */
-function RotateHandle({ table }: { table: TablePlacement }) {
-  const { t } = useT();
-  const p = rotateHandlePoint(table);
-  return (
-    <g style={{ cursor: "grab" }}>
-      {/* The other half of the canvas's only hint: hovering the table says
-          "drag to move", hovering this dot says "drag to rotate" — nothing
-          else on screen tells a first-time admin the dot does anything. */}
-      <title>{t("tables.map.rotateHint")}</title>
-      <line
-        x1={table.x}
-        y1={table.y}
-        x2={p.x}
-        y2={p.y}
-        stroke="var(--color-strike)"
-        strokeWidth={0.08}
-        strokeDasharray="0.3 0.3"
-      />
-      <circle
-        cx={p.x}
-        cy={p.y}
-        r={0.9}
-        fill="var(--color-strike)"
-        stroke="var(--color-pocket)"
-        strokeWidth={0.15}
-      />
-    </g>
-  );
-}
-
-/** A dashed preview of the table in flight, at the pointer's current spot —
- *  what commitSpawn is about to drop, drawn before it lands. */
-function SpawnGhost({
-  table,
-  at,
-}: {
-  table: ClubTable;
-  at: { x: number; y: number };
-}) {
-  const { lengthMm, widthMm } = footprintOf(table.type, table.size);
-  const w = mmToUnits(lengthMm);
-  const h = mmToUnits(widthMm);
-  return (
-    <rect
-      x={at.x - w / 2}
-      y={at.y - h / 2}
-      width={w}
-      height={h}
-      rx={Math.min(w, h) * 0.08}
-      // Matches the real tables' own fill (see TableFloorPlanSvg) so a
-      // table in flight previews as the same shape it'll land as.
-      fill="var(--color-rail)"
-      fillOpacity={0.6}
-      stroke="var(--color-strike)"
-      strokeDasharray="0.4 0.3"
-      strokeWidth={0.1}
-    />
-  );
-}
-
-/** Alignment guides' own colour — deliberately not var(--color-strike):
- *  that's already the selection outline and the rotate handle, and a guide
- *  has to read as a different kind of thing (a hint about a sibling table)
- *  from "this is what's selected". Design tools converge on some shade of
- *  magenta for exactly this reason — it doesn't occur naturally in the felt
- *  or the ink tokens either theme uses, so it never blends in. */
-const ALIGN_GUIDE_COLOR = "#ff2fa0";
-/** Spacing guides' own colour — a different hue from alignment (cyan
- *  against magenta), so "this lines up with something" and "this gap now
- *  matches another gap" read as the two distinct claims they are, at a
- *  glance, without having to read which shape the guide draws. */
-const SPACING_GUIDE_COLOR = "#00c2ff";
-/** Half-length of the little perpendicular tick at each end of a spacing
- *  guide, in grid units — a plain line reads as "these two things are
- *  connected"; the ticks are what makes it read as "these two distances are
- *  the same length", the way a ruler's end marks do. */
-const SPACING_TICK_UNITS = 0.6;
-
-/** The alignment and equal-spacing hints from the current drag — see
- *  tableFloorPlan.ts's alignSnap/spacingSnap for what each one means.
- *  Rendered last (as TableFloorPlanSvg's children), so a guide is always on
- *  top of the tables it's pointing at. */
-function GuideLines({
-  align,
-  spacing,
-}: {
-  align: AlignGuide[];
-  spacing: SpacingGuide[];
-}) {
-  return (
-    <g style={{ pointerEvents: "none" }}>
-      {align.map((g, i) => (
-        <line
-          key={`align-${i}`}
-          x1={g.axis === "x" ? g.at : g.from}
-          y1={g.axis === "x" ? g.from : g.at}
-          x2={g.axis === "x" ? g.at : g.to}
-          y2={g.axis === "x" ? g.to : g.at}
-          stroke={ALIGN_GUIDE_COLOR}
-          strokeWidth={0.1}
-          strokeDasharray="0.6 0.5"
-        />
-      ))}
-      {spacing.map((g, i) => (
-        <g key={`spacing-${i}`}>
-          {[g.gapA, g.gapB].map(([from, to], j) => (
-            <g key={j}>
-              <line
-                x1={g.axis === "x" ? from : g.cross}
-                y1={g.axis === "x" ? g.cross : from}
-                x2={g.axis === "x" ? to : g.cross}
-                y2={g.axis === "x" ? g.cross : to}
-                stroke={SPACING_GUIDE_COLOR}
-                strokeWidth={0.1}
-              />
-              {[from, to].map((at, k) => (
-                <line
-                  key={k}
-                  x1={g.axis === "x" ? at : g.cross - SPACING_TICK_UNITS}
-                  y1={g.axis === "x" ? g.cross - SPACING_TICK_UNITS : at}
-                  x2={g.axis === "x" ? at : g.cross + SPACING_TICK_UNITS}
-                  y2={g.axis === "x" ? g.cross + SPACING_TICK_UNITS : at}
-                  stroke={SPACING_GUIDE_COLOR}
-                  strokeWidth={0.1}
-                />
-              ))}
-            </g>
-          ))}
-        </g>
-      ))}
-    </g>
-  );
-}
 
 /**
  * The room, drawn to scale. An admin drags each table from the "not yet
@@ -271,13 +130,16 @@ export default function ClubFloorPlanEditor() {
               onPointerMove={editor.handlePointerMove}
               onPointerUp={editor.handlePointerUp}
             >
-              <GuideLines
+              <FloorPlanGuideLines
                 align={editor.guides.align}
                 spacing={editor.guides.spacing}
               />
-              {selected && <RotateHandle table={selected} />}
+              {selected && <FloorPlanRotateHandle table={selected} />}
               {editor.spawn?.pos && (
-                <SpawnGhost table={editor.spawn.table} at={editor.spawn.pos} />
+                <FloorPlanSpawnGhost
+                  table={editor.spawn.table}
+                  at={editor.spawn.pos}
+                />
               )}
             </TableFloorPlanSvg>
           </div>

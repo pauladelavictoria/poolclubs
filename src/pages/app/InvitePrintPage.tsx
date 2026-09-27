@@ -5,7 +5,7 @@ import { renderSVG } from "uqr";
 import { useAuth } from "@/hooks/useAuth";
 import PageTitle from "@/components/layout/PageTitle";
 import { Button } from "@/components/ui/Button";
-import { BallGlyph } from "@/components/ui/Ball";
+import { BallGlyph } from "@/components/ui/BallGlyph";
 import { useT } from "@/i18n";
 
 /**

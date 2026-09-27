@@ -105,7 +105,9 @@ const PAGES = [
     fullPage: false,
     // The by-division view is component state, not a URL, so it has to be clicked.
     prepare: (page, lang) =>
-      page.getByRole("tab", { name: DICTS[lang]["ranking.byCategory"] }).click(),
+      page
+        .getByRole("tab", { name: DICTS[lang]["ranking.byCategory"] })
+        .click(),
   },
   {
     name: "tv",
@@ -128,7 +130,9 @@ const PAGES = [
  * -code-verifier that the flow leaves behind.
  */
 const hasSession = async (context) =>
-  (await context.cookies(BASE)).some((c) => /-auth-token(\.\d+)?$/.test(c.name));
+  (await context.cookies(BASE)).some((c) =>
+    /-auth-token(\.\d+)?$/.test(c.name),
+  );
 
 /** Poll, because the cookie is set by a server redirect no page event covers. */
 async function waitForSession(context, timeout) {
@@ -137,7 +141,9 @@ async function waitForSession(context, timeout) {
     if (await hasSession(context)) return;
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  throw new Error("Timed out waiting for a session cookie — sign-in didn't finish.");
+  throw new Error(
+    "Timed out waiting for a session cookie — sign-in didn't finish.",
+  );
 }
 
 /**
@@ -154,7 +160,9 @@ async function session() {
   const email = process.env.SHOT_EMAIL;
   const password = process.env.SHOT_PASSWORD;
   // Headed only when a person has to type into it.
-  const browser = await chromium.launch({ headless: Boolean(email && password) });
+  const browser = await chromium.launch({
+    headless: Boolean(email && password),
+  });
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(`${BASE}/app/login`);
@@ -165,14 +173,18 @@ async function session() {
     // in. A fiber key on the form is hydration having actually happened.
     await page.waitForFunction(() => {
       const form = document.querySelector("form");
-      return form && Object.keys(form).some((k) => k.startsWith("__reactFiber$"));
+      return (
+        form && Object.keys(form).some((k) => k.startsWith("__reactFiber$"))
+      );
     });
     await page.fill('input[name="email"]', email);
     await page.fill('input[name="password"]', password);
     await page.click('button[type="submit"]');
     await waitForSession(context, 30_000);
   } else {
-    console.log(`Sign in in the window that just opened — waiting up to 5 min.`);
+    console.log(
+      `Sign in in the window that just opened — waiting up to 5 min.`,
+    );
     // Long, because the wait is a human finding a password manager, and with
     // Google a whole consent round trip.
     await waitForSession(context, 300_000);
@@ -181,12 +193,15 @@ async function session() {
   const state = await context.storageState();
   await browser.close();
   await writeFile(AUTH, JSON.stringify(state, null, 2));
-  console.log(`Session saved to ${AUTH} — delete it to sign in as someone else.`);
+  console.log(
+    `Session saved to ${AUTH} — delete it to sign in as someone else.`,
+  );
   return state;
 }
 
 async function shoot(browser, spec, { lang, theme, device, storageState }) {
-  const override = spec.only?.viewport ?? (device === "desktop" && spec.viewport);
+  const override =
+    spec.only?.viewport ?? (device === "desktop" && spec.viewport);
   const preset = override
     ? { viewport: override, deviceScaleFactor: 2 }
     : VIEWPORTS[device];
@@ -216,7 +231,9 @@ async function shoot(browser, spec, { lang, theme, device, storageState }) {
   const page = await context.newPage();
   await page.goto(`${BASE}${spec.path}`, { waitUntil: "networkidle" });
   if (spec.authed && new URL(page.url()).pathname.startsWith("/app/login"))
-    throw new Error(`Bounced to login — the saved session expired. Delete ${AUTH} and rerun.`);
+    throw new Error(
+      `Bounced to login — the saved session expired. Delete ${AUTH} and rerun.`,
+    );
   if (spec.prepare) {
     await spec.prepare(page, lang);
     // Clicking a control inside a horizontally scrollable row scrolls that row
@@ -237,7 +254,10 @@ async function shoot(browser, spec, { lang, theme, device, storageState }) {
     // scrollIntoView puts the heading flush against the top edge, where the
     // sticky nav then covers it. Back off by the nav's own height plus a gap.
     await page.evaluate(() =>
-      window.scrollBy(0, -((document.querySelector("header")?.offsetHeight ?? 0) + 32)),
+      window.scrollBy(
+        0,
+        -((document.querySelector("header")?.offsetHeight ?? 0) + 32),
+      ),
     );
   }
   // Fonts and any entry transition; networkidle fires before either finishes.
@@ -253,7 +273,9 @@ async function shoot(browser, spec, { lang, theme, device, storageState }) {
       .getByText(spec.cutBefore(lang))
       .first()
       .evaluate(
-        (el) => el.closest("section, footer").getBoundingClientRect().top + window.scrollY,
+        (el) =>
+          el.closest("section, footer").getBoundingClientRect().top +
+          window.scrollY,
       ),
   };
   // Foldered by theme then language, so a whole set is one directory to hand

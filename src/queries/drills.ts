@@ -25,10 +25,7 @@ export const drillQuery = (id: number) =>
     },
   });
 
-export const drillsQuery = (
-  clubId: number,
-  filters: DrillsFilters = {},
-) => {
+export const drillsQuery = (clubId: number, filters: DrillsFilters = {}) => {
   const { difficulty, skill_type } = filters;
 
   return queryOptions({

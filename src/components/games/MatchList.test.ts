@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isBye } from "./MatchList";
+import { isBye } from "./isBye";
 import type { TournamentMatch } from "@/types";
 
 const match = (p: Partial<TournamentMatch>) =>

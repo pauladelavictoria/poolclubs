@@ -21,11 +21,13 @@ import {
 } from "react-icons/lu";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Shot } from "@/components/ui/Shot";
-import { BallGlyph, DisciplineBall } from "@/components/ui/Ball";
+import { BallGlyph } from "@/components/ui/BallGlyph";
+import { DisciplineBall } from "@/components/ui/DisciplineBall";
 import { CLUB_BALL_LABEL } from "@/libs/theme/clubTheme";
 import type { BallColor } from "@/types";
 import { useT, type Key } from "@/i18n";
 import { DRILLS_ENABLED } from "@/libs/algorithms/features";
+import { LandingPartLabel } from "@/components/public/LandingPartLabel";
 
 /**
  * The front door. It has two jobs, and it now does them one after the other
@@ -210,24 +212,6 @@ const INSTALL: { icon: typeof LuApple; title: Key; body: Key }[] = [
   },
 ];
 
-/**
- * The seam between the page's two halves. A rule with a word on it, so the
- * change of subject is announced rather than left to the background banding,
- * which the eye reads as rhythm and not as structure.
- */
-function PartLabel({ label }: { label: Key }) {
-  const { t } = useT();
-
-  return (
-    <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 pt-16 sm:px-6 lg:pt-24">
-      <span className="text-caption uppercase tracking-[0.16em] text-ink-faint">
-        {t(label)}
-      </span>
-      <span className="h-px flex-1 bg-hairline" aria-hidden />
-    </div>
-  );
-}
-
 export default function LandingPage() {
   const { t } = useT();
 
@@ -330,7 +314,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <PartLabel label="landing.partProduct" />
+      <LandingPartLabel label="landing.partProduct" />
 
       {/* The product itself, area by area. Asymmetric bento so the grid
           alternates weight instead of repeating a row of equal cards, and every
@@ -358,10 +342,11 @@ export default function LandingPage() {
               className={cardClasses({
                 // The full-width video card sits side by side on desktop, or its
                 // shot alone would be taller than any other card.
-                className: `pop-in flex flex-col overflow-hidden ${art === "video" ? "lg:flex-row" : ""} ${!DRILLS_ENABLED && i === shown.length - 2
+                className: `pop-in flex flex-col overflow-hidden ${art === "video" ? "lg:flex-row" : ""} ${
+                  !DRILLS_ENABLED && i === shown.length - 2
                     ? "lg:col-span-12"
                     : span
-                  }`,
+                }`,
               })}
             >
               <div className="p-6 sm:p-8">
@@ -522,9 +507,7 @@ export default function LandingPage() {
                     <p className="text-body font-semibold text-ink">
                       {t(title)}
                     </p>
-                    <p className="mt-1 text-caption text-ink-soft">
-                      {t(body)}
-                    </p>
+                    <p className="mt-1 text-caption text-ink-soft">{t(body)}</p>
                   </div>
                 </li>
               ))}
@@ -567,7 +550,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <PartLabel label="landing.partClub" />
+      <LandingPartLabel label="landing.partClub" />
 
       {/* Who this is for. Three club types as hairline-divided rows rather than
           three cards: the interesting part is the pair of columns inside each

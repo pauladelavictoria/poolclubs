@@ -52,9 +52,7 @@ const byId = (rows: ReturnType<typeof eloRanking>, id: number) =>
 
 describe("eloRanking", () => {
   it("returns nothing for players who never played", () => {
-    expect(eloRanking([], [player(1, "Paula"), player(2, "Alex")])).toEqual(
-      [],
-    );
+    expect(eloRanking([], [player(1, "Paula"), player(2, "Alex")])).toEqual([]);
   });
 
   it("moves the winner's rating up and the loser's down from the same starting point", () => {
@@ -95,9 +93,7 @@ describe("eloRanking", () => {
       game(1, 5, 3, 0, { played_at: "2026-03-02T10:00:00.000Z" }),
     ];
     const reversed = [...forward].reverse();
-    expect(eloRanking(forward, players)).toEqual(
-      eloRanking(reversed, players),
-    );
+    expect(eloRanking(forward, players)).toEqual(eloRanking(reversed, players));
   });
 
   it("gives both members of a doubles team the same rating change", () => {

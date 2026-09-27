@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import type { DrillLog } from "@/types";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { useT } from "@/i18n";
 
 /**

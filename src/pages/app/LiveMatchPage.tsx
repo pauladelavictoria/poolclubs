@@ -28,7 +28,7 @@ import { AppLink, useAppNavigate } from "@/components/layout/AppLink";
 import { Button, IconButton } from "@/components/ui/Button";
 import ConfirmButton from "@/components/ui/ConfirmButton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PageSkeleton } from "@/components/ui/Skeleton";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
 import { useFullscreen } from "@/hooks/useFullscreen";
 import { readKioskTable } from "@/libs/browser/kiosk";
 import { START_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";

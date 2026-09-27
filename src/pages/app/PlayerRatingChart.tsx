@@ -7,7 +7,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { useChartTheme } from "@/libs/theme/chartTheme";
 import { useT } from "@/i18n";
 

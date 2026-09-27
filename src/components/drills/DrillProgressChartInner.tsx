@@ -9,8 +9,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { DrillLog } from "@/types";
-import { Card, CardHeader } from "@/components/ui/Card";
-import { bandGradientStops, scoreColor, scorePct } from "@/libs/algorithms/scoreBand";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
+import {
+  bandGradientStops,
+  scoreColor,
+  scorePct,
+} from "@/libs/algorithms/scoreBand";
 import { fmt, timeOf } from "@/libs/algorithms/dayLabel";
 import { useChartTheme } from "@/libs/theme/chartTheme";
 import { useT } from "@/i18n";

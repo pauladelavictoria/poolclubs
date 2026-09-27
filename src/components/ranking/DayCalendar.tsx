@@ -8,6 +8,7 @@ import { zoneOf } from "@/libs/algorithms/day";
 import { fmt } from "@/libs/algorithms/dayLabel";
 import { monthGrid, monthOf, shiftMonth } from "@/libs/algorithms/monthGrid";
 import { useT } from "@/i18n";
+import { MonthStep } from "./MonthStep";
 
 /**
  * A month at a time, with a dot on every night that was actually played.
@@ -146,27 +147,6 @@ export default function DayCalendar({
         </div>
       )}
     </div>
-  );
-}
-
-function MonthStep({
-  label,
-  onClick,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control text-ink-soft transition-colors duration-150 hover:bg-felt hover:text-ink"
-    >
-      {children}
-    </button>
   );
 }
 

@@ -3,7 +3,8 @@ import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { AppLink } from "@/components/layout/AppLink";
 import { cardClasses } from "@/components/ui/cardStyles";
-import { HomeSection, Carousel } from "@/components/home/HomeSection";
+import { HomeSection } from "@/components/home/HomeSection";
+import { Carousel } from "@/components/home/Carousel";
 import { sideNames } from "@/libs/algorithms/night";
 import { useT } from "@/i18n";
 

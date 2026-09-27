@@ -49,11 +49,17 @@ export function pickWeeklyDrill<T extends Pickable>(
 
 /** The club's own pick while it is still this week's, else the rotation. */
 export function drillOfWeek<T extends Pickable>(
-  club: { drill_override_id: number | null; drill_override_week: string | null },
+  club: {
+    drill_override_id: number | null;
+    drill_override_week: string | null;
+  },
   drills: T[],
   d: Date,
 ): T | undefined {
-  if (club.drill_override_id !== null && club.drill_override_week === weekKey(d)) {
+  if (
+    club.drill_override_id !== null &&
+    club.drill_override_week === weekKey(d)
+  ) {
     const own = drills.find((x) => x.id === club.drill_override_id);
     if (own) return own;
   }

@@ -1,7 +1,11 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import OverlayScoreboard from "@/components/live/OverlayScoreboard";
-import { bracketIndex, raceFor, resolveBracket } from "@/libs/algorithms/bracket";
+import {
+  bracketIndex,
+  raceFor,
+  resolveBracket,
+} from "@/libs/algorithms/bracket";
 import { publicClubRosterQuery } from "@/queries/public/clubs";
 import { publicLiveMatchByTournamentMatchQuery } from "@/queries/public/live";
 import type { PublicPlayer } from "@/queries/public/clubs";
@@ -56,8 +60,12 @@ export default function OverlayMatchPage() {
       <>
         {style}
         <OverlayScoreboard
-          side1={{ entries: entriesOf([live.player_1_id, live.player_1b_id], roster) }}
-          side2={{ entries: entriesOf([live.player_2_id, live.player_2b_id], roster) }}
+          side1={{
+            entries: entriesOf([live.player_1_id, live.player_1b_id], roster),
+          }}
+          side2={{
+            entries: entriesOf([live.player_2_id, live.player_2b_id], roster),
+          }}
           score1={live.player_1_score}
           score2={live.player_2_score}
           raceTo={live.race_to}
@@ -76,7 +84,8 @@ export default function OverlayMatchPage() {
   // other one is whichever of the two it is not.
   if (match?.game) {
     const { game } = match;
-    const otherId = match.p1_id === game.player_1_id ? match.p2_id : match.p1_id;
+    const otherId =
+      match.p1_id === game.player_1_id ? match.p2_id : match.p1_id;
 
     return (
       <>

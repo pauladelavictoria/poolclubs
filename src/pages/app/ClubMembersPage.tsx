@@ -19,16 +19,17 @@ import { useManagePlayers } from "@/hooks/useManagePlayers";
 import { runMutation } from "@/libs/browser/mutationToast";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import PlayerForm from "@/components/players/PlayerForm";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { Input } from "@/components/ui/Input";
 import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { useDialog, useLingering } from "@/hooks/useDialog";
 import type { Player, Category } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
-import { CountryFlag } from "@/components/ui/Flag";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 /**
  * The way into the club, and everyone who took it.

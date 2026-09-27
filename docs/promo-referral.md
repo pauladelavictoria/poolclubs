@@ -11,7 +11,7 @@ scheduled function described here exists in the repo yet.
 Today a club has exactly one door in: the club's own invite link/QR
 (`InvitePrintPage`, `join_club` RPC), which puts a new signup straight into
 the same `pending` membership queue as anyone who found the club any other
-way. There is no way to tell *who* brought someone in, and no reward for
+way. There is no way to tell _who_ brought someone in, and no reward for
 bringing them.
 
 This document covers two related but separable features:
@@ -38,18 +38,18 @@ this one.
 
 ## What already exists (verified against the code, 2026-09-15)
 
-| Fact | Where |
-|---|---|
-| One invite path per club today: a public join link/QR carrying only the club's `slug`, no per-member identity | `src/pages/app/InvitePrintPage.tsx`, `src/routes/app/join.$slug.tsx` |
-| `join_club(p_slug, claim_player_id, display_name)` is the single RPC that turns a link visit into a `players` row (`status = 'pending'`) | `sql/schema.sql:727` |
-| A person's identity (`people`) is already separate from their per-club membership (`players`) — one `people` row, one `players` row per club they belong to | `sql/schema.sql` (`people`, `players`) |
-| No concept of "who invited whom" anywhere in the schema — grepped for `referr`, `invited_by`, `promo` — no hits | whole-repo search |
-| Club-configurable reward text has no precedent field to copy (`clubs` has no free-form settings/JSON beyond `schedule`) | `sql/schema.sql:1630` (`clubs`) |
-| Games are the only "did they actually play" signal that exists — `games` rows are written from `AddGamePage`/`LiveMatchPage`, one row per completed game, `club_id` + two `players.id` | `sql/schema.sql:1794` (`games`) |
-| Web push is already wired end-to-end: VAPID keys, `push_subscriptions` (per **person**, not per club — `person_id` on the table), and `sendPush` server fn that resolves recipients via a `SECURITY DEFINER` `push_targets` function | `sql/schema.sql:1914`, `src/libs/server/push.functions.ts` |
-| Transactional email is already wired: Resend (`src/libs/server/resend.ts`), text built in `src/libs/algorithms/mailText.ts`, sent from server functions (`mail.functions.ts`) — used today for account-confirmation mail, not yet for any lifecycle/marketing message | `src/libs/server/resend.ts`, `src/libs/algorithms/mailText.ts` |
-| A scheduled job already exists and is the shape to copy: `netlify/functions/youtube-reconcile.mts`, a Netlify Scheduled Function running once a minute, using the **service-role** Supabase client (bypasses RLS on purpose — nobody is signed in when a cron fires), no-ops cleanly if its secrets aren't configured for the environment | `netlify/functions/youtube-reconcile.mts` |
-| `push_subscriptions.lang` and the mail templates are already per-recipient localized (es/en/fr) — any nudge copy needs to go through `src/i18n/*.json` like everything else, not be hardcoded | `sql/schema.sql:1914`, `src/i18n/*.json` |
+| Fact                                                                                                                                                                                                                                                                                                                                      | Where                                                                |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| One invite path per club today: a public join link/QR carrying only the club's `slug`, no per-member identity                                                                                                                                                                                                                             | `src/pages/app/InvitePrintPage.tsx`, `src/routes/app/join.$slug.tsx` |
+| `join_club(p_slug, claim_player_id, display_name)` is the single RPC that turns a link visit into a `players` row (`status = 'pending'`)                                                                                                                                                                                                  | `sql/schema.sql:727`                                                 |
+| A person's identity (`people`) is already separate from their per-club membership (`players`) — one `people` row, one `players` row per club they belong to                                                                                                                                                                               | `sql/schema.sql` (`people`, `players`)                               |
+| No concept of "who invited whom" anywhere in the schema — grepped for `referr`, `invited_by`, `promo` — no hits                                                                                                                                                                                                                           | whole-repo search                                                    |
+| Club-configurable reward text has no precedent field to copy (`clubs` has no free-form settings/JSON beyond `schedule`)                                                                                                                                                                                                                   | `sql/schema.sql:1630` (`clubs`)                                      |
+| Games are the only "did they actually play" signal that exists — `games` rows are written from `AddGamePage`/`LiveMatchPage`, one row per completed game, `club_id` + two `players.id`                                                                                                                                                    | `sql/schema.sql:1794` (`games`)                                      |
+| Web push is already wired end-to-end: VAPID keys, `push_subscriptions` (per **person**, not per club — `person_id` on the table), and `sendPush` server fn that resolves recipients via a `SECURITY DEFINER` `push_targets` function                                                                                                      | `sql/schema.sql:1914`, `src/libs/server/push.functions.ts`           |
+| Transactional email is already wired: Resend (`src/libs/server/resend.ts`), text built in `src/libs/algorithms/mailText.ts`, sent from server functions (`mail.functions.ts`) — used today for account-confirmation mail, not yet for any lifecycle/marketing message                                                                     | `src/libs/server/resend.ts`, `src/libs/algorithms/mailText.ts`       |
+| A scheduled job already exists and is the shape to copy: `netlify/functions/youtube-reconcile.mts`, a Netlify Scheduled Function running once a minute, using the **service-role** Supabase client (bypasses RLS on purpose — nobody is signed in when a cron fires), no-ops cleanly if its secrets aren't configured for the environment | `netlify/functions/youtube-reconcile.mts`                            |
+| `push_subscriptions.lang` and the mail templates are already per-recipient localized (es/en/fr) — any nudge copy needs to go through `src/i18n/*.json` like everything else, not be hardcoded                                                                                                                                             | `sql/schema.sql:1914`, `src/i18n/*.json`                             |
 
 Because the scheduled-job pattern, the push pipeline and the email pipeline
 all already exist, the new work is: a code column, a join-table linking
@@ -65,7 +65,7 @@ already know how to send.
 
 A reward that fires the moment someone signs up is a reward for a fake
 account. The only trustworthy signal already in the schema that someone
-*actually showed up* is a row in `games` naming their `players.id`. Tying
+_actually showed up_ is a row in `games` naming their `players.id`. Tying
 the reward to that — first completed game, not first click — is what makes
 this resistant to a member inviting themself from a second browser.
 
@@ -99,8 +99,8 @@ this resistant to a member inviting themself from a second browser.
 - **Reward state**, one row per successful referral rather than a column on
   `players` (a player could in principle refer more than one person): new
   table `referral_rewards` — `id, club_id, referrer_player_id,
-  referred_player_id, status ('earned' | 'redeemed'), earned_at,
-  redeemed_at`. Written by a trigger or a small RPC the first time a `games`
+referred_player_id, status ('earned' | 'redeemed'), earned_at,
+redeemed_at`. Written by a trigger or a small RPC the first time a `games`
   row appears naming the referred player's id (`earned`); flipped to
   `redeemed` by a club admin from `ClubMembersPage` or similar, the same
   hand-fulfilment model as `tournament_players.paid` today.
@@ -193,16 +193,16 @@ the other direction.
 
 ## Effort, order of magnitude
 
-| | |
-|---|---|
-| Referral code column + short-code resolution in `join_club` | ~1 day |
-| Referral link/QR on player profile (reuse `InvitePrintPage` pattern) | ~1 day |
-| `referral_rewards` table + earn-on-first-game trigger/RPC | ~1 day |
-| Admin "rewards to give out" list + redeem action | ~0.5–1 day |
-| Club settings for reward text + on/off toggle | ~0.5 day |
-| `nudges.mts` scheduled function + dormant-player query | ~1 day |
-| `nudges_sent` dedup table + win-back email template + push kind | ~1 day |
-| Email unsubscribe link (once, reusable by any future nudge) | ~0.5 day |
+|                                                                      |            |
+| -------------------------------------------------------------------- | ---------- |
+| Referral code column + short-code resolution in `join_club`          | ~1 day     |
+| Referral link/QR on player profile (reuse `InvitePrintPage` pattern) | ~1 day     |
+| `referral_rewards` table + earn-on-first-game trigger/RPC            | ~1 day     |
+| Admin "rewards to give out" list + redeem action                     | ~0.5–1 day |
+| Club settings for reward text + on/off toggle                        | ~0.5 day   |
+| `nudges.mts` scheduled function + dormant-player query               | ~1 day     |
+| `nudges_sent` dedup table + win-back email template + push kind      | ~1 day     |
+| Email unsubscribe link (once, reusable by any future nudge)          | ~0.5 day   |
 
 ---
 

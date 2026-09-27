@@ -1,19 +1,20 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
-import { LuCopy, LuDownload, LuMonitorPlay } from "react-icons/lu";
+import { LuDownload, LuMonitorPlay } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useClubStreams } from "@/hooks/useClubYoutube";
 import { AppLink } from "@/components/layout/AppLink";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { Segmented } from "@/components/ui/Segmented";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import {
   streamerFiles,
-  type StreamerFile,
   type StreamerOs,
 } from "@/libs/algorithms/streamerSetup";
 import { useT } from "@/i18n";
+import { StreamerCommand } from "./StreamerCommand";
+import { StreamerDownload } from "./StreamerDownload";
 
 /** Which tab opens first — the browser's own OS, which is usually but not
  *  always the streaming computer's (see ClubStreamingCard's
@@ -30,7 +31,9 @@ function detectOs(): StreamerOs {
 
 const LINUX_INSTALL =
   "sudo add-apt-repository ppa:obsproject/obs-studio && sudo apt install obs-studio";
+
 const MAC_AWAKE = "sudo pmset -a sleep 0 disksleep 0 autorestart 1";
+
 const LINUX_LID =
   "sudo sed -i 's/^#\\?HandleLidSwitch=.*/HandleLidSwitch=ignore/; s/^#\\?HandleLidSwitchExternalPower=.*/HandleLidSwitchExternalPower=ignore/' /etc/systemd/logind.conf && sudo systemctl restart systemd-logind";
 
@@ -64,7 +67,7 @@ export default function ClubStreamerSetupCard() {
         os === "linux" ? (
           <>
             <p>{t("club.streamer.installLinux")}</p>
-            <Command text={LINUX_INSTALL} />
+            <StreamerCommand text={LINUX_INSTALL} />
           </>
         ) : (
           <p>{t("club.streamer.installDownload")}</p>
@@ -123,11 +126,11 @@ export default function ClubStreamerSetupCard() {
           </p>
           <div className="flex flex-wrap gap-2">
             {files.map((file) => (
-              <Download key={file.name} file={file} />
+              <StreamerDownload key={file.name} file={file} />
             ))}
           </div>
           {os !== "windows" && (
-            <Command text={`bash ~/Downloads/${files[0]?.name}`} />
+            <StreamerCommand text={`bash ~/Downloads/${files[0]?.name}`} />
           )}
           <details>
             <summary className="cursor-pointer text-ink-faint">
@@ -153,12 +156,12 @@ export default function ClubStreamerSetupCard() {
         ) : os === "mac" ? (
           <>
             <p>{t("club.streamer.awakeMac")}</p>
-            <Command text={MAC_AWAKE} />
+            <StreamerCommand text={MAC_AWAKE} />
           </>
         ) : (
           <>
             <p>{t("club.streamer.awakeLinux")}</p>
-            <Command text={LINUX_LID} />
+            <StreamerCommand text={LINUX_LID} />
           </>
         ),
     },
@@ -218,50 +221,5 @@ export default function ClubStreamerSetupCard() {
         </AppLink>
       </div>
     </Card>
-  );
-}
-
-/** A one-line command with a copy button — commands here are pasted into a
- *  terminal, and retyping a sed expression is where they go wrong. */
-function Command({ text }: { text: string }) {
-  const { t } = useT();
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(t("club.copied"));
-    } catch {
-      toast.error(t("club.copyError"));
-    }
-  };
-  return (
-    <div className="flex items-start gap-2 rounded-control bg-pocket p-2">
-      <code className="min-w-0 flex-1 overflow-x-auto whitespace-pre font-mono text-caption text-ink">
-        {text}
-      </code>
-      <button
-        type="button"
-        onClick={copy}
-        aria-label={t("club.copy")}
-        className="shrink-0 text-ink-faint hover:text-ink"
-      >
-        <LuCopy className="h-4 w-4" aria-hidden />
-      </button>
-    </div>
-  );
-}
-
-/** A generated file as a real download: a data: URL, since the content is
- *  already here and a server route would only hand the same bytes back. */
-function Download({ file }: { file: StreamerFile }) {
-  const { t } = useT();
-  return (
-    <a
-      href={`data:text/plain;charset=utf-8,${encodeURIComponent(file.content)}`}
-      download={file.name}
-      className={buttonClasses({ variant: "primary", size: "sm" })}
-    >
-      <LuDownload className="h-4 w-4" aria-hidden />
-      {t("club.streamer.download", { file: file.name })}
-    </a>
   );
 }

@@ -1,11 +1,12 @@
 import type { DailyRankingEntry } from "@/types";
-import { BallBadge, CategoryBadge } from "@/components/ui/Ball";
+import { BallBadge } from "@/components/ui/BallBadge";
+import { CategoryBadge } from "@/components/ui/CategoryBadge";
 import { ScoreString } from "@/components/ui/ScoreString";
 import { useAuth } from "@/hooks/useAuth";
 import type { ViewMode } from "./Ranking";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
-import { PlayerFlag } from "@/components/players/PlayerLink";
+import { PlayerFlag } from "@/components/players/PlayerFlag";
 
 interface RankingTableProps {
   entries: DailyRankingEntry[];

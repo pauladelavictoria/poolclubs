@@ -96,9 +96,7 @@ describe("PlayGameForm", () => {
   it("refuses the same player on both sides", async () => {
     setup();
     await pickPlayers("Paula", "Paula");
-    expect(
-      screen.getByText("Pick two different players."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Pick two different players.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 
@@ -161,9 +159,7 @@ describe("PlayGameForm", () => {
     setup({ isSubmitting: true });
     expect(screen.getByLabelText("Player 1")).toBeDisabled();
     expect(screen.getByLabelText("Player 2")).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: "Saving..." }),
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
   });
 });

@@ -1,15 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { headlineClasses } from "@/components/layout/publicTitleStyles";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, getRouteApi, useRouter } from "@tanstack/react-router";
 import { LuGitFork, LuList, LuX } from "react-icons/lu";
 import PublicShell from "@/components/layout/PublicShell";
-import ShareButton from "@/components/social/ShareButton";
 import TournamentSocialBar from "@/components/social/TournamentSocialBar";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
@@ -17,16 +10,13 @@ import MatchList from "@/components/games/MatchList";
 import MatchCard, { type MatchLive } from "@/components/games/MatchCard";
 import LeagueFixtures from "@/components/tournaments/LeagueFixtures";
 import YoutubeEmbed from "@/components/live/YoutubeEmbed";
-import {
-  PlayerCountries,
-  PlayerHighlight,
-} from "@/components/players/PlayerLink";
+import { PlayerCountries } from "@/components/players/PlayerCountries";
+import { PlayerHighlight } from "@/components/players/PlayerHighlight";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { Avatar } from "@/components/ui/Avatar";
-import { Button, IconButton } from "@/components/ui/Button";
-import { Card, CardHeader } from "@/components/ui/Card";
-import { CategoriesBadge } from "@/components/ui/Ball";
-import { Fact } from "@/components/ui/Fact";
+import { IconButton } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHead } from "@/components/ui/SectionHead";
 import { Segmented } from "@/components/ui/Segmented";
@@ -40,24 +30,17 @@ import {
   tournamentResults,
 } from "@/libs/algorithms/bracket";
 import { groupStandings } from "@/libs/algorithms/leagueTable";
-import { eventDates } from "@/libs/algorithms/eventDates";
-import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import { pairNameOf, partnersOf } from "@/libs/algorithms/pairs";
-import { refreshTournaments } from "@/libs/browser/refresh";
-import { runMutation } from "@/libs/browser/mutationToast";
-import { supabase } from "@/libs/supabase/browser";
-import { useSession } from "@/hooks/useAuth";
 import {
   publicClubRosterQuery,
   publicClubTablesQuery,
 } from "@/queries/public/clubs";
 import { publicTournamentLiveQuery } from "@/queries/public/live";
 import { useTournamentBroadcasts } from "@/hooks/useClubYoutube";
-import { publicTournamentQuery } from "@/queries/public/tournaments";
-import type { PublicTournament } from "@/queries/public/tournaments";
-import { FORMAT_KEY, type TournamentMatch } from "@/types";
+import { type TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
-import { CountryFlag } from "@/components/ui/Flag";
+import { CountryFlag } from "@/components/ui/CountryFlag";
+import { TournamentHero } from "@/components/public/TournamentHero";
 
 const route = getRouteApi("/_public/tournaments/$tournamentId");
 
@@ -453,330 +436,5 @@ export default function PublicTournamentPage() {
         )}
       </PlayerHighlight>
     </PlayerCountries>
-  );
-}
-
-/**
- * The name, the way in, and every fact about the tournament as a labelled
- * field. Below those, only what the fields cannot say: a live pill and a real
- * progress bar while it is under way. Nothing while it is open — the entrant
- * count is a field and the entrants themselves are a named section below — and
- * nothing once it is finished, because the results section opens with the
- * podium and saying it twice on one screen read as two different facts.
- */
-function TournamentHero({
-  tournament,
-  entrantIds,
-  partners,
-  matchesTotal,
-  matchesPlayed,
-  url,
-}: {
-  tournament: PublicTournament;
-  entrantIds: number[];
-  partners: Map<number, number>;
-  matchesTotal: number;
-  matchesPlayed: number;
-  url: string;
-}) {
-  const { t, locale } = useT();
-  const progress = matchesTotal > 0 ? matchesPlayed / matchesTotal : 0;
-  const when = eventDates(tournament.starts_on, tournament.ends_on, locale);
-
-  return (
-    <section className="border-b border-hairline">
-      <div className="px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          {/* The title alone on its line. Everything that qualifies it is a
-              labelled field below rather than a run-on of pills and separators:
-              a reader looking for the date was reading a sentence to find it,
-              and "Bola 9 · Inscripción abierta" gave neither word a name. */}
-          <h1 className={headlineClasses("display", "min-w-0 flex-1 truncate")}>
-            {tournament.name}
-          </h1>
-          <div className="flex shrink-0 items-center gap-2">
-            <TournamentEntry
-              tournament={tournament}
-              entrantIds={entrantIds}
-              partners={partners}
-            />
-            <ShareButton title={tournament.name} url={url} />
-          </div>
-        </div>
-
-        {/* A definition list, because that is what this is: every row names the
-            question and then answers it. Grid rather than flex so the labels
-            line up down the columns — a ragged left edge is what made the old
-            run-on hard to scan. Fields with nothing in them are absent, not
-            blank: most tournaments open before anyone has dated them. */}
-        <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 sm:gap-x-8 lg:grid-cols-3 xl:grid-cols-4">
-          {tournament.club && (
-            <Fact
-              className="col-span-2 sm:col-span-1"
-              label={t("public.publicTournament.hostedBy")}
-            >
-              <Link
-                to="/clubs/$slug"
-                params={{ slug: tournament.club.slug }}
-                className="inline-flex max-w-full items-center gap-1.5 transition-colors duration-150 hover:text-strike"
-              >
-                <Avatar
-                  name={tournament.club.name}
-                  url={tournament.club.logo_url}
-                  mark
-                  className="h-4 w-4 shrink-0"
-                />
-                <span className="truncate">{tournament.club.name}</span>
-              </Link>
-            </Fact>
-          )}
-          <Fact label={t("tournaments.statusLabel")}>
-            {t(`tournaments.status.${tournament.status}`)}
-          </Fact>
-          <Fact label={t("tournaments.format")}>
-            {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}
-          </Fact>
-          <Fact label={t("tournaments.discipline")}>
-            {t(`discipline.${tournament.discipline}`)}
-          </Fact>
-          <Fact label={t("tournaments.category")}>
-            <CategoriesBadge categories={tournament.categories} />
-          </Fact>
-          {tournament.status === "open" && (
-            <Fact label={t("public.publicTournament.entrantsLabel")}>
-              <span className="font-mono tabular-nums">
-                {entrantIds.length}
-              </span>
-            </Fact>
-          )}
-          {/* Both of these run long — a date range, and a fee the club wrote in
-              its own words — so on a phone they take the whole row rather than
-              half of one and lose their tail to the truncation. */}
-          {when && (
-            <Fact
-              className="col-span-2 sm:col-span-1"
-              label={t("tournaments.dates")}
-            >
-              {when}
-            </Fact>
-          )}
-          {tournament.entry_fee && (
-            <Fact
-              className="col-span-2 sm:col-span-1"
-              label={t("tournaments.entryFee")}
-            >
-              {tournament.entry_fee}
-            </Fact>
-          )}
-        </dl>
-
-        {/* Prizes and anything else the organiser wants entrants to read —
-            long-form, so it sits below the fixed facts rather than fighting
-            them for a grid cell. */}
-        {tournament.notes && (
-          <p className="mt-4 whitespace-pre-wrap text-body text-ink">
-            {tournament.notes}
-          </p>
-        )}
-
-        {/* Under the fields: only progress, and only while there is any.
-            A count and a row of faces used to sit here too, directly above a
-            section that lists the same people larger and with their names on —
-            the same four faces twice on one screen, the second time captioned.
-            The count is a field now; the faces belong to the list that names
-            them. Nothing at all once it is finished: the results section below
-            opens with the podium, and the champion twice made the second one
-            look like a different fact. */}
-        {tournament.status === "running" || tournament.status === "groups" ? (
-          <div className="mt-8 max-w-md">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-strike-tint px-2 py-1 font-mono text-caption font-semibold text-strike">
-              <span
-                className="live-dot h-1.5 w-1.5 rounded-full bg-strike"
-                aria-hidden
-              />
-              {t("tournaments.status.running")}
-            </span>
-            {/* ponytail: track tinted from the fill colour rather than a
-                surface token, so it reads whatever the header sits on */}
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-strike/20">
-              <div
-                className="h-full rounded-full bg-strike transition-[width] duration-500"
-                style={{ width: `${Math.round(progress * 100)}%` }}
-              />
-            </div>
-            <p className="mt-2 font-mono text-caption tabular-nums text-ink-faint">
-              {t("public.publicTournament.progress", {
-                done: matchesPlayed,
-                total: matchesTotal,
-              })}
-            </p>
-          </div>
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
-/**
- * The way in, for whoever is reading the page.
- *
- * Entering a tournament is a member's action — the RLS policy on
- * tournament_players wants an active player row in the host club and your own
- * user behind it (see sql/schema.sql) — so what this renders is whichever step
- * of that the visitor is missing: sign in, join the club, or enter. A stranger
- * who lands here from a share link gets a path rather than a disabled button.
- *
- * Only while entries are open. Once the draw is cut the field is fixed, and a
- * button that would always fail is worse than no button.
- *
- * The mutation is written here rather than reused from useManageTournaments:
- * that hook reads `useAuth`, which only exists under /app/$clubSlug. Out here
- * the membership comes off the root context instead.
- */
-function TournamentEntry({
-  tournament,
-  entrantIds,
-  partners,
-}: {
-  tournament: PublicTournament;
-  entrantIds: number[];
-  partners: Map<number, number>;
-}) {
-  const { t } = useT();
-  const { session, memberships } = useSession();
-  const queryClient = useQueryClient();
-  const router = useRouter();
-
-  // Their player row in *this* club. Someone can be a member of three clubs and
-  // a pending request at a fourth; only an active row here can enter.
-  const membership = memberships.find(
-    (m) => m.club_id === tournament.club_id && m.status === "active",
-  );
-  // In a pair either half is entered; the row is the captain's either way.
-  const myEntry = membership
-    ? entrantIds.find(
-        (id) => id === membership.id || partners.get(id) === membership.id,
-      )
-    : undefined;
-  const entered = myEntry !== undefined;
-  // A tournament limited to one division is not open to the others — the same
-  // rule as the club's own page.
-  const eligible = canEnterTournament(
-    tournament.categories,
-    membership?.category,
-  );
-
-  const entry = useMutation({
-    mutationFn: async () => {
-      if (!membership) throw new Error("no player");
-      if (entered) {
-        await supabase
-          .from("tournament_players")
-          .delete()
-          .eq("tournament_id", tournament.id)
-          .eq("player_id", myEntry!)
-          .throwOnError();
-      } else {
-        await supabase
-          .from("tournament_players")
-          .insert([{ tournament_id: tournament.id, player_id: membership.id }])
-          .throwOnError();
-      }
-    },
-    onSuccess: async () => {
-      // Both halves, for the reason useAuth's refresh gives: the query holds the
-      // entrants, the route's loader holds the copy this page renders.
-      //
-      // Refetched by passing the options with staleTime 0, not by invalidating
-      // the key: the loader primes this query with staleTime "static", nothing
-      // on the page observes it, and static beats isInvalidated inside
-      // isStaleByTime — so an invalidate here refetched nothing and the entrant
-      // list kept the field it was rendered with.
-      await queryClient.query({
-        ...publicTournamentQuery(tournament.id),
-        staleTime: 0,
-      });
-      await router.invalidate();
-      // And the app's own copies — the entrant count on the index, "my
-      // entries" — which the same person may open next.
-      refreshTournaments(queryClient);
-    },
-  });
-
-  if (tournament.status !== "open") return null;
-
-  if (!session) {
-    return (
-      <Link
-        to="/app/login"
-        search={{ next: `/tournaments/${tournament.id}` }}
-        className={buttonClasses({ size: "sm" })}
-      >
-        {t("public.publicTournament.signInToEnter")}
-      </Link>
-    );
-  }
-
-  // Signed in, but not a player at this club yet — the invite link is the same
-  // one the club hands out, and it comes back here afterwards.
-  if (!membership) {
-    return tournament.club ? (
-      <Link
-        to="/app/join/$slug"
-        params={{ slug: tournament.club.slug }}
-        className={buttonClasses({ size: "sm" })}
-      >
-        {t("public.publicTournament.joinClubToEnter")}
-      </Link>
-    ) : null;
-  }
-
-  // A tournament with no category takes anybody who has a division, and a
-  // membership always has one — so ineligible here always means a division
-  // tournament, and the copy always has a division to name.
-  if (!entered && !eligible && tournament.categories) {
-    return (
-      <p className="max-w-[24ch] text-caption text-ink-faint">
-        {t("tournaments.notEligible", {
-          category: tournament.categories
-            .map((c) => t(`category.${c}`))
-            .join(", "),
-        })}
-      </p>
-    );
-  }
-
-  // A pair is entered from the club's own page, where the partner is picked
-  // from the members — this page has no picker to offer.
-  if (!entered && tournament.mode === "doubles" && tournament.club) {
-    return (
-      <Link
-        to="/app/$clubSlug/tournaments/$tournamentId"
-        params={{
-          clubSlug: tournament.club.slug,
-          tournamentId: String(tournament.id),
-        }}
-        className={buttonClasses({ size: "sm" })}
-      >
-        {t("tournaments.enterAsPair")}
-      </Link>
-    );
-  }
-
-  return (
-    <Button
-      size="sm"
-      variant={entered ? "secondary" : "primary"}
-      disabled={entry.isPending}
-      onClick={() =>
-        runMutation(
-          entry.mutateAsync(),
-          t,
-          entered ? "tournaments.left" : "tournaments.joined",
-        )
-      }
-    >
-      {entered ? t("tournaments.leave") : t("tournaments.join")}
-    </Button>
   );
 }

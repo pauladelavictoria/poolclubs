@@ -146,7 +146,11 @@ export function buildObsSceneCollection({
     const overlayName = `${table.label} — Overlay`;
 
     const camera = table.camera_url
-      ? source("ffmpeg_source", cameraName, rtspCameraSettings(table.camera_url))
+      ? source(
+          "ffmpeg_source",
+          cameraName,
+          rtspCameraSettings(table.camera_url),
+        )
       : source(CAMERA_SOURCE_ID, cameraName, {
           device_id: "",
           device_name: "",

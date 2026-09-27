@@ -27,9 +27,7 @@ describe("upsertRow", () => {
 
   it("leaves a stand-in in place when it is not what arrived — someone else's row, or your own second comment, must not evict a pending one", () => {
     expect(
-      upsertRow([mine(-1700, "still here")], mine(42), same).map(
-        (r) => r.id,
-      ),
+      upsertRow([mine(-1700, "still here")], mine(42), same).map((r) => r.id),
     ).toEqual([-1700, 42]);
   });
 
@@ -87,8 +85,8 @@ describe("removeRow", () => {
       club_id: 1,
       player_1_score: score,
     });
-    expect(
-      removeRow([live("a"), live("b")], "a").map((r) => r.id),
-    ).toEqual(["b"]);
+    expect(removeRow([live("a"), live("b")], "a").map((r) => r.id)).toEqual([
+      "b",
+    ]);
   });
 });

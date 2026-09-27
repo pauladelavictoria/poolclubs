@@ -3,7 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { LuTrophy } from "react-icons/lu";
 import ShareButton from "@/components/social/ShareButton";
 import Side from "@/components/social/feed/Side";
-import { PlayerCountries } from "@/components/players/PlayerLink";
+import { PlayerCountries } from "@/components/players/PlayerCountries";
 import { Card } from "@/components/ui/Card";
 import YoutubeEmbed from "@/components/live/YoutubeEmbed";
 import RackLog from "@/components/games/RackLog";

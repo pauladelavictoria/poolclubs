@@ -29,14 +29,14 @@ import { Segmented } from "@/components/ui/Segmented";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { dialogClasses } from "@/components/ui/cardStyles";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { useDialog, useLingering } from "@/hooks/useDialog";
 import { readTodaySetup, writeTodaySetup } from "@/libs/prefs";
 import { clampRace, seatsNeeded, type DaySetup } from "@/libs/algorithms/today";
 import { START_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 import { DISCIPLINES, type ClubTable, type Player } from "@/types";
-import { CountryFlag } from "@/components/ui/Flag";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 /**
  * The ranking night, on one page.

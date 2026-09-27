@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { LuTriangleAlert } from "react-icons/lu";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { operatorClubsQuery, type OperatorClub } from "@/queries/operator";
 import ClubRequestList from "@/components/layout/ClubRequestList";
 import { useT } from "@/i18n";

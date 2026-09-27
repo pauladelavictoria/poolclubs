@@ -1,6 +1,6 @@
 import { LuMinus, LuPlus, LuX, LuZap } from "react-icons/lu";
 import { Avatar } from "@/components/ui/Avatar";
-import { DisciplineBall } from "@/components/ui/Ball";
+import { DisciplineBall } from "@/components/ui/DisciplineBall";
 import { Button, IconButton } from "@/components/ui/Button";
 import { useRefetchLiveOnVisible } from "@/hooks/useLiveMatch";
 import { isMatchOver, leaderOf } from "@/libs/algorithms/night";
@@ -8,7 +8,7 @@ import { useDialog } from "@/hooks/useDialog";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import type { LiveMatch, Player } from "@/types";
 import { useT } from "@/i18n";
-import { CountryFlag } from "@/components/ui/Flag";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 type ScoreboardVariant = "play" | "spectate" | "tv";
 

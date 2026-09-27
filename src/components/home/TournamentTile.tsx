@@ -1,5 +1,5 @@
 import { AppLink } from "@/components/layout/AppLink";
-import { CategoriesBadge } from "@/components/ui/Ball";
+import { CategoriesBadge } from "@/components/ui/CategoriesBadge";
 import { Button } from "@/components/ui/Button";
 import { cardClasses } from "@/components/ui/cardStyles";
 import {

@@ -1,13 +1,10 @@
 import {
-  HeadContent,
   Outlet,
-  Scripts,
   createRootRouteWithContext,
   notFound,
 } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
-import { ToastContainer } from "react-toastify";
-import { I18nProvider, detectLang } from "@/i18n";
+import { detectLang } from "@/i18n";
 import type { Lang } from "@/i18n";
 import { KIOSK_COOKIE, THEME_COOKIE, readOrigin, readPref } from "@/libs/prefs";
 import { isHiddenPath } from "@/libs/algorithms/features";
@@ -15,6 +12,11 @@ import { sessionQuery } from "@/queries/session";
 import RouteError from "@/components/layout/RouteError";
 import { NotFound } from "@/components/layout/NotFound";
 import indexCss from "../index.css?url";
+import {
+  CF_BEACON_TOKEN,
+  THEME_BOOT,
+  RootDocument,
+} from "@/components/layout/RootDocument";
 
 /**
  * The document, and the two things every route below needs: who is looking at
@@ -188,70 +190,3 @@ export const Route = createRootRouteWithContext<{
   notFoundComponent: () => <NotFound />,
   component: () => <Outlet />,
 });
-
-/** Set in the Netlify UI; public by design, like the Supabase anon key — the
- *  token only says which site a hit belongs to. */
-const CF_BEACON_TOKEN = import.meta.env.VITE_CF_BEACON_TOKEN;
-
-/**
- * The server cannot see `prefers-color-scheme` — it is not in the request — so a
- * first-time visitor is served the dark default and this corrects the attribute
- * before the first paint. A returning visitor has the cookie and the server
- * already got it right, in which case this is a no-op.
- *
- * It runs blocking, in <head>, on purpose: after the first paint it would be a
- * flash instead of a fix. Nothing is written back — pinning the first guess in a
- * cookie would stop the app following the OS later, which is the same reason the
- * language picker only stores an explicit choice.
- */
-const THEME_BOOT = `(function(){try{
-var m=document.cookie.match(/(?:^|; )theme=([^;]*)/);
-var t=m?decodeURIComponent(m[1]):
-(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");
-document.documentElement.dataset.theme=t;
-document.documentElement.style.colorScheme=t;
-}catch(e){}})();`;
-
-function RootDocument({ children }: { children: React.ReactNode }) {
-  const { theme, lang, kiosk } = Route.useRouteContext();
-
-  return (
-    // suppressHydrationWarning covers data-theme and the inline color-scheme:
-    // THEME_BOOT above may have corrected both between the server writing this
-    // and React hydrating it, which is the intended behaviour rather than a
-    // mismatch to fix.
-    // color-scheme is inline rather than left to index.css: the stylesheet is a
-    // separate request (and in dev Vite serves it as a script, so the <link>
-    // never applies at all), and until it lands the UA paints its own canvas —
-    // white, whatever data-theme says. The inline property is on the element in
-    // the first byte, so the canvas is dark before there is any CSS to be late.
-    <html
-      lang={lang}
-      data-theme={theme}
-      data-kiosk={kiosk ? "" : undefined}
-      style={{ colorScheme: theme }}
-      suppressHydrationWarning
-    >
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <I18nProvider>
-          {children}
-          <Toasts />
-        </I18nProvider>
-        <Scripts />
-      </body>
-    </html>
-  );
-}
-
-/** Toasts arrive with react-toastify's own stylesheet, but everything it draws
- *  reads a custom property and index.css points those at our tokens — so the
- *  surface turns over with [data-theme] on its own and there is no `theme` prop
- *  here to keep in step with it. */
-function Toasts() {
-  return (
-    <ToastContainer position="bottom-center" autoClose={2600} hideProgressBar />
-  );
-}
