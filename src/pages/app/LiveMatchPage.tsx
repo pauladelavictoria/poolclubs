@@ -435,7 +435,7 @@ export default function LiveMatchPage() {
         p2={seat(match.player_2_id)}
         p2b={seat(match.player_2b_id)}
         variant={scorer ? "play" : "spectate"}
-        onBump={(side) => bump(match, side)}
+        onBump={(side, runout) => bump(match, side, runout)}
         onUnbump={(side) => unbump(match, side)}
         onFinish={() => finish()}
         // A bracket fixture is played once; anything else, the same four

@@ -599,10 +599,10 @@ BEGIN
 
   INSERT INTO games (club_id, mode, discipline, played_at,
                      player_1_id, player_2_id, player_1b_id, player_2b_id,
-                     player_1_score, player_2_score)
+                     player_1_score, player_2_score, racks)
   VALUES (m.club_id, m.mode, m.discipline, now(),
           m.player_1_id, m.player_2_id, m.player_1b_id, m.player_2b_id,
-          m.player_1_score, m.player_2_score)
+          m.player_1_score, m.player_2_score, m.racks)
   RETURNING id INTO g;
 
   IF m.challenge_id IS NOT NULL THEN
@@ -1960,7 +1960,8 @@ CREATE TABLE IF NOT EXISTS "public"."games" (
     "player_2b_id" bigint,
     "club_id" integer NOT NULL,
     "discipline" "public"."Discipline" DEFAULT '9ball'::"public"."Discipline" NOT NULL,
-    "played_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "played_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "racks" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL
 );
 
 
@@ -1987,6 +1988,7 @@ CREATE TABLE IF NOT EXISTS "public"."live_matches" (
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "record_opt_in" boolean DEFAULT false NOT NULL,
     "record_privacy" "text",
+    "racks" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
     CONSTRAINT "live_matches_doubles_check" CHECK ((("mode" = 'doubles'::"public"."GameMode") = (("player_1b_id" IS NOT NULL) AND ("player_2b_id" IS NOT NULL)))),
     CONSTRAINT "live_matches_last_side_check" CHECK ((("last_side" IS NULL) OR ("last_side" = ANY (ARRAY[1, 2])))),
     CONSTRAINT "live_matches_origin_check" CHECK (("num_nonnulls"("challenge_id", "tournament_match_id") <= 1)),

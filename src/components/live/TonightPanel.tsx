@@ -38,7 +38,7 @@ export default function TonightPanel() {
 
   return (
     <HomeSection titleKey="nav.night" to="/app/$clubSlug/night">
-      <Carousel wide>
+      <Carousel>
         {matches.map((match) => {
           const label = labelOf(match.table_id);
 

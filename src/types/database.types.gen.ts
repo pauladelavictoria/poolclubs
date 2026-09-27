@@ -587,6 +587,7 @@ export type Database = {
           player_2_id: number
           player_2_score: number
           player_2b_id: number | null
+          racks: Json
         }
         Insert: {
           club_id: number
@@ -601,6 +602,7 @@ export type Database = {
           player_2_id: number
           player_2_score: number
           player_2b_id?: number | null
+          racks?: Json
         }
         Update: {
           club_id?: number
@@ -615,6 +617,7 @@ export type Database = {
           player_2_id?: number
           player_2_score?: number
           player_2b_id?: number | null
+          racks?: Json
         }
         Relationships: [
           {
@@ -669,6 +672,7 @@ export type Database = {
           player_2_score: number
           player_2b_id: number | null
           race_to: number
+          racks: Json
           record_opt_in: boolean
           record_privacy: string | null
           started_at: string
@@ -690,6 +694,7 @@ export type Database = {
           player_2_score?: number
           player_2b_id?: number | null
           race_to?: number
+          racks?: Json
           record_opt_in?: boolean
           record_privacy?: string | null
           started_at?: string
@@ -711,6 +716,7 @@ export type Database = {
           player_2_score?: number
           player_2b_id?: number | null
           race_to?: number
+          racks?: Json
           record_opt_in?: boolean
           record_privacy?: string | null
           started_at?: string

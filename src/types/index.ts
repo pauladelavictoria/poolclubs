@@ -61,8 +61,12 @@ export type Discipline = Database["public"]["Enums"]["Discipline"];
 
 export const DISCIPLINES: Discipline[] = ["8ball", "9ball", "10ball"];
 
+/** One rack, in the order played: who won it and whether they broke and ran
+ *  it. `racks` is jsonb, so the generated type is `Json` — narrowed here. */
+export type Rack = { side: 1 | 2; runout: boolean };
+
 /** Scores are `bigint` columns: numbers, not strings. */
-export type Game = Stamped<Row<"games">>;
+export type Game = Omit<Stamped<Row<"games">>, "racks"> & { racks: Rack[] };
 
 export type Category = 1 | 2 | 3;
 
@@ -136,7 +140,8 @@ export type ClubTable = Omit<Row<"club_tables">, "type" | "size"> & {
  * the status columns below are: the CHECK is the real domain and the generated
  * type is looser than what is ever stored.
  */
-export type LiveMatch = Omit<Row<"live_matches">, "last_side"> & {
+export type LiveMatch = Omit<Row<"live_matches">, "last_side" | "racks"> & {
+  racks: Rack[];
   /** Which side scored the last rack. What undo reads — two counters alone
    *  cannot say, so undo on the other phone would guess. */
   last_side: 1 | 2 | null;

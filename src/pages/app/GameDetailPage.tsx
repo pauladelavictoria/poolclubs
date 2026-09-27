@@ -7,6 +7,7 @@ import YoutubeEmbed from "@/components/live/YoutubeEmbed";
 import { fmt } from "@/libs/algorithms/dayLabel";
 import PageTitle from "@/components/layout/PageTitle";
 import FeedMatchCard from "@/components/social/feed/FeedMatchCard";
+import RackLog from "@/components/games/RackLog";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -100,6 +101,8 @@ export default function GameDetailPage() {
           detail
         />
       </Card>
+
+      <RackLog game={game} />
 
       {recording && (
         <YoutubeEmbed broadcastId={recording} title={t("games.recording")} />
