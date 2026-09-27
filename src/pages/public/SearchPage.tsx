@@ -1,20 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, getRouteApi } from "@tanstack/react-router";
+import { getRouteApi } from "@tanstack/react-router";
 import { LuSearch } from "react-icons/lu";
 import DrillCard from "@/components/drills/DrillCard";
-import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
+import PublicShell from "@/components/layout/PublicShell";
+import { CtaBand } from "@/components/layout/CtaBand";
 import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SearchInput } from "@/components/ui/SearchInput";
-import { ClubCard } from "@/pages/public/PublicClubsPage";
+import { ClubCard } from "@/components/public/ClubCard";
 import { DRILL_GRID } from "@/pages/public/PublicDrillsPage";
-import { GRID, PersonRow } from "@/pages/public/PublicPlayersPage";
-import { TournamentCard } from "@/pages/public/PublicTournamentsPage";
+import { GRID } from "@/pages/public/PublicPlayersPage";
+import { PersonRow } from "@/components/public/PersonRow";
+import { TournamentCard } from "@/components/public/TournamentCard";
 import { useDebouncedQuery } from "@/hooks/useDebouncedQuery";
 import { publicSearchQuery } from "@/queries/public/search";
 import { useT } from "@/i18n";
-import type { Key } from "@/i18n";
+import { SearchCountChip } from "@/components/public/SearchCountChip";
+import { SearchBlock } from "@/components/public/SearchBlock";
 
 const route = getRouteApi("/_public/search");
 
@@ -96,22 +99,22 @@ export default function SearchPage() {
         {data && total > 0 && (
           <div className="mt-8 flex flex-wrap items-center gap-2">
             {data.clubs.length > 0 && (
-              <CountChip
+              <SearchCountChip
                 label={t("public.publicClubs.count", { n: data.clubs.length })}
               />
             )}
             {data.people.length > 0 && (
-              <CountChip
+              <SearchCountChip
                 label={t("ranking.playersCount", { n: data.people.length })}
               />
             )}
             {data.tournaments.length > 0 && (
-              <CountChip
+              <SearchCountChip
                 label={t("tournaments.count", { n: data.tournaments.length })}
               />
             )}
             {data.drills.length > 0 && (
-              <CountChip
+              <SearchCountChip
                 label={t("public.publicDrills.count", {
                   n: data.drills.length,
                 })}
@@ -141,7 +144,7 @@ export default function SearchPage() {
         ) : (
           <div className="mt-6 space-y-10">
             {data && data.clubs.length > 0 && (
-              <Block
+              <SearchBlock
                 titleKey="public.publicClubs.title"
                 to="/clubs"
                 term={term}
@@ -153,11 +156,11 @@ export default function SearchPage() {
                     <ClubCard key={club.id} club={club} />
                   ))}
                 </div>
-              </Block>
+              </SearchBlock>
             )}
 
             {data && data.people.length > 0 && (
-              <Block
+              <SearchBlock
                 titleKey="public.publicPlayers.title"
                 to="/players"
                 term={term}
@@ -167,11 +170,11 @@ export default function SearchPage() {
                     <PersonRow key={person.id} person={person} />
                   ))}
                 </div>
-              </Block>
+              </SearchBlock>
             )}
 
             {data && data.tournaments.length > 0 && (
-              <Block
+              <SearchBlock
                 titleKey="public.publicTournaments.title"
                 to="/tournaments"
                 term={term}
@@ -184,11 +187,11 @@ export default function SearchPage() {
                     />
                   ))}
                 </div>
-              </Block>
+              </SearchBlock>
             )}
 
             {data && data.drills.length > 0 && (
-              <Block
+              <SearchBlock
                 titleKey="public.publicDrills.title"
                 to="/drills"
                 term={term}
@@ -198,7 +201,7 @@ export default function SearchPage() {
                     <DrillCard key={drill.id} drill={drill} public />
                   ))}
                 </div>
-              </Block>
+              </SearchBlock>
             )}
           </div>
         )}
@@ -206,49 +209,5 @@ export default function SearchPage() {
         <CtaBand />
       </PublicShell>
     </>
-  );
-}
-
-function CountChip({ label }: { label: string }) {
-  return (
-    <span className="rounded-full border border-hairline bg-felt px-2.5 py-1 font-mono text-caption tabular-nums text-ink-soft">
-      {label}
-    </span>
-  );
-}
-
-/** One kind of result, with the way through to all of them. */
-function Block({
-  titleKey,
-  to,
-  term,
-  children,
-}: {
-  titleKey: Key;
-  to: "/clubs" | "/players" | "/tournaments" | "/drills";
-  term: string;
-  children: React.ReactNode;
-}) {
-  const { t } = useT();
-
-  return (
-    <section>
-      <div className="flex items-center justify-between gap-3 pb-3">
-        <h2 className="text-h3 font-semibold tracking-tight text-ink">
-          {t(titleKey)}
-        </h2>
-        <Link
-          to={to}
-          // Carries the term: every directory has its own field now, so it
-          // arrives filled in and the short list has a visible cause and a way
-          // to clear it.
-          search={{ q: term || undefined }}
-          className="shrink-0 text-caption font-medium text-strike transition-colors duration-150 hover:text-strike-light"
-        >
-          {t("common.seeAll")}
-        </Link>
-      </div>
-      {children}
-    </section>
   );
 }

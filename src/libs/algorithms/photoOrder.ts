@@ -29,7 +29,10 @@ type Pathed = { path: string };
  * object names carry a millisecond prefix (see libs/browser/photoImage.ts). So
  * "newest last" is the default, and the cover only moves when somebody moves it.
  */
-export function orderPhotos<T extends Pathed>(photos: T[], order: unknown): T[] {
+export function orderPhotos<T extends Pathed>(
+  photos: T[],
+  order: unknown,
+): T[] {
   const byPath = new Map(photos.map((photo) => [photo.path, photo]));
   const seen = new Set<string>();
   const out: T[] = [];
@@ -46,8 +49,7 @@ export function orderPhotos<T extends Pathed>(photos: T[], order: unknown): T[] 
     }
   }
 
-  for (const photo of photos)
-    if (!seen.has(photo.path)) out.push(photo);
+  for (const photo of photos) if (!seen.has(photo.path)) out.push(photo);
 
   return out;
 }

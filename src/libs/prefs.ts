@@ -4,7 +4,11 @@ import {
   getRequestHeader,
   getRequestUrl,
 } from "@tanstack/react-start/server";
-import { decodeSetup, encodeSetup, type DaySetup } from "@/libs/algorithms/today";
+import {
+  decodeSetup,
+  encodeSetup,
+  type DaySetup,
+} from "@/libs/algorithms/today";
 
 /**
  * The two choices the server has to know before it renders anything: which way

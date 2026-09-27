@@ -3,7 +3,8 @@ import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubMembers, useManageClub } from "@/hooks/useClub";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { Button } from "@/components/ui/Button";
 import { useT } from "@/i18n";
 

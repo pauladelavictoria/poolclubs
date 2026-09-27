@@ -38,9 +38,13 @@ describe("raceFor — race lengths", () => {
     const semis = se.filter((m) => m.bracket === "winners" && m.round === 2);
     expect(semis.length).toBe(2);
     for (const m of semis) expect(raceFor(m, races, se)).toBe(6);
-    expect(raceFor(se.find((m) => m.bracket === "final")!, races, se)).toBe(
-      7,
-    );
+    expect(
+      raceFor(
+        se.find((m) => m.bracket === "final")!,
+        races,
+        se,
+      ),
+    ).toBe(7);
   });
 
   it("gives a round robin no closing stage", () => {
@@ -57,7 +61,9 @@ describe("raceFor — race lengths", () => {
 
 describe("placings — the podium", () => {
   it("makes third place one player in double elimination, since the losers final decides it", () => {
-    const played = playOut(buildKnockout(field(8), { doubleElim: true }, ids()));
+    const played = playOut(
+      buildKnockout(field(8), { doubleElim: true }, ids()),
+    );
     const { first, second, third } = placings(played);
     expect(first, "the top seed wins out").toBe(1);
     expect(second).not.toBeNull();
@@ -73,14 +79,15 @@ describe("placings — the podium", () => {
     const { first, second, third } = placings(played);
     expect(first).toBe(1);
     expect(third.length, "joint third").toBe(2);
-    expect(
-      new Set([first, second, ...third]).size,
-      "four distinct names",
-    ).toBe(4);
+    expect(new Set([first, second, ...third]).size, "four distinct names").toBe(
+      4,
+    );
   });
 
   it("has nobody in third for a two-player final", () => {
-    const played = playOut(buildKnockout(field(2), { doubleElim: true }, ids()));
+    const played = playOut(
+      buildKnockout(field(2), { doubleElim: true }, ids()),
+    );
     expect(placings(played)).toEqual({ first: 1, second: 2, third: [] });
   });
 

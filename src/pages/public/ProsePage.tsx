@@ -1,4 +1,5 @@
-import PublicShell, { CtaBand } from "@/components/layout/PublicShell";
+import PublicShell from "@/components/layout/PublicShell";
+import { CtaBand } from "@/components/layout/CtaBand";
 import PublicPageTitle from "@/components/layout/PublicPageTitle";
 import { LEGAL } from "@/content/legal";
 import { ABOUT, CONTACT, PRICING, type ContentDoc } from "@/content/pages";

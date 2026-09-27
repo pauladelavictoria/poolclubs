@@ -15,12 +15,14 @@ import type {
 import {
   CARD_SIZES,
   paintClubCard,
+  paintDrillCard,
   paintGameCard,
   paintPlayerCard,
   paintResultCard,
   type CardContext,
   type CardImage,
   type CardSize,
+  type DrillCardSpec,
 } from "@/libs/cards/paint";
 
 /**
@@ -339,6 +341,32 @@ export async function renderResultCardPng(
         font: serverFont,
         ...chrome,
         avatars,
+      }),
+    ),
+  );
+}
+
+export async function renderDrillCardPng(
+  spec: DrillCardSpec,
+  request: CardRequest & {
+    /** public/table.png, from our own origin. */
+    tableUrl: string;
+  },
+): Promise<RenderedCard> {
+  const size = request.size ?? "wide";
+  const [chrome, table] = await Promise.all([
+    chromeOf(request),
+    fetchBytes(request.tableUrl).then((b) => (b ? decodeImage(b) : null)),
+  ]);
+
+  return png(
+    await encode(size, (ctx) =>
+      paintDrillCard(ctx, spec, {
+        size,
+        scale: SCALE,
+        font: serverFont,
+        ...chrome,
+        table,
       }),
     ),
   );

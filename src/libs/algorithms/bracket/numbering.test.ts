@@ -9,9 +9,7 @@ describe("bracketIndex — numbering and seat provenance", () => {
     const index = bracketIndex(ms);
 
     const numbers = ms.map((m) => index.number(m.id)!);
-    expect(new Set(numbers).size, "every match numbered once").toBe(
-      ms.length,
-    );
+    expect(new Set(numbers).size, "every match numbered once").toBe(ms.length);
     expect(
       [...numbers].sort((a, b) => a - b),
       "numbered 1..n with no gaps",

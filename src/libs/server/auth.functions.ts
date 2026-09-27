@@ -269,7 +269,12 @@ export const signUp = createServerFn({ method: "POST" })
  * the address has an unconfirmed account is not this endpoint's to reveal.
  */
 export const resendConfirmation = createServerFn({ method: "POST" })
-  .validator(z.object({ email: z.string().email().max(320), next: z.string().optional() }))
+  .validator(
+    z.object({
+      email: z.string().email().max(320),
+      next: z.string().optional(),
+    }),
+  )
   .handler(async ({ data }): Promise<null> => {
     const supabase = getSupabaseServer();
     const { error } = await supabase.auth.resend({

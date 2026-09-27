@@ -62,10 +62,7 @@ describe("resolveBracket — advancement", () => {
     const wbFinal = resolved.find(
       (m) => m.bracket === "winners" && m.round === 2,
     )!;
-    expect(
-      [wbFinal.p1_id, wbFinal.p2_id],
-      "winners advance",
-    ).toEqual([1, 3]);
+    expect([wbFinal.p1_id, wbFinal.p2_id], "winners advance").toEqual([1, 3]);
 
     const lb = resolved.filter(
       (m) => m.bracket === "losers" && m.round === 1,

@@ -5,7 +5,7 @@ import { dayLabel, playedTimeOf } from "@/libs/algorithms/dayLabel";
 import type { Game } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
-import { CountryFlag } from "@/components/ui/Flag";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 /**
  * A finished match, small enough to sit in a row of them.

@@ -7,7 +7,7 @@ import { routeTree } from "./routeTree.gen";
 import { makeQueryClient } from "@/libs/queryClient";
 import RouteError from "@/components/layout/RouteError";
 import { NotFound } from "@/components/layout/NotFound";
-import { PageSkeleton } from "@/components/ui/Skeleton";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
 
 /**
  * Called once per request on the server and once per page load in the browser.

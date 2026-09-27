@@ -24,7 +24,10 @@ export const Route = createFileRoute("/app/_authed/$clubSlug/drills/$drillId/")(
           staleTime: "static",
         }),
         context.queryClient.query({
-          ...drillLogsQuery({ drill_id: drillId }),
+          ...drillLogsQuery({
+            club_id: context.activeClubId,
+            drill_id: drillId,
+          }),
           staleTime: "static",
         }),
       ]);

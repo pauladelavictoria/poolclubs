@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { Segmented } from "@/components/ui/Segmented";
 import ConfirmButton from "@/components/ui/ConfirmButton";
-import { DisciplineBall } from "@/components/ui/Ball";
+import { DisciplineBall } from "@/components/ui/DisciplineBall";
 import { DISCIPLINES, type Discipline, type Game } from "@/types";
 import { useT } from "@/i18n";
 

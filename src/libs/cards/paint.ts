@@ -7,6 +7,19 @@ import {
   type PlayerCardSpec,
   type ResultCardSpec,
 } from "@/libs/algorithms/cards";
+import {
+  BALL_COLORS,
+  BALL_RADIUS,
+  FELT as FELT_RECT,
+  TABLE_H,
+  TABLE_W,
+  UNIT_X,
+  UNIT_Y,
+  isStriped,
+  radiusOf,
+  rectOf,
+} from "@/libs/algorithms/drillGeometry";
+import type { BallPosition, ShotPath } from "@/types";
 
 /**
  * Every card's layout, drawn against a Canvas-2D-shaped context and nothing
@@ -120,6 +133,12 @@ export type CardContext = {
   save(): void;
   restore(): void;
   drawImage(image: never, x: number, y: number, w: number, h: number): void;
+  strokeStyle: string | object;
+  lineWidth: number;
+  moveTo(x: number, y: number): void;
+  lineTo(x: number, y: number): void;
+  closePath(): void;
+  stroke(): void;
 };
 
 /** What every card gets, whatever it draws. */
@@ -645,4 +664,144 @@ export function paintPlayerCard(
       bodyTop + u(154),
     );
   });
+}
+
+export type DrillCardSpec = {
+  /** "Ejercicio de billar" */
+  byline: string;
+  title: string;
+  /** "Intermedio · máx. 20 puntos" */
+  subtitle: string;
+  balls: BallPosition[];
+  paths: ShotPath[];
+};
+
+/**
+ * A drill: its name up top and the table as big as the rest of the card
+ * allows: the table artwork as a PNG, and the drill's balls and shapes drawn
+ * over it in the drill's own units.
+ */
+export function paintDrillCard(
+  ctx: CardContext,
+  spec: DrillCardSpec,
+  opts: CardChrome & { table?: CardImage | null },
+): void {
+  const { W, PAD, bodyTop, floor, draw } = paintChrome(ctx, {
+    ...opts,
+    club: spec.byline,
+    title: spec.title,
+    subtitle: spec.subtitle,
+  });
+
+  // Fit the whole artwork box, centred, into what the header left.
+  const k = Math.min((W - PAD * 2) / TABLE_W, (floor - bodyTop) / TABLE_H);
+  const ox = (W - TABLE_W * k) / 2;
+  const oy = bodyTop + (floor - bodyTop - TABLE_H * k) / 2;
+  /** Drill units (0–100 × 0–50 over the cloth) into card pixels. */
+  const X = (x: number) => ox + (FELT_RECT.x + x * UNIT_X) * k;
+  const Y = (y: number) => oy + (FELT_RECT.y + y * UNIT_Y) * k;
+  const circle = (x: number, y: number, r: number) => {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+  };
+
+  // The table itself is public/table.png — the dark diagram's artwork,
+  // flattened, since no rasteriser here reads SVG.
+  if (opts.table) draw(opts.table, ox, oy, TABLE_W * k, TABLE_H * k);
+
+  // Head string and spots, faint, as on the diagram.
+  ctx.strokeStyle = "rgba(244, 242, 236, 0.24)";
+  ctx.lineWidth = 0.1 * UNIT_Y * k;
+  for (const [x1, y1, x2, y2] of [
+    [25, 0.5, 25, 49.7],
+    [0, 15, 25, 15],
+    [0, 35, 25, 35],
+  ]) {
+    ctx.beginPath();
+    ctx.moveTo(X(x1), Y(y1));
+    ctx.lineTo(X(x2), Y(y2));
+    ctx.stroke();
+  }
+
+  // Shapes: an arrow, a circle or a rectangle, same stroke for all three.
+  for (const path of spec.paths) {
+    const colour =
+      path.type === "dashed"
+        ? "rgba(255, 255, 100, 0.6)"
+        : "rgba(255, 255, 255, 0.5)";
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = 0.5 * UNIT_Y * k;
+    ctx.beginPath();
+    if (path.shape === "circle") {
+      ctx.arc(
+        X(path.x1),
+        Y(path.y1),
+        radiusOf(path) * UNIT_X * k,
+        0,
+        Math.PI * 2,
+      );
+    } else if (path.shape === "rect") {
+      const r = rectOf(path);
+      ctx.moveTo(X(r.x), Y(r.y));
+      ctx.lineTo(X(r.x + r.w), Y(r.y));
+      ctx.lineTo(X(r.x + r.w), Y(r.y + r.h));
+      ctx.lineTo(X(r.x), Y(r.y + r.h));
+      ctx.closePath();
+    } else {
+      ctx.moveTo(X(path.x1), Y(path.y1));
+      ctx.lineTo(X(path.x2), Y(path.y2));
+    }
+    ctx.stroke();
+
+    // The arrowhead, as a filled triangle at the far end.
+    if (!path.shape) {
+      const a = Math.atan2(Y(path.y2) - Y(path.y1), X(path.x2) - X(path.x1));
+      const len = 1.8 * UNIT_Y * k;
+      ctx.fillStyle = colour;
+      ctx.beginPath();
+      ctx.moveTo(X(path.x2), Y(path.y2));
+      ctx.lineTo(
+        X(path.x2) - len * Math.cos(a - 0.45),
+        Y(path.y2) - len * Math.sin(a - 0.45),
+      );
+      ctx.lineTo(
+        X(path.x2) - len * Math.cos(a + 0.45),
+        Y(path.y2) - len * Math.sin(a + 0.45),
+      );
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // Balls, with a number where one fits. A stripe is a white ball with a band.
+  const r = BALL_RADIUS * UNIT_Y * k;
+  const labelFont = opts.font(700, r * 1.1);
+  for (const ball of spec.balls) {
+    const x = X(ball.x);
+    const y = Y(ball.y);
+    const colour = BALL_COLORS[ball.color] ?? BALL_COLORS.white;
+    circle(x, y, r);
+    ctx.fillStyle = isStriped(ball.label) ? "#FFFFFF" : colour;
+    ctx.fill();
+    if (isStriped(ball.label)) {
+      ctx.save();
+      circle(x, y, r);
+      ctx.clip();
+      ctx.fillStyle = colour;
+      ctx.fillRect(x - r, y - r * 0.55, r * 2, r * 1.1);
+      ctx.restore();
+    }
+    if (ball.label && /^[0-9]{1,2}$/.test(ball.label)) {
+      circle(x, y, r * 0.5);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fill();
+      ctx.font = labelFont;
+      ctx.fillStyle = "#111111";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(ball.label, x, y);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+    }
+  }
 }

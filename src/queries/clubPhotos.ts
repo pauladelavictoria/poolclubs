@@ -52,14 +52,16 @@ export const clubPhotosQuery = (clubId: number | null | undefined) =>
       // a club with no photos looks like.
       if (error || !data) return [];
 
-      return data
-        // list() returns a placeholder row for the folder itself on some
-        // backends; a real object always has an id.
-        .filter((object) => object.id !== null)
-        .map((object) => {
-          const path = `${clubPhotoFolder(clubId!)}/${object.name}`;
-          return { path, url: bucket.getPublicUrl(path).data.publicUrl };
-        });
+      return (
+        data
+          // list() returns a placeholder row for the folder itself on some
+          // backends; a real object always has an id.
+          .filter((object) => object.id !== null)
+          .map((object) => {
+            const path = `${clubPhotoFolder(clubId!)}/${object.name}`;
+            return { path, url: bucket.getPublicUrl(path).data.publicUrl };
+          })
+      );
     },
     enabled: clubId != null,
   });

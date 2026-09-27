@@ -35,24 +35,24 @@ money currently moves through the app at all.
 
 ## What already exists (verified against the code, 2026-09-13)
 
-| Fact | Where |
-|---|---|
-| `tournaments.entry_fee` is free text, no currency or amount encoding — "15 €", "£10 members" are both valid values, unparseable by a computer | `sql/schema.sql`, `src/components/tournaments/TournamentForm.tsx` |
-| `tournaments.requires_payment` (boolean, default false) — just added, purely a UI gate today | `sql/schema.sql`, migration this session |
-| `tournament_players.paid` (boolean, default false) — admin-toggled by hand, no money changes hands to set it | `sql/schema.sql` |
-| Admin-only UPDATE RLS policy already exists for `tournament_players`, scoped by `is_club_admin(tournament_club(tournament_id))` — the exact predicate a Stripe-aware update would reuse | `sql/schema.sql`, `"Admin can mark entrants paid"` policy |
-| `clubs` has `owner_id` (→ `auth.users`), `country` (ISO-3166 alpha-2, CHECK-constrained), `contact_email` — no legal name, no tax ID, no bank details, no currency | `sql/schema.sql`, `clubs` table |
-| The company operating PoolClubs is a real, named Spanish entity: **Satellite Studio Digital S.L.**, NIF `B88036348`, Valencia — this is who would be the counterparty on every Stripe platform account and every invoice to a club | `src/content/legal.ts` (`OPERATOR`) |
-| No payment or billing code anywhere in the repo today (grepped for `stripe`, `billing`, `invoice` — no hits) | whole-repo search |
+| Fact                                                                                                                                                                                                                                                                                                                                              | Where                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `tournaments.entry_fee` is free text, no currency or amount encoding — "15 €", "£10 members" are both valid values, unparseable by a computer                                                                                                                                                                                                     | `sql/schema.sql`, `src/components/tournaments/TournamentForm.tsx`         |
+| `tournaments.requires_payment` (boolean, default false) — just added, purely a UI gate today                                                                                                                                                                                                                                                      | `sql/schema.sql`, migration this session                                  |
+| `tournament_players.paid` (boolean, default false) — admin-toggled by hand, no money changes hands to set it                                                                                                                                                                                                                                      | `sql/schema.sql`                                                          |
+| Admin-only UPDATE RLS policy already exists for `tournament_players`, scoped by `is_club_admin(tournament_club(tournament_id))` — the exact predicate a Stripe-aware update would reuse                                                                                                                                                           | `sql/schema.sql`, `"Admin can mark entrants paid"` policy                 |
+| `clubs` has `owner_id` (→ `auth.users`), `country` (ISO-3166 alpha-2, CHECK-constrained), `contact_email` — no legal name, no tax ID, no bank details, no currency                                                                                                                                                                                | `sql/schema.sql`, `clubs` table                                           |
+| The company operating PoolClubs is a real, named Spanish entity: **Satellite Studio Digital S.L.**, NIF `B88036348`, Valencia — this is who would be the counterparty on every Stripe platform account and every invoice to a club                                                                                                                | `src/content/legal.ts` (`OPERATOR`)                                       |
+| No payment or billing code anywhere in the repo today (grepped for `stripe`, `billing`, `invoice` — no hits)                                                                                                                                                                                                                                      | whole-repo search                                                         |
 | A near-identical OAuth-connect precedent already exists and is the shape to copy: `/api/youtube/connect` redirects a club admin to Google, `/api/youtube/callback` re-checks `is_club_admin` server-side (never trusts the signed state alone for authorization), exchanges the code, and upserts an encrypted token with the service-role client | `src/routes/api/youtube/connect.ts`, `src/routes/api/youtube/callback.ts` |
-| Secret convention: `VITE_`-prefixed env vars are public (inlined client-side); unprefixed ones are server-only (`process.env`, read only in server routes) | `netlify.toml` comments, `src/libs/server/*.functions.ts` |
-| Hosting is Netlify via `@netlify/vite-plugin-tanstack-start`; server routes live under `src/routes/api/*` as `createFileRoute(...).server.handlers` | `src/routes/api/youtube/callback.ts`, `netlify.toml` |
-| `encryptSecret`/service-role helpers already exist for storing a third party's opaque token per club | `src/libs/server/crypto.ts`, `src/libs/supabase/serviceRole.ts` |
-| Clubs already quote fees in more than one currency informally — the English placeholder uses £, Spanish/French use € (`src/i18n/*.json`, `tournaments.entryFeePlaceholder`) — so multi-currency is a real requirement, not a hypothetical |
+| Secret convention: `VITE_`-prefixed env vars are public (inlined client-side); unprefixed ones are server-only (`process.env`, read only in server routes)                                                                                                                                                                                        | `netlify.toml` comments, `src/libs/server/*.functions.ts`                 |
+| Hosting is Netlify via `@netlify/vite-plugin-tanstack-start`; server routes live under `src/routes/api/*` as `createFileRoute(...).server.handlers`                                                                                                                                                                                               | `src/routes/api/youtube/callback.ts`, `netlify.toml`                      |
+| `encryptSecret`/service-role helpers already exist for storing a third party's opaque token per club                                                                                                                                                                                                                                              | `src/libs/server/crypto.ts`, `src/libs/supabase/serviceRole.ts`           |
+| Clubs already quote fees in more than one currency informally — the English placeholder uses £, Spanish/French use € (`src/i18n/*.json`, `tournaments.entryFeePlaceholder`) — so multi-currency is a real requirement, not a hypothetical                                                                                                         |
 
 Because the OAuth-connect pattern, the server-route layout, the secret
 convention and the admin-authorization predicate all already exist, the
-*engineering* shape of "club connects a payment account" is not new work —
+_engineering_ shape of "club connects a payment account" is not new work —
 it is the YouTube integration's skeleton with Stripe in place of Google. The
 new work is everything payments-specific: PCI exposure, webhooks as the only
 source of truth, refunds, and the accounting/legal layer below.
@@ -126,7 +126,7 @@ None of this exists yet; sketched, not final:
    `is_club_admin` server-side, stores `stripe_account_id` with the
    service-role client. No encryption needed here (unlike the YouTube
    refresh token) — the account id is not a secret, only Stripe API calls
-   made *as* PoolClubs's platform account are.
+   made _as_ PoolClubs's platform account are.
 2. **Admin sets a real price.** `TournamentForm` gains an amount + currency
    control for `requires_payment` tournaments, replacing the free-text guess
    with something a computer can charge.
@@ -141,7 +141,7 @@ None of this exists yet; sketched, not final:
    with `paid = true` and `paid_at`. The browser redirect back from Stripe is
    only ever a "thanks, hang on" screen; a player closing the tab mid-payment
    must not silently count as entered, and a network hiccup on the redirect
-   must not silently count as *not* entered. This is the one hard rule of
+   must not silently count as _not_ entered. This is the one hard rule of
    integrating Stripe correctly.
 5. **Decide when a seat is reserved.** Does clicking "join" on a paid
    tournament provisionally hold a spot before payment completes (risk: a
@@ -150,8 +150,8 @@ None of this exists yet; sketched, not final:
    nothing happen until they've paid — needs its own pending-state UI)?
 6. **Refunds need a money-aware version of "remove entrant".** The
    unpaid-entrant removal flow shipped this session (`TournamentAdminPanel`,
-   confirm-then-`leaveTournament`) only ever removes people who *never*
-   paid. A *paid* entrant withdrawing, or being removed by an admin, needs a
+   confirm-then-`leaveTournament`) only ever removes people who _never_
+   paid. A _paid_ entrant withdrawing, or being removed by an admin, needs a
    new path that calls Stripe's refund API first — and a policy decision on
    whether Stripe's own non-refundable processing fee is absorbed by the
    club, the player, or PoolClubs.
@@ -166,7 +166,7 @@ None of this exists yet; sketched, not final:
 ## Costs
 
 - **Stripe's own processing fee** — representative published rates, not
-  quoted precisely on purpose because they vary by the *connected account's*
+  quoted precisely on purpose because they vary by the _connected account's_
   country and change over time: roughly 1.4–1.5% + a small fixed fee for
   domestic EU/UK cards, higher (often ~2.9% + fee) for non-EU cards or Amex.
   **Check Stripe's live pricing page for the actual country before building
@@ -185,15 +185,15 @@ None of this exists yet; sketched, not final:
 - **Engineering effort**, order of magnitude, once Stripe's actual current
   pricing and API shape are confirmed:
 
-  | | |
-  |---|---|
-  | Club Stripe Connect onboarding (route pair + schema + settings UI) | ~2–3 days |
-  | Structured entry fee (schema + form) | ~0.5 day |
-  | Checkout session route + webhook handler + idempotency table | ~2–3 days |
-  | Pending/paid entrant states in the join flow | ~1 day |
-  | Refund flow tied into entrant removal | ~1–2 days |
-  | Receipts, club-facing payout visibility, i18n | ~1–2 days |
-  | Stripe test-mode → live-mode cutover, webhook signing secret rotation per environment | ~0.5 day |
+  |                                                                                       |           |
+  | ------------------------------------------------------------------------------------- | --------- |
+  | Club Stripe Connect onboarding (route pair + schema + settings UI)                    | ~2–3 days |
+  | Structured entry fee (schema + form)                                                  | ~0.5 day  |
+  | Checkout session route + webhook handler + idempotency table                          | ~2–3 days |
+  | Pending/paid entrant states in the join flow                                          | ~1 day    |
+  | Refund flow tied into entrant removal                                                 | ~1–2 days |
+  | Receipts, club-facing payout visibility, i18n                                         | ~1–2 days |
+  | Stripe test-mode → live-mode cutover, webhook signing secret rotation per environment | ~0.5 day  |
 
 - **Ongoing, non-engineering cost**: disputes/chargebacks. Stripe forwards
   these and charges a per-dispute fee regardless of outcome; someone has to
@@ -208,10 +208,10 @@ This is the part with no code precedent in the repo to check against, and
 the part most likely to need a real accountant before a single line ships.
 
 - **Two different sales happen in every transaction, to two different
-  parties.** The player buys a tournament entry *from the club* — the club
+  parties.** The player buys a tournament entry _from the club_ — the club
   is the merchant of record for that sale, and whatever VAT treatment
   applies to it is the club's, not PoolClubs's. Separately, the club buys a
-  software/platform service *from Satellite Studio Digital S.L.* — the
+  software/platform service _from Satellite Studio Digital S.L._ — the
   application fee — and that invoice is PoolClubs's own sale, with its own
   VAT treatment. These are legally distinct and need to be invoiced/reported
   separately, even though Stripe moves both amounts in one transaction.
@@ -228,13 +228,13 @@ the part most likely to need a real accountant before a single line ships.
   free: a Spanish club gets a normal Spanish invoice with 21% IVA. A club in
   another EU country with a valid, VIES-checkable VAT number is typically a
   B2B reverse-charge (0% Spanish IVA, the club self-assesses locally) — this
-  requires collecting and *validating* a VAT number per club, which nothing
+  requires collecting and _validating_ a VAT number per club, which nothing
   in `clubs` does today. A non-EU club is different again. `clubs.country`
   (already ISO-3166 alpha-2) is a start; a VAT-number field is not.
 - **Multi-currency bookkeeping.** Clubs already informally quote fees in
   different currencies (§ "What already exists"). Stripe settles a connected
   account in its own local currency, but typically takes the platform's
-  application fee in the *charge's* currency — meaning Satellite Studio
+  application fee in the _charge's_ currency — meaning Satellite Studio
   Digital S.L., a single Spanish company, would end up holding a mix of EUR,
   GBP, etc. across its own Stripe balance. That is solvable but is a real,
   non-zero addition to the company's own accounting, not just a UI detail.

@@ -29,14 +29,14 @@ import { Segmented } from "@/components/ui/Segmented";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { dialogClasses } from "@/components/ui/cardStyles";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SkeletonRows } from "@/components/ui/Skeleton";
-import { useDialog } from "@/hooks/useDialog";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
+import { useDialog, useLingering } from "@/hooks/useDialog";
 import { readTodaySetup, writeTodaySetup } from "@/libs/prefs";
 import { clampRace, seatsNeeded, type DaySetup } from "@/libs/algorithms/today";
 import { START_MATCH_KEYS, dbErrorMessage } from "@/libs/algorithms/dbError";
 import { useT } from "@/i18n";
 import { DISCIPLINES, type ClubTable, type Player } from "@/types";
-import { CountryFlag } from "@/components/ui/Flag";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 /**
  * The ranking night, on one page.
@@ -93,6 +93,8 @@ export default function RankingNightPage() {
 
   const [startingOn, setStartingOn] = useState<ClubTable | null>(null);
   const dialogRef = useDialog(startingOn !== null);
+  // Kept through the close animation — see useLingering.
+  const shownStartingOn = useLingering(startingOn);
   const close = () => setStartingOn(null);
 
   const roster = players ?? [];
@@ -486,11 +488,11 @@ export default function RankingNightPage() {
           if (e.target === dialogRef.current) close();
         }}
       >
-        {startingOn && player && (
+        {shownStartingOn && player && (
           <StartMatchForm
             me={player}
             opponents={roster.filter((p) => p.id !== player.id)}
-            table={startingOn}
+            table={shownStartingOn}
             // The day's answer, already filled in. Still a form: one match in an
             // evening is somebody's race to nine and it should not need the bar
             // above changing and changing back.

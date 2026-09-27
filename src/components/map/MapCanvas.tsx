@@ -1,7 +1,7 @@
+import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState } from "react";
 import MapLibre, { Marker, Popup, type MapRef } from "react-map-gl/maplibre";
 import { setWorkerUrl, type Map as MapLibreMap } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre 6 finds its worker at runtime with
 // `new URL("./maplibre-gl-worker.mjs", import.meta.url)`, which resolves next to
 // the bundled chunk — where no such file exists. The request 404s, and because
@@ -12,6 +12,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { useTheme } from "@/libs/theme/theme";
 import type { MapViewProps, Pin } from "./MapView";
+import { MapPinGlyph } from "./MapPinGlyph";
 
 /**
  * The map itself: react-map-gl over MapLibre, tiles from OpenFreeMap.
@@ -42,6 +43,7 @@ const STYLE = {
 
 /** A single pin is an address being checked, so it opens close in. */
 const ONE_PIN_ZOOM = 15;
+
 /** Many pins are a directory: never so far in that the country is lost. */
 const MANY_PIN_MAX_ZOOM = 12;
 
@@ -173,7 +175,7 @@ export default function MapCanvas({
                   className="h-10 w-10 rounded-full border-2 border-strike bg-white object-contain p-0.5 shadow-pop"
                 />
               ) : (
-                <PinGlyph />
+                <MapPinGlyph />
               )}
             </div>
           </Marker>
@@ -314,20 +316,6 @@ function recolor(map: MapLibreMap, p: Palette) {
       map.setPaintProperty(layer.id, "line-color", color);
     }
   }
-}
-
-/** The classic teardrop, in the app's accent colour. */
-function PinGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-8 w-8 text-strike" aria-hidden>
-      <path
-        d="M12 2c-3.87 0-7 3.13-7 7 0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
-        fill="currentColor"
-        stroke="rgba(0,0,0,0.25)"
-      />
-      <circle cx="12" cy="9" r="2.6" fill="#fff" />
-    </svg>
-  );
 }
 
 const boundsOf = (pins: Pin[]) =>

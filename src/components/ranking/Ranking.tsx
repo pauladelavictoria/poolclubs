@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { CATEGORIES, type DailyRankingEntry, type Category } from "@/types";
 import RankingTable from "./RankingTable";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LuTrophy } from "react-icons/lu";
 import { useT } from "@/i18n";
@@ -9,7 +9,6 @@ import { useT } from "@/i18n";
 /** One table, or one per division. Declared here because this is the component
  *  the choice belongs to; the pages and RankingTable import it. */
 export type ViewMode = "combined" | "byCategory";
-
 
 interface RankingProps {
   ranking: DailyRankingEntry[] | null;

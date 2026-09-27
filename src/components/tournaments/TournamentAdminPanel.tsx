@@ -1,12 +1,5 @@
-import { useState, type ReactNode } from "react";
-import {
-  LuChevronDown,
-  LuPencil,
-  LuSettings,
-  LuTrash2,
-  LuUserMinus,
-  LuUserPlus,
-} from "react-icons/lu";
+import { useState } from "react";
+import { LuTrash2, LuUserMinus, LuUserPlus } from "react-icons/lu";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { PlayerOptions } from "@/components/players/PlayerOptions";
@@ -17,6 +10,8 @@ import type {
   useManageTournaments,
 } from "@/hooks/useTournaments";
 import { useT } from "@/i18n";
+import { TournamentEditButton } from "./TournamentEditButton";
+import { TournamentManagePanel } from "./TournamentManagePanel";
 
 type Manage = Pick<
   ReturnType<typeof useManageTournaments>,
@@ -104,7 +99,7 @@ export default function TournamentAdminPanel({
 
   if (tournament.status === "open") {
     return (
-      <ManagePanel title={t("tournaments.manage")}>
+      <TournamentManagePanel title={t("tournaments.manage")}>
         <p className="text-body text-ink-soft">
           {field.length < minimum
             ? t("tournaments.needMore", {
@@ -120,7 +115,7 @@ export default function TournamentAdminPanel({
           >
             {t("tournaments.start")}
           </Button>
-          <EditButton onEdit={onEdit} />
+          <TournamentEditButton onEdit={onEdit} />
           <Button
             variant="ghost"
             onClick={() => {
@@ -141,13 +136,13 @@ export default function TournamentAdminPanel({
             {t("common.delete")}
           </Button>
         </div>
-      </ManagePanel>
+      </TournamentManagePanel>
     );
   }
 
   if (tournament.status === "groups") {
     return (
-      <ManagePanel title={t("tournaments.manage")}>
+      <TournamentManagePanel title={t("tournaments.manage")}>
         <p className="text-body text-ink-soft">
           {groupsDone
             ? t("tournaments.groupsDone", { n: tournament.advance ?? 0 })
@@ -166,15 +161,15 @@ export default function TournamentAdminPanel({
           >
             {t("tournaments.generateKnockout")}
           </Button>
-          <EditButton onEdit={onEdit} />
+          <TournamentEditButton onEdit={onEdit} />
         </div>
-      </ManagePanel>
+      </TournamentManagePanel>
     );
   }
 
   if (tournament.status === "running") {
     return (
-      <ManagePanel title={t("tournaments.manage")}>
+      <TournamentManagePanel title={t("tournaments.manage")}>
         {/* A league is a table, not a draw: a member who turned up in week
             three can still play everyone, so they are drawn against the field
             as they are added. A knockout has no seat to give, which is why
@@ -324,17 +319,17 @@ export default function TournamentAdminPanel({
           >
             {t("tournaments.close")}
           </Button>
-          <EditButton onEdit={onEdit} />
+          <TournamentEditButton onEdit={onEdit} />
         </div>
-      </ManagePanel>
+      </TournamentManagePanel>
     );
   }
 
   if (tournament.status === "done") {
     return (
-      <ManagePanel title={t("tournaments.manage")}>
+      <TournamentManagePanel title={t("tournaments.manage")}>
         <div className="flex flex-wrap gap-2">
-          <EditButton onEdit={onEdit} />
+          <TournamentEditButton onEdit={onEdit} />
           <Button
             variant="ghost"
             onClick={() => {
@@ -355,54 +350,9 @@ export default function TournamentAdminPanel({
             {t("common.delete")}
           </Button>
         </div>
-      </ManagePanel>
+      </TournamentManagePanel>
     );
   }
 
   return null;
-}
-
-/**
- * Editing stays available after the draw is cut: what a tournament says — its
- * name, its dates, what it costs, the notes the prizes live in — is not what
- * its fixtures were generated from, and only the latter is frozen. The form
- * hides the rest itself (TournamentForm's `locked`).
- */
-function EditButton({ onEdit }: { onEdit: () => void }) {
-  const { t } = useT();
-  return (
-    <Button variant="secondary" onClick={onEdit}>
-      <LuPencil className="h-4 w-4" aria-hidden />
-      {t("common.edit")}
-    </Button>
-  );
-}
-
-/**
- * The organiser's controls. A native <details> — click to open, Esc, no state
- * and no outside-click listener — with a dashed edge, so it reads as scaffolding
- * around the tournament rather than another part of it.
- */
-function ManagePanel({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <details className="group rounded-card border border-dashed border-hairline">
-      <summary className="flex h-11 cursor-pointer list-none items-center gap-2 px-4 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint transition-colors duration-150 hover:text-ink-soft [&::-webkit-details-marker]:hidden">
-        <LuSettings className="h-4 w-4" aria-hidden />
-        {title}
-        <LuChevronDown
-          className="ml-auto h-4 w-4 transition-transform duration-150 group-open:rotate-180"
-          aria-hidden
-        />
-      </summary>
-      <div className="space-y-3 border-t border-dashed border-hairline p-4">
-        {children}
-      </div>
-    </details>
-  );
 }

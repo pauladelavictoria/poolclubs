@@ -62,10 +62,9 @@ export const getStreamedTableIds = createServerFn({ method: "GET" })
 export const getLiveBroadcasts = createServerFn({ method: "GET" })
   .validator(clubIdInput)
   .handler(async ({ data }) => {
-    const { data: isMember } = await getSupabaseServer().rpc(
-      "is_club_member",
-      { cid: data.clubId },
-    );
+    const { data: isMember } = await getSupabaseServer().rpc("is_club_member", {
+      cid: data.clubId,
+    });
     if (!isMember) throw new Error("not a club member");
 
     const { data: rows } = await getSupabaseServiceRole()
@@ -98,10 +97,9 @@ export const getGameRecording = createServerFn({ method: "GET" })
     if (!row?.broadcast_id) return null;
     if (row.privacy_status === "public") return row.broadcast_id;
 
-    const { data: isMember } = await getSupabaseServer().rpc(
-      "is_club_member",
-      { cid: row.club_streams.club_id },
-    );
+    const { data: isMember } = await getSupabaseServer().rpc("is_club_member", {
+      cid: row.club_streams.club_id,
+    });
     return isMember ? row.broadcast_id : null;
   });
 

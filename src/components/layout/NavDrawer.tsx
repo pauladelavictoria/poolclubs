@@ -8,10 +8,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSignOut } from "@/hooks/useSignOut";
 import { useDialog } from "@/hooks/useDialog";
 import { toast } from "react-toastify";
-import { NAV_SECTIONS, ME_NAV, type NavItem } from "@/components/layout/navItems";
+import {
+  NAV_SECTIONS,
+  ME_NAV,
+  type NavItem,
+} from "@/components/layout/navItems";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { LANGS, useT, type Lang } from "@/i18n";
 import { LuLogOut, LuSend } from "react-icons/lu";
+import { NavDrawerHeading } from "./NavDrawerHeading";
 
 /**
  * Where you are is a raised row wearing the club's colour, glyph and label both
@@ -35,19 +40,11 @@ const item = ({ isActive }: { isActive: boolean }) =>
     "transition-colors duration-150",
     isActive
       ? // Hovering where you already are does not un-mark it. The row still lifts,
-      // so it stays obviously a link, but the colour is the answer to "where am
-      // I" and the pointer passing over is not new information about that.
-      "bg-felt-raised font-medium text-strike hover:bg-rail"
+        // so it stays obviously a link, but the colour is the answer to "where am
+        // I" and the pointer passing over is not new information about that.
+        "bg-felt-raised font-medium text-strike hover:bg-rail"
       : "text-ink-soft hover:bg-felt-raised hover:text-ink",
   ].join(" ");
-
-function Heading({ children }: { children: string }) {
-  return (
-    <div className="px-3 pb-1 pt-5 text-caption font-medium uppercase tracking-[0.08em] text-ink-faint">
-      {children}
-    </div>
-  );
-}
 
 function activePath(
   pathname: string,
@@ -64,7 +61,9 @@ function activePath(
   }));
   const active = resolved
     .filter(({ path, end }) =>
-      end ? pathname === path : pathname === path || pathname.startsWith(`${path}/`),
+      end
+        ? pathname === path
+        : pathname === path || pathname.startsWith(`${path}/`),
     )
     .sort((a, b) => b.path.length - a.path.length)[0];
   return active?.to;
@@ -72,7 +71,7 @@ function activePath(
 
 export default function NavDrawer({
   open = false,
-  onClose = () => { },
+  onClose = () => {},
   /** Renders the left-column form instead of the dialog: no backdrop, no Esc,
    *  nothing to open, and the club and the user across its two ends.
    *
@@ -105,9 +104,9 @@ export default function NavDrawer({
       // button below instead of a page they can't do anything on.
       section.headingKey === "nav.club" && !isClubAdmin
         ? {
-          ...section,
-          items: section.items.filter((i) => i.to !== "/app/$clubSlug/club"),
-        }
+            ...section,
+            items: section.items.filter((i) => i.to !== "/app/$clubSlug/club"),
+          }
         : section,
     ),
     // Your own rows only exist once there is a player to address them to, which
@@ -152,7 +151,7 @@ export default function NavDrawer({
           came here to tap. */}
       {sections.map((section) => (
         <div key={section.headingKey}>
-          <Heading>{t(section.headingKey)}</Heading>
+          <NavDrawerHeading>{t(section.headingKey)}</NavDrawerHeading>
           {section.items.map(({ to, labelKey, icon: Icon }) => {
             // Picked by activePath, not by this row's own Link — a row otherwise
             // has no way to know a sibling's match is the more specific one. See
@@ -168,8 +167,9 @@ export default function NavDrawer({
               >
                 <>
                   <Icon
-                    className={`h-[18px] w-[18px] ${isActive ? "text-strike" : "text-ink-soft"
-                      }`}
+                    className={`h-[18px] w-[18px] ${
+                      isActive ? "text-strike" : "text-ink-soft"
+                    }`}
                   />
                   {t(labelKey)}
                 </>

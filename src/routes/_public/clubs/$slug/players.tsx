@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ClubPlayersTab } from "@/pages/public/PublicClubPage";
+import { ClubPlayersTab } from "@/components/public/club/ClubPlayersTab";
 
 /** Everyone who plays here and chose to be listed. */
 export const Route = createFileRoute("/_public/clubs/$slug/players")({

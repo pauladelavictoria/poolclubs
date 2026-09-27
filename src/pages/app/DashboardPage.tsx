@@ -5,7 +5,8 @@ import StartMatchButton from "@/components/live/StartMatchButton";
 import DrillCard from "@/components/drills/DrillCard";
 import GameTile from "@/components/home/GameTile";
 import TournamentTile from "@/components/home/TournamentTile";
-import { Carousel, HomeSection } from "@/components/home/HomeSection";
+import { HomeSection } from "@/components/home/HomeSection";
+import { Carousel } from "@/components/home/Carousel";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +23,7 @@ import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
+import { DrillOfWeekBlock } from "@/components/home/DrillOfWeekBlock";
 
 /** How many rows a block shows before "see all" is the rest of the answer. */
 const PER_BLOCK = 8;
@@ -145,6 +147,8 @@ export default function DashboardPage() {
           have arrived is up in the strip, so this block no longer has to
           render on a quiet afternoon to carry that button. */}
       <TonightPanel />
+
+      {DRILLS_ENABLED && <DrillOfWeekBlock />}
 
       {DRILLS_ENABLED && latestDrills.length > 0 && (
         <HomeSection titleKey="drills.title" to="/app/$clubSlug/drills">

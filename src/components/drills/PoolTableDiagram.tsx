@@ -15,7 +15,8 @@ import {
   type Selection,
 } from "@/libs/algorithms/drillGeometry";
 import { useTheme } from "@/libs/theme/theme";
-import { BallShading, BallShadingDefs } from "@/components/ui/Ball";
+import { BallShading } from "@/components/ui/BallShading";
+import { BallShadingDefs } from "@/components/ui/BallShadingDefs";
 
 interface PoolTableDiagramProps {
   ballPositions: BallPosition[];

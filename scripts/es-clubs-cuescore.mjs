@@ -78,14 +78,17 @@ async function api(path) {
   try {
     const res = await fetch(`${API}${path}`, {
       headers: {
-        "User-Agent": "PoolClubs directory (https://github.com/pauladelavictoria)",
+        "User-Agent":
+          "PoolClubs directory (https://github.com/pauladelavictoria)",
       },
       signal: AbortSignal.timeout(30000),
     });
     if (!res.ok) return null;
     const text = await res.text();
     // A missing id answers with a plain-text message, not JSON.
-    return text.startsWith("{") || text.startsWith("[") ? JSON.parse(text) : null;
+    return text.startsWith("{") || text.startsWith("[")
+      ? JSON.parse(text)
+      : null;
   } catch {
     return null;
   }
@@ -139,7 +142,10 @@ export function street(address) {
     .replace(/\s*-\s*Spain\s*$/i, "")
     .replace(/\s+/g, " ")
     .trim();
-  const parts = body.split(",").map((p) => p.trim()).filter(Boolean);
+  const parts = body
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
   // Drop trailing "28013 Madrid" / "Madrid" chunks; keep at least one.
   while (parts.length > 1 && /^\d{5}\b/.test(parts.at(-1))) parts.pop();
   const out = parts.join(", ").trim();
@@ -150,7 +156,9 @@ export function street(address) {
 async function walk() {
   try {
     const cached = JSON.parse(await readFile(CACHE, "utf8"));
-    console.log(`${cached.length} venues from ${CACHE} (delete it to walk again)`);
+    console.log(
+      `${cached.length} venues from ${CACHE} (delete it to walk again)`,
+    );
     return cached;
   } catch {
     // No cache. Walk.
@@ -232,8 +240,7 @@ async function main() {
       tables: (v.tables ?? []).length,
     }))
     .filter(
-      (c) =>
-        c.city && ![...NOT_A_CLUB].some((x) => fold(c.name).startsWith(x)),
+      (c) => c.city && ![...NOT_A_CLUB].some((x) => fold(c.name).startsWith(x)),
     )
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
 
@@ -271,7 +278,10 @@ async function main() {
 
 async function selftest() {
   const { strict: assert } = await import("node:assert");
-  assert.equal(town("Villares de la Reina (Salamanca)"), "Villares de la Reina");
+  assert.equal(
+    town("Villares de la Reina (Salamanca)"),
+    "Villares de la Reina",
+  );
   assert.equal(town("Granda, Siero"), "Siero");
   assert.equal(town("Pontevedra"), "Pontevedra");
   assert.equal(town(""), null);

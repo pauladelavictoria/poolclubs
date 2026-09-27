@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { toPlace, type Place, type PhotonFeature } from "@/libs/algorithms/geocode";
+import {
+  toPlace,
+  type Place,
+  type PhotonFeature,
+} from "@/libs/algorithms/geocode";
 
 /**
  * Address search, on the server.

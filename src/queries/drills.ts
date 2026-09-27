@@ -25,10 +25,7 @@ export const drillQuery = (id: number) =>
     },
   });
 
-export const drillsQuery = (
-  clubId: number,
-  filters: DrillsFilters = {},
-) => {
+export const drillsQuery = (clubId: number, filters: DrillsFilters = {}) => {
   const { difficulty, skill_type } = filters;
 
   return queryOptions({
@@ -53,6 +50,9 @@ export const drillsQuery = (
 };
 
 export type DrillLogsFilters = {
+  /** Always set by the app: RLS lets a member read logs in every club they
+   *  belong to, so without it a drill's page mixes in other clubs' players. */
+  club_id?: number;
   player_id?: number;
   drill_id?: number;
   limit?: number;
@@ -68,11 +68,13 @@ export const drillLogsQuery = (filters: DrillLogsFilters) =>
     queryKey: keys.drillLogs.list(filters),
     queryFn: async () => {
       const supabase = getSupabase();
+      // drill_logs has no club of its own; it is the player's.
       let query = supabase
         .from("drill_logs")
-        .select("*")
+        .select("*, player:players!inner(club_id)")
         .order("created_at", { ascending: false });
 
+      if (filters.club_id) query = query.eq("player.club_id", filters.club_id);
       if (filters.player_id) query = query.eq("player_id", filters.player_id);
       if (filters.drill_id) query = query.eq("drill_id", filters.drill_id);
       if (filters.limit) query = query.limit(filters.limit);

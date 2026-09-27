@@ -58,7 +58,10 @@ export type PublicLiveMatchOnTable = LiveMatch & {
  * The abandoned-row filter matches queries/live.ts's own: two players who
  * walked away three hours ago must not sit on the stream forever.
  */
-export const publicLiveMatchByTableQuery = (clubSlug: string, tableId: number) =>
+export const publicLiveMatchByTableQuery = (
+  clubSlug: string,
+  tableId: number,
+) =>
   queryOptions({
     queryKey: keys.public.liveMatchByTable(clubSlug, tableId),
     queryFn: async (): Promise<PublicLiveMatchOnTable | null> => {

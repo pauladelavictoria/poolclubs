@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { usePlayerHighlight } from "@/components/players/PlayerLink";
+import { usePlayerHighlight } from "@/components/players/playerContexts";
 import {
   positionsByDay,
   type LeaguePoints,

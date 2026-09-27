@@ -10,12 +10,13 @@ import { useManagePlayers } from "@/hooks/useManagePlayers";
 import { useLeaveClub } from "@/hooks/useClub";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { changePassword } from "@/libs/server/auth.functions";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
-import { CountrySelect } from "@/components/ui/Flag";
+import { CountrySelect } from "@/components/ui/CountrySelect";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useT } from "@/i18n";
 

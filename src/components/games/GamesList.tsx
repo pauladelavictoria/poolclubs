@@ -1,6 +1,5 @@
-import type { Game, Player } from "@/types";
+import type { Game } from "@/types";
 import React from "react";
-import { Link } from "@tanstack/react-router";
 import { EmptyState } from "@/components/ui/EmptyState";
 import SocialBar from "@/components/social/SocialBar";
 import { LuPencil, LuSwords } from "react-icons/lu";
@@ -12,84 +11,8 @@ import {
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 import GameLinkOverlay from "@/components/games/GameLinkOverlay";
-import { CountryFlag } from "@/components/ui/Flag";
-
-const NAME_LINK = "transition-colors duration-150 hover:text-strike";
-
-/** What this list needs to turn a game's player id into a linked name. Games
- *  stopped carrying a copy of the name when names moved to people, so the
- *  roster is now an input rather than a convenience. */
-type GamesListPlayer = Pick<Player, "id" | "name" | "slug" | "country">;
-
-/**
- * One player's name on the tape.
- *
- * Text, not a link, wherever the row itself opens the result: a row full of
- * links to somewhere else is a row you cannot tap. Only a tape whose results
- * have no page to go to — a public club that cannot be resolved to a slug —
- * spends the name on a link to the person instead.
- */
-function Name({
-  player,
-  linked,
-}: {
-  /** Undefined for somebody who has since left the club: the game keeps its id,
-   *  the roster no longer has the row. The em dash is what the rest of the app
-   *  shows for that — see usePlayerLookup. */
-  player: GamesListPlayer | undefined;
-  linked: boolean;
-}) {
-  if (!player) return <>—</>;
-
-  return linked ? (
-    <Link
-      to="/players/$playerSlug"
-      params={{ playerSlug: player.slug }}
-      className={NAME_LINK}
-    >
-      {player.name}
-      <CountryFlag country={player.country} />
-    </Link>
-  ) : (
-    <>
-      {player.name}
-      <CountryFlag country={player.country} />
-    </>
-  );
-}
-
-/**
- * A team's name(s) on the tape, one per line.
- *
- * Stacked rather than joined with a slash: the row gives each side half the
- * width, and two names on one line of it is two truncations — every doubles
- * result read as "Jesus Sr ... v Vicent R...", which is the same four letters
- * whoever was playing.
- */
-function Team({
-  id1,
-  id2,
-  byId,
-  linked,
-}: {
-  id1: number;
-  id2?: number | null;
-  byId: Map<number, GamesListPlayer>;
-  linked: boolean;
-}) {
-  return (
-    <>
-      <span className="truncate">
-        <Name player={byId.get(id1)} linked={linked} />
-      </span>
-      {id2 != null && (
-        <span className="truncate">
-          <Name player={byId.get(id2)} linked={linked} />
-        </span>
-      )}
-    </>
-  );
-}
+import type { GamesListPlayer } from "./GamesListName";
+import { GamesListTeam } from "./GamesListTeam";
 
 interface GamesListProps {
   games: Game[];
@@ -257,7 +180,7 @@ export default function GamesList({
                 <span
                   className={`flex min-w-0 flex-1 flex-col text-right ${side(p1Won)}`}
                 >
-                  <Team
+                  <GamesListTeam
                     id1={player_1_id}
                     id2={isDoubles ? player_1b_id : undefined}
                     byId={byId}
@@ -274,7 +197,7 @@ export default function GamesList({
                   </span>
                 </span>
                 <span className={`flex min-w-0 flex-1 flex-col ${side(p2Won)}`}>
-                  <Team
+                  <GamesListTeam
                     id1={player_2_id}
                     id2={isDoubles ? player_2b_id : undefined}
                     byId={byId}

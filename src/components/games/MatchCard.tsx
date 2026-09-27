@@ -1,41 +1,15 @@
-import { LuPlay } from "react-icons/lu";
 import type { BracketIndex } from "@/libs/algorithms/bracket";
 import type { TournamentMatch } from "@/types";
 import { useT } from "@/i18n";
 import GameLinkOverlay from "@/components/games/GameLinkOverlay";
 import PlayerLink from "@/components/players/PlayerLink";
-import { IconButton } from "@/components/ui/Button";
+import { WatchButton } from "./WatchButton";
+import { LiveDot } from "./LiveDot";
 
 /** What a fixture is doing on camera, on the public side: its running score
  *  in fixture seat order while it is being played, and a way to watch it —
  *  live, or back once it is a result. */
 export type MatchLive = { score?: [number, number]; onWatch?: () => void };
-
-/** The watch button a fixture carries when it has video. `relative` lifts it
- *  over GameLinkOverlay, like the names. */
-export function WatchButton({ onWatch }: { onWatch: () => void }) {
-  const { t } = useT();
-  return (
-    <IconButton
-      label={t("live.watch")}
-      title={t("live.watch")}
-      size="sm"
-      shape="circle"
-      onClick={(e) => {
-        e.stopPropagation();
-        onWatch();
-      }}
-      className="relative shrink-0 text-strike"
-    >
-      <LuPlay className="h-3.5 w-3.5" aria-hidden />
-    </IconButton>
-  );
-}
-
-/** The pulsing dot a fixture in play carries — the hero's own live mark. */
-export const LiveDot = () => (
-  <span className="live-dot h-1.5 w-1.5 shrink-0 rounded-full bg-strike" aria-hidden />
-);
 
 /**
  * One fixture, in every format.
@@ -128,7 +102,8 @@ export default function MatchCard({
             live?.score ? "font-semibold text-strike" : tone
           }`}
         >
-          {racksFor(playerId, slot) ?? (won ? t("tournaments.walkoverMark") : "")}
+          {racksFor(playerId, slot) ??
+            (won ? t("tournaments.walkoverMark") : "")}
         </span>
       </div>
     );

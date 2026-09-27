@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { useClubRequests } from "@/hooks/useClub";
 import { clubRequestsQuery } from "@/queries/operator";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";

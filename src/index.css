@@ -683,7 +683,7 @@ dialog.drawer[open]::backdrop {
 /* Sheet dialog: rises from the bottom edge on a phone, where a thumb is, and
    fades in centred from sm up. Same discrete-transition dance as the drawer. */
 dialog.sheet {
-  translate: 0 100%;
+  translate: 0 100dvh;
   transition:
     translate 240ms var(--ease-out),
     overlay 240ms allow-discrete,
@@ -708,20 +708,21 @@ dialog.sheet[open]::backdrop {
 
 @starting-style {
   dialog.sheet[open] {
-    translate: 0 100%;
+    translate: 0 100dvh;
   }
   dialog.sheet[open]::backdrop {
     background: rgb(0 0 0 / 0);
   }
 }
 
-/* The finish dialog's veil. Heavier than the drawer's and blurred, because what
-   it covers is two numerals a foot tall — at 60% black the score behind it was
-   still the loudest thing on the screen and the dialog read as a sticker on it
-   rather than as the question it is. */
+/* The finish dialog's veil. Heavier than the drawer's, because what it covers
+   is two numerals a foot tall — at 60% black the score behind it was still the
+   loudest thing on the screen and the dialog read as a sticker on it rather
+   than as the question it is. Darkness alone, no blur: a backdrop-filter over
+   the whole scoreboard is what stutters on the old tablets clubs bolt to a
+   rail. */
 dialog.finish::backdrop {
   background: rgb(0 0 0 / 0);
-  backdrop-filter: blur(6px);
   transition:
     background 240ms var(--ease-out),
     overlay 240ms allow-discrete,
@@ -729,7 +730,7 @@ dialog.finish::backdrop {
 }
 
 dialog.finish[open]::backdrop {
-  background: rgb(0 0 0 / 0.78);
+  background: rgb(0 0 0 / 0.88);
 }
 
 @starting-style {
@@ -738,14 +739,13 @@ dialog.finish[open]::backdrop {
   }
 }
 
-/* The photo lightbox's veil. The heaviest of the four, and blurred like the
-   finish dialog's for the same reason: what it covers is a whole club page —
+/* The photo lightbox's veil. The heaviest of the four, for the same reason as
+   the finish dialog's, and unblurred for the same reason too: what it covers is a whole club page —
    a hero, a stats row, a roster grid — and at the sheet's 60% all of that was
    still legible around the edges of the picture and competing with it. A photo
    opened full size should be the only thing in the room. */
 dialog.lightbox::backdrop {
   background: rgb(0 0 0 / 0);
-  backdrop-filter: blur(4px);
   transition:
     background 240ms var(--ease-out),
     overlay 240ms allow-discrete,
@@ -753,7 +753,7 @@ dialog.lightbox::backdrop {
 }
 
 dialog.lightbox[open]::backdrop {
-  background: rgb(0 0 0 / 0.85);
+  background: rgb(0 0 0 / 0.92);
 }
 
 @starting-style {

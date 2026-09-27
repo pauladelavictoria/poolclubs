@@ -7,7 +7,7 @@ import { usePlayers } from "@/hooks/usePlayers";
 import { useTrainingPlan } from "@/hooks/useTrainingPlan";
 import { dbErrorMessage } from "@/libs/algorithms/dbError";
 import { Card } from "@/components/ui/Card";
-import { CategoryBadge } from "@/components/ui/Ball";
+import { CategoryBadge } from "@/components/ui/CategoryBadge";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";

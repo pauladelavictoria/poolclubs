@@ -1,8 +1,8 @@
 import { useLiveMatches } from "@/hooks/useLiveMatch";
 import { useClubTables } from "@/hooks/useClubTables";
 import { usePlayerLookup } from "@/hooks/usePlayers";
-import { DisciplineBall } from "@/components/ui/Ball";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { DisciplineBall } from "@/components/ui/DisciplineBall";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import type { LiveMatch } from "@/types";
 import { useT } from "@/i18n";
 

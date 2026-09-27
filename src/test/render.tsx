@@ -1,4 +1,7 @@
-import { render as rtlRender, type RenderOptions } from "@testing-library/react";
+import {
+  render as rtlRender,
+  type RenderOptions,
+} from "@testing-library/react";
 import type { ReactElement } from "react";
 import { I18nProvider } from "@/i18n";
 

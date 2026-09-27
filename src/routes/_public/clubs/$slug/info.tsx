@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ClubInfoTab } from "@/pages/public/PublicClubPage";
+import { ClubInfoTab } from "@/components/public/club/ClubInfoTab";
 
 /** What the club says it is: its room, its hours, its phone. */
 export const Route = createFileRoute("/_public/clubs/$slug/info")({

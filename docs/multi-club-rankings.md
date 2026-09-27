@@ -32,21 +32,21 @@ and be ranked against a bigger pool.
 
 ## What already exists (verified against the code, 2026-09-27)
 
-| Fact | Where |
-|---|---|
-| Identity is cross-club by construction: one `people` row per human, one `players` row per club they belong to | `sql/schema.sql` (`people`, `players`) |
-| **Clubless users already have a `players` row**, in the sentinel club "PoolClubs Global" (slug `global`). So "anyone with an account" and "anyone who owns some `players` row" are the same set — an open tournament needs no person-keying migration | `create_club` / sentinel-club work |
-| `tournaments` has one owning `club_id`, one nullable `category` (1–3, NULL = all categories), and no `mode` — tournaments are singles-only | `sql/schema.sql:2151` |
-| `tournament_players` is just `tournament_id, player_id, created_at, paid` | `sql/schema.sql:2140` |
-| **Category eligibility is enforced only in the UI**, by `canEnterTournament()`; nothing in RLS checks it. `players.category` is set by each club on its own roster (`double precision`, default 3) | `src/libs/algorithms/tournamentEntry.ts` |
-| The entry blocker: `"Members can enter themselves"` requires membership of the tournament's club *and* that `player_id` is a `players` row of that club | `sql/schema.sql:3084` |
-| Every other tournament policy is gated the same way: viewing (`:3164`, `:3168`, `:3180`), recording results (`:3114`), public read only when the owning club is public (`:3056`, `:3068`, `:3292`). **Opening entry alone is not enough** — an outside entrant must also be able to see the tournament and record their own matches | `sql/schema.sql` |
-| Doubles already exist everywhere below tournaments: `GameMode` (`single`/`doubles`), `player_1b_id`/`player_2b_id` on `games` and `live_matches`; Elo, daily score, cards and the live scoreboard all handle a partner seat | `sql/schema.sql:1899`, `src/libs/algorithms/elo.ts`, `dailyScore.ts` |
-| Tournament results become `games` rows under the tournament's `club_id` (via `finish_live_match`, which also links `tournament_matches.game_id`) | `sql/schema.sql:575` |
-| Standings are a pure function over entrant ids + matches, club-agnostic — but **league format only**. No finishing-position function exists for double elimination or groups + knockout | `src/libs/algorithms/leagueTable.ts:59` (`standings`) |
-| Clubs already have branding: `slug`, `logo_url`, `theme_color` (`BallColor`) | `sql/schema.sql` (`clubs`) |
-| A federation-seeded directory of clubs (including unclaimed ones) already exists — usable as a venue list | `sql/clubs-seed-es.sql`, `src/pages/public/PublicClubPage.tsx` |
-| The name `season` is unused anywhere in the schema | — |
+| Fact                                                                                                                                                                                                                                                                                                                                | Where                                                                |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Identity is cross-club by construction: one `people` row per human, one `players` row per club they belong to                                                                                                                                                                                                                       | `sql/schema.sql` (`people`, `players`)                               |
+| **Clubless users already have a `players` row**, in the sentinel club "PoolClubs Global" (slug `global`). So "anyone with an account" and "anyone who owns some `players` row" are the same set — an open tournament needs no person-keying migration                                                                               | `create_club` / sentinel-club work                                   |
+| `tournaments` has one owning `club_id`, one nullable `category` (1–3, NULL = all categories), and no `mode` — tournaments are singles-only                                                                                                                                                                                          | `sql/schema.sql:2151`                                                |
+| `tournament_players` is just `tournament_id, player_id, created_at, paid`                                                                                                                                                                                                                                                           | `sql/schema.sql:2140`                                                |
+| **Category eligibility is enforced only in the UI**, by `canEnterTournament()`; nothing in RLS checks it. `players.category` is set by each club on its own roster (`double precision`, default 3)                                                                                                                                  | `src/libs/algorithms/tournamentEntry.ts`                             |
+| The entry blocker: `"Members can enter themselves"` requires membership of the tournament's club _and_ that `player_id` is a `players` row of that club                                                                                                                                                                             | `sql/schema.sql:3084`                                                |
+| Every other tournament policy is gated the same way: viewing (`:3164`, `:3168`, `:3180`), recording results (`:3114`), public read only when the owning club is public (`:3056`, `:3068`, `:3292`). **Opening entry alone is not enough** — an outside entrant must also be able to see the tournament and record their own matches | `sql/schema.sql`                                                     |
+| Doubles already exist everywhere below tournaments: `GameMode` (`single`/`doubles`), `player_1b_id`/`player_2b_id` on `games` and `live_matches`; Elo, daily score, cards and the live scoreboard all handle a partner seat                                                                                                         | `sql/schema.sql:1899`, `src/libs/algorithms/elo.ts`, `dailyScore.ts` |
+| Tournament results become `games` rows under the tournament's `club_id` (via `finish_live_match`, which also links `tournament_matches.game_id`)                                                                                                                                                                                    | `sql/schema.sql:575`                                                 |
+| Standings are a pure function over entrant ids + matches, club-agnostic — but **league format only**. No finishing-position function exists for double elimination or groups + knockout                                                                                                                                             | `src/libs/algorithms/leagueTable.ts:59` (`standings`)                |
+| Clubs already have branding: `slug`, `logo_url`, `theme_color` (`BallColor`)                                                                                                                                                                                                                                                        | `sql/schema.sql` (`clubs`)                                           |
+| A federation-seeded directory of clubs (including unclaimed ones) already exists — usable as a venue list                                                                                                                                                                                                                           | `sql/clubs-seed-es.sql`, `src/pages/public/PublicClubPage.tsx`       |
+| The name `season` is unused anywhere in the schema                                                                                                                                                                                                                                                                                  | —                                                                    |
 
 ---
 
@@ -73,7 +73,7 @@ remove any entrant, and `requires_payment` still applies).
   played, when that isn't the organizer's own room (see Seasons). Any club in
   the directory, claimed or not. NULL = at the organizer.
 - `tournament_players.person_id integer NOT NULL` — filled by a `BEFORE
-  INSERT` trigger from `players.person_id`, with
+INSERT` trigger from `players.person_id`, with
   `UNIQUE (tournament_id, person_id)`. This is the one real guard an open
   tournament needs: a person with rows at two clubs cannot enter twice. It is
   also what the season ranking keys on.
@@ -87,7 +87,7 @@ remove any entrant, and `requires_payment` still applies).
 
 - **Enter** (`"Members can enter themselves"`, `:3084`) becomes:
   `(tournament_is_open(tournament_id) AND is_own_player(player_id))
-  OR <today's check>`. The admin-adds-someone branch stays members-only; an
+OR <today's check>`. The admin-adds-someone branch stays members-only; an
   admin of an open tournament can still add their own members.
 - **Read**: tournaments with `open = true`, their entrants and their matches
   are readable by anyone, `anon` included — the same shape as the existing
@@ -124,7 +124,7 @@ here.
   not replaced. `TournamentForm`'s single select becomes checkboxes for 1, 2
   and 3 (none checked = all).
 - **Eligibility moves into the database for the first time.** A `BEFORE
-  INSERT` trigger on `tournament_players` snapshots the entrant's category
+INSERT` trigger on `tournament_players` snapshots the entrant's category
   (`players.category` rounded to 1–3) into `tournament_players.category` and
   rejects the entry if `categories` is set and doesn't contain it. With open
   tournaments the UI-only check stops being good enough — anyone can call the
@@ -191,7 +191,7 @@ played at any venue, and contributes points by finishing position.
 ### Schema
 
 - **`seasons`** — `id, slug, name, owner_club_id, logo_url, theme_color
-  ("BallColor"), starts_on, ends_on, points smallint[]`.
+("BallColor"), starts_on, ends_on, points smallint[]`.
   - `slug`, `logo_url` and `theme_color` mirror `clubs`, so the public page,
     link-preview card and logo upload reuse the club patterns.
   - `points` is the **placement table**: `points[1]` for 1st, `points[2]` for
@@ -236,7 +236,7 @@ Two pure functions in `src/libs/algorithms/`, with one small test file:
   - one table per category, grouped by the snapshot category (`category` /
     `partner_category`);
   - one combined table, summing everything per person.
-  Ties are broken by number of 1st places, then 2nds, and so on.
+    Ties are broken by number of 1st places, then 2nds, and so on.
 
 The data is read with one query: the season's tournaments with their
 entrants and matches, the same shape `src/queries/tournaments.ts` already
@@ -267,7 +267,7 @@ dozens of tournaments.
   each club separately.
 - **Paid open tournaments.** `tournament-payments.md`'s Stripe Connect design
   pays one connected account, which fits: the organizer club is paid. The
-  case that doesn't fit is a paid tournament whose venue is a *different*
+  case that doesn't fit is a paid tournament whose venue is a _different_
   club expecting a share. That needs its own follow-up.
 - **Does PoolClubs itself run a season** (an official platform-wide ranking),
   the way the operator role already exists for drills? That makes PoolClubs a
@@ -278,21 +278,21 @@ dozens of tournaments.
 
 ## Effort, order of magnitude
 
-| | |
-|---|---|
-| `open` flag, `person_id` uniqueness, widened entry/read/record/comment policies | ~1–2 days |
-| `categories` array, DB eligibility trigger + snapshot, form and badge updates | ~1 day |
-| Couples: `mode`, `partner_id` + triggers, entry UI, partner seats into live matches/games | ~2 days |
-| `venue_club_id` + showing each entrant's club | ~0.5 day |
-| Seasons: `seasons`/`season_clubs`/`season_id`, settings form, logo upload | ~2 days |
-| `placements()` + `seasonStandings()` with tests | ~1–2 days |
-| `PublicSeasonPage` + OG card | ~1 day |
+|                                                                                           |           |
+| ----------------------------------------------------------------------------------------- | --------- |
+| `open` flag, `person_id` uniqueness, widened entry/read/record/comment policies           | ~1–2 days |
+| `categories` array, DB eligibility trigger + snapshot, form and badge updates             | ~1 day    |
+| Couples: `mode`, `partner_id` + triggers, entry UI, partner seats into live matches/games | ~2 days   |
+| `venue_club_id` + showing each entrant's club                                             | ~0.5 day  |
+| Seasons: `seasons`/`season_clubs`/`season_id`, settings form, logo upload                 | ~2 days   |
+| `placements()` + `seasonStandings()` with tests                                           | ~1–2 days |
+| `PublicSeasonPage` + OG card                                                              | ~1 day    |
 
 ---
 
 ## Open questions for whoever implements
 
-1. Should tournament games count toward an outside entrant's *own* club
+1. Should tournament games count toward an outside entrant's _own_ club
    ranking? Today they land under the organizer's `club_id` and are ignored
    by the entrant's club.
 2. Should a partner confirm before they are entered, or is

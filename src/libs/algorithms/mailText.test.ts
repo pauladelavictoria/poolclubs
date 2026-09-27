@@ -197,7 +197,9 @@ const approved = (over: Partial<Parameters<typeof clubApprovedMail>[0]> = {}) =>
 
 describe("clubApprovedMail", () => {
   it("leads with the club, which is the news", () => {
-    expect(approved().subject).toBe("Billar de los jueves ya está en PoolClubs");
+    expect(approved().subject).toBe(
+      "Billar de los jueves ya está en PoolClubs",
+    );
   });
 
   it("links to the club itself, the first thing they have to open", () => {

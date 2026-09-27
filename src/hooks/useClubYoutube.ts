@@ -70,7 +70,10 @@ export const useGameRecording = (gameId: string) =>
 
 /** A public tournament's broadcasts — live by live match id, recorded by game
  *  id. Polled at the reconciler's pace only while matches can still go live. */
-export const useTournamentBroadcasts = (tournamentId: number, running: boolean) =>
+export const useTournamentBroadcasts = (
+  tournamentId: number,
+  running: boolean,
+) =>
   useQuery({
     queryKey: keys.public.tournamentBroadcasts(tournamentId),
     queryFn: () => getTournamentBroadcasts({ data: { tournamentId } }),

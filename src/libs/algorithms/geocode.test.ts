@@ -48,7 +48,13 @@ describe("toPlace", () => {
         geometry: { coordinates: [1.0, 42.0] },
         properties: { name: "Aigües", village: "Aigües", countrycode: "es" },
       }),
-    ).toEqual({ address: "Aigües", city: "Aigües", country: "ES", lat: 42, lon: 1 });
+    ).toEqual({
+      address: "Aigües",
+      city: "Aigües",
+      country: "ES",
+      lat: 42,
+      lon: 1,
+    });
   });
 
   it("returns null when unusable: no coordinates, out-of-range coordinates, nothing to name it by", () => {
@@ -60,7 +66,10 @@ describe("toPlace", () => {
       }),
     ).toBeNull();
     expect(
-      toPlace({ geometry: { coordinates: [0, 91] }, properties: { name: "x" } }),
+      toPlace({
+        geometry: { coordinates: [0, 91] },
+        properties: { name: "x" },
+      }),
     ).toBeNull();
     expect(
       toPlace({ geometry: { coordinates: [0, 0] }, properties: {} }),

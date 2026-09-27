@@ -14,9 +14,7 @@ describe("seedOrder", () => {
   it("seeds small fields, 1 meeting the last seed", () => {
     expect(seedOrder(2)).toEqual([1, 2]);
     expect(seedOrder(4)).toEqual([1, 4, 2, 3]);
-    expect(seedOrder(8), "1 meets 8, not 2").toEqual([
-      1, 8, 4, 5, 2, 7, 3, 6,
-    ]);
+    expect(seedOrder(8), "1 meets 8, not 2").toEqual([1, 8, 4, 5, 2, 7, 3, 6]);
   });
 
   it("pairs i against n+1-i at every size", () => {
@@ -37,16 +35,19 @@ describe("buildKnockout — single elimination", () => {
     [5, 7],
     [8, 7],
     [16, 15],
-  ] as const)("%i players makes %i matches, no losers bracket, one final", (n, expected) => {
-    const ms = buildKnockout(field(n), { doubleElim: false }, ids());
-    expect(ms.length).toBe(expected);
-    expect(of(ms, "losers").length, "no losers bracket").toBe(0);
-    expect(of(ms, "final").length, "exactly one final").toBe(1);
-    expect(
-      ms.filter((m) => m.winner_to === null).length,
-      "only the final leads nowhere",
-    ).toBe(1);
-  });
+  ] as const)(
+    "%i players makes %i matches, no losers bracket, one final",
+    (n, expected) => {
+      const ms = buildKnockout(field(n), { doubleElim: false }, ids());
+      expect(ms.length).toBe(expected);
+      expect(of(ms, "losers").length, "no losers bracket").toBe(0);
+      expect(of(ms, "final").length, "exactly one final").toBe(1);
+      expect(
+        ms.filter((m) => m.winner_to === null).length,
+        "only the final leads nowhere",
+      ).toBe(1);
+    },
+  );
 });
 
 describe("buildKnockout — double elimination", () => {
@@ -64,7 +65,10 @@ describe("buildKnockout — double elimination", () => {
         expect(m.winner_to).toBeNull();
         continue;
       }
-      expect(m.winner_to, `${m.bracket} r${m.round}s${m.slot} has no winner_to`).toBeTruthy();
+      expect(
+        m.winner_to,
+        `${m.bracket} r${m.round}s${m.slot} has no winner_to`,
+      ).toBeTruthy();
       expect(m.winner_to_slot === 1 || m.winner_to_slot === 2).toBe(true);
     }
 
@@ -106,7 +110,10 @@ describe("buildKnockout — byes", () => {
       (m) => m.p1_id !== null && m.p2_id !== null,
     );
     expect(contested.length).toBe(1);
-    expect(contested[0].winner_id, "a real match waits for a result").toBeNull();
+    expect(
+      contested[0].winner_id,
+      "a real match waits for a result",
+    ).toBeNull();
 
     // Walkover winners are already standing in the next round.
     const round2 = of(ms, "winners").filter((m) => m.round === 2);
@@ -167,12 +174,9 @@ describe("buildLeague — leagues", () => {
     expect(ms.length).toBe((legs * n * (n - 1)) / 2);
     for (const id of field(n)) {
       const played = ms.filter((m) => m.p1_id === id || m.p2_id === id);
-      expect(played.length, `player ${id} meets everyone`).toBe(
-        legs * (n - 1),
-      );
+      expect(played.length, `player ${id} meets everyone`).toBe(legs * (n - 1));
       expect(
-        new Set(played.map((m) => (m.p1_id === id ? m.p2_id : m.p1_id)))
-          .size,
+        new Set(played.map((m) => (m.p1_id === id ? m.p2_id : m.p1_id))).size,
         `player ${id} meets a different opponent each time`,
       ).toBe(n - 1);
     }
@@ -268,10 +272,11 @@ describe("buildKnockout — double elimination that stops part way (singleFrom)"
     expect(ms.filter((m) => m.bracket === "final").length).toBe(1);
 
     // Nobody goes out on one loss before the merge, and everybody does after it.
-    for (const m of ms.filter(
-      (m) => m.bracket === "winners" && m.round <= 2,
-    )) {
-      expect(m.loser_to, `winners r${m.round} should drop its loser`).toBeTruthy();
+    for (const m of ms.filter((m) => m.bracket === "winners" && m.round <= 2)) {
+      expect(
+        m.loser_to,
+        `winners r${m.round} should drop its loser`,
+      ).toBeTruthy();
     }
     for (const m of ms.filter((m) => m.bracket === "winners" && m.round > 2)) {
       expect(m.loser_to, "one loss is out from the merge on").toBeNull();
@@ -283,9 +288,9 @@ describe("buildKnockout — double elimination that stops part way (singleFrom)"
       stage.map((s) =>
         ms.find((m) => m.winner_to === s.id && m.winner_to_slot === slot)!,
       );
-    expect(feeds(1).every((m) => m.bracket === "winners" && m.round === 2)).toBe(
-      true,
-    );
+    expect(
+      feeds(1).every((m) => m.bracket === "winners" && m.round === 2),
+    ).toBe(true);
     expect(feeds(2).every((m) => m.bracket === "losers" && m.round === 2)).toBe(
       true,
     );
@@ -296,10 +301,9 @@ describe("buildKnockout — double elimination that stops part way (singleFrom)"
     expect(third.length, "it ends single elimination, so third is joint").toBe(
       2,
     );
-    expect(
-      new Set([first, second, ...third]).size,
-      "four distinct names",
-    ).toBe(4);
+    expect(new Set([first, second, ...third]).size, "four distinct names").toBe(
+      4,
+    );
   });
 
   it("treats a cutoff at or above the field as the whole draw played single elimination, not an error", () => {

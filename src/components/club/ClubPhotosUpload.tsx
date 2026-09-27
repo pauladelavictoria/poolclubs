@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/Button";
 import { moveItem, orderPhotos } from "@/libs/algorithms/photoOrder";
 import { useManageClub } from "@/hooks/useClub";
 import { useT } from "@/i18n";
+import { PhotoUploadStep } from "./PhotoUploadStep";
 
 /**
  * The club's venue photos.
@@ -178,20 +179,20 @@ export default function ClubPhotosUpload({ disabled }: { disabled?: boolean }) {
                   route — and they are also the whole of the keyboard and
                   screen-reader story, which drag alone has none of. */}
               <div className="absolute inset-x-1 bottom-1 flex justify-between">
-                <Step
+                <PhotoUploadStep
                   label={t("club.photos.moveEarlier")}
                   disabled={disabled || i === 0}
                   onClick={() => reorder(i, i - 1)}
                 >
                   <LuChevronLeft className="h-3.5 w-3.5" aria-hidden />
-                </Step>
-                <Step
+                </PhotoUploadStep>
+                <PhotoUploadStep
                   label={t("club.photos.moveLater")}
                   disabled={disabled || i === photos.length - 1}
                   onClick={() => reorder(i, i + 1)}
                 >
                   <LuChevronRight className="h-3.5 w-3.5" aria-hidden />
-                </Step>
+                </PhotoUploadStep>
               </div>
             </li>
           ))}
@@ -222,29 +223,5 @@ export default function ClubPhotosUpload({ disabled }: { disabled?: boolean }) {
         })}
       </p>
     </div>
-  );
-}
-
-function Step({
-  label,
-  disabled,
-  onClick,
-  children,
-}: {
-  label: string;
-  disabled?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      disabled={disabled}
-      onClick={onClick}
-      className="flex h-6 w-6 items-center justify-center rounded-control bg-pocket/90 text-ink-soft transition-colors duration-150 hover:text-ink disabled:invisible"
-    >
-      {children}
-    </button>
   );
 }

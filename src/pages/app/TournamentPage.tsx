@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { dialogClasses } from "@/components/ui/cardStyles";
 import {
-  LuBanknote,
   LuGitFork,
   LuList,
   LuPlus,
@@ -31,30 +30,31 @@ import PageTitle from "@/components/layout/PageTitle";
 import BracketView from "@/components/tournaments/BracketView";
 import LeagueTable from "@/components/tournaments/LeagueTable";
 import MatchList from "@/components/games/MatchList";
-import LeagueFixtures, {
-  Fixtures,
-} from "@/components/tournaments/LeagueFixtures";
+import LeagueFixtures from "@/components/tournaments/LeagueFixtures";
+import { Fixtures } from "@/components/tournaments/Fixtures";
 import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import { canPair, pairNameOf, partnersOf } from "@/libs/algorithms/pairs";
 import SocialBar from "@/components/social/SocialBar";
 import TournamentAdminPanel from "@/components/tournaments/TournamentAdminPanel";
 import PlayGameForm from "@/components/games/PlayGameForm";
-import { PlayerHighlight } from "@/components/players/PlayerLink";
+import { PlayerHighlight } from "@/components/players/PlayerHighlight";
 import { PlayerOptions } from "@/components/players/PlayerOptions";
 import TournamentForm, {
   type TournamentValues,
 } from "@/components/tournaments/TournamentForm";
-import { Card, CardHeader, CollapsibleCard } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
+import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Segmented } from "@/components/ui/Segmented";
 import { Select } from "@/components/ui/Select";
-import { CategoriesBadge } from "@/components/ui/Ball";
+import { CategoriesBadge } from "@/components/ui/CategoriesBadge";
 import { Fact } from "@/components/ui/Fact";
-import { PageSkeleton } from "@/components/ui/Skeleton";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useDialog } from "@/hooks/useDialog";
+import { useDialog, useLingering } from "@/hooks/useDialog";
 import {
   FORMAT_KEY,
   tournamentValues,
@@ -64,7 +64,8 @@ import {
 import { useT } from "@/i18n";
 import { getRouteApi } from "@tanstack/react-router";
 import { AppLink } from "@/components/layout/AppLink";
-import { PlayerFlag } from "@/components/players/PlayerLink";
+import { PlayerFlag } from "@/components/players/PlayerFlag";
+import { PaidMark } from "@/components/tournaments/PaidMark";
 
 const route = getRouteApi("/app/_authed/$clubSlug/tournaments/$tournamentId");
 
@@ -98,10 +99,14 @@ export default function TournamentPage() {
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const editRef = useDialog(isEditOpen);
+  // Kept through the close animation — see useLingering.
+  const shownIsEditOpen = useLingering(isEditOpen);
   // Either a fixture tapped in the bracket, or "new" for the pick-the-players
   // route. Both end up filing a result against a fixture.
   const [playing, setPlaying] = useState<TournamentMatch | "new" | null>(null);
   const recordRef = useDialog(!!playing);
+  // Kept through the close animation — see useLingering.
+  const shownPlaying = useLingering(playing);
   const [adding, setAdding] = useState("");
   const [addingPartner, setAddingPartner] = useState("");
   const [partnerId, setPartnerId] = useState("");
@@ -784,7 +789,7 @@ export default function TournamentPage() {
         <h2 className="mb-4 text-h3 font-semibold text-ink">
           {t("tournaments.edit")}
         </h2>
-        {isEditOpen && (
+        {shownIsEditOpen && (
           <TournamentForm
             initialValues={tournamentValues(tournament)}
             // Once the fixtures exist they were generated from these
@@ -814,11 +819,11 @@ export default function TournamentPage() {
         }}
       >
         {/* Mounted only while open, so the pickers start empty every time. */}
-        {playing && (
+        {shownPlaying && (
           <PlayGameForm
             entrants={entrantPlayers}
             meId={meId}
-            initialMatch={playing === "new" ? null : playing}
+            initialMatch={shownPlaying === "new" ? null : shownPlaying}
             findMatch={findMatch}
             raceFor={raceOf}
             isSubmitting={recordResult.isPending}
@@ -844,50 +849,5 @@ export default function TournamentPage() {
         )}
       </dialog>
     </PlayerHighlight>
-  );
-}
-
-/** Whether an entrant has paid: a toggle for the club's admin, a mark for
- *  everyone else — and nothing at all for an unpaid entrant, whose absence of
- *  a mark says it. */
-function PaidMark({
-  paid,
-  canToggle,
-  pending,
-  onToggle,
-}: {
-  paid: boolean;
-  canToggle: boolean;
-  pending: boolean;
-  onToggle: () => void;
-}) {
-  const { t } = useT();
-  if (canToggle)
-    return (
-      <IconButton
-        label={t("tournaments.paid")}
-        title={t("tournaments.paid")}
-        size="sm"
-        disabled={pending}
-        onClick={onToggle}
-        shape="circle"
-        className={
-          paid
-            ? "bg-strike text-pocket hover:bg-strike-light"
-            : "text-ink-faint"
-        }
-      >
-        <LuBanknote className="h-4 w-4" aria-hidden />
-      </IconButton>
-    );
-  if (!paid) return null;
-  return (
-    <span
-      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-strike text-pocket"
-      aria-label={t("tournaments.paid")}
-      title={t("tournaments.paid")}
-    >
-      <LuBanknote className="h-4 w-4" aria-hidden />
-    </span>
   );
 }

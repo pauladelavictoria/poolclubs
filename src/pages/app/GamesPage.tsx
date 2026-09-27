@@ -10,7 +10,7 @@ import { FilterBar } from "@/components/ui/FilterBar";
 import { PlayerOptions } from "@/components/players/PlayerOptions";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
 

@@ -13,7 +13,10 @@ const INITIAL_RATING = 500;
  *  page ranks a redacted roster that is not a full Player. */
 type Ranked = Pick<Player, "id" | "name" | "category">;
 
-export function eloRanking(games: Game[], players: Ranked[]): DailyRankingEntry[] {
+export function eloRanking(
+  games: Game[],
+  players: Ranked[],
+): DailyRankingEntry[] {
   // Initialize ratings
   const playerStats = new Map<
     number,

@@ -51,6 +51,7 @@ import { Route as PublicClubsSlugPlayersRouteImport } from './routes/_public/clu
 import { Route as ApiClubsSlugLogoRouteImport } from './routes/api/clubs/$slug/logo'
 import { Route as ApiClubsSlugObsScenesDotjsonRouteImport } from './routes/api/clubs/$slug/obs-scenes[.]json'
 import { Route as ApiOgClubsSlugRouteImport } from './routes/api/og/clubs/$slug'
+import { Route as ApiOgDrillsSplatRouteImport } from './routes/api/og/drills/$'
 import { Route as ApiOgGamesSplatRouteImport } from './routes/api/og/games/$'
 import { Route as ApiOgPlayersSplatRouteImport } from './routes/api/og/players/$'
 import { Route as ApiOgTournamentsSplatRouteImport } from './routes/api/og/tournaments/$'
@@ -91,6 +92,7 @@ import { Route as AppAuthedClubSlugMeTrainingIndexRouteImport } from './routes/a
 import { Route as AppAuthedClubSlugMeTrainingPlanRouteImport } from './routes/app/_authed/$clubSlug/me/training/plan'
 import { Route as AppAuthedClubSlugPlayersPlayerIdIndexRouteImport } from './routes/app/_authed/$clubSlug/players/$playerId/index'
 import { Route as AppAuthedClubSlugPlayersPlayerIdSettingsRouteImport } from './routes/app/_authed/$clubSlug/players/$playerId/settings'
+import { Route as AppAuthedClubSlugTablesTableIdDrillRouteImport } from './routes/app/_authed/$clubSlug/tables/$tableId_.drill'
 import { Route as AppAuthedClubSlugPlayersPlayerIdTrainingIndexRouteImport } from './routes/app/_authed/$clubSlug/players/$playerId/training/index'
 import { Route as AppAuthedClubSlugPlayersPlayerIdTrainingPlanRouteImport } from './routes/app/_authed/$clubSlug/players/$playerId/training/plan'
 
@@ -304,6 +306,11 @@ const ApiClubsSlugObsScenesDotjsonRoute =
 const ApiOgClubsSlugRoute = ApiOgClubsSlugRouteImport.update({
   id: '/api/og/clubs/$slug',
   path: '/api/og/clubs/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOgDrillsSplatRoute = ApiOgDrillsSplatRouteImport.update({
+  id: '/api/og/drills/$',
+  path: '/api/og/drills/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOgGamesSplatRoute = ApiOgGamesSplatRouteImport.update({
@@ -538,6 +545,12 @@ const AppAuthedClubSlugPlayersPlayerIdSettingsRoute =
     path: '/players/$playerId/settings',
     getParentRoute: () => AppAuthedClubSlugRouteRoute,
   } as any)
+const AppAuthedClubSlugTablesTableIdDrillRoute =
+  AppAuthedClubSlugTablesTableIdDrillRouteImport.update({
+    id: '/tables/$tableId_/drill',
+    path: '/tables/$tableId/drill',
+    getParentRoute: () => AppAuthedClubSlugRouteRoute,
+  } as any)
 const AppAuthedClubSlugPlayersPlayerIdTrainingIndexRoute =
   AppAuthedClubSlugPlayersPlayerIdTrainingIndexRouteImport.update({
     id: '/players/$playerId/training/',
@@ -592,6 +605,7 @@ export interface FileRoutesByFullPath {
   '/api/clubs/$slug/logo': typeof ApiClubsSlugLogoRoute
   '/api/clubs/$slug/obs-scenes.json': typeof ApiClubsSlugObsScenesDotjsonRoute
   '/api/og/clubs/$slug': typeof ApiOgClubsSlugRoute
+  '/api/og/drills/$': typeof ApiOgDrillsSplatRoute
   '/api/og/games/$': typeof ApiOgGamesSplatRoute
   '/api/og/players/$': typeof ApiOgPlayersSplatRoute
   '/api/og/tournaments/$': typeof ApiOgTournamentsSplatRoute
@@ -628,6 +642,7 @@ export interface FileRoutesByFullPath {
   '/app/$clubSlug/games/$gameId/edit': typeof AppAuthedClubSlugGamesGameIdEditRoute
   '/app/$clubSlug/me/training/plan': typeof AppAuthedClubSlugMeTrainingPlanRoute
   '/app/$clubSlug/players/$playerId/settings': typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
+  '/app/$clubSlug/tables/$tableId/drill': typeof AppAuthedClubSlugTablesTableIdDrillRoute
   '/app/$clubSlug/drills/$drillId/': typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
   '/app/$clubSlug/games/$gameId/': typeof AppAuthedClubSlugGamesGameIdIndexRoute
   '/app/$clubSlug/me/training/': typeof AppAuthedClubSlugMeTrainingIndexRoute
@@ -672,6 +687,7 @@ export interface FileRoutesByTo {
   '/api/clubs/$slug/logo': typeof ApiClubsSlugLogoRoute
   '/api/clubs/$slug/obs-scenes.json': typeof ApiClubsSlugObsScenesDotjsonRoute
   '/api/og/clubs/$slug': typeof ApiOgClubsSlugRoute
+  '/api/og/drills/$': typeof ApiOgDrillsSplatRoute
   '/api/og/games/$': typeof ApiOgGamesSplatRoute
   '/api/og/players/$': typeof ApiOgPlayersSplatRoute
   '/api/og/tournaments/$': typeof ApiOgTournamentsSplatRoute
@@ -708,6 +724,7 @@ export interface FileRoutesByTo {
   '/app/$clubSlug/games/$gameId/edit': typeof AppAuthedClubSlugGamesGameIdEditRoute
   '/app/$clubSlug/me/training/plan': typeof AppAuthedClubSlugMeTrainingPlanRoute
   '/app/$clubSlug/players/$playerId/settings': typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
+  '/app/$clubSlug/tables/$tableId/drill': typeof AppAuthedClubSlugTablesTableIdDrillRoute
   '/app/$clubSlug/drills/$drillId': typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
   '/app/$clubSlug/games/$gameId': typeof AppAuthedClubSlugGamesGameIdIndexRoute
   '/app/$clubSlug/me/training': typeof AppAuthedClubSlugMeTrainingIndexRoute
@@ -759,6 +776,7 @@ export interface FileRoutesById {
   '/api/clubs/$slug/logo': typeof ApiClubsSlugLogoRoute
   '/api/clubs/$slug/obs-scenes.json': typeof ApiClubsSlugObsScenesDotjsonRoute
   '/api/og/clubs/$slug': typeof ApiOgClubsSlugRoute
+  '/api/og/drills/$': typeof ApiOgDrillsSplatRoute
   '/api/og/games/$': typeof ApiOgGamesSplatRoute
   '/api/og/players/$': typeof ApiOgPlayersSplatRoute
   '/api/og/tournaments/$': typeof ApiOgTournamentsSplatRoute
@@ -795,6 +813,7 @@ export interface FileRoutesById {
   '/app/_authed/$clubSlug/games/$gameId/edit': typeof AppAuthedClubSlugGamesGameIdEditRoute
   '/app/_authed/$clubSlug/me/training/plan': typeof AppAuthedClubSlugMeTrainingPlanRoute
   '/app/_authed/$clubSlug/players/$playerId/settings': typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
+  '/app/_authed/$clubSlug/tables/$tableId_/drill': typeof AppAuthedClubSlugTablesTableIdDrillRoute
   '/app/_authed/$clubSlug/drills/$drillId/': typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
   '/app/_authed/$clubSlug/games/$gameId/': typeof AppAuthedClubSlugGamesGameIdIndexRoute
   '/app/_authed/$clubSlug/me/training/': typeof AppAuthedClubSlugMeTrainingIndexRoute
@@ -845,6 +864,7 @@ export interface FileRouteTypes {
     | '/api/clubs/$slug/logo'
     | '/api/clubs/$slug/obs-scenes.json'
     | '/api/og/clubs/$slug'
+    | '/api/og/drills/$'
     | '/api/og/games/$'
     | '/api/og/players/$'
     | '/api/og/tournaments/$'
@@ -881,6 +901,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/games/$gameId/edit'
     | '/app/$clubSlug/me/training/plan'
     | '/app/$clubSlug/players/$playerId/settings'
+    | '/app/$clubSlug/tables/$tableId/drill'
     | '/app/$clubSlug/drills/$drillId/'
     | '/app/$clubSlug/games/$gameId/'
     | '/app/$clubSlug/me/training/'
@@ -925,6 +946,7 @@ export interface FileRouteTypes {
     | '/api/clubs/$slug/logo'
     | '/api/clubs/$slug/obs-scenes.json'
     | '/api/og/clubs/$slug'
+    | '/api/og/drills/$'
     | '/api/og/games/$'
     | '/api/og/players/$'
     | '/api/og/tournaments/$'
@@ -961,6 +983,7 @@ export interface FileRouteTypes {
     | '/app/$clubSlug/games/$gameId/edit'
     | '/app/$clubSlug/me/training/plan'
     | '/app/$clubSlug/players/$playerId/settings'
+    | '/app/$clubSlug/tables/$tableId/drill'
     | '/app/$clubSlug/drills/$drillId'
     | '/app/$clubSlug/games/$gameId'
     | '/app/$clubSlug/me/training'
@@ -1011,6 +1034,7 @@ export interface FileRouteTypes {
     | '/api/clubs/$slug/logo'
     | '/api/clubs/$slug/obs-scenes.json'
     | '/api/og/clubs/$slug'
+    | '/api/og/drills/$'
     | '/api/og/games/$'
     | '/api/og/players/$'
     | '/api/og/tournaments/$'
@@ -1047,6 +1071,7 @@ export interface FileRouteTypes {
     | '/app/_authed/$clubSlug/games/$gameId/edit'
     | '/app/_authed/$clubSlug/me/training/plan'
     | '/app/_authed/$clubSlug/players/$playerId/settings'
+    | '/app/_authed/$clubSlug/tables/$tableId_/drill'
     | '/app/_authed/$clubSlug/drills/$drillId/'
     | '/app/_authed/$clubSlug/games/$gameId/'
     | '/app/_authed/$clubSlug/me/training/'
@@ -1067,6 +1092,7 @@ export interface RootRouteChildren {
   ApiClubsSlugLogoRoute: typeof ApiClubsSlugLogoRoute
   ApiClubsSlugObsScenesDotjsonRoute: typeof ApiClubsSlugObsScenesDotjsonRoute
   ApiOgClubsSlugRoute: typeof ApiOgClubsSlugRoute
+  ApiOgDrillsSplatRoute: typeof ApiOgDrillsSplatRoute
   ApiOgGamesSplatRoute: typeof ApiOgGamesSplatRoute
   ApiOgPlayersSplatRoute: typeof ApiOgPlayersSplatRoute
   ApiOgTournamentsSplatRoute: typeof ApiOgTournamentsSplatRoute
@@ -1369,6 +1395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOgClubsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/og/drills/$': {
+      id: '/api/og/drills/$'
+      path: '/api/og/drills/$'
+      fullPath: '/api/og/drills/$'
+      preLoaderRoute: typeof ApiOgDrillsSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/og/games/$': {
       id: '/api/og/games/$'
       path: '/api/og/games/$'
@@ -1649,6 +1682,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthedClubSlugPlayersPlayerIdSettingsRouteImport
       parentRoute: typeof AppAuthedClubSlugRouteRoute
     }
+    '/app/_authed/$clubSlug/tables/$tableId_/drill': {
+      id: '/app/_authed/$clubSlug/tables/$tableId_/drill'
+      path: '/tables/$tableId/drill'
+      fullPath: '/app/$clubSlug/tables/$tableId/drill'
+      preLoaderRoute: typeof AppAuthedClubSlugTablesTableIdDrillRouteImport
+      parentRoute: typeof AppAuthedClubSlugRouteRoute
+    }
     '/app/_authed/$clubSlug/players/$playerId/training/': {
       id: '/app/_authed/$clubSlug/players/$playerId/training/'
       path: '/players/$playerId/training'
@@ -1776,6 +1816,7 @@ interface AppAuthedClubSlugRouteRouteChildren {
   AppAuthedClubSlugGamesGameIdEditRoute: typeof AppAuthedClubSlugGamesGameIdEditRoute
   AppAuthedClubSlugMeTrainingPlanRoute: typeof AppAuthedClubSlugMeTrainingPlanRoute
   AppAuthedClubSlugPlayersPlayerIdSettingsRoute: typeof AppAuthedClubSlugPlayersPlayerIdSettingsRoute
+  AppAuthedClubSlugTablesTableIdDrillRoute: typeof AppAuthedClubSlugTablesTableIdDrillRoute
   AppAuthedClubSlugDrillsDrillIdIndexRoute: typeof AppAuthedClubSlugDrillsDrillIdIndexRoute
   AppAuthedClubSlugGamesGameIdIndexRoute: typeof AppAuthedClubSlugGamesGameIdIndexRoute
   AppAuthedClubSlugMeTrainingIndexRoute: typeof AppAuthedClubSlugMeTrainingIndexRoute
@@ -1818,6 +1859,8 @@ const AppAuthedClubSlugRouteRouteChildren: AppAuthedClubSlugRouteRouteChildren =
     AppAuthedClubSlugMeTrainingPlanRoute: AppAuthedClubSlugMeTrainingPlanRoute,
     AppAuthedClubSlugPlayersPlayerIdSettingsRoute:
       AppAuthedClubSlugPlayersPlayerIdSettingsRoute,
+    AppAuthedClubSlugTablesTableIdDrillRoute:
+      AppAuthedClubSlugTablesTableIdDrillRoute,
     AppAuthedClubSlugDrillsDrillIdIndexRoute:
       AppAuthedClubSlugDrillsDrillIdIndexRoute,
     AppAuthedClubSlugGamesGameIdIndexRoute:
@@ -1892,6 +1935,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiClubsSlugLogoRoute: ApiClubsSlugLogoRoute,
   ApiClubsSlugObsScenesDotjsonRoute: ApiClubsSlugObsScenesDotjsonRoute,
   ApiOgClubsSlugRoute: ApiOgClubsSlugRoute,
+  ApiOgDrillsSplatRoute: ApiOgDrillsSplatRoute,
   ApiOgGamesSplatRoute: ApiOgGamesSplatRoute,
   ApiOgPlayersSplatRoute: ApiOgPlayersSplatRoute,
   ApiOgTournamentsSplatRoute: ApiOgTournamentsSplatRoute,

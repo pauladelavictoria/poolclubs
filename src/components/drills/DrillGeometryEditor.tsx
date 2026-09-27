@@ -9,29 +9,20 @@ import {
 import PoolTableDiagram from "@/components/drills/PoolTableDiagram";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { BallGlyph } from "@/components/ui/Ball";
+import { BallGlyph } from "@/components/ui/BallGlyph";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
+import { BALLS, LABEL_TAGS } from "@/libs/algorithms/drillGeometry";
 import {
-  BALLS,
-  BALL_COLORS,
-  CIRCLE_SPAWN_RADIUS,
-  LABEL_TAGS,
-  RECT_SPAWN_HALF,
-  snap,
-} from "@/libs/algorithms/drillGeometry";
-import {
-  ARROW_SPAWN_LENGTH,
-  BALL_RADIUS,
   useDrillGeometryEditor,
   type ShapeSource,
-  type SpawnSource,
 } from "@/hooks/useDrillGeometryEditor";
 import { useTablePortrait } from "@/hooks/useMedia";
 import type { IconType } from "react-icons";
 import type { BallPosition, ShotPath } from "@/types";
 import { useT, type Key } from "@/i18n";
+import { DrillShapeGhost } from "./DrillShapeGhost";
 
 const PALETTE_ITEM_CLASSES = [
   "h-9 w-9 shrink-0 cursor-grab touch-none rounded-full p-0.5",
@@ -49,64 +40,6 @@ const SHAPE_TOOLS = [
   label: Key;
   Icon: IconType;
 }[];
-
-/**
- * What is under the pointer mid-drag: the ball, arrow, circle or rectangle
- * about to be dropped, at the size it will land.
- *
- * Drawn from the same constants as spawnShape rather than from a real shape,
- * because there is nothing in the arrays yet — the felt clamping is the one
- * thing it does not repeat, so a ghost near a rail is a touch off where the
- * shape settles.
- */
-function Ghost({
-  source,
-  at,
-}: {
-  source: SpawnSource;
-  at: { x: number; y: number };
-}) {
-  const line = {
-    stroke: "rgba(255,255,255,0.5)",
-    strokeWidth: 0.5,
-    fill: "none",
-  };
-
-  if (source === "arrow")
-    return (
-      <line
-        x1={at.x - ARROW_SPAWN_LENGTH / 2}
-        y1={at.y}
-        x2={at.x + ARROW_SPAWN_LENGTH / 2}
-        y2={at.y}
-        {...line}
-      />
-    );
-
-  if (source === "circle")
-    return <circle cx={at.x} cy={at.y} r={CIRCLE_SPAWN_RADIUS} {...line} />;
-
-  if (source === "rect")
-    return (
-      <rect
-        x={at.x - RECT_SPAWN_HALF.w}
-        y={at.y - RECT_SPAWN_HALF.h}
-        width={RECT_SPAWN_HALF.w * 2}
-        height={RECT_SPAWN_HALF.h * 2}
-        {...line}
-      />
-    );
-
-  return (
-    <circle
-      cx={snap(at.x)}
-      cy={snap(at.y)}
-      r={BALL_RADIUS}
-      fill={BALL_COLORS[source.color] ?? source.color}
-      opacity={0.6}
-    />
-  );
-}
 
 /**
  * The table: a toolbar of balls and the shape tools to drag out, the felt
@@ -252,7 +185,7 @@ export default function DrillGeometryEditor({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
         >
-          {ghost && <Ghost source={spawn!.source} at={ghost} />}
+          {ghost && <DrillShapeGhost source={spawn!.source} at={ghost} />}
         </PoolTableDiagram>
 
         <p className="mt-2 text-caption text-ink-faint">

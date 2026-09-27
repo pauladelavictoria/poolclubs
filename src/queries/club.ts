@@ -50,7 +50,8 @@ export const clubPreviewQuery = (slug: string) =>
         unclaimed: players
           .filter(
             (r) =>
-              r.claimable && !isPlaceholderPlayer({ name: r.player_name ?? "" }),
+              r.claimable &&
+              !isPlaceholderPlayer({ name: r.player_name ?? "" }),
           )
           .map((r) => ({
             id: r.player_id as number,

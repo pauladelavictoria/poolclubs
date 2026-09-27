@@ -1,4 +1,4 @@
-import { BallGlyph } from "@/components/ui/Ball";
+import { BallGlyph } from "@/components/ui/BallGlyph";
 import { CLUB_BALL_COLORS, type BallColor } from "@/types";
 import { useT } from "@/i18n";
 

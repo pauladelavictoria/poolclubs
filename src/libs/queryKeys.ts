@@ -100,7 +100,7 @@ export const keys = {
   drillLogs: {
     all: ["drill_logs"] as const,
     list: (f: DrillLogsFilters) =>
-      ["drill_logs", f.player_id, f.drill_id, f.limit] as const,
+      ["drill_logs", f.club_id, f.player_id, f.drill_id, f.limit] as const,
   },
 
   challenges: {

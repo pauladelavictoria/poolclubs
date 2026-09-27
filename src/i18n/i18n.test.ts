@@ -55,12 +55,12 @@ describe("plurals", () => {
   });
 
   it("picks the singular at one and the plural at two", () => {
-    expect(pick(en as never, "public.publicClubs.members", "en", { n: 1 })).toBe(
-      "{n} player",
-    );
-    expect(pick(en as never, "public.publicClubs.members", "en", { n: 2 })).toBe(
-      "{n} players",
-    );
+    expect(
+      pick(en as never, "public.publicClubs.members", "en", { n: 1 }),
+    ).toBe("{n} player");
+    expect(
+      pick(en as never, "public.publicClubs.members", "en", { n: 2 }),
+    ).toBe("{n} players");
   });
 
   it("counts zero as plural in es and en, singular in fr", () => {

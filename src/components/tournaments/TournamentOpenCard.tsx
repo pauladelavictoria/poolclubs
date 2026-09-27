@@ -1,53 +1,15 @@
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayerLookup } from "@/hooks/usePlayers";
 import { useTournament, useManageTournaments } from "@/hooks/useTournaments";
-import TournamentPodium from "@/components/tournaments/TournamentPodium";
-import SocialBar from "@/components/social/SocialBar";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { CategoriesBadge } from "@/components/ui/Ball";
-import { resolveBracket, tournamentResults } from "@/libs/algorithms/bracket";
 import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
 import { runMutation } from "@/libs/browser/mutationToast";
-import { FORMAT_KEY, type Tournament } from "@/types";
-import { useT, type Key } from "@/i18n";
+import { type Tournament } from "@/types";
+import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
-import { PlayerFlag } from "@/components/players/PlayerLink";
-
-/** Name, discipline and format — the same line the tournament's own page leads
- *  with, so a card in the feed reads as that tournament and not as a summary of
- *  it. */
-function Head({ tournament, label }: { tournament: Tournament; label?: Key }) {
-  const { t } = useT();
-
-  return (
-    <div className="min-w-0">
-      {/* Optional: the open card sits under a heading that already says
-          "entries open", so it would be the same words twice. */}
-      {label && (
-        <p className="text-caption font-medium uppercase tracking-[0.08em] text-strike">
-          {t(label)}
-        </p>
-      )}
-      <AppLink
-        to="/app/$clubSlug/tournaments/$tournamentId"
-        params={{ tournamentId: tournament.id }}
-        className="block truncate text-body font-semibold text-ink transition-colors duration-150 hover:text-strike"
-      >
-        {tournament.name}
-      </AppLink>
-      <p className="flex flex-wrap items-center gap-x-1 text-caption text-ink-faint">
-        <CategoriesBadge categories={tournament.categories} />
-        <span className="truncate">
-          {" · "}
-          {t(`discipline.${tournament.discipline}`)}
-          {" · "}
-          {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}
-        </span>
-      </p>
-    </div>
-  );
-}
+import { PlayerFlag } from "@/components/players/PlayerFlag";
+import { TournamentFeedHead } from "./TournamentFeedHead";
 
 /**
  * A tournament still taking entries. It sits at the top of the feed rather than
@@ -81,7 +43,7 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
   return (
     <>
       <div className="flex items-start justify-between gap-3">
-        <Head tournament={tournament} />
+        <TournamentFeedHead tournament={tournament} />
         {isMember && canEnter && (
           <Button
             size="sm"
@@ -131,33 +93,6 @@ export function TournamentOpenCard({ tournament }: { tournament: Tournament }) {
           </ul>
         )}
       </div>
-    </>
-  );
-}
-
-/** A tournament that is over: who was on the podium, nothing else. The bracket
- *  behind it is a tap away. */
-export function TournamentResultCard({
-  tournament,
-}: {
-  tournament: Tournament;
-}) {
-  const { byId } = usePlayerLookup();
-  const { data: detail } = useTournament(tournament.id);
-
-  const matches = resolveBracket(detail?.tournament_matches ?? []);
-  const entrants = (detail?.tournament_players ?? []).map((e) => e.player_id);
-
-  const { podium: places } = tournamentResults(tournament, entrants, matches);
-
-  return (
-    <>
-      <Head tournament={tournament} label="tournaments.results" />
-      <TournamentPodium places={places} byId={byId} />
-      {/* The result is the thing people talk about, so the thread hangs off the
-          tournament itself — not off the final game, which is where it would
-          land if this reused the match card's bar. */}
-      <SocialBar target={{ tournamentId: tournament.id }} preview />
     </>
   );
 }

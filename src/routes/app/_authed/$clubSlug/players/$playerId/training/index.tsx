@@ -14,7 +14,10 @@ export const Route = createFileRoute(
   },
   loader: ({ context, params }) =>
     context.queryClient.query({
-      ...drillLogsQuery({ player_id: Number(params.playerId) }),
+      ...drillLogsQuery({
+        club_id: context.activeClubId,
+        player_id: Number(params.playerId),
+      }),
       staleTime: "static",
     }),
   component: TrainingProgressPage,

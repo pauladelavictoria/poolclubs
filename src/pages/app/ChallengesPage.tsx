@@ -12,13 +12,14 @@ import { useWhoIsHere } from "@/hooks/useNight";
 import { useClubTables } from "@/hooks/useClubTables";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import StartMatchForm from "@/components/live/StartMatchForm";
-import { useDialog } from "@/hooks/useDialog";
+import { useDialog, useLingering } from "@/hooks/useDialog";
 import PageTitle from "@/components/layout/PageTitle";
-import { Card, CardHeader } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
+import { CardHeader } from "@/components/ui/CardHeader";
 import { dialogClasses } from "@/components/ui/cardStyles";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import type { Challenge, Player } from "@/types";
 import { useT } from "@/i18n";
@@ -59,6 +60,8 @@ export default function ChallengesPage() {
   // point of knowing who is in the room.
   const [startingWith, setStartingWith] = useState<Player | null>(null);
   const dialogRef = useDialog(startingWith !== null);
+  // Kept through the close animation — see useLingering.
+  const shownStartingWith = useLingering(startingWith);
   const here = useWhoIsHere();
   const { data: tables } = useClubTables();
   const { data: live } = useLiveMatches();
@@ -302,19 +305,19 @@ export default function ChallengesPage() {
           if (e.target === dialogRef.current) closeStart();
         }}
       >
-        {startingWith && player && (
+        {shownStartingWith && player && (
           <StartMatchForm
             me={player}
             opponents={[]}
             roster={players ?? []}
-            lockedOpponent={startingWith}
+            lockedOpponent={shownStartingWith}
             tables={tables ?? []}
             busyTableIds={busy}
             onSubmit={(values) => {
               const challenge = accepted.find(
                 (c) =>
-                  c.from_player_id === startingWith.id ||
-                  c.to_player_id === startingWith.id,
+                  c.from_player_id === shownStartingWith.id ||
+                  c.to_player_id === shownStartingWith.id,
               );
               startMatch.mutate(
                 {

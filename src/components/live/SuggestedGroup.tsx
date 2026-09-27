@@ -1,6 +1,6 @@
 import { Avatar } from "@/components/ui/Avatar";
 import type { Player } from "@/types";
-import { CountryFlag } from "@/components/ui/Flag";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 /**
  * A suggested match, as faces and names.

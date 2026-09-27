@@ -5,7 +5,7 @@ import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
-import { DisciplineBall } from "@/components/ui/Ball";
+import { DisciplineBall } from "@/components/ui/DisciplineBall";
 import { groupCount, minimumEntrants } from "@/libs/algorithms/bracket";
 import { pairRules } from "@/libs/algorithms/pairs";
 import {

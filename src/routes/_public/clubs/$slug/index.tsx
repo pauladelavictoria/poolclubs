@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ClubTournamentsTab } from "@/pages/public/PublicClubPage";
+import { ClubTournamentsTab } from "@/components/public/club/ClubTournamentsTab";
 import { publicClubQuery } from "@/queries/public/clubs";
 import { publicTournamentsQuery } from "@/queries/public/tournaments";
 
