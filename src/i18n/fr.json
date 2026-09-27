@@ -1171,5 +1171,11 @@
   "drills.cardByline": "Exercice de billard",
   "drillWeek.pending": "À jouer",
   "drillWeek.beat": "Battez {name} : {score}/{max}",
-  "drillWeek.beFirst": "Personne ne l'a encore joué. Fixez le score à battre."
+  "drillWeek.beFirst": "Personne ne l'a encore joué. Fixez le score à battre.",
+  "drills.yourBest": "Votre meilleur score",
+  "drills.groupBy": "Regrouper par",
+  "drills.byDifficulty": "Difficulté",
+  "drills.bySkill": "Type",
+  "drills.doneCount": "{done}/{total} faits",
+  "drills.emptyTitle": "Aucun exercice pour l'instant"
 }

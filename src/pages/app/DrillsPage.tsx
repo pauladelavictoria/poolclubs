@@ -1,18 +1,23 @@
 import { getRouteApi } from "@tanstack/react-router";
 import { cardClasses } from "@/components/ui/cardStyles";
-import { LuPlus, LuTarget } from "react-icons/lu";
+import {
+  LuChevronRight,
+  LuPlus,
+  LuShapes,
+  LuSignal,
+  LuTarget,
+} from "react-icons/lu";
 import PageTitle from "@/components/layout/PageTitle";
 import DrillCard from "@/components/drills/DrillCard";
 import { useDrills } from "@/hooks/useDrills";
 import { useAuth } from "@/hooks/useAuth";
+import { useDrillLogs } from "@/hooks/useDrillLogs";
+import { scorePct } from "@/libs/algorithms/scoreBand";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { Card } from "@/components/ui/Card";
-import { Select } from "@/components/ui/Select";
-import { FilterBar } from "@/components/ui/FilterBar";
-import { Button } from "@/components/ui/Button";
+import { Segmented } from "@/components/ui/Segmented";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import type { DrillDifficulty, DrillSkillType } from "@/types";
 import { DIFFICULTIES, SKILL_TYPES } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -21,21 +26,35 @@ const route = getRouteApi("/app/_authed/$clubSlug/drills/");
 
 export default function DrillsPage() {
   const { t } = useT();
-  // In the URL rather than in useState, so the route's loader can fetch the
-  // filtered library before this renders — and so a filtered library is a link.
-  const { difficulty, skill } = route.useSearch();
+  // In the URL, so a grouping survives a reload and is a link.
+  const { group } = route.useSearch();
   const navigate = route.useNavigate();
 
-  const setFilter = (patch: {
-    difficulty?: DrillDifficulty;
-    skill?: DrillSkillType;
-  }) => navigate({ search: (prev) => ({ ...prev, ...patch }) });
+  const { user, player } = useAuth();
+  // Same request the notification bell makes, so this is from cache.
+  const { data: myLogs } = useDrillLogs({ player_id: player?.id });
+  const bestPct = new Map<number, number>();
+  for (const log of myLogs ?? []) {
+    const pct = scorePct(log.score, log.max_score);
+    bestPct.set(log.drill_id, Math.max(pct, bestPct.get(log.drill_id) ?? 0));
+  }
+  const { data: drills, isLoading } = useDrills();
 
-  const { user } = useAuth();
-  const { data: drills, isLoading } = useDrills({
-    difficulty,
-    skill_type: skill,
-  });
+  // In the order the app ranks them — beginner first, the skills as listed —
+  // and only the ones with a drill in them.
+  const groups = (
+    group === "skill"
+      ? SKILL_TYPES.map((key) => ({
+          key,
+          label: t(`skill.${key}`),
+          items: (drills ?? []).filter((d) => d.skill_type === key),
+        }))
+      : DIFFICULTIES.map((key) => ({
+          key,
+          label: t(`difficulty.${key}`),
+          items: (drills ?? []).filter((d) => d.difficulty === key),
+        }))
+  ).filter((g) => g.items.length > 0);
 
   return (
     <>
@@ -52,50 +71,29 @@ export default function DrillsPage() {
           )}
         </PageTitle>
 
-        {/* The filters are their own control strip. The drills below are cards
-            in their own right, so wrapping the grid in another card would put
-            a border around a field of borders — and a second card up here made
-            the top of the page look like every other page in the app.
-            Same <FilterBar> the games tape wears: these are facets on a list,
-            not fields on a form, so they are sized to their labels rather than
-            stretched to half the page each. */}
-        <FilterBar>
-          <Select
-            size="sm"
-            aria-label={t("drills.filterDifficulty")}
-            value={difficulty ?? ""}
-            onChange={(e) =>
-              setFilter({
-                difficulty: (e.target.value as DrillDifficulty) || undefined,
-              })
-            }
-          >
-            <option value="">{t("drills.allDifficulties")}</option>
-            {DIFFICULTIES.map((key) => (
-              <option key={key} value={key}>
-                {t(`difficulty.${key}`)}
-              </option>
-            ))}
-          </Select>
-
-          <Select
-            size="sm"
-            aria-label={t("drills.filterSkill")}
-            value={skill ?? ""}
-            onChange={(e) =>
-              setFilter({
-                skill: (e.target.value as DrillSkillType) || undefined,
-              })
-            }
-          >
-            <option value="">{t("drills.allSkills")}</option>
-            {SKILL_TYPES.map((key) => (
-              <option key={key} value={key}>
-                {t(`skill.${key}`)}
-              </option>
-            ))}
-          </Select>
-        </FilterBar>
+        {/* Group by, not filter by: the whole library stays on the page, so
+            what is left to try in each part of it is visible rather than
+            hidden behind a select. */}
+        <Segmented
+          label={t("drills.groupBy")}
+          value={group}
+          onChange={(value) => navigate({ search: { group: value } })}
+          options={[
+            {
+              value: "difficulty",
+              label: t("drills.byDifficulty"),
+              icon: <LuSignal className="h-4 w-4" aria-hidden />,
+            },
+            {
+              value: "skill",
+              label: t("drills.bySkill"),
+              icon: <LuShapes className="h-4 w-4" aria-hidden />,
+            },
+          ]}
+          // Full width on a phone, two even halves — a thumb-sized target
+          // rather than two words floating at the left.
+          className="max-sm:w-full [&>button]:justify-center max-sm:[&>button]:flex-1"
+        />
 
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
@@ -114,28 +112,59 @@ export default function DrillsPage() {
               </div>
             ))}
           </div>
-        ) : drills && drills.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {drills.map((drill) => (
-              <DrillCard key={drill.id} drill={drill} />
-            ))}
+        ) : groups.length > 0 ? (
+          <div className="space-y-4">
+            {groups.map(({ key, label, items }) => {
+              const done = items.filter((d) => bestPct.has(d.id)).length;
+              return (
+                // Native <details>: collapsing costs no state and no script,
+                // and every group starts open.
+                <details key={key} open className="group">
+                  <summary className="flex cursor-pointer list-none items-center gap-2 border-b border-hairline pb-2 [&::-webkit-details-marker]:hidden">
+                    <LuChevronRight
+                      className="h-4 w-4 shrink-0 text-ink-faint transition-transform duration-150 group-open:rotate-90"
+                      aria-hidden
+                    />
+                    <h2 className="min-w-0 flex-1 truncate text-h4 font-semibold text-ink">
+                      {label}
+                    </h2>
+                    {/* How far through the group, at a glance. A bar, not a
+                        chart: one number out of another is all there is. */}
+                    <span
+                      aria-hidden
+                      className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-hairline sm:w-24"
+                    >
+                      <span
+                        className="block h-full rounded-full bg-strike"
+                        style={{ width: `${(done / items.length) * 100}%` }}
+                      />
+                    </span>
+                    <span
+                      // A fixed width in a mono face, so the bars before it line
+                      // up whether the count is 0/6 or 12/20.
+                      className={`min-w-[12ch] shrink-0 text-right font-mono text-caption tabular-nums ${done === items.length ? "text-strike" : "text-ink-faint"}`}
+                    >
+                      {t("drills.doneCount", { done, total: items.length })}
+                    </span>
+                  </summary>
+                  <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                    {items.map((drill) => (
+                      <DrillCard
+                        key={drill.id}
+                        drill={drill}
+                        best={bestPct.get(drill.id)}
+                      />
+                    ))}
+                  </div>
+                </details>
+              );
+            })}
           </div>
         ) : (
           <Card>
             <EmptyState
               icon={<LuTarget className="h-5 w-5" />}
-              title={t("drills.noneMatch")}
-              hint={t("drills.noneMatchHint")}
-              action={
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    navigate({ search: {} });
-                  }}
-                >
-                  {t("common.clearFilters")}
-                </Button>
-              }
+              title={t("drills.emptyTitle")}
             />
           </Card>
         )}

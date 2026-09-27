@@ -1171,5 +1171,11 @@
   "drills.cardByline": "Pool drill",
   "drillWeek.pending": "Not played yet",
   "drillWeek.beat": "Beat {name}: {score}/{max}",
-  "drillWeek.beFirst": "Nobody has played it yet. Set the score to beat."
+  "drillWeek.beFirst": "Nobody has played it yet. Set the score to beat.",
+  "drills.yourBest": "Your best",
+  "drills.groupBy": "Group by",
+  "drills.byDifficulty": "Difficulty",
+  "drills.bySkill": "Type",
+  "drills.doneCount": "{done}/{total} done",
+  "drills.emptyTitle": "No drills yet"
 }
