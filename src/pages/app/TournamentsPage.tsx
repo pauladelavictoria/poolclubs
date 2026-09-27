@@ -15,7 +15,7 @@ import TournamentForm, {
 import { Card } from "@/components/ui/Card";
 import { cardClasses, dialogClasses } from "@/components/ui/cardStyles";
 import { Button } from "@/components/ui/Button";
-import { CategoryBadge } from "@/components/ui/Ball";
+import { CategoriesBadge } from "@/components/ui/Ball";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { useDialog } from "@/hooks/useDialog";
@@ -186,13 +186,10 @@ function EventCard({ tournament }: { tournament: TournamentListItem }) {
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-1.5">
-        {tournament.category === null ? (
-          <span className="text-caption text-ink-faint">
-            {t("tournaments.combined")}
-          </span>
-        ) : (
-          <CategoryBadge category={tournament.category} />
-        )}
+        <CategoriesBadge
+          categories={tournament.categories}
+          className="text-caption text-ink-faint"
+        />
         <span className="flex items-center gap-1 font-mono text-caption tabular-nums text-ink-faint">
           <LuUsers className="h-3.5 w-3.5" aria-hidden />
           {entrants}

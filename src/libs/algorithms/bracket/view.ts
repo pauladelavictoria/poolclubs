@@ -105,8 +105,8 @@ export function sortPlayedMatches(
  *  open to, minus whoever is already entered. */
 export function eligibleToAdd<
   T extends { id: number; category: Category; name: string },
->(players: T[], category: Category | null, entrants: number[]): T[] {
-  return eligible(players, category).filter((p) => !entrants.includes(p.id));
+>(players: T[], categories: Category[] | null, entrants: number[]): T[] {
+  return eligible(players, categories).filter((p) => !entrants.includes(p.id));
 }
 
 type Format = "double_elim" | "league" | "group_knockout";

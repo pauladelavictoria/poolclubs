@@ -137,9 +137,14 @@ export default function AddGamePage() {
     ? []
     : [
         ...new Map(
-          fixturesBetween(leagueFixtures ?? [], player_1_id, player_2_id).map(
-            (f) => [f.tournament.id, f],
-          ),
+          fixturesBetween(
+            // A couples fixture is not a singles game's to close.
+            (leagueFixtures ?? []).filter(
+              (f) => f.tournament.mode === "single",
+            ),
+            player_1_id,
+            player_2_id,
+          ).map((f) => [f.tournament.id, f]),
         ).values(),
       ];
   /** Read off the options rather than off the state, so a league picked and

@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
 import { DisciplineBall } from "@/components/ui/Ball";
 import { groupCount, minimumEntrants } from "@/libs/algorithms/bracket";
+import { pairRules } from "@/libs/algorithms/pairs";
 import {
+  CATEGORIES,
   DISCIPLINES,
   type Category,
   type Discipline,
+  type GameMode,
   type TournamentFormat,
   type TournamentValues,
 } from "@/types";
@@ -60,7 +63,7 @@ export default function TournamentForm({
   /** The draw already exists: hide everything it was generated from. */
   locked?: boolean;
 }) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const [name, setName] = useState(initialValues?.name ?? "");
   const [startsOn, setStartsOn] = useState(initialValues?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(initialValues?.ends_on ?? "");
@@ -72,9 +75,25 @@ export default function TournamentForm({
   const [format, setFormat] = useState<TournamentFormat>(
     initialValues?.format ?? "double_elim",
   );
-  const [category, setCategory] = useState<Category | null>(
-    initialValues?.category ?? null,
+  /** Empty = every division, the same as ticking all three. */
+  const [categories, setCategories] = useState<Category[]>(
+    initialValues?.categories ?? [],
   );
+  const toggleCategory = (c: Category) =>
+    setCategories((cs) =>
+      cs.includes(c) ? cs.filter((x) => x !== c) : [...cs, c].sort(),
+    );
+  const [mode, setMode] = useState<GameMode>(initialValues?.mode ?? "single");
+  const [pairMinSum, setPairMinSum] = useState<number | null>(
+    initialValues?.pair_min_sum ?? null,
+  );
+  // Only the rules these divisions can actually use — see pairRules. A rule
+  // picked for another set of divisions drops back to "anyone".
+  const rules = pairRules(categories.length ? categories : null);
+  const pairRule = rules.some((r) => r.minSum === pairMinSum)
+    ? pairMinSum
+    : null;
+  const pairList = new Intl.ListFormat(locale, { type: "disjunction" });
   const [legs, setLegs] = useState<1 | 2>(initialValues?.legs ?? 1);
   const [advance, setAdvance] = useState(
     initialValues?.advance ?? DEFAULTS.advance,
@@ -131,7 +150,12 @@ export default function TournamentForm({
       notes: notes.trim() || null,
       requires_payment: requiresPayment,
       format,
-      category,
+      categories:
+        categories.length === 0 || categories.length === CATEGORIES.length
+          ? null
+          : categories,
+      mode,
+      pair_min_sum: mode === "doubles" ? pairRule : null,
       legs,
       advance: format === "group_knockout" ? advance : null,
       single_from: format === "double_elim" ? singleFrom : DEFAULTS.single_from,
@@ -266,25 +290,83 @@ export default function TournamentForm({
       )}
 
       {!locked && (
+        <fieldset className="space-y-1.5">
+          <legend className="mb-1.5">
+            <Label>{t("tournaments.category")}</Label>
+          </legend>
+          {/* Checkboxes, not a select: a tournament can take one division or
+              two together (1st and 2nd, say). */}
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {CATEGORIES.map((c) => (
+              <label
+                key={c}
+                className="flex cursor-pointer items-center gap-2 text-body text-ink"
+              >
+                <input
+                  type="checkbox"
+                  checked={categories.includes(c)}
+                  onChange={() => toggleCategory(c)}
+                  disabled={isSubmitting}
+                  className="h-4 w-4 cursor-pointer rounded-[4px] accent-[var(--color-strike)] disabled:cursor-not-allowed"
+                />
+                {t(`category.${c}`)}
+              </label>
+            ))}
+          </div>
+          <p className="text-caption text-ink-faint">
+            {t("tournaments.categoriesHint")}
+          </p>
+        </fieldset>
+      )}
+
+      {/* Only when creating: the entrants of a singles tournament are not
+          pairs, and turning it into one would leave every entry half-made. */}
+      {!initialValues && (
         <div className="space-y-1.5">
-          <Label htmlFor="tournament-category">
-            {t("tournaments.category")}
+          <Label htmlFor="tournament-mode">{t("tournaments.mode")}</Label>
+          <Segmented<GameMode>
+            value={mode}
+            onChange={setMode}
+            label={t("tournaments.mode")}
+            options={[
+              { value: "single", label: t("games.single") },
+              { value: "doubles", label: t("tournaments.couples") },
+            ]}
+          />
+        </div>
+      )}
+
+      {!locked && mode === "doubles" && rules.length > 0 && (
+        <div className="space-y-1.5">
+          <Label htmlFor="tournament-pair-sum">
+            {t("tournaments.pairMinSum")}
           </Label>
           <Select
-            id="tournament-category"
-            value={category ?? ""}
+            id="tournament-pair-sum"
+            value={pairRule ?? ""}
             onChange={(e) =>
-              setCategory(
-                e.target.value ? (Number(e.target.value) as Category) : null,
-              )
+              setPairMinSum(e.target.value ? Number(e.target.value) : null)
             }
             disabled={isSubmitting}
           >
-            <option value="">{t("tournaments.combined")}</option>
-            <option value={1}>{t("category.1")}</option>
-            <option value={2}>{t("category.2")}</option>
-            <option value={3}>{t("category.3")}</option>
+            <option value="">{t("tournaments.pairAny")}</option>
+            {/* Named by the pairs they rule out, not by the sum they
+                stand for. */}
+            {rules.map((r) => (
+              <option key={r.minSum} value={r.minSum}>
+                {t("tournaments.pairForbid", {
+                  pairs: pairList.format(
+                    r.forbidden.map((pair) =>
+                      pair.map((n) => t("category.short", { n })).join("+"),
+                    ),
+                  ),
+                })}
+              </option>
+            ))}
           </Select>
+          <p className="text-caption text-ink-faint">
+            {t("tournaments.pairMinSumHint")}
+          </p>
         </div>
       )}
 

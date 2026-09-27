@@ -25,7 +25,7 @@ import TournamentPodium from "@/components/tournaments/TournamentPodium";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { CategoryBadge } from "@/components/ui/Ball";
+import { CategoriesBadge } from "@/components/ui/Ball";
 import { Fact } from "@/components/ui/Fact";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHead } from "@/components/ui/SectionHead";
@@ -42,6 +42,7 @@ import {
 import { groupStandings } from "@/libs/algorithms/leagueTable";
 import { eventDates } from "@/libs/algorithms/eventDates";
 import { canEnterTournament } from "@/libs/algorithms/tournamentEntry";
+import { pairNameOf, partnersOf } from "@/libs/algorithms/pairs";
 import { refreshTournaments } from "@/libs/browser/refresh";
 import { runMutation } from "@/libs/browser/mutationToast";
 import { supabase } from "@/libs/supabase/browser";
@@ -85,13 +86,25 @@ export default function PublicTournamentPage() {
   );
 
   const byId = new Map(roster.map((p) => [p.id, p]));
-  const nameOf = (id: number) => byId.get(id)?.name ?? t("tournaments.tbd");
+  // In a couples tournament an entrant is a pair, under its captain's id.
+  const partners = partnersOf(tournament.tournament_players);
+  const nameOf = pairNameOf(
+    partners,
+    (id) => byId.get(id)?.name ?? t("tournaments.tbd"),
+  );
   // Out here a name links to the person, not to the membership, so the shared
   // bracket components need the slug alongside the name. Inside a club they get
   // neither — PlayerLink uses the club route there.
   const slugOf = (id: number) => byId.get(id)?.slug;
 
   const entrantIds = tournament.tournament_players.map((e) => e.player_id);
+  /** Entrants by id, named as entrants — a pair's two names on one person. */
+  const entrantById = new Map(
+    entrantIds.flatMap((id) => {
+      const p = byId.get(id);
+      return p ? [[id, { ...p, name: nameOf(id) }] as const] : [];
+    }),
+  );
   // resolveBracket fills each empty seat from the match that feeds it, so a draw
   // reads forward rather than only backward.
   const matches = resolveBracket(
@@ -175,6 +188,7 @@ export default function PublicTournamentPage() {
         <TournamentHero
           tournament={tournament}
           entrantIds={entrantIds}
+          partners={partners}
           matchesTotal={matches.length}
           matchesPlayed={played}
           url={url}
@@ -189,7 +203,8 @@ export default function PublicTournamentPage() {
             <section className="mt-6">
               <SectionHead title={t("public.publicTournament.entrantsLabel")} />
               <div className="mt-5 grid grid-cols-4 gap-4 sm:grid-cols-6 lg:grid-cols-8">
-                {entrantIds.map((id) => {
+                {/* Everyone entered, partners too: a face is one person. */}
+                {[...entrantIds, ...partners.values()].map((id) => {
                   const player = byId.get(id);
                   return (
                     <Link
@@ -220,7 +235,11 @@ export default function PublicTournamentPage() {
               <h2 className="px-6 pt-6 text-h3 font-semibold tracking-tight text-ink">
                 {t("tournaments.results")}
               </h2>
-              <TournamentPodium places={podium} byId={byId} />
+              <TournamentPodium
+                places={podium}
+                byId={byId}
+                partners={partners}
+              />
             </section>
           )}
 
@@ -278,7 +297,8 @@ export default function PublicTournamentPage() {
                 nameOf={nameOf}
                 slugOf={slugOf}
                 categoryOf={
-                  tournament.category === null
+                  tournament.categories?.length !== 1 &&
+                  tournament.mode === "single"
                     ? (id) => byId.get(id)?.category
                     : undefined
                 }
@@ -366,7 +386,7 @@ export default function PublicTournamentPage() {
             <div className="mt-10">
               <LeagueFixtures
                 matches={matches}
-                personOf={(id) => byId.get(id)}
+                personOf={(id) => entrantById.get(id) ?? byId.get(id)}
                 clubSlug={tournament.club?.slug}
                 playerIds={entrantIds}
                 liveOf={liveOf}
@@ -447,12 +467,14 @@ export default function PublicTournamentPage() {
 function TournamentHero({
   tournament,
   entrantIds,
+  partners,
   matchesTotal,
   matchesPlayed,
   url,
 }: {
   tournament: PublicTournament;
   entrantIds: number[];
+  partners: Map<number, number>;
   matchesTotal: number;
   matchesPlayed: number;
   url: string;
@@ -473,7 +495,11 @@ function TournamentHero({
             {tournament.name}
           </h1>
           <div className="flex shrink-0 items-center gap-2">
-            <TournamentEntry tournament={tournament} entrantIds={entrantIds} />
+            <TournamentEntry
+              tournament={tournament}
+              entrantIds={entrantIds}
+              partners={partners}
+            />
             <ShareButton title={tournament.name} url={url} />
           </div>
         </div>
@@ -514,11 +540,7 @@ function TournamentHero({
             {t(`discipline.${tournament.discipline}`)}
           </Fact>
           <Fact label={t("tournaments.category")}>
-            {tournament.category === null ? (
-              t("tournaments.combined")
-            ) : (
-              <CategoryBadge category={tournament.category} />
-            )}
+            <CategoriesBadge categories={tournament.categories} />
           </Fact>
           {tournament.status === "open" && (
             <Fact label={t("public.publicTournament.entrantsLabel")}>
@@ -614,9 +636,11 @@ function TournamentHero({
 function TournamentEntry({
   tournament,
   entrantIds,
+  partners,
 }: {
   tournament: PublicTournament;
   entrantIds: number[];
+  partners: Map<number, number>;
 }) {
   const { t } = useT();
   const { session, memberships } = useSession();
@@ -628,11 +652,17 @@ function TournamentEntry({
   const membership = memberships.find(
     (m) => m.club_id === tournament.club_id && m.status === "active",
   );
-  const entered = !!membership && entrantIds.includes(membership.id);
+  // In a pair either half is entered; the row is the captain's either way.
+  const myEntry = membership
+    ? entrantIds.find(
+        (id) => id === membership.id || partners.get(id) === membership.id,
+      )
+    : undefined;
+  const entered = myEntry !== undefined;
   // A tournament limited to one division is not open to the others — the same
   // rule as the club's own page.
   const eligible = canEnterTournament(
-    tournament.category,
+    tournament.categories,
     membership?.category,
   );
 
@@ -644,7 +674,7 @@ function TournamentEntry({
           .from("tournament_players")
           .delete()
           .eq("tournament_id", tournament.id)
-          .eq("player_id", membership.id)
+          .eq("player_id", myEntry!)
           .throwOnError();
       } else {
         await supabase
@@ -704,13 +734,32 @@ function TournamentEntry({
   // A tournament with no category takes anybody who has a division, and a
   // membership always has one — so ineligible here always means a division
   // tournament, and the copy always has a division to name.
-  if (!entered && !eligible && tournament.category) {
+  if (!entered && !eligible && tournament.categories) {
     return (
       <p className="max-w-[24ch] text-caption text-ink-faint">
         {t("tournaments.notEligible", {
-          category: t(`category.${tournament.category}`),
+          category: tournament.categories
+            .map((c) => t(`category.${c}`))
+            .join(", "),
         })}
       </p>
+    );
+  }
+
+  // A pair is entered from the club's own page, where the partner is picked
+  // from the members — this page has no picker to offer.
+  if (!entered && tournament.mode === "doubles" && tournament.club) {
+    return (
+      <Link
+        to="/app/$clubSlug/tournaments/$tournamentId"
+        params={{
+          clubSlug: tournament.club.slug,
+          tournamentId: String(tournament.id),
+        }}
+        className={buttonClasses({ size: "sm" })}
+      >
+        {t("tournaments.enterAsPair")}
+      </Link>
     );
   }
 

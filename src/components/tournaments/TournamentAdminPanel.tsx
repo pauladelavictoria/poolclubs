@@ -50,6 +50,7 @@ export default function TournamentAdminPanel({
   seeded,
   groupsDone,
   addable,
+  partnersFor,
   entered,
   meId,
   manage,
@@ -61,6 +62,8 @@ export default function TournamentAdminPanel({
   groupsDone: boolean;
   /** Club players eligible for this tournament and not yet in it. */
   addable: { id: number; name: string }[];
+  /** A couples tournament's: who this player may pair with. */
+  partnersFor?: (playerId: number) => { id: number; name: string }[];
   /** Who is in it, named — the list a removal picks from. */
   entered: { id: number; name: string }[];
   /** The organiser, when they are one of the addable names. */
@@ -78,6 +81,7 @@ export default function TournamentAdminPanel({
     removeEntrant,
   } = manage;
   const [adding, setAdding] = useState("");
+  const [addingPartner, setAddingPartner] = useState("");
   const [removing, setRemoving] = useState("");
 
   // Who the draw is cut for — the unpaid are dropped in the same transaction
@@ -185,26 +189,57 @@ export default function TournamentAdminPanel({
                 {t("tournaments.allEntered")}
               </p>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Select
                   size="sm"
                   className="min-w-0 flex-1"
                   value={adding}
                   aria-label={t("tournaments.addPlayer")}
-                  onChange={(e) => setAdding(e.target.value)}
+                  onChange={(e) => {
+                    setAdding(e.target.value);
+                    setAddingPartner("");
+                  }}
                 >
                   <option value="">{t("tournaments.addPlayer")}</option>
                   <PlayerOptions players={addable} meId={meId} />
                 </Select>
+                {partnersFor && (
+                  <Select
+                    size="sm"
+                    className="min-w-0 flex-1"
+                    value={addingPartner}
+                    disabled={!adding}
+                    aria-label={t("tournaments.partner")}
+                    onChange={(e) => setAddingPartner(e.target.value)}
+                  >
+                    <option value="">{t("tournaments.partner")}</option>
+                    <PlayerOptions
+                      players={adding ? partnersFor(Number(adding)) : []}
+                      meId={meId}
+                    />
+                  </Select>
+                )}
                 <Button
                   size="sm"
                   className="shrink-0"
-                  disabled={!adding || addLateEntrant.isPending}
+                  disabled={
+                    !adding ||
+                    (!!partnersFor && !addingPartner) ||
+                    addLateEntrant.isPending
+                  }
                   onClick={() => {
                     const playerId = Number(adding);
+                    const partnerId = partnersFor
+                      ? Number(addingPartner)
+                      : undefined;
                     setAdding("");
+                    setAddingPartner("");
                     runMutation(
-                      addLateEntrant.mutateAsync({ tournament, playerId }),
+                      addLateEntrant.mutateAsync({
+                        tournament,
+                        playerId,
+                        partnerId,
+                      }),
                       t,
                       "tournaments.added",
                     );

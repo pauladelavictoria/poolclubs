@@ -70,7 +70,9 @@ export default function DashboardPage() {
   // offered a button that RLS would refuse.
   const rank = (x: TournamentListItem) => {
     if (x.status !== "open") return 0;
-    return isMember && canEnterTournament(x.category, player?.category) ? 1 : 2;
+    return isMember && canEnterTournament(x.categories, player?.category)
+      ? 1
+      : 2;
   };
 
   const featured = (tournaments ?? [])

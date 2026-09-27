@@ -347,10 +347,10 @@ BEGIN
   -- 5. One finished double-elimination tournament among the 8 category-1
   -- members (v_player_ids[1..8], already in seed order).
   INSERT INTO tournaments (
-    club_id, name, format, category, legs, single_from, status,
+    club_id, name, format, categories, legs, single_from, status,
     discipline, race_to, race_semi, race_final, created_at
   ) VALUES (
-    v_club_id, 'Copa de Otoño', 'double_elim', 1, 1, 2, 'done',
+    v_club_id, 'Copa de Otoño', 'double_elim', '{1}', 1, 2, 'done',
     '9ball', 5, 7, 9, v_tour_ts - interval '10 days'
   ) RETURNING id INTO v_tournament_id;
 
@@ -404,10 +404,10 @@ BEGIN
   -- src/libs/algorithms/bracket/generate.ts) — so only the 'winners' bracket
   -- exists, 7 matches, no losers side, no merge.
   INSERT INTO tournaments (
-    club_id, name, format, category, legs, single_from, status,
+    club_id, name, format, categories, legs, single_from, status,
     discipline, race_to, race_semi, race_final, created_at
   ) VALUES (
-    v_club_id, 'Copa Máster', 'double_elim', 2, 1, 8, 'done',
+    v_club_id, 'Copa Máster', 'double_elim', '{2}', 1, 8, 'done',
     '8ball', 5, 7, 9, v_t2_ts - interval '8 days'
   ) RETURNING id INTO v_t2_id;
 
@@ -459,7 +459,7 @@ BEGIN
   -- src/libs/algorithms/bracket/generate.ts): pin seat 1, rotate the rest
   -- each round, home/away are the two ends of what is left of the wheel.
   INSERT INTO tournaments (
-    club_id, name, format, category, legs, status,
+    club_id, name, format, categories, legs, status,
     discipline, race_to, created_at
   ) VALUES (
     v_club_id, 'Liga Tercera', 'league', NULL, 1, 'done',
@@ -519,7 +519,7 @@ BEGIN
   -- running), so 'open' here is exactly a row in tournaments and rows in
   -- tournament_players — no games, no tournament_matches.
   INSERT INTO tournaments (
-    club_id, name, format, category, legs, single_from, status,
+    club_id, name, format, categories, legs, single_from, status,
     discipline, race_to, race_semi, race_final, starts_on, created_at
   ) VALUES (
     v_club_id, 'Copa Presidente', 'double_elim', NULL, 1, 2, 'open',
@@ -539,7 +539,7 @@ BEGIN
   v_field := ARRAY[2,4,6,8,10,12,14,16];
 
   INSERT INTO tournaments (
-    club_id, name, format, category, legs, single_from, status,
+    club_id, name, format, categories, legs, single_from, status,
     discipline, race_to, race_semi, race_final, starts_on, created_at
   ) VALUES (
     v_club_id, 'Trofeo Aniversario', 'double_elim', NULL, 1, 8, 'running',
@@ -589,7 +589,7 @@ BEGIN
   v_field := ARRAY[1,5,9,13];
 
   INSERT INTO tournaments (
-    club_id, name, format, category, legs, status,
+    club_id, name, format, categories, legs, status,
     discipline, race_to, starts_on, created_at
   ) VALUES (
     v_club_id, 'Liga Nocturna', 'league', NULL, 1, 'running',

@@ -220,6 +220,27 @@ export function BallBadge({
  * third colour here would spend the budget on a label. Prominence comes from
  * contrast and weight instead: rail surface, full-strength ink, semibold.
  */
+/** A tournament's divisions: "all", or a badge for each one it takes. */
+export function CategoriesBadge({
+  categories,
+  className,
+}: {
+  categories: Category[] | null;
+  /** For the "all" text, which has no badge of its own to style. */
+  className?: string;
+}) {
+  const { t } = useT();
+  if (!categories)
+    return <span className={className}>{t("tournaments.combined")}</span>;
+  return (
+    <span className="inline-flex gap-1">
+      {categories.map((c) => (
+        <CategoryBadge key={c} category={c} />
+      ))}
+    </span>
+  );
+}
+
 export function CategoryBadge({
   category,
   full = false,

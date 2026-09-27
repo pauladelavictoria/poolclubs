@@ -300,14 +300,14 @@ export const FORMAT_KEY: Record<
 
 export type Tournament = Omit<
   Row<"tournaments">,
-  "format" | "status" | "category" | "legs"
+  "format" | "status" | "categories" | "legs"
 > & {
   /* discipline, race_to, race_semi and race_final come through as they are —
      the enum is narrowed by Postgres and the races are plain numbers. */
   format: TournamentFormat;
   status: TournamentStatus;
-  /** null = combined, every division. */
-  category: Category | null;
+  /** null = combined, every division; else the divisions it takes. */
+  categories: Category[] | null;
   /** Times each pair meets in a league or inside a group. */
   legs: 1 | 2;
 };
@@ -323,7 +323,7 @@ export const TOURNAMENT_FIELDS = [
   "notes",
   "requires_payment",
   "format",
-  "category",
+  "categories",
   "legs",
   "advance",
   "single_from",
@@ -333,6 +333,8 @@ export const TOURNAMENT_FIELDS = [
   "race_final",
   "points_win",
   "points_play",
+  "mode",
+  "pair_min_sum",
 ] as const;
 
 export type TournamentValues = Pick<

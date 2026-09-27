@@ -311,9 +311,9 @@ export function TournamentCard({
             <span className="min-w-0 truncate">
               {t(`tournaments.${FORMAT_KEY[tournament.format]}`)}
               {" · "}
-              {tournament.category === null
+              {tournament.categories === null
                 ? t("tournaments.combined")
-                : `${t("ranking.categoryShort")} ${t("category.short", { n: tournament.category })}`}
+                : `${t("ranking.categoryShort")} ${tournament.categories.map((n) => t("category.short", { n })).join("/")}`}
             </span>
             <span className="ml-auto flex shrink-0 items-center gap-1 font-mono tabular-nums">
               <LuUsers className="h-3.5 w-3.5" aria-hidden />
@@ -343,15 +343,23 @@ function CardPodium({ tournament }: { tournament: PublicTournamentListItem }) {
   // An entrant whose row was withheld (a claimed guest, a deleted person) has
   // no name to draw and simply is not in the map — the step falls back to a
   // dash rather than dropping out of the podium.
+  const roster = tournament.roster ?? [];
   const byId = new Map(
-    (tournament.roster ?? []).flatMap(({ player }) =>
-      player?.person ? [[player.id, player.person] as const] : [],
+    roster.flatMap(({ player, partner }) =>
+      [player, partner].flatMap((p) =>
+        p?.person ? [[p.id, p.person] as const] : [],
+      ),
+    ),
+  );
+  const partners = new Map(
+    roster.flatMap(({ player, partner }) =>
+      player && partner ? [[player.id, partner.id] as const] : [],
     ),
   );
 
   const { podium: places } = tournamentResults(
     tournament,
-    [...byId.keys()],
+    roster.flatMap(({ player }) => (player?.person ? [player.id] : [])),
     resolveBracket(matches),
   );
 
@@ -361,7 +369,12 @@ function CardPodium({ tournament }: { tournament: PublicTournamentListItem }) {
     // Padding on top only: the plinths sit straight on the footer's rule,
     // which is the floor of this podium.
     <div className="pt-3">
-      <TournamentPodium places={places} byId={byId} compact />
+      <TournamentPodium
+        places={places}
+        byId={byId}
+        partners={partners}
+        compact
+      />
     </div>
   );
 }
