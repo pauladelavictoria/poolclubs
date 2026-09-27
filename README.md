@@ -49,33 +49,64 @@
 
 ## ✨ Key Features
 
-### 🎯 Practice & Drills _(built, currently hidden behind a feature flag — see [`src/libs/algorithms/features.ts`](src/libs/algorithms/features.ts))_
+### 🏆 Tournaments & Leagues
 
-- **Drill Library:** Create, customize, and browse pool drills (position play, safety shots, cue ball control, and breaking).
-- **Track Results:** Log shot attempts, completion times, success percentages, and personal bests.
-- **Progress Analytics:** Monitor skill improvement over time with detailed performance stats.
+- **Three formats:** double elimination, group stage + knockout, and leagues (each pair meets a set number of times).
+- **Couples tournaments:** doubles pairs, with an optional rule on which divisions can pair up.
+- **Rack-by-rack results:** every rack is recorded, runouts included.
+- **League tables:** standings, a grid of every game, and points per game won or played.
+- **Public pages and share cards:** brackets and results at `/tournaments`, with server-rendered OG images for clubs, games, players and tournaments.
 
-### 🏆 Clubs & Communities
+### 🔴 YouTube Streaming & Match Recording
 
-- **Create & Join Clubs:** Form local leagues, venue clubs, or online training groups.
-- **Club Roster & Wall:** Share announcements, view active members, and track internal club rankings.
+Every club table with a camera can stream to the club's own YouTube channel.
 
-### ⚔️ Match Challenges & Rankings
+- **Connect once:** a club admin links the club's YouTube channel with Google sign-in. Each table then gets its own stream, created automatically when its camera URL is saved.
+- **Streams only when needed:** a server job checks every minute and starts a broadcast only while a match is on that table. Tournament matches always stream publicly. Other games stream only if recording is ticked when the match is started, with the privacy picked there.
+- **One video per match:** recordings are split and titled per match, and players get an email with the YouTube link when their video is ready.
+- **Scoreboard overlay:** live score overlays for OBS, per table (`/overlay/table/…`) and per tournament match (`/overlay/$tournamentId/$matchId`).
+- **OBS setup:** a downloadable OBS scene collection, an OBS dock page for running matches from inside OBS, and `find-cameras` scripts (Windows and Mac/Linux) to find the table cameras on the club's network.
+- **Admin page:** camera and stream settings per table at `/app/$clubSlug/club/streaming`.
 
-- **Direct Challenges:** Challenge other players to matches (8-Ball, 9-Ball, 10-Ball, Straight Pool, etc.).
-- **Competitive Leaderboards:** Skill-based ranking system (ELO / handicap system) to see where you stand within a club.
-- **Match Logging:** Track scores, match history, and head-to-head records.
+### 📺 Live Scoreboards
 
-### 💬 Social Feed & Interactions
+- **Tablet scoreboards:** full-screen, kiosk-style scoreboards for club tablets, paired to a table, with a one-tap rematch.
+- **TV view:** a wall screen for the club, showing live matches and today's games.
 
-- **Activity Feed:** Share match results and drill achievements with your club.
-- **Reactions & Comments:** Like, react, and comment on friend and club activity.
+### ⚔️ Games, Rankings & Challenges
+
+- **Game logging:** scores, match history and head-to-head records. Admins can edit or delete games.
+- **Club rankings:** split by division, plus a daily ranking with a month calendar.
+- **Ranking nights:** a guided flow for running a club's weekly ranking evening.
+- **Challenges:** challenge other players in your club.
+
+### 🎯 Drills & Training
+
+- **Drill library:** browse and create drills with table diagrams, setup and scoring. A shared catalog, plus drills each club makes for itself.
+- **Table drills:** run a drill on a club table.
+- **Training plans:** personal plans, with results and progress tracked over time.
+- Switchable with one flag in [`src/libs/algorithms/features.ts`](src/libs/algorithms/features.ts).
+
+### 🏠 Clubs
+
+- **Public club pages:** hours, description, venue photos, players, games and tables, searchable in the `/clubs` directory.
+- **Joining:** join requests, printable invites, and ownership claims for listed clubs, with email notifications.
+- **Admin tools:** members, tables, streaming settings, and an operator dashboard (`/app/ops`).
+- **Per-club setup:** timezone-aware day boundaries and an installable PWA per club.
+- **No club needed:** players can use the app without joining a club.
+- **Pricing:** €15/month flat per club, at [`/pricing`](https://poolclubs.app/pricing).
+
+### 💬 Social
+
+- **Activity feed:** match results and club activity, filtered to your membership period.
+- **Comments and mentions:** comment, edit comments and @mention players.
+- **Notifications:** in-app and web push.
 
 ---
 
 ## 🛠 Running it
 
-Requires Node ≥ 22.6 (see `.nvmrc`). Docker + the
+Requires the Node version in `.nvmrc`. Docker + the
 [Supabase CLI](https://supabase.com/docs/guides/cli) are needed for
 `db:dump` / `db:types` (see `sql/README.md`).
 
@@ -96,11 +127,21 @@ generate-vapid-keys` makes a pair. Only the public half is prefixed, because
 Vite inlines every `VITE_*` into the client bundle and the signing key must not
 go there. Without them the feature switches itself off rather than breaking.
 
+YouTube streaming adds `YOUTUBE_CLIENT_ID` and `YOUTUBE_CLIENT_SECRET` (a Google
+Cloud OAuth client with the YouTube Data API v3), `TOKEN_ENCRYPTION_KEY`
+(`openssl rand -hex 32`, encrypts refresh tokens and stream keys at rest) and
+`SUPABASE_SERVICE_ROLE_KEY`. None are `VITE_*`: only server routes and the
+once-a-minute reconciler in
+[`netlify/functions/youtube-reconcile.mts`](netlify/functions/youtube-reconcile.mts)
+read them. Without them the reconciler does nothing.
+
 ## 🧱 How it fits together
 
 **TanStack Start** (React + Vite, server-rendered) with **file-based routes** in
 [`src/routes/`](src/routes/), **Supabase** for data and auth, **TanStack Query**
-for the client cache, **Tailwind 4** for styling. Deployed to Netlify.
+for the client cache, **Tailwind 4** for styling. Deployed to Netlify. Each
+library and service, and where it lives, is listed in
+[`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 A few things worth knowing before changing it:
 
@@ -110,7 +151,7 @@ A few things worth knowing before changing it:
   written as route patterns (`to="/app/$clubSlug/players/$playerId"`), so a typo
   is a build error. [`AppLink`](src/components/layout/AppLink.tsx) fills the club in.
 - **Auth is server-side.** Sign-in, sign-up, sign-out and the Google round trip
-  are server functions in [`src/libs/auth.functions.ts`](src/libs/auth.functions.ts);
+  are server functions in [`src/libs/server/auth.functions.ts`](src/libs/server/auth.functions.ts);
   the session lives in httpOnly cookies that both the server and the browser
   client read. `beforeLoad` turns unauthorised requests away before any loader
   runs.
