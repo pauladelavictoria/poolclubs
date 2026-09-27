@@ -16,7 +16,7 @@ import { gamesQuery } from "@/queries/games";
 import { clubPhotosQuery, type ClubPhoto } from "@/queries/clubPhotos";
 import { orderPhotos } from "@/libs/algorithms/photoOrder";
 import { groupTablesByFacts } from "@/libs/algorithms/tableFacts";
-import { useDialog } from "@/hooks/useDialog";
+import { useDialog, useLingering } from "@/hooks/useDialog";
 import {
   publicClubRosterQuery,
   publicClubTablesQuery,
@@ -696,7 +696,9 @@ function PhotoLightbox({
 }) {
   const { t } = useT();
   const ref = useDialog(index !== null);
-  const photo = index === null ? null : photos[index];
+  // Kept through the close animation — see useLingering.
+  const shownIndex = useLingering(index);
+  const photo = shownIndex === null ? null : photos[shownIndex];
 
   return (
     <dialog
@@ -734,7 +736,7 @@ function PhotoLightbox({
           </button>
           {photos.length > 1 && (
             <p className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-control bg-pocket/90 px-2 py-0.5 font-mono text-caption tabular-nums text-ink-soft">
-              {index !== null ? index + 1 : 0} / {photos.length}
+              {shownIndex !== null ? shownIndex + 1 : 0} / {photos.length}
             </p>
           )}
         </div>

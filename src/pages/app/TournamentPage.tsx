@@ -54,7 +54,7 @@ import { CategoriesBadge } from "@/components/ui/Ball";
 import { Fact } from "@/components/ui/Fact";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useDialog } from "@/hooks/useDialog";
+import { useDialog, useLingering } from "@/hooks/useDialog";
 import {
   FORMAT_KEY,
   tournamentValues,
@@ -98,10 +98,14 @@ export default function TournamentPage() {
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const editRef = useDialog(isEditOpen);
+  // Kept through the close animation — see useLingering.
+  const shownIsEditOpen = useLingering(isEditOpen);
   // Either a fixture tapped in the bracket, or "new" for the pick-the-players
   // route. Both end up filing a result against a fixture.
   const [playing, setPlaying] = useState<TournamentMatch | "new" | null>(null);
   const recordRef = useDialog(!!playing);
+  // Kept through the close animation — see useLingering.
+  const shownPlaying = useLingering(playing);
   const [adding, setAdding] = useState("");
   const [addingPartner, setAddingPartner] = useState("");
   const [partnerId, setPartnerId] = useState("");
@@ -784,7 +788,7 @@ export default function TournamentPage() {
         <h2 className="mb-4 text-h3 font-semibold text-ink">
           {t("tournaments.edit")}
         </h2>
-        {isEditOpen && (
+        {shownIsEditOpen && (
           <TournamentForm
             initialValues={tournamentValues(tournament)}
             // Once the fixtures exist they were generated from these
@@ -814,11 +818,11 @@ export default function TournamentPage() {
         }}
       >
         {/* Mounted only while open, so the pickers start empty every time. */}
-        {playing && (
+        {shownPlaying && (
           <PlayGameForm
             entrants={entrantPlayers}
             meId={meId}
-            initialMatch={playing === "new" ? null : playing}
+            initialMatch={shownPlaying === "new" ? null : shownPlaying}
             findMatch={findMatch}
             raceFor={raceOf}
             isSubmitting={recordResult.isPending}

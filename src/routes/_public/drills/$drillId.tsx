@@ -36,8 +36,10 @@ export const Route = createFileRoute("/_public/drills/$drillId")({
         description: drill.description,
         path,
         origin,
-        // A drill's diagram is drawn as SVG in the page, so there is no image
-        // file to point a crawler at — the section card stands in.
+        // The diagram is SVG in the page, which no crawler renders, so it is
+        // redrawn as a PNG card — see routes/api/og/drills.
+        image: `/api/og/drills/${drill.id}.png`,
+        wideImage: true,
         fallback: "drills",
       }),
       links: canonical(path, origin),

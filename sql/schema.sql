@@ -572,6 +572,36 @@ END $$;
 ALTER FUNCTION "public"."cut_fixtures"("p_tournament" integer, "p_from" "text", "p_to" "text", "p_fixtures" "jsonb", "p_drop" integer[]) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."drill_week_board"("p_drill_id" integer, "p_since" timestamp with time zone, "p_club_id" integer) RETURNS TABLE("player_id" bigint, "player_name" "text", "avatar_url" "text", "best_score" integer, "max_score" integer, "attempts" integer)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  WITH logs AS (
+    SELECT dl.player_id, dl.score, dl.max_score, dl.created_at,
+      count(*) OVER w AS attempts,
+      row_number() OVER (w ORDER BY dl.score DESC, dl.created_at) AS rn
+    FROM drill_logs dl
+    JOIN players p ON p.id = dl.player_id
+    WHERE dl.drill_id = p_drill_id
+      AND dl.created_at >= p_since
+      AND p.club_id = p_club_id
+      AND NOT p.is_device
+      AND is_club_member(p_club_id)
+    WINDOW w AS (PARTITION BY dl.player_id)
+  )
+  SELECT l.player_id, pe.name, pe.avatar_url, l.score, l.max_score, l.attempts::integer
+  FROM logs l
+  JOIN players p ON p.id = l.player_id
+  JOIN people pe ON pe.id = p.person_id
+  WHERE l.rn = 1
+  ORDER BY l.score DESC, l.attempts ASC, l.created_at ASC
+  LIMIT 50;
+$$;
+
+
+ALTER FUNCTION "public"."drill_week_board"("p_drill_id" integer, "p_since" timestamp with time zone, "p_club_id" integer) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."finish_live_match"("p_id" "uuid") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -1808,6 +1838,8 @@ CREATE TABLE IF NOT EXISTS "public"."clubs" (
     "has_logo" boolean GENERATED ALWAYS AS (("logo_url" IS NOT NULL)) STORED,
     "night_call_at" timestamp with time zone,
     "contact_email" "text",
+    "drill_override_id" integer,
+    "drill_override_week" "date",
     CONSTRAINT "clubs_contact_email_shape" CHECK ((("contact_email" IS NULL) OR ("contact_email" ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'::"text"))),
     CONSTRAINT "clubs_country_shape" CHECK ((("country" IS NULL) OR ("country" ~ '^[A-Z]{2}$'::"text"))),
     CONSTRAINT "clubs_latlon_pair" CHECK (((("lat" IS NULL) = ("lon" IS NULL)) AND (("lat" IS NULL) OR ((("lat" >= ('-90'::integer)::double precision) AND ("lat" <= (90)::double precision)) AND (("lon" >= ('-180'::integer)::double precision) AND ("lon" <= (180)::double precision)))))),
@@ -2760,6 +2792,11 @@ ALTER TABLE ONLY "public"."club_youtube"
 
 
 ALTER TABLE ONLY "public"."clubs"
+    ADD CONSTRAINT "clubs_drill_override_id_fkey" FOREIGN KEY ("drill_override_id") REFERENCES "public"."drills"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."clubs"
     ADD CONSTRAINT "clubs_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "auth"."users"("id");
 
 
@@ -3148,10 +3185,6 @@ CREATE POLICY "Members can clear an abandoned match" ON "public"."live_matches" 
 
 
 
-CREATE POLICY "Members can delete drill logs" ON "public"."drill_logs" FOR DELETE TO "authenticated" USING ("public"."can_touch_player"("player_id"));
-
-
-
 CREATE POLICY "Members can enter themselves" ON "public"."tournament_players" FOR INSERT TO "authenticated" WITH CHECK (("public"."is_club_member"("public"."tournament_club"("tournament_id")) AND (EXISTS ( SELECT 1
    FROM "public"."players"
   WHERE (("players"."id" = "tournament_players"."player_id") AND ("players"."club_id" = "public"."tournament_club"("tournament_players"."tournament_id"))))) AND ("public"."is_own_player"("player_id") OR "public"."is_club_admin"("public"."tournament_club"("tournament_id")))));
@@ -3285,6 +3318,12 @@ CREATE POLICY "Own club requests" ON "public"."club_requests" FOR SELECT TO "aut
 
 
 CREATE POLICY "Own person can be updated" ON "public"."people" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "Own player or club admin can delete drill logs" ON "public"."drill_logs" FOR DELETE TO "authenticated" USING (("public"."is_own_player"("player_id") OR (EXISTS ( SELECT 1
+   FROM "public"."players" "p"
+  WHERE (("p"."id" = "drill_logs"."player_id") AND "public"."is_club_admin"("p"."club_id"))))));
 
 
 
@@ -3763,6 +3802,12 @@ GRANT ALL ON FUNCTION "public"."create_club"("club_name" "text", "p_owner" "uuid
 GRANT ALL ON FUNCTION "public"."cut_fixtures"("p_tournament" integer, "p_from" "text", "p_to" "text", "p_fixtures" "jsonb", "p_drop" integer[]) TO "anon";
 GRANT ALL ON FUNCTION "public"."cut_fixtures"("p_tournament" integer, "p_from" "text", "p_to" "text", "p_fixtures" "jsonb", "p_drop" integer[]) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."cut_fixtures"("p_tournament" integer, "p_from" "text", "p_to" "text", "p_fixtures" "jsonb", "p_drop" integer[]) TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."drill_week_board"("p_drill_id" integer, "p_since" timestamp with time zone, "p_club_id" integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."drill_week_board"("p_drill_id" integer, "p_since" timestamp with time zone, "p_club_id" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."drill_week_board"("p_drill_id" integer, "p_since" timestamp with time zone, "p_club_id" integer) TO "service_role";
 
 
 

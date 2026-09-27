@@ -333,6 +333,8 @@ export type Database = {
           country: string | null
           created_at: string | null
           description: string | null
+          drill_override_id: number | null
+          drill_override_week: string | null
           has_logo: boolean | null
           id: number
           is_public: boolean
@@ -358,6 +360,8 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           description?: string | null
+          drill_override_id?: number | null
+          drill_override_week?: string | null
           has_logo?: boolean | null
           id?: number
           is_public?: boolean
@@ -383,6 +387,8 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           description?: string | null
+          drill_override_id?: number | null
+          drill_override_week?: string | null
           has_logo?: boolean | null
           id?: number
           is_public?: boolean
@@ -401,7 +407,15 @@ export type Database = {
           theme_color?: Database["public"]["Enums"]["BallColor"]
           timezone?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clubs_drill_override_id_fkey"
+            columns: ["drill_override_id"]
+            isOneToOne: false
+            referencedRelation: "drills"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comments: {
         Row: {
@@ -1500,6 +1514,17 @@ export type Database = {
           p_tournament: number
         }
         Returns: undefined
+      }
+      drill_week_board: {
+        Args: { p_club_id: number; p_drill_id: number; p_since: string }
+        Returns: {
+          attempts: number
+          avatar_url: string
+          best_score: number
+          max_score: number
+          player_id: number
+          player_name: string
+        }[]
       }
       finish_live_match: { Args: { p_id: string }; Returns: string }
       game_winner: { Args: { g: string }; Returns: number }

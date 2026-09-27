@@ -11,6 +11,9 @@ import PageTitle from "@/components/layout/PageTitle";
 import PoolTableDiagram from "@/components/drills/PoolTableDiagram";
 import DrillLogForm from "@/components/drills/DrillLogForm";
 import SocialBar from "@/components/social/SocialBar";
+import DrillWeekBoard from "@/components/drills/DrillWeekBoard";
+import { useDrillOfWeek, useSetDrillOfWeek } from "@/hooks/useDrillOfWeek";
+import { MIN_WEEKLY_MAX_SCORE } from "@/libs/algorithms/drillOfWeek";
 import { usePlayerLookup } from "@/hooks/usePlayers";
 import { scoreBand, scorePct } from "@/libs/algorithms/scoreBand";
 import { fmt } from "@/libs/algorithms/dayLabel";
@@ -44,7 +47,9 @@ export default function DrillDetailPage() {
 
   const { data: drillLogs } = useDrillLogs({ drill_id: drillId });
   const { nameOf } = usePlayerLookup();
-  const { user, isAdmin, player } = useAuth();
+  const { user, isAdmin, isClubAdmin, player, activeClub } = useAuth();
+  const weekly = useDrillOfWeek();
+  const setWeekly = useSetDrillOfWeek();
   // Own plan, whichever page this was opened from: the log below is always
   // filed under the signed-in player, and a plan only ever belongs to them.
   const { data: planData, completeStep } = useTrainingPlan(player.id);
@@ -79,6 +84,24 @@ export default function DrillDetailPage() {
             }),
           ),
         ),
+    });
+  };
+
+  const isWeekly = !!drill && weekly.drill?.id === drill.id;
+  // The admin's own pick, as opposed to the rotation landing on it.
+  const isOverride = isWeekly && activeClub?.drill_override_id === drill?.id;
+
+  const handleSetWeekly = (id: number | null) => {
+    if (
+      drill &&
+      id !== null &&
+      drill.max_score < MIN_WEEKLY_MAX_SCORE &&
+      !confirm(t("drillWeek.lowCapHint", { n: drill.max_score }))
+    )
+      return;
+    setWeekly.mutate(id, {
+      onSuccess: () => toast.success(t("drillWeek.setToast")),
+      onError: () => toast.error(t("drillWeek.setError")),
     });
   };
 
@@ -127,6 +150,16 @@ export default function DrillDetailPage() {
     <>
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-4">
         <PageTitle title={drill.name}>
+          {isClubAdmin && (!isWeekly || isOverride) && (
+            <button
+              type="button"
+              onClick={() => handleSetWeekly(isOverride ? null : drill.id)}
+              disabled={setWeekly.isPending}
+              className={buttonClasses({ variant: "secondary", size: "sm" })}
+            >
+              {t(isOverride ? "drillWeek.reset" : "drillWeek.makeIt")}
+            </button>
+          )}
           {canEdit && (
             <>
               <AppLink
@@ -211,6 +244,19 @@ export default function DrillDetailPage() {
                 {drill.scoring_method}
               </p>
             </Card>
+
+            {isWeekly && (
+              <Card className="p-5">
+                <h2 className="mb-3 text-h4 font-semibold text-ink">
+                  {t("drillWeek.title")}
+                </h2>
+                <DrillWeekBoard
+                  drillId={drill.id}
+                  since={weekly.since}
+                  highlight={player.id}
+                />
+              </Card>
+            )}
 
             <Card className="p-5">
               <h2 className="mb-4 text-h4 font-semibold text-ink">

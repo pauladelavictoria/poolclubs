@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getRouteApi } from "@tanstack/react-router";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { LuMonitorSmartphone } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,12 +13,17 @@ import { seatsOfGroup, useSuggestions } from "@/hooks/useSuggestions";
 import Scoreboard from "@/components/live/Scoreboard";
 import StartMatchForm from "@/components/live/StartMatchForm";
 import SuggestedGroup from "@/components/live/SuggestedGroup";
+import DrillWeekBoard from "@/components/drills/DrillWeekBoard";
+import PoolTableDiagram from "@/components/drills/PoolTableDiagram";
+import PlayerPicker from "@/components/players/PlayerPicker";
+import { useDrillOfWeek } from "@/hooks/useDrillOfWeek";
+import { DRILLS_ENABLED } from "@/libs/algorithms/features";
 import { AppLink, useAppNavigate } from "@/components/layout/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { dialogClasses } from "@/components/ui/cardStyles";
 import { PageSkeleton } from "@/components/ui/Skeleton";
-import { useDialog } from "@/hooks/useDialog";
+import { useDialog, useLingering } from "@/hooks/useDialog";
 import { pinKiosk, readKioskTable } from "@/libs/browser/kiosk";
 import { readTodaySetup } from "@/libs/prefs";
 import { seatsNeeded } from "@/libs/algorithms/today";
@@ -39,7 +44,9 @@ const route = getRouteApi("/app/_authed/$clubSlug/tables/$tableId");
  */
 export default function TablePage() {
   const { t } = useT();
-  const { tableId } = route.useParams();
+  const { clubSlug, tableId } = route.useParams();
+  const navigate = useNavigate();
+  const [pickingShooter, setPickingShooter] = useState(false);
   const id = Number(tableId);
   const { player, isClubAdmin } = useAuth();
   const { data: tables, isLoading } = useClubTables();
@@ -49,6 +56,7 @@ export default function TablePage() {
   const { data: streamedTableIds } = useStreamedTableIds();
   const { data: leagueFixtures } = useLeagueFixtures();
   const appNavigate = useAppNavigate();
+  const weekly = useDrillOfWeek();
 
   // The club's setting as it stands. Read, not owned: /night is where it is
   // changed, and a table arguing with it would be a second answer.
@@ -76,6 +84,8 @@ export default function TablePage() {
     league?: LeagueFixture["tournament"];
   } | null>(null);
   const dialogRef = useDialog(starting !== null);
+  // Kept through the close animation — see useLingering.
+  const shownStarting = useLingering(starting);
   const close = () => setStarting(null);
 
   const match = (live ?? []).find((m) => m.table_id === id);
@@ -211,18 +221,16 @@ export default function TablePage() {
           </AppLink>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 items-center justify-center p-4">
-          <Card className="w-full max-w-sm space-y-4 p-5">
-            <div>
-              <p className="text-caption font-medium uppercase tracking-wide text-ink-faint">
-                {t("tables.free")}
-              </p>
-              <h2 className="mt-1 text-h3 font-semibold text-ink">
-                {table.label}
+        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+          {/* The primary card: centred in its column and set larger than the
+              drill beside it — a table is for matches first. */}
+          <div className="flex shrink-0 items-center justify-center overflow-y-auto p-4 md:min-h-0 md:flex-[3] md:shrink">
+            <Card className="w-full max-w-xl space-y-5 p-6">
+              <h2 className="text-h2 font-semibold text-ink">
+                {t("live.start")}
               </h2>
-            </div>
 
-            {/* Whoever the night has put on this table, already here rather than
+              {/* Whoever the night has put on this table, already here rather than
                 waiting for somebody to walk over and pick from a list. This is
                 the whole of "the next players appear on the tablet": the row is
                 deleted when the last match was filed, realtime says so, and the
@@ -230,63 +238,112 @@ export default function TablePage() {
 
                 Still an offer and never an auto-start — see the note in
                 LiveMatchPage. */}
-            {next && (
-              <div className="space-y-3 border-t border-hairline pt-4">
-                <p className="text-caption font-medium uppercase tracking-wide text-ink-faint">
-                  {t("night.nextUp")}
-                </p>
-                <SuggestedGroup group={next} seats={seats} />
-                {canStart(next) && (
-                  <Button
-                    className="w-full"
-                    disabled={startMatch.isPending}
-                    onClick={() => startNext(next)}
-                  >
-                    {t("night.startOn", { name: table.label })}
-                  </Button>
-                )}
-              </div>
-            )}
+              {next && (
+                <div className="space-y-3">
+                  <p className="text-caption font-medium uppercase tracking-wide text-ink-faint">
+                    {t("night.nextUp")}
+                  </p>
+                  <SuggestedGroup group={next} seats={seats} />
+                  {canStart(next) && (
+                    <Button
+                      className="w-full"
+                      disabled={startMatch.isPending}
+                      onClick={() => startNext(next)}
+                    >
+                      {t("night.startOn", { name: table.label })}
+                    </Button>
+                  )}
+                </div>
+              )}
 
-            {/* Kept whatever the offer says: the room is allowed to disagree
+              {/* Kept whatever the offer says: the room is allowed to disagree
                 with the queue, and somebody who has just walked in is not in it
-                at all yet. */}
-            {/* A league running is a reason to be at the table that the table
-                should say out loud: the fixture list is the one thing nobody
-                walks over holding. One button per league — clubs run one, and a
-                picker for the second one would be a screen to get through
-                before the form that asks the same question. */}
-            {/* Exactly one thing to press, whatever the club has on: the
-                night's own offer when there is one, else the league, else the
-                game. Full width and stacked — a free table is a card with one
-                question on it, and a row of buttons hugging the right edge
-                reads as three afterthoughts. */}
-            <div className="flex flex-col gap-2">
-              {leagues.map((league) => (
+                at all yet. One button per league — clubs run one — beside the
+                plain game; the night's offer above, when there is one, is the
+                primary. */}
+              <div className="flex flex-col gap-3">
+                {leagues.map((league) => (
+                  <Button
+                    key={league.id}
+                    className="h-14 w-full text-h4"
+                    variant={next ? "secondary" : "primary"}
+                    onClick={() => void open(league)}
+                    disabled={!player}
+                  >
+                    {t("live.playForLeague", { name: league.name })}
+                  </Button>
+                ))}
                 <Button
-                  key={league.id}
-                  className="w-full"
-                  variant={next ? "secondary" : "primary"}
-                  onClick={() => void open(league)}
+                  className="h-14 w-full text-h4"
+                  variant={
+                    next
+                      ? "ghost"
+                      : leagues.length > 0
+                        ? "secondary"
+                        : "primary"
+                  }
+                  onClick={() => void open()}
                   disabled={!player}
                 >
-                  {t("live.playForLeague", { name: league.name })}
+                  {t("live.playHere")}
                 </Button>
-              ))}
-              <Button
-                className="w-full"
-                variant={
-                  next ? "ghost" : leagues.length > 0 ? "secondary" : "primary"
-                }
-                onClick={() => void open()}
-                disabled={!player}
-              >
-                {t("live.playHere")}
-              </Button>
-            </div>
-          </Card>
+              </div>
+            </Card>
+          </div>
+
+          {/* The week's drill, while nobody is playing on it: the leaders are
+              the invitation, the button is the way to beat them. Secondary:
+              the narrower column behind a rule rather than a card. The button
+              stays put; everything above it scrolls. */}
+          {DRILLS_ENABLED && weekly.drill && (
+            <aside className="flex min-h-0 flex-1 flex-col border-t border-hairline md:flex-[2] md:border-t-0 md:border-l">
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+                <h2 className="text-caption font-medium uppercase tracking-wide text-ink-faint">
+                  {t("drillWeek.title")}
+                </h2>
+                <div className="space-y-2">
+                  <p className="text-body font-medium text-ink">
+                    {weekly.drill.name}
+                  </p>
+                  <PoolTableDiagram
+                    ballPositions={weekly.drill.ball_positions}
+                    shotPaths={weekly.drill.shot_paths}
+                    compact
+                    className="shrink-0"
+                  />
+                </div>
+                <DrillWeekBoard
+                  drillId={weekly.drill.id}
+                  since={weekly.since}
+                  limit={5}
+                />
+              </div>
+              <div className="shrink-0 border-t border-hairline p-4">
+                <Button
+                  className="w-full"
+                  variant="secondary"
+                  disabled={!player}
+                  onClick={() => setPickingShooter(true)}
+                >
+                  {t("drillWeek.playOnTable")}
+                </Button>
+              </div>
+            </aside>
+          )}
         </div>
       )}
+
+      <PlayerPicker
+        open={pickingShooter}
+        onClose={() => setPickingShooter(false)}
+        onPick={(shooter) =>
+          navigate({
+            to: "/app/$clubSlug/tables/$tableId/drill",
+            params: { clubSlug, tableId },
+            search: { player: shooter.id },
+          })
+        }
+      />
 
       <dialog
         ref={dialogRef}
@@ -297,15 +354,16 @@ export default function TablePage() {
           if (e.target === dialogRef.current) close();
         }}
       >
-        {starting && player && (
+        {shownStarting && player && (
           <StartMatchForm
             me={player}
-            league={starting.league}
+            league={shownStarting.league}
             // A pinned tablet is scoring for whoever is standing at it, and the
             // device account is one of the seats the database will accept — so
             // the roster it offers is everyone but itself, the same as a phone.
             opponents={roster.filter((p) => p.id !== player.id)}
             table={table}
+            atTable
             streamed={(streamedTableIds ?? []).includes(table.id)}
             leagueFixtures={leagueFixtures}
             onSubmit={(values) =>

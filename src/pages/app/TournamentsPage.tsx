@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { CategoriesBadge } from "@/components/ui/Ball";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
-import { useDialog } from "@/hooks/useDialog";
+import { useDialog, useLingering } from "@/hooks/useDialog";
 import { eventDates } from "@/libs/algorithms/eventDates";
 import { FORMAT_KEY, type TournamentStatus } from "@/types";
 import { useT, type Key } from "@/i18n";
@@ -51,6 +51,8 @@ export default function TournamentsPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const dialogRef = useDialog(isModalOpen);
+  // Kept through the close animation — see useLingering.
+  const shownIsModalOpen = useLingering(isModalOpen);
 
   const create = async (values: TournamentValues) => {
     const ok = await runMutation(
@@ -125,7 +127,7 @@ export default function TournamentsPage() {
           {t("tournaments.new")}
         </h2>
         {/* Mounted only while open, so the form starts empty every time. */}
-        {isModalOpen && (
+        {shownIsModalOpen && (
           <TournamentForm
             onSubmit={create}
             onCancel={() => setIsModalOpen(false)}

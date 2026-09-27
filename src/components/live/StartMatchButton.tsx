@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { dialogClasses } from "@/components/ui/cardStyles";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubTables } from "@/hooks/useClubTables";
-import { useDialog } from "@/hooks/useDialog";
+import { useDialog, useLingering } from "@/hooks/useDialog";
 import { useLiveMatches, useManageLiveMatch } from "@/hooks/useLiveMatch";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useLeagueFixtures } from "@/hooks/useTournaments";
@@ -36,6 +36,8 @@ export default function StartMatchButton({
   const appNavigate = useAppNavigate();
   const [starting, setStarting] = useState(false);
   const dialogRef = useDialog(starting);
+  // Kept through the close animation — see useLingering.
+  const shownStarting = useLingering(starting);
   const close = () => setStarting(false);
 
   if (!player) return null;
@@ -64,7 +66,7 @@ export default function StartMatchButton({
           if (e.target === dialogRef.current) close();
         }}
       >
-        {starting && (
+        {shownStarting && (
           <StartMatchForm
             me={player}
             opponents={(players ?? []).filter((p) => p.id !== player.id)}

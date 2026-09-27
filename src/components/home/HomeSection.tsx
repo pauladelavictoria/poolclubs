@@ -21,8 +21,9 @@ export function HomeSection({
   children,
 }: {
   titleKey: Key;
-  /** The section this block is the front of. */
-  to: LinkProps["to"];
+  /** The section this block is the front of. Omitted for a block that is
+   *  the whole of its answer — the week's drill has no "all" to see. */
+  to?: LinkProps["to"];
   children: ReactNode;
 }) {
   const { t } = useT();
@@ -37,14 +38,16 @@ export function HomeSection({
           in a card the cards inside would then sit in. */}
       <div className="flex items-baseline justify-between gap-3 border-b border-hairline pb-2">
         <h2 className="text-h4 font-semibold text-ink">{t(titleKey)}</h2>
-        <AppLink
-          to={to}
-          viewTransition
-          className="flex shrink-0 items-center gap-0.5 text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-strike"
-        >
-          {t("common.seeAll")}
-          <LuChevronRight className="h-3.5 w-3.5" aria-hidden />
-        </AppLink>
+        {to && (
+          <AppLink
+            to={to}
+            viewTransition
+            className="flex shrink-0 items-center gap-0.5 text-caption font-medium text-ink-faint transition-colors duration-150 hover:text-strike"
+          >
+            {t("common.seeAll")}
+            <LuChevronRight className="h-3.5 w-3.5" aria-hidden />
+          </AppLink>
+        )}
       </div>
       {children}
     </section>

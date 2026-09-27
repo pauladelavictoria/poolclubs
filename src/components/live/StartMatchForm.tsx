@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { LuMinus, LuPlus } from "react-icons/lu";
 import { Select } from "@/components/ui/Select";
+import { Avatar } from "@/components/ui/Avatar";
+import PlayerPicker from "@/components/players/PlayerPicker";
 import { DisciplineBall } from "@/components/ui/Ball";
 import { PlayerOptions } from "@/components/players/PlayerOptions";
 import { Input } from "@/components/ui/Input";
@@ -56,6 +58,7 @@ export default function StartMatchForm({
   onCancel,
   isSubmitting,
   defaults = DEFAULT_SETUP,
+  atTable = false,
 }: {
   me: Player;
   /** Ignored when `lockedOpponent` is given. */
@@ -111,6 +114,10 @@ export default function StartMatchForm({
   }) => void;
   onCancel: () => void;
   isSubmitting: boolean;
+  /** Opened on a table's own screen — the tablet on the rail, whoever is signed
+   *  in on it. Seats are then picked from the big contacts-style list rather
+   *  than a native select. */
+  atTable?: boolean;
 }) {
   const { t } = useT();
   const { isClubAdmin } = useAuth();
@@ -137,11 +144,18 @@ export default function StartMatchForm({
   // other member picking two other names would have the insert refused.
   const isDevice = me.is_device === true;
   const forOthers = canScore(me, isClubAdmin);
+  const bigPicker = atTable || isDevice;
 
   /** An <option> cannot be styled, so presence is a mark in the text. */
   const label = (p: Player) =>
     hereIds.has(p.id) ? `\u25CF ${p.name}` : p.name;
   const [opponentId, setOpponentId] = useState("");
+  /** The seat the tablet's picker is open for — see pickField. */
+  const [picking, setPicking] = useState<{
+    title: string;
+    options: Player[];
+    set: (id: string) => void;
+  } | null>(null);
   // A league is played in singles or in couples, fixed when it was created, so
   // the format question does not arise — see the note on `league`.
   const [pickedMode, setMode] = useState<GameMode>(defaults.mode);
@@ -283,6 +297,42 @@ export default function StartMatchForm({
     Number.isInteger(effectiveRaceTo) &&
     effectiveRaceTo >= 1 &&
     effectiveRaceTo <= 50;
+
+  /** At the table a seat is a button that opens the contacts-style picker —
+   *  a native select there is a tiny wheel at arm's length. Phones keep the
+   *  select, which is the platform's own and already good. */
+  const pickField = (
+    title: string,
+    value: string,
+    set: (id: string) => void,
+    options: Player[],
+    id?: string,
+  ) => {
+    const picked = options.find((p) => String(p.id) === value);
+    return (
+      <button
+        id={id}
+        type="button"
+        disabled={isSubmitting}
+        onClick={() => setPicking({ title, options, set })}
+        className="flex h-11 w-full items-center gap-2 rounded-control border border-hairline bg-pocket px-3 text-left text-body text-ink disabled:opacity-50"
+      >
+        {picked ? (
+          <>
+            <Avatar
+              name={picked.name}
+              url={picked.avatar_url}
+              seed={picked.id}
+              className="h-7 w-7 shrink-0"
+            />
+            <span className="truncate">{label(picked)}</span>
+          </>
+        ) : (
+          <span className="text-ink-faint">{t("common.select")}</span>
+        )}
+      </button>
+    );
+  };
 
   return (
     <form
@@ -456,24 +506,31 @@ export default function StartMatchForm({
             {forOthers ? t("live.sideOne") : t("live.you")}
           </p>
           {forOthers ? (
-            <Select
-              aria-label={t("live.sideOne")}
-              value={player1Id}
-              onChange={(e) => setPlayer1Id(e.target.value)}
-              disabled={isSubmitting}
-              required
-            >
-              <option value="">{t("common.select")}</option>
-              {/* An admin starting a match is usually in it, so their own
-                  name leads this side. Not on the tablet: `sideOne` already
-                  leaves the device out, and `isDevice` keeps it out of the
-                  mark too. */}
-              <PlayerOptions
-                players={sideOneOptions}
-                meId={isDevice ? undefined : me.id}
-                format={label}
-              />
-            </Select>
+            bigPicker ? (
+              pickField(
+                t("live.sideOne"),
+                player1Id,
+                setPlayer1Id,
+                sideOneOptions,
+              )
+            ) : (
+              <Select
+                aria-label={t("live.sideOne")}
+                value={player1Id}
+                onChange={(e) => setPlayer1Id(e.target.value)}
+                disabled={isSubmitting}
+                required
+              >
+                <option value="">{t("common.select")}</option>
+                {/* An admin starting a match is usually in it, so their own
+                    name leads this side. */}
+                <PlayerOptions
+                  players={sideOneOptions}
+                  meId={me.id}
+                  format={label}
+                />
+              </Select>
+            )
           ) : (
             <p className="truncate text-body font-medium text-ink">
               {me.name}
@@ -484,20 +541,30 @@ export default function StartMatchForm({
           {mode === "doubles" && (
             <div className="space-y-1.5 pt-1">
               <Label htmlFor="live-partner1">{t("live.partner")}</Label>
-              <Select
-                id="live-partner1"
-                value={partner1Id}
-                onChange={(e) => setPartner1Id(e.target.value)}
-                disabled={isSubmitting}
-                required
-              >
-                <option value="">{t("common.select")}</option>
-                {roster.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {label(p)}
-                  </option>
-                ))}
-              </Select>
+              {bigPicker ? (
+                pickField(
+                  t("live.partner"),
+                  partner1Id,
+                  setPartner1Id,
+                  roster,
+                  "live-partner1",
+                )
+              ) : (
+                <Select
+                  id="live-partner1"
+                  value={partner1Id}
+                  onChange={(e) => setPartner1Id(e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                >
+                  <option value="">{t("common.select")}</option>
+                  {roster.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {label(p)}
+                    </option>
+                  ))}
+                </Select>
+              )}
             </div>
           )}
         </div>
@@ -512,6 +579,13 @@ export default function StartMatchForm({
               {lockedOpponent.name}
               <CountryFlag country={lockedOpponent.country} />
             </p>
+          ) : bigPicker ? (
+            pickField(
+              t("live.sideTwo"),
+              opponentId,
+              setOpponentId,
+              sideTwoOptions,
+            )
           ) : (
             <Select
               aria-label={t("live.opponent")}
@@ -536,20 +610,30 @@ export default function StartMatchForm({
           {mode === "doubles" && (
             <div className="space-y-1.5 pt-1">
               <Label htmlFor="live-partner2">{t("live.partner")}</Label>
-              <Select
-                id="live-partner2"
-                value={partner2Id}
-                onChange={(e) => setPartner2Id(e.target.value)}
-                disabled={isSubmitting}
-                required
-              >
-                <option value="">{t("common.select")}</option>
-                {roster.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {label(p)}
-                  </option>
-                ))}
-              </Select>
+              {bigPicker ? (
+                pickField(
+                  t("live.partner"),
+                  partner2Id,
+                  setPartner2Id,
+                  roster,
+                  "live-partner2",
+                )
+              ) : (
+                <Select
+                  id="live-partner2"
+                  value={partner2Id}
+                  onChange={(e) => setPartner2Id(e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                >
+                  <option value="">{t("common.select")}</option>
+                  {roster.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {label(p)}
+                    </option>
+                  ))}
+                </Select>
+              )}
             </div>
           )}
         </div>
@@ -626,6 +710,16 @@ export default function StartMatchForm({
           {isSubmitting ? t("common.saving") : t("live.start")}
         </Button>
       </div>
+      <PlayerPicker
+        open={picking !== null}
+        title={picking?.title}
+        players={picking?.options ?? []}
+        onPick={(p) => {
+          picking?.set(String(p.id));
+          setPicking(null);
+        }}
+        onClose={() => setPicking(null)}
+      />
     </form>
   );
 }

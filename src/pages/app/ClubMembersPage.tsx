@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/Input";
 import { Button, IconButton } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { SkeletonRows } from "@/components/ui/Skeleton";
-import { useDialog } from "@/hooks/useDialog";
+import { useDialog, useLingering } from "@/hooks/useDialog";
 import type { Player, Category } from "@/types";
 import { useT } from "@/i18n";
 import { AppLink } from "@/components/layout/AppLink";
@@ -53,6 +53,8 @@ export default function ClubMembersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const dialogRef = useDialog(isModalOpen);
+  // Kept through the close animation — see useLingering.
+  const shownIsModalOpen = useLingering(isModalOpen);
 
   // Admin-only, enforced by the route's beforeLoad before this renders.
 
@@ -319,7 +321,7 @@ export default function ClubMembersPage() {
         </h2>
         {/* Mounted only while open, so the form starts empty every time rather
             than showing what the last edit typed. */}
-        {isModalOpen && (
+        {shownIsModalOpen && (
           <PlayerForm
             initialValues={
               editingPlayer
