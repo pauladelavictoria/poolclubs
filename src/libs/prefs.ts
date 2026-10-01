@@ -44,6 +44,13 @@ export const LANG_COOKIE = "lang";
 export const KIOSK_COOKIE = "kiosk";
 
 /**
+ * The club this device was last in, by slug — so /app can skip the picker for
+ * somebody in several clubs. A cookie because /app decides in beforeLoad, which
+ * runs on the server too.
+ */
+export const LAST_CLUB_COOKIE = "last_club";
+
+/**
  * What the club is playing today — format, game and race, as one string. Read on
  * the server so /today's bar is right in the first byte; see libs/algorithms/today.ts for
  * the shape and why it is not per club.

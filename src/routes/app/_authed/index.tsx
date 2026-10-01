@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { LAST_CLUB_COOKIE, readPref } from "@/libs/prefs";
 
 /**
  * /app has no page of its own any more — every page belongs to a club, and the
@@ -6,15 +7,22 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
  * which one when there's more than one, and when there is none, go to the page
  * that says so.
  *
- * There's no "last in" or "default" any more — picking one silently for
- * somebody in several clubs was arbitrary, so with more than one active
- * membership this always defers to /select-club instead of guessing.
+ * With more than one active membership, the club this device was last in wins
+ * (a cookie ClubLayout writes); only without one, or when it is no longer an
+ * active membership, does this defer to /select-club.
  */
 export const Route = createFileRoute("/app/_authed/")({
   beforeLoad: ({ context }) => {
     const active = context.memberships.filter((m) => m.status === "active");
 
     if (active.length > 1) {
+      const lastSlug = readPref(LAST_CLUB_COOKIE);
+      const last = active.find((m) => m.club?.slug === lastSlug);
+      if (last)
+        throw redirect({
+          to: "/app/$clubSlug",
+          params: { clubSlug: last.club!.slug },
+        });
       throw redirect({ to: "/app/select-club" });
     }
 
