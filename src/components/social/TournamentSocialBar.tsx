@@ -147,7 +147,7 @@ export default function TournamentSocialBar({
 
         {canWrite &&
           (picking ? (
-            <span className="inline-flex flex-wrap items-center gap-0.5 rounded-full border border-hairline px-1 py-0.5">
+            <span className="inline-flex flex-wrap items-center gap-0.5 rounded-3xl border border-hairline px-1 py-0.5">
               {REACTIONS.map((emoji) => (
                 <IconButton
                   key={emoji}

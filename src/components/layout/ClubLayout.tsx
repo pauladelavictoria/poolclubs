@@ -15,6 +15,7 @@ import ClubThemeStyle from "@/components/club/ClubThemeStyle";
 import { useRouteMeta } from "@/libs/routeMeta";
 import { useAuth, useSessionRefresh } from "@/hooks/useAuth";
 import { readKioskTable } from "@/libs/browser/kiosk";
+import { LAST_CLUB_COOKIE, writePref } from "@/libs/prefs";
 import KioskBar from "@/components/layout/KioskBar";
 
 const route = getRouteApi("/app/_authed/$clubSlug");
@@ -49,6 +50,13 @@ export default function ClubLayout() {
       refreshSession,
     });
   }, [queryClient, activeClubId, player.id, refreshSession]);
+
+  // Remembered for /app's redirect. Only an approved club: a pending one is
+  // not somewhere to be sent back to by default.
+  useEffect(() => {
+    if (isMember && activeClub?.slug)
+      writePref(LAST_CLUB_COOKIE, activeClub.slug);
+  }, [isMember, activeClub?.slug]);
 
   // A page that is the whole screen — the live scoreboard — keeps neither the
   // tab bar nor the room reserved for it. See RouteMeta.fullBleed.
