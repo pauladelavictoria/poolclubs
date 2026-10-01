@@ -12,6 +12,8 @@ import { Button, IconButton } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { fmt } from "@/libs/algorithms/dayLabel";
 import { CommentBody } from "@/components/social/CommentBody";
+import { CommentGif } from "@/components/social/CommentGif";
+import { GifPicker } from "@/components/social/GifPicker";
 import { MentionPicker } from "@/components/social/MentionPicker";
 import { useMentionPicker } from "@/hooks/useMentionPicker";
 import { REACTIONS, type SocialTarget } from "@/types";
@@ -48,6 +50,7 @@ export default function SocialBar({
   const [open, setOpen] = useState(defaultOpen);
   const [picking, setPicking] = useState(false);
   const [draft, setDraft] = useState("");
+  const [gifOpen, setGifOpen] = useState(false);
   /** Which comment is open for editing, and the text as it is being changed. */
   const [editing, setEditing] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
@@ -212,7 +215,11 @@ export default function SocialBar({
             >
               {nameOf(comments[0].author_player_id)}
             </AppLink>{" "}
-            <CommentBody body={comments[0].body} mention={mention} />
+            {comments[0].gif_url ? (
+              t("social.gif")
+            ) : (
+              <CommentBody body={comments[0].body} mention={mention} />
+            )}
           </span>
         </div>
       )}
@@ -280,6 +287,8 @@ export default function SocialBar({
                       {t("common.cancel")}
                     </Button>
                   </form>
+                ) : c.gif_url ? (
+                  <CommentGif url={c.gif_url} />
                 ) : (
                   <p className="whitespace-pre-wrap break-words text-body text-ink">
                     <CommentBody body={c.body} mention={mention} />
@@ -290,7 +299,7 @@ export default function SocialBar({
                   the form carries save and cancel itself. */}
               {editing !== c.id && (
                 <>
-                  {c.author_player_id === player?.id && (
+                  {c.author_player_id === player?.id && !c.gif_url && (
                     <IconButton
                       type="button"
                       label={t("common.edit")}
@@ -344,6 +353,16 @@ export default function SocialBar({
               className="h-9"
             />
             <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-expanded={gifOpen}
+              onClick={() => setGifOpen((v) => !v)}
+              className="shrink-0 font-mono"
+            >
+              {t("social.gif")}
+            </Button>
+            <Button
               type="submit"
               variant="accent"
               size="sm"
@@ -354,6 +373,15 @@ export default function SocialBar({
               {t("social.send")}
             </Button>
           </form>
+          {gifOpen && (
+            <GifPicker
+              onPick={(gifUrl) => {
+                addComment.mutate({ target, body: "", gifUrl });
+                setGifOpen(false);
+              }}
+              onClose={() => setGifOpen(false)}
+            />
+          )}
         </div>
       )}
     </div>

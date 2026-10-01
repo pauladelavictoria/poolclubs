@@ -35,6 +35,13 @@ export const matchesTarget = (row: TargetColumns, target: SocialTarget) =>
       ? row.drill_log_id === target.drillLogId
       : row.tournament_id === target.tournamentId;
 
+/** A comment is text or one GIF, never both — a GIF row's body is ''. The
+ *  CHECKs on comments in sql/schema.sql hold the same line. */
+type NewComment = { target: SocialTarget; body: string; gifUrl?: string };
+
+const commentContent = ({ body, gifUrl }: Omit<NewComment, "target">) =>
+  gifUrl ? { body: "", gif_url: gifUrl } : { body: body.trim(), gif_url: null };
+
 export const useComments = () => {
   const { activeClubId } = useAuth();
   return useQuery(commentsQuery(activeClubId));
@@ -80,16 +87,16 @@ const useScopedSocialActions = ({
 
   return {
     addComment: useMutation({
-      mutationFn: async ({
-        target,
-        body,
-      }: {
-        target: SocialTarget;
-        body: string;
-      }) => {
+      mutationFn: async ({ target, body, gifUrl }: NewComment) => {
         const { data } = await supabase
           .from("comments")
-          .insert([{ ...base(), ...targetColumns(target), body: body.trim() }])
+          .insert([
+            {
+              ...base(),
+              ...targetColumns(target),
+              ...commentContent({ body, gifUrl }),
+            },
+          ])
           .select("id")
           .single()
           .throwOnError();
@@ -97,17 +104,17 @@ const useScopedSocialActions = ({
         return data.id;
       },
       // Appended at the end because useComments orders by created_at ascending.
-      ...optimisticList<{ target: SocialTarget; body: string }, Comment>(
+      ...optimisticList<NewComment, Comment>(
         queryClient,
         commentsKey,
-        (rows, { target, body }) => [
+        (rows, { target, body, gifUrl }) => [
           ...rows,
           {
             id: tempId(),
             club_id: clubId,
             author_player_id: playerId,
             ...targetColumns(target),
-            body: body.trim(),
+            ...commentContent({ body, gifUrl }),
             created_at: new Date().toISOString(),
           },
         ],

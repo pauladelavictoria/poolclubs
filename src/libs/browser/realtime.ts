@@ -251,7 +251,10 @@ export function startRealtime({
       applyRow<Comment>(
         queryClient,
         keys.comments,
-        (a, b) => sameTargetAndAuthor(a, b) && a.body === b.body,
+        (a, b) =>
+          sameTargetAndAuthor(a, b) &&
+          a.body === b.body &&
+          a.gif_url === b.gif_url,
       ),
     )
     .on(

@@ -53,6 +53,9 @@ export const keys = {
   places: {
     for: (q: string) => ["places", q] as const,
   },
+  gifs: {
+    for: (q: string) => ["gifs", q] as const,
+  },
 
   games: {
     all: ["games"] as const,

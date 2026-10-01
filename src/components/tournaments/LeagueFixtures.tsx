@@ -114,7 +114,7 @@ export default function LeagueFixtures({
             >
               {dayLabel(new Date(day[0].game!.played_at), t, locale)}
             </h3>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {day.map((match) => (
                 <LeagueResultCard
                   key={match.id}
