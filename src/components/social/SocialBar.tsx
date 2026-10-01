@@ -215,12 +215,12 @@ export default function SocialBar({
             >
               {nameOf(comments[0].author_player_id)}
             </AppLink>{" "}
-            {comments[0].gif_url ? (
-              t("social.gif")
-            ) : (
+            {!comments[0].gif_url && (
               <CommentBody body={comments[0].body} mention={mention} />
             )}
           </span>
+          {/* Outside the line-clamp: a clamped GIF is a GIF cut in half. */}
+          {comments[0].gif_url && <CommentGif url={comments[0].gif_url} />}
         </div>
       )}
 
