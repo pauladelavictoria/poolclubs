@@ -1888,8 +1888,10 @@ CREATE TABLE IF NOT EXISTS "public"."comments" (
     "body" "text" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"(),
     "tournament_id" integer,
-    CONSTRAINT "comments_body_check" CHECK ((("char_length"("btrim"("body")) >= 1) AND ("char_length"("btrim"("body")) <= 1000))),
-    CONSTRAINT "comments_check" CHECK (("num_nonnulls"("game_id", "drill_log_id", "tournament_id") = 1))
+    "gif_url" "text",
+    CONSTRAINT "comments_body_check" CHECK (((("gif_url" IS NULL) AND (("char_length"("btrim"("body")) >= 1) AND ("char_length"("btrim"("body")) <= 1000))) OR (("gif_url" IS NOT NULL) AND ("body" = ''::"text")))),
+    CONSTRAINT "comments_check" CHECK (("num_nonnulls"("game_id", "drill_log_id", "tournament_id") = 1)),
+    CONSTRAINT "comments_gif_url_check" CHECK ((("gif_url" IS NULL) OR (("gif_url" ~ '^https://static\.klipy\.com/'::"text") AND ("char_length"("gif_url") <= 500))))
 );
 
 

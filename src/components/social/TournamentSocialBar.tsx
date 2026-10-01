@@ -7,6 +7,8 @@ import { Button, IconButton } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { fmt } from "@/libs/algorithms/dayLabel";
 import { CommentBody } from "@/components/social/CommentBody";
+import { CommentGif } from "@/components/social/CommentGif";
+import { GifPicker } from "@/components/social/GifPicker";
 import { MentionPicker } from "@/components/social/MentionPicker";
 import { useMentionPicker } from "@/hooks/useMentionPicker";
 import { publicClubRosterQuery } from "@/queries/public/clubs";
@@ -49,6 +51,7 @@ export default function TournamentSocialBar({
 
   const [picking, setPicking] = useState(false);
   const [draft, setDraft] = useState("");
+  const [gifOpen, setGifOpen] = useState(false);
   /** Which comment is open for editing, and the text as it is being changed. */
   const [editing, setEditing] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
@@ -250,6 +253,8 @@ export default function TournamentSocialBar({
                       {t("common.cancel")}
                     </Button>
                   </form>
+                ) : c.gif_url ? (
+                  <CommentGif url={c.gif_url} />
                 ) : (
                   <p className="whitespace-pre-wrap break-words text-body text-ink">
                     <CommentBody body={c.body} mention={mention} />
@@ -261,7 +266,7 @@ export default function TournamentSocialBar({
                   here may remove a comment, never rewrite one. */}
               {editing !== c.id && (
                 <>
-                  {c.author_player_id === myPlayerId && (
+                  {c.author_player_id === myPlayerId && !c.gif_url && (
                     <IconButton
                       type="button"
                       label={t("common.edit")}
@@ -317,10 +322,29 @@ export default function TournamentSocialBar({
                 placeholder={t("social.write")}
                 className="h-9"
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-expanded={gifOpen}
+                onClick={() => setGifOpen((v) => !v)}
+                className="shrink-0 font-mono"
+              >
+                {t("social.gif")}
+              </Button>
               <Button type="submit" size="sm" disabled={!draft.trim()}>
                 {t("social.send")}
               </Button>
             </form>
+            {gifOpen && (
+              <GifPicker
+                onPick={(gifUrl) => {
+                  addComment.mutate({ target, body: "", gifUrl });
+                  setGifOpen(false);
+                }}
+                onClose={() => setGifOpen(false)}
+              />
+            )}
           </>
         ) : (
           <Link

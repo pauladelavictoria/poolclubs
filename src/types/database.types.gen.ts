@@ -425,6 +425,7 @@ export type Database = {
           created_at: string | null
           drill_log_id: number | null
           game_id: string | null
+          gif_url: string | null
           id: number
           tournament_id: number | null
         }
@@ -435,6 +436,7 @@ export type Database = {
           created_at?: string | null
           drill_log_id?: number | null
           game_id?: string | null
+          gif_url?: string | null
           id?: number
           tournament_id?: number | null
         }
@@ -445,6 +447,7 @@ export type Database = {
           created_at?: string | null
           drill_log_id?: number | null
           game_id?: string | null
+          gif_url?: string | null
           id?: number
           tournament_id?: number | null
         }
