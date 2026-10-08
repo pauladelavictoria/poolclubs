@@ -140,11 +140,17 @@ export type ClubTable = Omit<Row<"club_tables">, "type" | "size"> & {
  * the status columns below are: the CHECK is the real domain and the generated
  * type is looser than what is ever stored.
  */
-export type LiveMatch = Omit<Row<"live_matches">, "last_side" | "racks"> & {
+export type LiveMatch = Omit<
+  Row<"live_matches">,
+  "last_side" | "racks" | "first_break"
+> & {
   racks: Rack[];
   /** Which side scored the last rack. What undo reads — two counters alone
    *  cannot say, so undo on the other phone would guess. */
   last_side: 1 | 2 | null;
+  /** Who broke the first rack — asked for tournament and league fixtures only,
+   *  null otherwise. The break alternates from there; see breakerOf. */
+  first_break: 1 | 2 | null;
 };
 
 export type Player = Omit<Row<"players">, "category" | "status"> & {

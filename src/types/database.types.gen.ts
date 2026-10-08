@@ -679,6 +679,7 @@ export type Database = {
           challenge_id: number | null
           club_id: number
           discipline: Database["public"]["Enums"]["Discipline"]
+          first_break: number | null
           id: string
           last_side: number | null
           mode: Database["public"]["Enums"]["GameMode"]
@@ -701,6 +702,7 @@ export type Database = {
           challenge_id?: number | null
           club_id: number
           discipline?: Database["public"]["Enums"]["Discipline"]
+          first_break?: number | null
           id: string
           last_side?: number | null
           mode?: Database["public"]["Enums"]["GameMode"]
@@ -723,6 +725,7 @@ export type Database = {
           challenge_id?: number | null
           club_id?: number
           discipline?: Database["public"]["Enums"]["Discipline"]
+          first_break?: number | null
           id?: string
           last_side?: number | null
           mode?: Database["public"]["Enums"]["GameMode"]

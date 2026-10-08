@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LuMinus, LuPlus } from "react-icons/lu";
+import { LuMinus, LuPlus, LuX } from "react-icons/lu";
 import { Select } from "@/components/ui/Select";
 import { Avatar } from "@/components/ui/Avatar";
 import PlayerPicker from "@/components/players/PlayerPicker";
@@ -7,7 +7,7 @@ import { DisciplineBall } from "@/components/ui/DisciplineBall";
 import { PlayerOptions } from "@/components/players/PlayerOptions";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { Button } from "@/components/ui/Button";
+import { Button, IconButton } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
 import { Toggle } from "@/components/ui/Toggle";
 import {
@@ -111,6 +111,8 @@ export default function StartMatchForm({
     /** Set when this pair also has a pending league fixture and the toggle
      *  below was left on — finishing then files the fixture too. */
     tournamentMatchId?: string;
+    /** Asked for a fixture only — see the break step below. */
+    firstBreak?: 1 | 2;
   }) => void;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -334,41 +336,109 @@ export default function StartMatchForm({
     );
   };
 
+  /** Start was pressed on a fixture: the break question is up. */
+  const [askBreak, setAskBreak] = useState(false);
+
+  const values = () => {
+    // A couples fixture is filed under each pair's captain (the one who
+    // entered it), so the captain takes the side's first seat: the game's
+    // winner is then the entrant id the fixture expects, and the league
+    // table reads the racks from the right side.
+    const captains =
+      forLeague && mode === "doubles"
+        ? new Set([fixture!.p1_id, fixture!.p2_id])
+        : null;
+    const side = (main: Player, partner: Player | null) =>
+      partner && captains?.has(partner.id)
+        ? ([partner, main] as const)
+        : ([main, partner] as const);
+    const [seat1, seat1b] = side(player1!, partner1);
+    const [seat2, seat2b] = side(opponent!, partner2);
+    return {
+      player1: seat1,
+      player2: seat2,
+      partner1: seat1b,
+      partner2: seat2b,
+      discipline: effectiveDiscipline,
+      raceTo: effectiveRaceTo,
+      // A match with no table is a real thing in a busy club, and it is
+      // what "every table is taken but we are playing anyway" writes.
+      tableId: table?.id ?? (tableId ? Number(tableId) : null),
+      recordOptIn: streamed && !forLeague && recordOptIn,
+      recordPrivacy:
+        streamed && !forLeague && recordOptIn ? recordPrivacy : null,
+      tournamentMatchId: forLeague ? fixture!.id : undefined,
+    };
+  };
+
+  // A fixture is played alternate break, so the one thing left to settle at
+  // the table is who breaks the first rack. Asked as a second step of this same
+  // dialog rather than a dialog over a dialog.
+  if (askBreak) {
+    const seats = values();
+    const sides = [
+      [seats.player1, seats.partner1],
+      [seats.player2, seats.partner2],
+    ].map((side) => side.filter((p): p is Player => p !== null));
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-h3 font-semibold text-ink">
+            {t("live.whoBreaks")}
+          </h2>
+          {/* Back to the form, not out of the dialog: the question is the
+              step, and closing it is changing your mind about the start. */}
+          <IconButton
+            label={t("common.back")}
+            size="sm"
+            onClick={() => setAskBreak(false)}
+            disabled={isSubmitting}
+            className="-mr-1 -mt-1 shrink-0"
+          >
+            <LuX className="h-4 w-4" aria-hidden />
+          </IconButton>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {sides.map((side, i) => (
+            <button
+              key={i}
+              type="button"
+              disabled={isSubmitting}
+              onClick={() =>
+                onSubmit({ ...seats, firstBreak: (i + 1) as 1 | 2 })
+              }
+              className="flex min-w-0 flex-col items-center gap-2 rounded-card border border-hairline p-4 transition-colors hover:bg-felt-raised disabled:opacity-50"
+            >
+              <span className="flex -space-x-3">
+                {side.map((p) => (
+                  <Avatar
+                    key={p.id}
+                    name={p.name}
+                    url={p.avatar_url}
+                    seed={p.id}
+                    className="h-16 w-16 ring-2 ring-felt"
+                  />
+                ))}
+              </span>
+              <span className="max-w-full text-center font-semibold text-ink">
+                {side.map((p) => p.name).join(" & ")}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         if (!valid) return;
-        // A couples fixture is filed under each pair's captain (the one who
-        // entered it), so the captain takes the side's first seat: the game's
-        // winner is then the entrant id the fixture expects, and the league
-        // table reads the racks from the right side.
-        const captains =
-          forLeague && mode === "doubles"
-            ? new Set([fixture!.p1_id, fixture!.p2_id])
-            : null;
-        const side = (main: Player, partner: Player | null) =>
-          partner && captains?.has(partner.id)
-            ? ([partner, main] as const)
-            : ([main, partner] as const);
-        const [seat1, seat1b] = side(player1!, partner1);
-        const [seat2, seat2b] = side(opponent!, partner2);
-        onSubmit({
-          player1: seat1,
-          player2: seat2,
-          partner1: seat1b,
-          partner2: seat2b,
-          discipline: effectiveDiscipline,
-          raceTo: effectiveRaceTo,
-          // A match with no table is a real thing in a busy club, and it is
-          // what "every table is taken but we are playing anyway" writes.
-          tableId: table?.id ?? (tableId ? Number(tableId) : null),
-          recordOptIn: streamed && !forLeague && recordOptIn,
-          recordPrivacy:
-            streamed && !forLeague && recordOptIn ? recordPrivacy : null,
-          tournamentMatchId: forLeague ? fixture!.id : undefined,
-        });
+        if (forLeague) setAskBreak(true);
+        else onSubmit(values());
       }}
     >
       <h2 className="text-h3 font-semibold text-ink">{t("live.start")}</h2>
