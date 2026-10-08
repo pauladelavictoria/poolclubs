@@ -45,15 +45,35 @@ export default function LeagueFixtures({
   /** Whose results to show, "" for everyone's. A string because it is a
    *  <select>'s value. */
   const [fixturesOf, setFixturesOf] = useState("");
+  /** And against whom — only once the first is picked. Head to head. */
+  const [against, setAgainst] = useState("");
   const [limit, setLimit] = useState(PAGE);
 
   // A walkover has no game and so no day; the table counts it, the timeline
   // has nothing to show for it.
-  const mine = matches.filter(
-    (m) =>
-      fixturesOf === "" ||
-      m.p1_id === Number(fixturesOf) ||
-      m.p2_id === Number(fixturesOf),
+  const has = (m: TournamentMatch, id: string) =>
+    id === "" || m.p1_id === Number(id) || m.p2_id === Number(id);
+  const mine = matches.filter((m) => has(m, fixturesOf) && has(m, against));
+  const options = (exclude: string) => (
+    <PlayerOptions
+      players={playerIds
+        .filter((id) => String(id) !== exclude)
+        .map((id) => ({ id, name: personOf(id)?.name ?? "—" }))
+        .sort((a, b) => a.name.localeCompare(b.name, locale))}
+      // The second list counts games against the first, on every row — so no
+      // "you" row lifted out of it, which PlayerOptions writes uncounted.
+      meId={exclude ? undefined : meId}
+      format={
+        exclude
+          ? (p) =>
+              `${p.name} (${
+                matches.filter(
+                  (m) => m.game && has(m, exclude) && has(m, String(p.id)),
+                ).length
+              })`
+          : undefined
+      }
+    />
   );
   const settled = mine.filter((m) => m.winner_id !== null).length;
   const played = sortPlayedMatches(mine.filter((m) => m.game));
@@ -79,25 +99,39 @@ export default function LeagueFixtures({
         </h2>
         {/* It filters the results, not the table: a table of one row is not
             a standing. Your own name leads — see PlayerOptions. */}
-        <Select
-          size="sm"
-          className="max-w-[14rem]"
-          value={fixturesOf}
-          aria-label={t("tournaments.filterByPlayer")}
-          onChange={(e) => {
-            setFixturesOf(e.target.value);
-            setLimit(PAGE);
-          }}
-        >
-          <option value="">{t("games.allPlayers")}</option>
-          <PlayerOptions
-            players={playerIds.map((id) => ({
-              id,
-              name: personOf(id)?.name ?? "—",
-            }))}
-            meId={meId}
-          />
-        </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            size="sm"
+            className="max-w-[14rem]"
+            value={fixturesOf}
+            aria-label={t("tournaments.filterByPlayer")}
+            onChange={(e) => {
+              setFixturesOf(e.target.value);
+              // Cleared or picked as the first name: the second has to go.
+              if (e.target.value === "" || e.target.value === against)
+                setAgainst("");
+              setLimit(PAGE);
+            }}
+          >
+            <option value="">{t("games.allPlayers")}</option>
+            {options("")}
+          </Select>
+          {fixturesOf !== "" && (
+            <Select
+              size="sm"
+              className="max-w-[14rem]"
+              value={against}
+              aria-label={t("tournaments.filterAgainst")}
+              onChange={(e) => {
+                setAgainst(e.target.value);
+                setLimit(PAGE);
+              }}
+            >
+              <option value="">{t("tournaments.vsAnyone")}</option>
+              {options(fixturesOf)}
+            </Select>
+          )}
+        </div>
       </div>
 
       {shown.length === 0 ? (

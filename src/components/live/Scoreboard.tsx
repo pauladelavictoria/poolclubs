@@ -3,7 +3,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { DisciplineBall } from "@/components/ui/DisciplineBall";
 import { Button, IconButton } from "@/components/ui/Button";
 import { useRefetchLiveOnVisible } from "@/hooks/useLiveMatch";
-import { isMatchOver, leaderOf } from "@/libs/algorithms/night";
+import { breakerOf, isMatchOver, leaderOf } from "@/libs/algorithms/night";
 import { useDialog } from "@/hooks/useDialog";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import type { LiveMatch, Player } from "@/types";
@@ -11,10 +11,6 @@ import { useT } from "@/i18n";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 
 type ScoreboardVariant = "play" | "spectate" | "tv";
-
-/** Past this a bead stops being countable at a glance and the ratio says it
- *  better — the same reason a real wire carries a dozen beads and not fifty. */
-const BEAD_LIMIT = 12;
 
 /**
  * The score, at arm's length, with a cue in the other hand.
@@ -71,6 +67,7 @@ export default function Scoreboard({
 
   const over = isMatchOver(match);
   const leader = leaderOf(match);
+  const breaker = breakerOf(match);
 
   // One player or a pair. The pair is the unit that wins the rack, so it is the
   // unit a half is labelled with and the unit that wins the match.
@@ -97,47 +94,6 @@ export default function Scoreboard({
   const keepPlaying = () => {
     if (isFinishing || !over || !leader) return;
     onUnbump?.(leader);
-  };
-
-  /**
-   * The bead wire. A pool room keeps score on a string of beads slid along a
-   * wire over the table, and that is what this is: the wire is a hairline
-   * through the middle, the beads sit on it, and the racks won are pushed to
-   * the player's own end the way a hand pushes them.
-   */
-  const wire = (side: 1 | 2, score: number) => {
-    if (match.race_to > BEAD_LIMIT)
-      return (
-        <span className="text-caption tabular-nums text-ink-faint">
-          {score} / {match.race_to}
-        </span>
-      );
-
-    return (
-      <div className="relative flex items-center justify-center" aria-hidden>
-        <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-hairline" />
-        <div
-          className={[
-            "relative flex items-center gap-[max(2px,1cqmin)]",
-            // Won beads gather at the player's own end, so a glance at which
-            // way the string is bunched is the score.
-            side === 1 ? "flex-row" : "flex-row-reverse",
-          ].join(" ")}
-        >
-          {Array.from({ length: match.race_to }, (_, i) => (
-            <span
-              key={i}
-              className={[
-                "h-[var(--scoreboard-bead)] w-[var(--scoreboard-bead)] rounded-full border transition-colors duration-200 ease-[var(--ease-out)]",
-                i < score
-                  ? "border-transparent bg-ink"
-                  : "border-hairline bg-pocket",
-              ].join(" ")}
-            />
-          ))}
-        </div>
-      </div>
-    );
   };
 
   const half = (n: 1 | 2) => {
@@ -174,51 +130,65 @@ export default function Scoreboard({
           aria-hidden
         />
 
-        {/* The score and its wire are one thing, so they sit tight together and
-            the air goes below them. */}
         <div className="scoreboard-stack gap-[var(--scoreboard-gap)]">
-          <div className="flex w-full flex-col items-center gap-[max(0.25rem,2cqmin)]">
-            <span
-              className="font-mono font-semibold leading-none tracking-tight text-ink tabular-nums"
-              style={{ fontSize: "var(--text-score)" }}
-            >
-              {score}
-            </span>
-            {wire(n, score)}
-          </div>
+          <span
+            className="font-mono font-semibold leading-none tracking-tight text-ink tabular-nums"
+            style={{ fontSize: "var(--text-score)" }}
+          >
+            {score}
+          </span>
 
-          {/* Whose half this is. A row per player: two names on one line are
-              two names nobody reads from the far end of the table, and a pair
-              is two people rather than one long label. The numeral gives the
-              second row its height back — see [data-pair] in index.css. */}
+          {/* Whose half this is: the faces, then a row per name. Two names on
+              one line are two names nobody reads from the far end of the
+              table, and a pair is two people rather than one long label. The
+              numeral gives the second row its height back — see [data-pair]
+              in index.css. */}
           <div
             className="flex min-w-0 max-w-full flex-col items-center gap-[max(0.25rem,1cqmin)]"
             title={full}
           >
-            {side.map((p) => (
-              <div
-                key={p.id}
-                className="flex min-w-0 max-w-full items-center gap-[max(0.5rem,2cqmin)]"
-              >
-                {/* No seed, so a face without a picture is a grey disc rather
-                    than a solid ball colour. The palette is for a roster grid;
-                    here one of the eight hues is the club's own accent, which
-                    is the + button — and the initial next to the score has no
-                    business being the loudest thing on the half. */}
+            {/* No seed, so a face without a picture is a grey disc rather than
+                a solid ball colour. The palette is for a roster grid; here one
+                of the eight hues is the club's own accent, which is the +
+                button — and the initial next to the score has no business
+                being the loudest thing on the half. */}
+            <div className="flex -space-x-[calc(var(--scoreboard-avatar)*0.25)]">
+              {side.map((p) => (
                 <Avatar
+                  key={p.id}
                   name={p.name}
                   url={p.avatar_url}
-                  className="h-[var(--scoreboard-face)] w-[var(--scoreboard-face)] shrink-0 ring-2 ring-felt"
+                  className="h-[var(--scoreboard-avatar)] w-[var(--scoreboard-avatar)] shrink-0 ring-2 ring-felt"
                 />
-                <span
-                  className="min-w-0 truncate font-semibold leading-tight text-ink"
-                  style={{ fontSize: "var(--text-scoreboard-name)" }}
-                >
-                  {p.name}
-                  <CountryFlag country={p.country} />
-                </span>
-              </div>
+              ))}
+            </div>
+            {side.map((p) => (
+              // The name gives way, never the flag: truncating the line as a
+              // whole cut the flag off first.
+              <span
+                key={p.id}
+                className="flex min-w-0 max-w-full items-center font-semibold leading-tight text-ink"
+                style={{ fontSize: "var(--text-scoreboard-name)" }}
+              >
+                <span className="min-w-0 truncate">{p.name}</span>
+                <CountryFlag country={p.country} />
+              </span>
             ))}
+            {/* Whose break it is, on a fixture played alternate break. A cue
+                ball because that is what the breaker picks up. On both halves,
+                hidden on one, so the two scores and names stay level. */}
+            {match.first_break && (
+              <span
+                role="img"
+                aria-label={t("live.breaks")}
+                aria-hidden={breaker !== n}
+                title={t("live.breaks")}
+                className={[
+                  "h-[calc(var(--scoreboard-face)*0.6)] w-[calc(var(--scoreboard-face)*0.6)] rounded-full bg-white shadow-sm ring-1 ring-hairline",
+                  breaker === n ? "" : "invisible",
+                ].join(" ")}
+              />
+            )}
           </div>
         </div>
 

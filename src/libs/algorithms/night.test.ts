@@ -3,6 +3,7 @@ import type { ClubTable, LiveMatch, Player } from "@/types";
 import {
   ABANDON_AFTER_MS,
   PRESENT_WINDOW_MS,
+  breakerOf,
   bump,
   canScore,
   freeTables,
@@ -34,6 +35,7 @@ const match = (over: Partial<LiveMatch> = {}): LiveMatch => ({
   player_2_score: 0,
   race_to: 5,
   last_side: null,
+  first_break: null,
   racks: [],
   challenge_id: null,
   tournament_match_id: null,
@@ -128,6 +130,28 @@ describe("isMatchOver / leaderOf — the race", () => {
 
   it("names whoever is ahead as the leader", () => {
     expect(leaderOf(match({ player_1_score: 2, player_2_score: 3 }))).toBe(2);
+  });
+});
+
+describe("breakerOf — alternate break", () => {
+  it("is nobody when no one was asked", () => {
+    expect(breakerOf(match({}))).toBeNull();
+  });
+
+  it("hands the break over every rack, whoever won it", () => {
+    expect(breakerOf(match({ first_break: 2 }))).toBe(2);
+    expect(breakerOf(match({ first_break: 2, player_2_score: 1 }))).toBe(1);
+    expect(
+      breakerOf(
+        match({ first_break: 2, player_1_score: 1, player_2_score: 1 }),
+      ),
+    ).toBe(2);
+  });
+
+  it("is nobody once the race is run", () => {
+    expect(
+      breakerOf(match({ first_break: 1, player_1_score: 5, race_to: 5 })),
+    ).toBeNull();
   });
 });
 

@@ -54,12 +54,12 @@
   --text-scoreboard-label: clamp(0.875rem, 4cqmin, 1.5rem);
 
   /* The furniture grows with the type, or the number gets big while the buttons
-     stay the same and the whole thing stops being one object. One token for
-     both round things: a face and a ball at two different sizes read as two
-     unrelated widgets. */
+     stay the same and the whole thing stops being one object. */
   --scoreboard-control: clamp(2.75rem, 18cqmin, 6rem);
   --scoreboard-face: clamp(1.5rem, 9cqmin, 4rem);
-  --scoreboard-bead: clamp(0.5rem, 3cqmin, 1rem);
+  /* Its own size, not the face token: the avatar sits on its own row above
+     the name now, where a face the size of the spine's ball reads as a bullet. */
+  --scoreboard-avatar: clamp(2.5rem, 16cqmin, 7rem);
   /* The air between the groups and around them — one value, because the two
      that were here were tuned against each other and neither was the reason
      anything fit. */
@@ -1244,7 +1244,7 @@ button.lift:active {
 }
 
 /* A pair takes a row each, and stacked on a phone every one of these sizes is a
-   percentage of the same short side: the numeral, the wire, one name row per
+   percentage of the same short side: the numeral, one name row per
    player, the controls, and the air between them have to add up to less than
    the half. The second row is the two lines that budget cannot afford, so the
    numeral gives them back. */
@@ -1252,7 +1252,7 @@ button.lift:active {
   --text-score: clamp(2rem, 38cqmin, 22rem);
 }
 
-/* The score, its wire and whose half it is — one block, whichever side the
+/* The score and whose half it is — one block, whichever side the
    controls end up on. */
 .scoreboard-stack {
   display: flex;
@@ -1267,7 +1267,7 @@ button.lift:active {
   width: 100%;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: max(1rem, calc(var(--scoreboard-control) * 0.35));
 }
 
 /* Both the same square. A wide + and a small − read as one big button with a

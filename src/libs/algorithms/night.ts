@@ -149,6 +149,14 @@ export const leaderOf = (match: LiveMatch): 1 | 2 | null => {
 export const isMatchOver = (match: LiveMatch) =>
   Math.max(match.player_1_score, match.player_2_score) >= match.race_to;
 
+/** Who breaks the rack on now — alternate break, so every rack played hands
+ *  it over. Null when nobody said who broke first, or the race is run. */
+export const breakerOf = (match: LiveMatch): 1 | 2 | null => {
+  if (!match.first_break || isMatchOver(match)) return null;
+  const played = match.player_1_score + match.player_2_score;
+  return played % 2 === 0 ? match.first_break : match.first_break === 1 ? 2 : 1;
+};
+
 /** The patch the plus button writes. A rack past the race is refused rather
  *  than clamped — the finish sheet is already up, and a button behind it should
  *  do nothing at all. */

@@ -70,6 +70,8 @@ type NewLiveMatch = {
    *  so finishing can close it out in the same transaction. */
   challengeId?: number;
   tournamentMatchId?: string;
+  /** Who breaks the first rack. Alternate break from there. */
+  firstBreak?: 1 | 2;
   /** "Record this game" — casual games only, docs/youtube-streaming.md §2.5.
    *  Ignored by the reconciler for a tournament fixture, which is desired
    *  unconditionally regardless of these two. */
@@ -163,6 +165,7 @@ export const useManageLiveMatch = () => {
           racks: [],
           challenge_id: input.challengeId ?? null,
           tournament_match_id: input.tournamentMatchId ?? null,
+          first_break: input.firstBreak ?? null,
           record_opt_in: input.recordOptIn ?? false,
           record_privacy: input.recordPrivacy ?? null,
         };
