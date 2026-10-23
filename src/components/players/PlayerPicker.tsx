@@ -91,6 +91,7 @@ export default function PlayerPicker({
         wide: true,
         className: "p-3! overflow-x-hidden",
       })}
+      data-picker
       aria-label={heading}
       // React bubbles a dialog's close event through the component tree, so
       // opened from inside another dialog (the match form) closing this one

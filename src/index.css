@@ -646,6 +646,32 @@ html[data-kiosk] {
   font-size: clamp(1rem, 1.55vmax, 1.5rem);
 }
 
+/*
+  A sheet open on the kiosk — the match setup, the player picker — is the one
+  place the tablet is read at arm's length while being filled in, by people who
+  have never touched it, so it gets a bigger root again. Same knob as above:
+  every size in the sheet is a rem, so text and touch targets come up together.
+  The table page's own setup sheet (data-tablet) gets it pinned or not: the
+  tablet at the table is often just a browser on the table page. Floored at the
+  app's 16px so a phone at the table is not handed a poster.
+  ponytail: the page behind reflows to the same root while it is open; it is
+  dimmed under the backdrop and the scoreboard is cqmin, so nothing shows.
+*/
+html[data-kiosk]:has(dialog.sheet[open]),
+html:has(dialog[data-tablet][open]) {
+  font-size: clamp(1rem, 2.4vmax, 2.5rem);
+}
+
+/* At that size a list of names is a handful of rows, so the player picker
+   takes the whole height of the screen rather than a centred box of it. */
+:is(html[data-kiosk], html:has(dialog[data-tablet][open])) dialog[data-picker] {
+  height: 100dvh;
+  max-height: 100dvh;
+  & > div {
+    height: 100%;
+  }
+}
+
 /* Side nav drawer: slides in, fades its backdrop. No JS animation. */
 dialog.drawer {
   translate: -100% 0;
@@ -1134,6 +1160,15 @@ button.lift:active {
 @keyframes fade-in {
   from {
     opacity: 0;
+  }
+}
+
+/* A banner said once and then gone, so it stops covering the board. Hidden, not
+   just transparent, so taps reach what is under it. */
+@keyframes fade-away {
+  to {
+    opacity: 0;
+    visibility: hidden;
   }
 }
 

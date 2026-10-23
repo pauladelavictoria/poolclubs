@@ -348,6 +348,7 @@ export default function TablePage() {
       <dialog
         ref={dialogRef}
         className={dialogClasses({ wide: true })}
+        data-tablet
         aria-label={t("live.start")}
         onClose={close}
         onClick={(e) => {
