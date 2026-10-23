@@ -407,10 +407,12 @@ export default function LiveMatchPage() {
         </div>
       )}
 
+      {/* Gone after 5s, by CSS: mounts afresh — and shows again — each time
+          the stream goes down. */}
       {streamDown && (
         <div
           role="alert"
-          className="absolute inset-x-0 top-0 z-30 bg-accent-red px-3 py-2 text-center text-sm font-semibold text-white"
+          className="absolute inset-x-0 top-0 z-30 animate-[fade-away_300ms_ease-out_5s_forwards] bg-accent-red px-3 py-2 text-center text-sm font-semibold text-white"
         >
           {t("live.streamDown")}
         </div>
